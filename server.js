@@ -87,7 +87,7 @@ app.get('/api/sets', async (req, res) => {
 app.get('/api/minifigs', (req, res) => res.json([]));
 app.get('/api/bricklink-price', (req, res) => res.json({ used: { avg: 15, stock: 2 }, new: { avg: 30, stock: 1 } }));
 
-const PORT = 3001;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running stable on http://0.0.0.0:${PORT}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
