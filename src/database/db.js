@@ -6,9 +6,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
+
 export async function openDB() {
   return open({
-    filename: path.join(__dirname, 'src/database/brick_collection.db'),
+    filename: path.join(__dirname, 'brick_collection.db'),
     driver: sqlite3.Database
   });
 }
