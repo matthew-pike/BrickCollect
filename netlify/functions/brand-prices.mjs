@@ -62,8 +62,15 @@ export async function updateBrand({ brand, shop }, rates) {
 export default async () => {
   if (!env('SUPABASE_URL') || !env('SUPABASE_SECRET_KEY')) { console.log('brand-prices: database settings missing'); return; }
   const rateRows = await sb('shared_docs?select=data&collection=eq.meta&id=eq.rates');
-  const rates = rateRows?.[0]?.data?.rates;
-  if (!rates) { console.log('brand-prices: exchange rates not loaded yet; run the rates function first'); return; }
+  let rates = rateRows?.[0]?.data?.rates;
+  if (!rates) {
+    // The daily rates job hasn't run yet: fetch today's rates directly and save them for the site too.
+    try {
+      const d = await fetchJson('https://api.frankfurter.dev/v1/latest?base=AUD');
+      rates = { AUD: 1, ...d.rates };
+      await upsertShared('meta', 'rates', { base: 'AUD', date: d.date, fetchedAt: Date.now(), rates });
+    } catch (e) { console.log('brand-prices: no exchange rates available:', e.message); return; }
+  }
   for (const b of BRANDS) {
     try { console.log('brand-prices:', JSON.stringify(await updateBrand(b, rates))); }
     catch (e) { console.log(`brand-prices: ${b.brand} failed:`, e.message); }
