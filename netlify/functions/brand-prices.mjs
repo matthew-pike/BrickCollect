@@ -1,4 +1,4 @@
-// Daily: fetch retail prices from brands' own Shopify stores (LumiBricks for now) and save them
+// Daily: fetch retail prices from brands' own Shopify stores (LumiBricks and Pantasy) and save them
 // as the "new" price for those sets, converted to AUD. Sets the store sells that aren't in
 // BrickCollect yet are added to that brand's list (name and number; theme left as "Unsorted").
 //
@@ -8,11 +8,12 @@ import { env, sb, upsertShared, savePrices } from '../lib/common.mjs';
 
 const BRANDS = [
   { brand: 'LumiBricks', shop: 'https://www.lumibricks.com' },
-  // { brand: 'Pantasy', shop: 'https://…' },  // add once we know Pantasy's Shopify store address
+  { brand: 'Pantasy', shop: 'https://pantasy.com' },
 ];
 
-const numFromHandle = h => { const m = /-([a-z]?\d{4,6})$/i.exec(h || ''); return m ? m[1].toUpperCase() : null; };
-const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy)\s*[-–:]\s*/i, '').trim() || num;
+// The set number is the last number in the address, optionally followed by a region (e.g. pantasy-t-800-87503-us-eu).
+const numFromHandle = h => { const m = /-([a-z]?\d{4,6})(?:-[a-z]{2,3})*$/i.exec(h || ''); return m ? m[1].toUpperCase() : null; };
+const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy)\b[\s:–-]*/i, '').trim() || num;
 
 async function fetchJson(url) {
   const res = await fetch(url, { headers: { 'User-Agent': 'BrickCollect price updater (an Art of Bricks project)', Accept: 'application/json' } });

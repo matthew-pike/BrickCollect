@@ -203,6 +203,9 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .buy:hover{filter:brightness(1.05)}
 .buy-lego{background:#e3000b;border:2px solid #ffcf00;color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
 .buy-lego:hover{filter:brightness(1.08)}
+.buy-pantasy{background:#14161c;border-color:#14161c;color:#fff;font-weight:700;letter-spacing:.02em}
+:root[data-theme="dark"] .buy-pantasy{background:#fff;border-color:#fff;color:#14161c}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .buy-pantasy{background:#fff;border-color:#fff;color:#14161c}}
 .buy-lumibricks{background:#14161c;border-color:#14161c;color:#fff;font-weight:700;letter-spacing:.02em}
 :root[data-theme="dark"] .buy-lumibricks{background:#fff;border-color:#fff;color:#14161c}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .buy-lumibricks{background:#fff;border-color:#fff;color:#14161c}}
@@ -651,6 +654,7 @@ function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond
 const BUY = Object.assign({
   LEGO: { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
   LumiBricks: { label: 'LU', title: 'Find it at LumiBricks', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
+  Pantasy: { label: 'PA', title: 'Find it at Pantasy', url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
 function buyLink(x) {
   if (x.k !== 's') return '';

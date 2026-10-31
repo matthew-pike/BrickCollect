@@ -13,6 +13,6 @@ window.BC_CONFIG = {
   buyLinks: {
     LEGO:       { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
     LumiBricks: { label: 'LU', title: 'Find it at LumiBricks', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
-    Pantasy:    { label: 'Buy', title: 'Find it at Pantasy',    url: '' },
+    Pantasy:    { label: 'PA', title: 'Find it at Pantasy',    url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
   },
 };
