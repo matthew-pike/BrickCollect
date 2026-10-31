@@ -234,6 +234,9 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .condchip.c-used{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,transparent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .condchip.c-used-inc{color:var(--stud);border-color:color-mix(in srgb,var(--stud) 55%,transparent);background:color-mix(in srgb,var(--stud) 10%,transparent)}
 .condchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tip{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:5px;border-radius:50%;border:1px solid currentColor;background:transparent;color:var(--faint);font:italic 600 9.5px/1 Georgia,serif;cursor:help;padding:0;vertical-align:1px;text-transform:none;letter-spacing:0;opacity:.85}
+.tip:hover,.tip:focus-visible,.tip[aria-expanded="true"]{color:var(--accent);opacity:1;outline:none}
+.tipbox{position:absolute;z-index:40;max-width:min(280px,calc(100vw - 24px));background:var(--fg);color:var(--bg);font-size:12.5px;line-height:1.45;padding:9px 11px;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.3);text-transform:none;letter-spacing:0;font-weight:400}
 .condchip.c-mixed{color:var(--violet);border-color:color-mix(in srgb,var(--violet) 50%,transparent);background:color-mix(in srgb,var(--violet) 10%,transparent)}
 .copies{position:absolute;z-index:30;background:var(--panel);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 12px 36px rgba(0,0,0,.28);padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:220px}
 .copies h4{margin:0 0 2px;font-size:12px;font-weight:500;color:var(--muted)}
@@ -306,12 +309,12 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 <div class="wrap">
 <main>
   <section class="stats" aria-label="Collection summary">
-    <div class="stat"><span class="k" id="kOwned">Complete sets</span><span class="v" id="sOwned">0</span><div class="bar"><i id="sBar"></i></div><span class="s" id="sPct">Across your whole collection</span></div>
-    <div class="stat"><span class="k">Remaining</span><span class="v accent" id="sRemain">—</span><span class="s" id="sRemainS">Pick a theme to see the gap</span></div>
-    <div class="stat"><span class="k">Needed (used)</span><span class="v good" id="sNeedU">$0.00</span><span class="s" id="sNeedUs">Live used avg</span></div>
-    <div class="stat"><span class="k">Needed (new)</span><span class="v good" id="sNeedN">$0.00</span><span class="s" id="sNeedNs">Live new avg</span></div>
-    <div class="stat"><span class="k">Collection value</span><span class="v violet" id="sValU">$0.00</span><span class="s" id="sValUs">By each item’s condition</span></div>
-    <div class="stat"><span class="k">Wanted list</span><span class="v accent" id="sValN">$0.00</span><span class="s" id="sValNs">Star sets to add them</span></div>
+    <div class="stat"><span class="k"><span id="kOwned">Complete sets</span><button type="button" class="tip" data-tip="How many of the sets in view you own, in any condition. Pick a brand, theme or subtheme to see how complete that range is. Extra copies of a set don&#x27;t count twice." aria-label="What is this?">i</button></span><span class="v" id="sOwned">0</span><div class="bar"><i id="sBar"></i></div><span class="s" id="sPct">Across your whole collection</span></div>
+    <div class="stat"><span class="k">Remaining<button type="button" class="tip" data-tip="Sets in view you don&#x27;t own yet. Minifigures that come with a set you own count as owned." aria-label="What is this?">i</button></span><span class="v accent" id="sRemain">—</span><span class="s" id="sRemainS">Pick a theme to see the gap</span></div>
+    <div class="stat"><span class="k">Needed (used)<button type="button" class="tip" data-tip="What the remaining sets would cost at the average used price on BrickLink, in your currency. Sets without a price yet aren&#x27;t included." aria-label="What is this?">i</button></span><span class="v good" id="sNeedU">$0.00</span><span class="s" id="sNeedUs">Live used avg</span></div>
+    <div class="stat"><span class="k">Needed (new)<button type="button" class="tip" data-tip="What the remaining sets would cost at the average new price, in your currency. Sets without a price yet aren&#x27;t included." aria-label="What is this?">i</button></span><span class="v good" id="sNeedN">$0.00</span><span class="s" id="sNeedNs">Live new avg</span></div>
+    <div class="stat"><span class="k">Collection value<button type="button" class="tip" data-tip="What everything you own is worth: new copies at the new price, used and incomplete copies at the used price, times how many copies you have." aria-label="What is this?">i</button></span><span class="v violet" id="sValU">$0.00</span><span class="s" id="sValUs">By each item’s condition</span></div>
+    <div class="stat"><span class="k">Wanted list<button type="button" class="tip" data-tip="The new price of everything you&#x27;ve starred. Tap the star next to any set or minifigure to add it." aria-label="What is this?">i</button></span><span class="v accent" id="sValN">$0.00</span><span class="s" id="sValNs">Star sets to add them</span></div>
   </section>
 
   <section class="welcome" id="welcome" hidden>
@@ -325,7 +328,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
   </section>
 
   <section class="sellbox" aria-labelledby="sellTitle">
-    <div class="sellhead"><h3 id="sellTitle">Selling or buying a collection?</h3><p>Market value of what you own, by condition. Pick a percentage to see what you’d ask or offer.</p></div>
+    <div class="sellhead"><h3 id="sellTitle">Selling or buying a collection? <button type="button" class="tip" data-tip="Based on what you&#x27;ve ticked as owned and the copies you&#x27;ve set in the Condition column. Sellers and buyers often agree on a share of market value, like 70%, to allow for fees, shipping and time." aria-label="What is this?">i</button></h3><p>Market value of what you own, by condition. Pick a percentage to see what you’d ask or offer.</p></div>
     <div class="pct"><div class="pctchips" role="group" aria-label="Quick percentages"><button class="pctchip" data-pct="60">60%</button><button class="pctchip" data-pct="70">70%</button><button class="pctchip" data-pct="80">80%</button><button class="pctchip" data-pct="100">100%</button></div><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="100" aria-label="Percentage of market value"><span>%</span></div>
     <dl class="sellgrid">
       <div class="selltile t-new"><dt>New</dt><dd id="sellNew">—</dd><small id="sellNewN"></small></div>
@@ -358,13 +361,13 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
         <button class="pill" data-view="all" aria-pressed="true">All</button>
         <button class="pill" data-view="owned" aria-pressed="false">Owned <b id="cOwned">0</b></button>
         <button class="pill" data-view="wanted" aria-pressed="false">Wanted <b id="cWanted">0</b></button>
-      </div>
+      </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
       <button class="btn" id="unselAll" title="Unmark everything in view">Unselect all</button>
       <span class="spacer"></span>
       <a class="btn" href="https://store.bricklink.com/TheArtofBricks#/shop" target="_blank" rel="noopener" title="The Art of Bricks store on BrickLink">BrickLink Store ↗</a>
       <button class="btn" id="exportBtn" title="Download everything you own as a spreadsheet">Export my collection</button>
       <button class="btn" id="exportWantBtn" title="Download your wanted list as a spreadsheet, with prices and where to buy">Export wanted list</button>
-      <button class="btn primary" id="syncBtn" title="Fetch BrickLink price guide averages for the sets in view">Sync Prices</button>
+      <button class="btn primary" id="syncBtn" title="Fetch BrickLink price guide averages for the sets in view">Sync Prices</button><button type="button" class="tip" data-tip="Fetches the latest BrickLink prices for what&#x27;s in view. Prices are also refreshed every night for the sets people own. Sign in to sync; each person can sync up to 60 items a day." aria-label="What is this?">i</button>
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
       <b id="bulkLabel">Set for the sets in view</b>
@@ -797,12 +800,13 @@ function thumb(x) {
 /* ---------- render ---------- */
 const COLS = () => [
   { label: '<input type="checkbox" class="chk" id="selAll" aria-label="Mark everything in view as owned">' }, { label: 'Image' },
-  { key: 'name', label: kind === 'sets' ? 'Set name' : 'Minifigure' }, { key: 'cond', label: 'Condition' },
+  { key: 'name', label: kind === 'sets' ? 'Set name' : 'Minifigure' }, { key: 'cond', label: 'Condition', tip: 'Click a chip to set how many copies you own in each condition: New, Used (complete) or Used (incomplete).' },
   { key: 'brand', label: 'Brand' }, { key: 'sub', label: 'Subtheme' },
   { key: 'n', label: kind === 'sets' ? 'Set #' : 'Rebrickable #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BrickLink #' }] : []), { key: 'year', label: kind === 'sets' ? 'Year' : 'First year' },
   { key: 'pieces', label: 'Pieces', cls: 'num' },
-  { key: 'used', label: `Used ${cur()}`, cls: 'num' }, { key: 'new', label: `New ${cur()}`, cls: 'num' },
-  { label: 'Links', cls: 'num' },
+  { key: 'used', label: `Used ${cur()}`, cls: 'num', tip: 'Average used price on BrickLink over the last six months of sales worldwide (current listings if nothing sold), in your currency.' },
+  { key: 'new', label: `New ${cur()}`, cls: 'num', tip: 'Average new price on BrickLink, or the brand’s own store price for LumiBricks, Pantasy, CaDA and Mould King, in your currency.' },
+  { label: 'Links', cls: 'num', tip: 'The coloured button opens the set at the brand’s own store (some are affiliate links that support BrickCollect). BL opens it on BrickLink.' },
 ];
 const val = (x, k) => k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
 
@@ -878,8 +882,9 @@ function render() {
     return sort.dir === 'asc' ? r : -r;
   });
 
-  $('headRow').innerHTML = COLS().map(c => !c.key ? `<th class="${c.cls || ''}">${c.label}</th>`
-    : `<th class="sortable ${c.cls || ''}" data-sort="${c.key}" tabindex="0" aria-sort="${sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${c.label} ${sort.key === c.key ? `<span class="arr">${sort.dir === 'asc' ? '▲' : '▼'}</span>` : ''}</th>`).join('');
+  const tipOf = c => c.tip ? `<button type="button" class="tip" data-tip="${esc(c.tip)}" aria-label="What is this?">i</button>` : '';
+  $('headRow').innerHTML = COLS().map(c => !c.key ? `<th class="${c.cls || ''}">${c.label}${tipOf(c)}</th>`
+    : `<th class="sortable ${c.cls || ''}" data-sort="${c.key}" tabindex="0" aria-sort="${sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${c.label} ${sort.key === c.key ? `<span class="arr">${sort.dir === 'asc' ? '▲' : '▼'}</span>` : ''}${tipOf(c)}</th>`).join('');
 
   const sa = $('selAll');
   if (sa) {
@@ -976,6 +981,30 @@ function openZoom(btn) {
 function closeZoom() { if ($('zoom').hidden) return; $('zoom').hidden = true; $('zoomImg').removeAttribute('src'); zoomFrom?.focus(); zoomFrom = null; }
 $('zoom').addEventListener('click', e => { if (e.target === $('zoom') || e.target.closest('#zoomClose')) closeZoom(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeZoom(); });
+/* little "i" info tips: tap or hover to read */
+const tipEl = document.createElement('div'); tipEl.className = 'tipbox'; tipEl.hidden = true; tipEl.setAttribute('role', 'tooltip'); tipEl.id = 'tipbox';
+document.body.append(tipEl);
+let tipFor = null, tipPinned = false; // pinned: opened by a click or tap, so it stays until the next click
+function showTip(btn) {
+  tipFor?.setAttribute('aria-expanded', 'false');
+  tipFor = btn; btn.setAttribute('aria-expanded', 'true'); btn.setAttribute('aria-describedby', 'tipbox');
+  tipEl.textContent = btn.dataset.tip; tipEl.hidden = false;
+  const r = btn.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  const below = r.bottom + 8 + h < window.innerHeight;
+  tipEl.style.top = (window.scrollY + (below ? r.bottom + 8 : r.top - h - 8)) + 'px';
+  tipEl.style.left = (window.scrollX + Math.max(12, Math.min(r.left + r.width / 2 - w / 2, document.documentElement.clientWidth - w - 12))) + 'px';
+}
+function hideTip() { tipPinned = false; if (!tipFor) return; tipFor.setAttribute('aria-expanded', 'false'); tipFor = null; tipEl.hidden = true; }
+document.addEventListener('click', e => {
+  const b = e.target.closest('.tip');
+  if (b) { e.preventDefault(); e.stopPropagation(); if (tipFor === b && tipPinned) hideTip(); else { showTip(b); tipPinned = true; } return; }
+  hideTip();
+}, true);
+document.addEventListener('pointerover', e => { const b = e.target.closest?.('.tip'); if (b && e.pointerType === 'mouse' && !tipPinned) showTip(b); });
+document.addEventListener('pointerout', e => { const b = e.target.closest?.('.tip'); if (b && e.pointerType === 'mouse' && !tipPinned && !b.contains(e.relatedTarget)) hideTip(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
+window.addEventListener('scroll', hideTip, { passive: true });
+
 /* copies panel: how many you own in each condition */
 let copiesFor = null;
 const copiesEl = document.createElement('div'); copiesEl.className = 'copies'; copiesEl.hidden = true; copiesEl.setAttribute('role', 'dialog'); copiesEl.setAttribute('aria-label', 'Copies you own');
