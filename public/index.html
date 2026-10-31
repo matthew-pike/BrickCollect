@@ -231,6 +231,17 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .condchip.c-used{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,transparent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .condchip.c-used-inc{color:var(--stud);border-color:color-mix(in srgb,var(--stud) 55%,transparent);background:color-mix(in srgb,var(--stud) 10%,transparent)}
 .condchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.condchip.c-mixed{color:var(--violet);border-color:color-mix(in srgb,var(--violet) 50%,transparent);background:color-mix(in srgb,var(--violet) 10%,transparent)}
+.copies{position:absolute;z-index:30;background:var(--panel);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 12px 36px rgba(0,0,0,.28);padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:220px}
+.copies h4{margin:0 0 2px;font-size:12px;font-weight:500;color:var(--muted)}
+.copyrow{display:flex;align-items:center;gap:10px}
+.copyrow .lab{flex:1;display:flex;align-items:center;gap:7px;font-size:13px}
+.copyrow .dot{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.copyrow .n{width:26px;text-align:center;font-variant-numeric:tabular-nums;font-weight:500}
+.copyrow button{width:28px;height:28px;border-radius:7px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg);cursor:pointer;font-size:16px;line-height:1;display:grid;place-items:center}
+.copyrow button:hover{border-color:var(--accent)}
+.copyrow button:disabled{opacity:.35;cursor:default}
+.copies .hint{font-size:11.5px;color:var(--faint)}
 .buy{background:var(--stud);border-color:var(--stud);color:#1a1300;font-weight:600}
 .buy:hover{filter:brightness(1.05)}
 .buy-lego{background:#e3000b;border:2px solid #ffcf00;color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
@@ -605,9 +616,19 @@ function setInfo(n, patch, { quiet } = {}) {
   if ('owned' in patch) {
     me.owned = !!patch.owned;
     if (me.owned) { me.wanted = false; if (!me.cond) me.cond = prefs.lastCond || 'used'; }
-    else delete me.cond;
+    else { delete me.cond; delete me.qty; }
   }
-  if ('cond' in patch && me.owned) { me.cond = patch.cond; prefs.lastCond = patch.cond; savePrefs(); }
+  if ('cond' in patch && me.owned) { me.cond = patch.cond; delete me.qty; prefs.lastCond = patch.cond; savePrefs(); }
+  // qty: how many copies you own in each condition, e.g. { new: 1, used: 2 }. One copy is stored as just cond.
+  if ('qty' in patch) {
+    const q = {}; for (const c of CONDS) { const v = Math.max(0, Math.min(999, Math.floor(Number(patch.qty[c]) || 0))); if (v) q[c] = v; }
+    const total = Object.values(q).reduce((a, b) => a + b, 0);
+    if (!total) { me.owned = false; delete me.cond; delete me.qty; }
+    else {
+      me.owned = true; me.wanted = false; me.cond = CONDS.find(c => q[c]);
+      if (total === 1) delete me.qty; else me.qty = q;
+    }
+  }
   if ('wanted' in patch) me.wanted = !!patch.wanted && !me.owned;
   if (!me.wanted) delete me.wanted;
   const sharedPatch = {};
@@ -684,11 +705,32 @@ const fromSet = x => x.k === 'm' && !owned(x) && x.so.some(owned);
 const has = x => owned(x) || fromSet(x);
 const COND = { new: 'New', used: 'Used (complete)', 'used-inc': 'Used (incomplete)' };
 const COND_SHORT = { new: 'New', used: 'Used', 'used-inc': 'Incomplete' };
-const condCell = x => owned(x) ? `<button class="condchip c-${condOf(x)}" data-condmenu="${esc(x.n)}" title="${COND[condOf(x)]}. Click to switch: New → Used → Incomplete" aria-label="Condition: ${COND[condOf(x)]}. Click to change">${COND_SHORT[condOf(x)]}</button>` : fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : '';
+function condLabel(x) {
+  const q = copiesOf(x), parts = CONDS.filter(c => q[c]);
+  if (parts.length === 1 && q[parts[0]] === 1) return { cls: parts[0], text: COND_SHORT[parts[0]], long: COND[parts[0]] };
+  if (parts.length === 1) return { cls: parts[0], text: `${q[parts[0]]} ${COND_SHORT[parts[0]]}`, long: `${q[parts[0]]} × ${COND[parts[0]]}` };
+  return { cls: 'mixed', text: parts.map(c => `${q[c]} ${COND_SHORT[c]}`).join(' · '), long: parts.map(c => `${q[c]} × ${COND[c]}`).join(', ') };
+}
+const condCell = x => { if (!owned(x)) return fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : ''; const l = condLabel(x); return `<button class="condchip c-${l.cls}" data-condmenu="${esc(x.n)}" aria-haspopup="dialog" title="${esc(l.long)}. Click to change condition or add copies" aria-label="Condition: ${esc(l.long)}. Click to change">${esc(l.text)}</button>`; };
 const condOf = x => (mine.get(x.n) || {}).cond || 'used';
+const CONDS = ['new', 'used', 'used-inc'];
+// Copies you own in each condition: { new, used, 'used-inc' } (0 when not owned).
+function copiesOf(x) {
+  const me = mine.get(x.n) || {}, out = { new: 0, used: 0, 'used-inc': 0 };
+  if (!me.owned) return out;
+  if (me.qty && typeof me.qty === 'object') { for (const c of CONDS) out[c] = Math.max(0, Number(me.qty[c]) || 0); if (out.new + out.used + out['used-inc']) return out; }
+  out[me.cond || 'used'] = 1; return out;
+}
+const copyCount = x => { const q = copiesOf(x); return q.new + q.used + q['used-inc']; };
 // What an owned item is worth at its condition, in AUD (null when unpriced).
+// Value of every copy you own (new copies at the new price, used and incomplete at the used price).
 function valueOf(x) {
-  const i = info(x.n), c = condOf(x);
+  const i = info(x.n), q = copiesOf(x);
+  let v = 0, priced = false;
+  for (const c of CONDS) if (q[c]) { const p = valueOne(i, c); if (p != null) { v += p * q[c]; priced = true; } }
+  return priced ? v : null;
+}
+function valueOne(i, c) {
   if (c === 'new') return i.new ?? null;
   if (i.used == null) return null;
   return i.used; // used and used incomplete both count at the used price
@@ -789,7 +831,7 @@ function render() {
   $('sNeedNs').textContent = !isScoped ? 'Pick a theme to see the cost' : unN ? `${unN.toLocaleString()} still unpriced` : 'To finish, at new prices';
   const vc = ownedIn.reduce((t, x) => t + (valueOf(x) || 0), 0), vu = sum(ownedIn, 'used'), vn = sum(ownedIn, 'new');
   $('sValU').innerHTML = `${money(vc)} <small>${cur()}</small>`;
-  const byCond = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => byCond[condOf(x)]++);
+  const byCond = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => { const q = copiesOf(x); for (const c of CONDS) byCond[c] += q[c]; });
   const wantList = (isScoped ? list.filter(inScope) : list).filter(wanted);
   $('sValN').innerHTML = `${money(sum(wantList, 'new'))} <small>${cur()}</small>`;
   $('sValNs').textContent = wantList.length ? `${wantList.length} wanted · ${money(sum(wantList, 'used'))} used` : 'Star sets to add them';
@@ -797,7 +839,7 @@ function render() {
     const pct = Number(prefs.sellPct);
     const ok = prefs.sellPct !== '' && prefs.sellPct != null && isFinite(pct) && pct > 0;
     // Market value of what you own, split by condition; the total applies your percentage.
-    const byVal = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => { byVal[condOf(x)] += valueOf(x) || 0; });
+    const byVal = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => { const q = copiesOf(x), i = info(x.n); for (const c of CONDS) if (q[c]) byVal[c] += (valueOne(i, c) || 0) * q[c]; });
     $('sellNew').textContent = money(byVal.new); $('sellUsed').textContent = money(byVal.used); $('sellInc').textContent = money(byVal['used-inc']);
     const cnt = (n, c) => n ? `${n.toLocaleString()} item${n > 1 ? 's' : ''}` : 'None';
     $('sellNewN').textContent = cnt(byCond.new); $('sellUsedN').textContent = cnt(byCond.used); $('sellIncN').textContent = cnt(byCond['used-inc']);
@@ -923,6 +965,28 @@ function openZoom(btn) {
 function closeZoom() { if ($('zoom').hidden) return; $('zoom').hidden = true; $('zoomImg').removeAttribute('src'); zoomFrom?.focus(); zoomFrom = null; }
 $('zoom').addEventListener('click', e => { if (e.target === $('zoom') || e.target.closest('#zoomClose')) closeZoom(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeZoom(); });
+/* copies panel: how many you own in each condition */
+let copiesFor = null;
+const copiesEl = document.createElement('div'); copiesEl.className = 'copies'; copiesEl.hidden = true; copiesEl.setAttribute('role', 'dialog'); copiesEl.setAttribute('aria-label', 'Copies you own');
+document.body.append(copiesEl);
+function paintCopies() {
+  const q = copiesOf({ n: copiesFor }), colour = { new: 'var(--good)', used: 'var(--accent)', 'used-inc': 'var(--stud)' };
+  copiesEl.innerHTML = `<h4>Copies you own</h4>${CONDS.map(c => `<div class="copyrow"><span class="lab"><span class="dot" style="--c:${colour[c]}"></span>${COND[c]}</span><button data-copy="${c}" data-d="-1" aria-label="One fewer ${COND[c]}" ${q[c] ? '' : 'disabled'}>−</button><span class="n" aria-live="polite">${q[c]}</span><button data-copy="${c}" data-d="1" aria-label="One more ${COND[c]}">+</button></div>`).join('')}<span class="hint">Set all to 0 to remove it from your collection.</span>`;
+}
+function placeCopies() {
+  const chip = document.querySelector(`[data-condmenu="${CSS.escape(copiesFor)}"]`);
+  if (!chip) { closeCopies(); return; }
+  paintCopies(); copiesEl.hidden = false;
+  const r = chip.getBoundingClientRect(), w = copiesEl.offsetWidth;
+  copiesEl.style.top = (r.bottom + window.scrollY + 6) + 'px';
+  copiesEl.style.left = Math.max(8 + window.scrollX, Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - w - 8)) + 'px';
+}
+function openCopies(n) { copiesFor = n; placeCopies(); copiesEl.querySelector('button:not(:disabled)')?.focus(); }
+function closeCopies() { if (!copiesFor) return; const n = copiesFor; copiesFor = null; copiesEl.hidden = true; document.querySelector(`[data-condmenu="${CSS.escape(n)}"]`)?.focus(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && copiesFor) closeCopies(); });
+document.addEventListener('click', e => { if (copiesFor && !e.target.closest('.copies,[data-condmenu]')) closeCopies(); }, true);
+window.addEventListener('resize', () => { if (copiesFor) placeCopies(); });
+
 document.addEventListener('click', e => {
   if (e.target.closest('#zoom')) return;
   const zb = e.target.closest('[data-zoom]'); if (zb) { openZoom(zb); return; }
@@ -932,7 +996,8 @@ document.addEventListener('click', e => {
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
   if (t.dataset.kind) { kind = t.dataset.kind; limit = PAGE; themeOptions(); savePrefs(); render(); return; }
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
-  if (t.dataset.condmenu) { const order = ['new', 'used', 'used-inc'], n = t.dataset.condmenu, c = condOf({ n }); setInfo(n, { cond: order[(order.indexOf(c) + 1) % order.length] }); requestAnimationFrame(() => document.querySelector(`[data-condmenu="${CSS.escape(n)}"]`)?.focus()); return; }
+  if (t.dataset.condmenu) { copiesFor === t.dataset.condmenu ? closeCopies() : openCopies(t.dataset.condmenu); return; }
+  if (t.dataset.copy) { const n = copiesFor, q = copiesOf({ n }); q[t.dataset.copy] += Number(t.dataset.d); setInfo(n, { qty: q }); if (copyCount({ n })) placeCopies(); else closeCopies(); return; }
   if (t.dataset.want) { setInfo(t.dataset.want, { wanted: !wanted({ n: t.dataset.want }) }); return; }
   if (t.dataset.view) { listView = t.dataset.view; limit = PAGE; savePrefs(); render(); return; }
   if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
@@ -1270,14 +1335,14 @@ $('exportBtn').onclick = async () => {
   const rows = [...CAT.sets.filter(owned), ...CAT.figs.filter(owned)];
   if (!rows.length) { toast('Tick the sets and minifigures you own first, then export.'); return; }
   const pct = Number(prefs.sellPct), withPct = prefs.sellPct != null && prefs.sellPct !== '' && pct > 0;
-  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Film / Series', 'Year', 'Pieces', 'Condition', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : [])];
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Film / Series', 'Year', 'Pieces', 'Condition', 'Copies', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : [])];
   const at = v => v == null ? '' : Math.round(v * pct) / 100;
   const body = rows.map(x => {
     const s = info(x.n), u = toLocal(s.used), nw = toLocal(s.new), v = toLocal(valueOf(x));
-    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.k === 's' ? x.film : (x.films || []).join('; '), x.year, x.pieces, COND[condOf(x)], u, nw, v, ...(withPct ? [at(v)] : [])];
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.k === 's' ? x.film : (x.films || []).join('; '), x.year, x.pieces, condLabel(x).long, copyCount(x), u, nw, v, ...(withPct ? [at(v)] : [])];
   });
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
-  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), sumCol(11), sumCol(12), ...(withPct ? [sumCol(13)] : [])];
+  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), '', '', sumCol(13), ...(withPct ? [sumCol(14)] : [])];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-my-collection-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your collection: ${rows.length.toLocaleString()} items`);
 };
