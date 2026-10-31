@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BrickCollect</title>
+<meta name="description" content="Track your LEGO, LumiBricks and Pantasy collection, see what's left to collect and what it's worth in your currency. Free, by The Art of Bricks.">
+<meta property="og:title" content="BrickCollect">
+<meta property="og:description" content="Track your brick collection, see what's left to collect and what it's worth.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a1120">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Crect x='2' y='10' width='30' height='20' rx='3' fill='%23f2c200'/%3E%3Crect x='6' y='4' width='8' height='7' rx='2' fill='%23f2c200'/%3E%3Crect x='20' y='4' width='8' height='7' rx='2' fill='%23f2c200'/%3E%3C/svg%3E">
+<style>*,*::before,*::after{box-sizing:border-box}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky top bar, stat strip, welcome note, filter row, tabbed toolbar, one wide catalog table. Dark-first, following the original BrickCollect look. */
+:root{
+  --bg:#0a1120; --panel:#0f192d; --panel-2:#131f37; --line:#1e2b47; --line-2:#2a3a5c;
+  --fg:#e5ebf6; --muted:#8693ae; --faint:#5b6886;
+  --accent:#1fb3e5; --accent-ink:#04121b; --good:#2fcf7c; --violet:#a98bff; --stud:#f2c200; --danger:#f0566a;
+  --font-display:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-body:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1;
+  --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab;
+  --accent:#0a86b8; --accent-ink:#ffffff; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
+  color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1;
+  --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab;
+  --accent:#0a86b8; --accent-ink:#ffffff; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
+  color-scheme:light}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1320px;margin:0 auto}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:16px;padding-block:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand h1{font-family:var(--font-display);font-weight:700;font-size:20px;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.beta{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.08em;padding:2px 6px;border-radius:4px;background:var(--accent);color:var(--accent-ink)}
+.brand p{margin:0;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:640px){.brand p{display:none}.top .wrap{gap:10px}}
+.search{flex:1 1 260px;max-width:460px;margin-left:auto;margin-right:auto;position:relative;display:block}
+.search input{width:100%;background:var(--bg);border:1px solid var(--line-2);border-radius:8px;padding:9px 12px 9px 34px}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.top-actions{display:flex;gap:8px}
+.icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--line-2);background:var(--panel-2);cursor:pointer;color:var(--muted)}
+.icon-btn:hover{color:var(--fg);border-color:var(--accent)}
+@media (max-width:640px){.search{order:3;flex-basis:100%;max-width:none}.top-actions{margin-left:auto}.top-actions .icon-btn#showWelcome{display:none}}
+
+main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
+
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.stat .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.stat .v{font-family:var(--font-display);font-weight:500;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.stat .v small{font-family:var(--font-body);font-size:11px;font-weight:500;color:var(--muted)}
+.stat .s{font-size:11.5px;color:var(--faint)}
+.v.good{color:var(--good)} .v.violet{color:var(--violet)} .v.accent{color:var(--accent)}
+.bar{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--good);width:0;transition:width .4s}
+@media (max-width:1100px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat .v{font-size:21px}}
+
+.welcome{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:16px;position:relative}
+.welcome-text{display:flex;flex-direction:column;gap:8px;min-width:0}
+.sellbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;display:flex;align-items:center;flex-wrap:wrap;gap:10px 24px}
+.sellbox h3{margin:0;font-size:14px;font-weight:500;white-space:nowrap}
+.sellbox p{font-size:12.5px}
+.pct{display:flex;align-items:center;gap:8px}
+.pct input{width:90px;text-align:right;font-family:var(--font-mono)}
+.pct span{color:var(--muted);font-size:13px}
+.sellrows{display:flex;align-items:baseline;gap:6px 20px;margin:0;font-size:13px;font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.sellrows div{display:flex;gap:8px;align-items:baseline}
+.sellrows dt{color:var(--muted)} .sellrows dd{margin:0;font-weight:500;font-size:16px;color:var(--violet)}
+.sellnote{font-size:11.5px;color:var(--faint);flex:1 1 220px;min-width:0}
+.welcome h2{margin:0;font-family:var(--font-display);font-weight:500;font-size:18px;padding-right:40px}
+.welcome p{margin:0;color:var(--muted);max-width:none}
+.welcome-text{padding-right:40px}
+.welcome .cta{color:var(--accent);font-weight:500;font-size:13px}
+.welcome .x{position:absolute;top:12px;right:12px}
+
+.filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr)) auto auto auto;gap:12px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500}
+select,.inp{width:100%;background:var(--bg);border:1px solid var(--line-2);border-radius:7px;padding:8px 10px;min-width:0}
+select.set-on{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:7px;padding:8px 13px;border:1px solid var(--line-2);background:var(--panel-2);cursor:pointer;white-space:nowrap;font-weight:500;font-size:13px;text-decoration:none;color:var(--fg)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover{border-color:var(--line-2)}
+@media (max-width:1100px){.filters{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:900px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.board{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.board-head{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,62px));z-index:4;background:var(--panel);border-radius:10px 10px 0 0}
+.board-head.stuck{box-shadow:0 8px 16px -10px rgba(0,0,0,.35)}
+.status button{margin-left:8px}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px}
+.tab{border:0;background:transparent;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-weight:500;font-size:13px}
+.tab[aria-selected="true"]{background:var(--panel-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-2)}
+.tab b{font-family:var(--font-mono);font-weight:500;color:var(--accent);margin-left:2px}
+.toolbar .spacer{flex:1}
+.status{font-size:12px;color:var(--muted);padding:8px 16px;border-bottom:1px solid var(--line)}
+.status.warn{color:var(--stud)}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:1000px}
+th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--fg)}
+th .arr{color:var(--accent)}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:nth-child(even){background:color-mix(in srgb,var(--panel-2) 60%,transparent)}
+tbody tr:hover{background:var(--panel-2)}
+tbody tr[data-row]{cursor:pointer}
+tbody tr.picked{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+tbody tr.picked td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.pick{all:unset;cursor:pointer;font-weight:500;color:var(--fg)}
+.pick:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.pick:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.focusbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 9%,var(--panel));font-size:13px}
+.focusbar b{font-weight:500}
+.subbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:500;border-bottom:1px dashed transparent}
+.subbtn:hover{border-bottom-color:var(--accent)}
+.subbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.subbtn.none{color:var(--faint);font-weight:400}
+.focusbar .spacer{flex:1}
+tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--good);border:1px solid color-mix(in srgb,var(--good) 50%,transparent);border-radius:4px;padding:0 5px;margin-left:8px;vertical-align:1px}
+.num{text-align:right}
+.mono{font-family:var(--font-mono);font-size:12.5px}
+.muted{color:var(--muted)}
+.nm{font-weight:500;min-width:240px}
+.nm small{display:block;font-weight:400;color:var(--faint);font-size:11.5px}
+.sub{color:var(--accent);font-weight:500}
+.sub small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
+.thumb{width:48px;height:40px;border-radius:7px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line);overflow:hidden;position:relative}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+.priced{display:block;font-size:10.5px;color:var(--faint);font-family:var(--font-body)}
+.price{font-family:var(--font-mono);font-size:12.5px;color:var(--faint);min-width:76px;justify-content:flex-end;padding:5px 8px}
+.price.has{color:var(--fg)}
+.chk{width:18px;height:18px;accent-color:var(--good);cursor:pointer}
+.links{display:flex;gap:6px;justify-content:flex-end}
+.mini{padding:5px 9px;font-size:12px}
+.bl{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.empty{padding:56px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
+.empty h3{margin:0;font-family:var(--font-display);color:var(--fg);font-weight:500;font-size:17px}
+.empty p{margin:0;max-width:56ch}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px}
+.home{color:inherit;text-decoration:none}
+.home:hover{color:var(--accent)}
+.foot-site{border-top:1px solid var(--line);padding-block:20px 28px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--muted)}
+.foot-row{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap}
+.foot-brand b{color:var(--fg);font-weight:700}
+.foot-links{display:flex;gap:8px 20px;flex-wrap:wrap}
+.foot-site a{color:var(--accent);text-decoration:none}
+.foot-site a:hover{text-decoration:underline;text-underline-offset:3px}
+.foot-src{margin:0;display:flex;gap:6px 18px;flex-wrap:wrap;font-size:12.5px}
+.foot-src span:empty{display:none}
+.fine{margin:0;font-size:11.5px;color:var(--faint);max-width:90ch}
+.cur{width:auto;padding:7px 8px;border-radius:8px;font-family:var(--font-mono);font-size:12.5px;height:34px}
+.savemode{font-size:12px;color:var(--good);border:1px solid color-mix(in srgb,var(--good) 45%,transparent);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.savemode.local{color:var(--stud);border-color:color-mix(in srgb,var(--stud) 50%,transparent)}
+.addpanel{border-bottom:1px solid var(--line);padding:14px 16px;display:flex;flex-direction:column;gap:12px;background:var(--panel-2)}
+.addhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.addhead .muted{font-size:12px}
+.addgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.addgrid .wide{grid-column:span 2}
+@media (max-width:760px){.addgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.addactions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn.danger{color:var(--danger)}
+.acct{height:34px;padding:0 12px}
+.dlg{border:1px solid var(--line-2);border-radius:12px;background:var(--panel);color:var(--fg);padding:22px;width:min(420px,calc(100vw - 32px))}
+.dlg::backdrop{background:rgba(5,10,20,.55)}
+.dlg h2{margin:0 0 8px;font-size:18px;font-weight:500;padding-right:36px}
+.dlg p{margin:0 0 14px;color:var(--muted)}
+.dlg form{display:flex;flex-direction:column;gap:8px}
+.dlg label{font-size:12px;color:var(--muted)}
+.dlg .btn{justify-content:center;width:100%}
+.dlg .or{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--faint);font-size:12px}
+.dlg .or::before,.dlg .or::after{content:"";flex:1;border-top:1px solid var(--line)}
+.dlg .fine{margin:14px 0 0}
+.dlg-x{position:absolute;top:14px;right:14px}
+.savemode{cursor:default}.savemode.local{cursor:pointer}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;z-index:20;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div>
+        <h1><a href="#" class="home" id="homeLink" title="Back to home">BrickCollect</a> <span class="beta">BETA</span></h1>
+        <p>Collect. Track. Value. Export. In one place.</p>
+      </div>
+    </div>
+    <label class="search" for="q">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search set name or #…" autocomplete="off" aria-label="Search set name or number">
+    </label>
+    <div class="top-actions">
+      <button class="btn acct" id="acctBtn" type="button">Sign in</button>
+      <select id="curSel" class="cur" aria-label="Currency" title="Currency"></select>
+      <button class="icon-btn" id="themeBtn" title="Switch light or dark" aria-label="Switch to light mode"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
+      <button class="icon-btn" id="showWelcome" title="About BrickCollect" aria-label="About BrickCollect"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+<main>
+  <section class="stats" aria-label="Collection summary">
+    <div class="stat"><span class="k" id="kOwned">Complete sets</span><span class="v" id="sOwned">0</span><div class="bar"><i id="sBar"></i></div><span class="s" id="sPct">Across your whole collection</span></div>
+    <div class="stat"><span class="k">Remaining</span><span class="v accent" id="sRemain">—</span><span class="s" id="sRemainS">Pick a theme to see the gap</span></div>
+    <div class="stat"><span class="k">Needed (used)</span><span class="v good" id="sNeedU">$0.00</span><span class="s" id="sNeedUs">Live used avg</span></div>
+    <div class="stat"><span class="k">Needed (new)</span><span class="v good" id="sNeedN">$0.00</span><span class="s" id="sNeedNs">Live new avg</span></div>
+    <div class="stat"><span class="k">Total value (used)</span><span class="v violet" id="sValU">$0.00</span><span class="s" id="sValUs">What you own, used</span></div>
+    <div class="stat"><span class="k">Total value (new)</span><span class="v violet" id="sValN">$0.00</span><span class="s" id="sValNs">What you own, new</span></div>
+  </section>
+
+  <section class="welcome" id="welcome">
+    <div class="welcome-text">
+      <h2>Welcome to BrickCollect</h2>
+      <p>Built by an enthusiast, for enthusiasts. BrickCollect covers LEGO and a growing list of other brick brands, starting with LumiBricks and Pantasy. The goal is simple: make everything easy to find in a few clicks, on a clean, fast, easy-to-read site, with the ability to export your collection. Manage your collection, track the sets and minifigures you still need, and see every theme's timeline in one screen. It’s free, and you can sign in to keep your collection on every device.</p>
+      <p>It’s also a quick way to value your sets when you’re selling, insuring or trading. Tick what you own and BrickCollect adds up what it’s worth, used and new. Enter a percentage in the bar below to see what you’d ask, or offer, at that share of market value.</p>
+      <span class="cta">To get started, select a brand or theme below, or search above.</span>
+    </div>
+    <button class="icon-btn x" id="hideWelcome" aria-label="Hide welcome"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </section>
+
+  <section class="sellbox" aria-labelledby="sellTitle">
+    <h3 id="sellTitle">Selling or buying a collection?</h3>
+    <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="70" aria-describedby="sellHelp"><span>% of value</span></div>
+    <dl class="sellrows"><div><dt>Used</dt><dd id="sellU">—</dd></div><div><dt>New</dt><dd id="sellN">—</dd></div></dl>
+    <span class="sellnote" id="sellHelp">Based on what you’ve ticked as owned in the current view. Sets without a price count as zero.</span>
+  </section>
+
+  <section class="filters" aria-label="Filters">
+    <div class="field"><label for="fiBrand">Brand</label><select id="fiBrand"><option value="">All brands</option><option value="LEGO">LEGO</option></select></div>
+    <div class="field"><label for="fiTheme">Theme</label><select id="fiTheme"><option value="">Please select a theme</option></select></div>
+    <div class="field"><label for="fiSub">Subtheme</label><select id="fiSub"><option value="">Please select a theme</option></select></div>
+    <div class="field"><label for="fiSet">Set</label><select id="fiSet"><option value="all">All sets</option><option value="owned">Owned</option><option value="missing">Still needed</option></select></div>
+    <div class="field"><label for="fiFilm">Film / Series</label><select id="fiFilm"><option value="">All</option></select></div>
+    <div class="field"><label for="fiYear">Year</label><select id="fiYear"><option value="">All</option></select></div>
+    <button class="btn" id="addBtn" hidden title="Add a set from another brand">Add set</button>
+    <button class="btn" id="bulkBtn" title="Set the subtheme or film for every set in view">Bulk edit</button>
+    <button class="btn" id="fiReset" title="Reset filters" aria-label="Reset filters"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+  </section>
+
+  <section class="board">
+    <div class="board-head" id="boardHead">
+    <div class="toolbar">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabFigs" data-kind="figs" aria-selected="false">Minifigures <b id="cFigs">0</b></button>
+        <button class="tab" role="tab" id="tabSets" data-kind="sets" aria-selected="true">Sets <b id="cSets">0</b></button>
+      </div>
+      <button class="btn" id="unselAll" title="Unmark everything in view">Unselect all</button>
+      <span class="savemode" id="saveMode" hidden></span>
+      <span class="spacer"></span>
+      <a class="btn" href="https://store.bricklink.com/TheArtofBricks#/shop" target="_blank" rel="noopener" title="The Art of Bricks store on BrickLink">BrickLink Store ↗</a>
+      <button class="btn" id="exportBtn" title="Download everything you own as a spreadsheet">Export my collection</button>
+      <button class="btn primary" id="syncBtn" title="Fetch BrickLink price guide averages for the sets in view">Sync Prices</button>
+    </div>
+    <form class="focusbar" id="bulkbar" hidden autocomplete="off">
+      <b id="bulkLabel">Set for the sets in view</b>
+      <select id="bulkField" aria-label="Field to set" style="width:auto"><option value="sub">Subtheme</option><option value="film">Film / Series</option></select>
+      <input class="inp" id="bulkSub" list="subNames" placeholder="e.g. Microfighters" aria-label="Value" style="width:240px;max-width:100%">
+      <button class="btn mini primary" type="submit" id="bulkApply">Apply</button>
+      <button class="btn mini" type="button" id="bulkClear" title="Remove this value from these sets">Clear</button>
+      <span class="spacer"></span>
+      <button class="btn mini ghost" type="button" id="bulkCancel">Close</button>
+    </form>
+    <form class="addpanel" id="addPanel" hidden autocomplete="off">
+      <div class="addhead"><b id="addTitle">Add a set</b><span class="muted">Shows for everyone. Use this for brands Rebrickable doesn’t cover.</span></div>
+      <div class="addgrid">
+        <div class="field"><label for="aBrand">Brand</label><input class="inp" id="aBrand" list="brandNames" required placeholder="LumiBricks"></div>
+        <div class="field"><label for="aNum">Set #</label><input class="inp mono" id="aNum" required placeholder="15010"></div>
+        <div class="field wide"><label for="aName">Name</label><input class="inp" id="aName" required placeholder="Italian Homestyle Restaurant"></div>
+        <div class="field"><label for="aTheme">Theme</label><input class="inp" id="aTheme" list="themeNames" placeholder="Modular Buildings"></div>
+        <div class="field"><label for="aSub">Subtheme</label><input class="inp" id="aSub" list="subNames" placeholder="Optional"></div>
+        <div class="field"><label for="aYear">Year</label><input class="inp" id="aYear" type="number" min="1949" max="2100" placeholder="2026"></div>
+        <div class="field"><label for="aPieces">Pieces</label><input class="inp" id="aPieces" type="number" min="0" placeholder="2,500"></div>
+        <div class="field wide"><label for="aImg">Image link</label><input class="inp" id="aImg" type="url" placeholder="https://… (an image you have permission to use)"></div>
+      </div>
+      <div class="addactions"><button class="btn primary" type="submit" id="aSave">Add set</button><button class="btn" type="button" id="aCancel">Cancel</button><span class="spacer"></span><button class="btn danger" type="button" id="aDelete" hidden>Remove set</button></div>
+    </form>
+    <div class="focusbar" id="focusbar" hidden></div>
+    <div class="status" id="status" hidden></div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr id="headRow"></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty"><h3>Loading the catalog…</h3></div>
+    <div class="foot" id="foot" hidden><span id="footCount"></span><button class="btn" id="more">Show 200 more</button><span id="footHint">Click a set to see its minifigures · click a price, subtheme or film to change it</span></div>
+  </section>
+</main>
+<footer class="foot-site">
+  <div class="foot-row">
+    <div class="foot-brand"><b>BrickCollect</b> <span class="muted">is an Art of Bricks project.</span></div>
+    <nav class="foot-links" aria-label="The Art of Bricks">
+      <a href="https://www.youtube.com/@TheArtofBricks" target="_blank" rel="noopener">The Art of Bricks on YouTube</a>
+      <a href="https://store.bricklink.com/TheArtofBricks#/shop" target="_blank" rel="noopener">Our BrickLink store</a>
+      <a href="https://www.instagram.com/the_artofbricks/" target="_blank" rel="noopener">Instagram</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="#" id="footHome">Back to top</a>
+    </nav>
+  </div>
+  <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span id="ratesNote"></span></p>
+  <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © Rebrickable, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Converted prices are approximate.</p>
+</footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+<dialog class="dlg" id="authDlg" aria-labelledby="authTitle">
+  <div id="authIn">
+    <h2 id="authTitle">Sign in to BrickCollect</h2>
+    <p>Save your collection to a free account so it follows you to any device. There’s no password: we email you a sign-in link.</p>
+    <form id="authForm" autocomplete="on">
+      <label for="authEmail">Email</label>
+      <input class="inp" id="authEmail" type="email" required autocomplete="email" placeholder="you@example.com">
+      <button class="btn primary" type="submit" id="authSend">Email me a sign-in link</button>
+    </form>
+    <div class="or"><span>or</span></div>
+    <button class="btn" type="button" id="googleBtn">Continue with Google</button>
+    <p class="fine">By signing in you agree to our <a href="/privacy.html">privacy policy</a>. Anything you’ve ticked in this browser moves into your account.</p>
+  </div>
+  <div id="authSent" hidden>
+    <h2>Check your email</h2>
+    <p>We’ve sent a sign-in link to <b id="authSentTo"></b>. Open it on this device to finish signing in.</p>
+  </div>
+  <div id="authOut" hidden>
+    <h2>Your account</h2>
+    <p>Signed in as <b id="acctEmail"></b>. Your collection is saved to your account.</p>
+    <button class="btn" type="button" id="signOutBtn">Sign out</button>
+  </div>
+  <button class="icon-btn dlg-x" type="button" id="authClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</dialog>
+<datalist id="subNames"></datalist>
+<datalist id="filmNames"></datalist>
+<datalist id="brandNames"></datalist>
+<datalist id="themeNames"></datalist>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/config.js"></script>
+<script src="/backend.js"></script>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const PAGE = 200;
+let CAT = null;                       // { themes: Map, sets: [], figs: [] }
+const mine = new Map();               // number -> { owned, used, new }
+let db = null, mcp = null, hostOk = true, syncing = false;
+const HOST = 'BrickCollect';
+const imgs = new Map(); // number -> data URI | false
+const imgWant = new Set(); let imgBusy = false;
+let kind = 'sets', sort = { key: 'year', dir: 'desc' }, limit = PAGE, editing = null, focus = null;
+
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const prefs = lsGet('bc-prefs') || {};
+if (prefs.kind) kind = prefs.kind;
+if (prefs.sort) sort = prefs.sort;
+if (prefs.focus) focus = prefs.focus;
+if (prefs.hideWelcome) $('welcome').hidden = true;
+
+/* ---------- currency: prices are stored in AUD and shown in the visitor's currency ---------- */
+const BASE_RATES = { base: 'AUD', date: '2026-10-31', rates: { AUD: 1, USD: 0.70175, EUR: 0.62559, GBP: 0.52414, JPY: 110.23, CHF: 0.57763 } };
+let rates = BASE_RATES;
+const EURO = 'AT BE CY DE EE ES FI FR GR HR IE IT LT LU LV MT NL PT SI SK'.split(' ');
+const REGION_CUR = { US: 'USD', GB: 'GBP', UK: 'GBP', AU: 'AUD', NZ: 'NZD', CA: 'CAD', JP: 'JPY', CH: 'CHF', LI: 'CHF', SG: 'SGD', HK: 'HKD', SE: 'SEK', NO: 'NOK', DK: 'DKK', PL: 'PLN', CZ: 'CZK', HU: 'HUF', MX: 'MXN', BR: 'BRL', IN: 'INR', ZA: 'ZAR', KR: 'KRW', CN: 'CNY', TH: 'THB', MY: 'MYR', PH: 'PHP', ID: 'IDR', IL: 'ILS', TR: 'TRY', RO: 'RON', IS: 'ISK', BG: 'BGN' };
+EURO.forEach(c => REGION_CUR[c] = 'EUR');
+const TZ_REGION = { 'Pacific/Auckland': 'NZ', 'Pacific/Chatham': 'NZ', 'Europe/London': 'GB', 'Europe/Dublin': 'IE', 'Asia/Tokyo': 'JP', 'Europe/Zurich': 'CH', 'Asia/Singapore': 'SG', 'Asia/Hong_Kong': 'HK', 'Europe/Stockholm': 'SE', 'Europe/Oslo': 'NO', 'Europe/Copenhagen': 'DK', 'Europe/Warsaw': 'PL', 'Europe/Prague': 'CZ', 'Europe/Budapest': 'HU', 'America/Mexico_City': 'MX', 'America/Sao_Paulo': 'BR', 'Asia/Kolkata': 'IN', 'Asia/Calcutta': 'IN', 'Africa/Johannesburg': 'ZA', 'Asia/Seoul': 'KR', 'Asia/Shanghai': 'CN', 'Asia/Bangkok': 'TH', 'Asia/Kuala_Lumpur': 'MY', 'Asia/Manila': 'PH', 'Asia/Jakarta': 'ID', 'Asia/Jerusalem': 'IL', 'Europe/Istanbul': 'TR', 'Europe/Bucharest': 'RO', 'Atlantic/Reykjavik': 'IS', 'Europe/Berlin': 'DE', 'Europe/Paris': 'FR', 'Europe/Madrid': 'ES', 'Europe/Rome': 'IT', 'Europe/Amsterdam': 'NL', 'Europe/Brussels': 'BE', 'Europe/Vienna': 'AT', 'Europe/Lisbon': 'PT', 'Europe/Helsinki': 'FI', 'Europe/Athens': 'GR' };
+const CA_TZ = ['Toronto', 'Vancouver', 'Edmonton', 'Winnipeg', 'Halifax', 'St_Johns', 'Regina', 'Montreal', 'Moncton', 'Whitehorse', 'Yellowknife'];
+function detectCurrency() {
+  let region = null;
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    if (tz.startsWith('Australia/')) region = 'AU';
+    else if (TZ_REGION[tz]) region = TZ_REGION[tz];
+    else if (tz.startsWith('America/')) region = CA_TZ.some(c => tz.endsWith(c)) ? 'CA' : null;
+    if (!region && /^(America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Detroit|Boise|Indiana|Kentucky|Juneau|Adak)|Pacific\/Honolulu)/.test(tz)) region = 'US';
+  } catch {}
+  if (!region) for (const l of (navigator.languages || [navigator.language || ''])) { const m = /-([A-Z]{2})\b/i.exec(l); if (m) { region = m[1].toUpperCase(); break; } }
+  return REGION_CUR[region] || 'AUD';
+}
+const curPref = () => prefs.currency || detectCurrency();
+const cur = () => { const c = curPref(); return rates.rates[c] ? c : 'AUD'; };
+const rate = () => rates.rates[cur()] || 1;
+const fmtCache = new Map();
+function money(aud) {
+  const c = cur();
+  if (!fmtCache.has(c)) { try { fmtCache.set(c, new Intl.NumberFormat(undefined, { style: 'currency', currency: c, currencyDisplay: 'narrowSymbol' })); } catch { fmtCache.set(c, new Intl.NumberFormat(undefined, { style: 'currency', currency: c })); } }
+  return fmtCache.get(c).format((aud || 0) * rate());
+}
+const toLocal = aud => aud == null ? null : Math.round(aud * rate() * 100) / 100;
+const toAud = v => v == null ? null : Math.round(v / rate() * 10000) / 10000;
+function paintCurrency() {
+  const sel = $('curSel'), c = cur();
+  const codes = Object.keys(rates.rates).sort();
+  sel.innerHTML = codes.map(k => `<option value="${k}">${k}</option>`).join('');
+  sel.value = c;
+  const wanted = curPref();
+  sel.title = rates.rates[wanted] ? `Prices in ${c}, converted from AUD at rates from ${rates.date}` : `${wanted} rates aren’t loaded yet, so prices show in AUD`;
+  const note = $('ratesNote'); if (note) note.textContent = c === 'AUD' ? '' : `Prices converted from AUD at ${rates.date} rates`;
+}
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const toast = msg => { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); };
+const setStatus = (msg, warn) => { const s = $('status'); s.hidden = !msg; s.textContent = msg || ''; s.classList.toggle('warn', !!warn); };
+
+/* ---------- catalog ---------- */
+function buildCatalog(raw) {
+  const themes = new Map(raw.themes.map(([id, name, parent]) => [id, { name, parent }]));
+  const place = new Map();   // theme id -> {theme, sub}
+  for (const id of themes.keys()) {
+    const chain = []; let t = id, g = 0;
+    while (t && themes.has(t) && g++ < 8) { chain.unshift(themes.get(t).name); t = themes.get(t).parent; }
+    place.set(id, { theme: chain[0], sub: chain[1] || '' });
+  }
+  const sets = raw.sets.map(([n, name, year, tid, pieces]) => {
+    const p = place.get(tid) || { theme: 'Other', sub: '' };
+    return { n, name, year, pieces, theme: p.theme, sub: p.sub, rbSub: p.sub, brand: 'LEGO', k: 's', key: (n + ' ' + name).toLowerCase() };
+  });
+  const figs = raw.figs.map(([n, name, pieces, si]) => {
+    const in_ = si.map(i => sets[i]);
+    const themesOf = [...new Set(in_.map(s => s.theme))], subsOf = [...new Set(in_.map(s => s.sub).filter(Boolean))];
+    const years = in_.map(s => s.year);
+    const first = in_.slice().sort((a, b) => a.year - b.year)[0];
+    return { n, name, pieces, brand: 'LEGO', k: 'm', themes: themesOf, subs: subsOf, years: new Set(years),
+      year: years.length ? Math.min(...years) : null, theme: themesOf[0] || '', sub: subsOf[0] || '',
+      inSets: in_.length, so: in_, sets: new Set(in_.map(s => s.n)), firstSet: first ? first.n : '', key: (n + ' ' + name).toLowerCase() };
+  });
+  return { themes, sets, lego: sets, figs };
+}
+
+/* ---------- storage ----------
+   Personal (each visitor): owned ticks, plus their own price / BrickLink # overrides.
+     Saved to their private space data/users/<id>/collection when they can save there,
+     otherwise in this browser only.
+   Shared (curated by the site owner): prices, BrickLink #s, subthemes, films, other brands, rates. */
+let uid = null, isOwner = false, saveMode = 'loading'; // 'cloud' | 'local' | 'loading'
+const shared = new Map(); // n -> { used, new, bl, pricedAt, priceSource }
+const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource'];
+function info(n) {
+  const sh = shared.get(n) || {}, me = mine.get(n) || {};
+  const out = { ...sh };
+  for (const k of SHARED_KEYS) if (me[k] !== undefined && me[k] !== null) out[k] = me[k];
+  out.owned = !!me.owned;
+  return out;
+}
+const hasMineData = v => v && (v.owned || SHARED_KEYS.some(k => v[k] != null));
+const personalObj = () => { const o = {}; for (const [k, v] of mine) if (hasMineData(v)) o[k] = v; return o; };
+function loadPersonal(items) { mine.clear(); for (const [k, v] of Object.entries(items || {})) if (v && typeof v === 'object') mine.set(k, v); }
+
+let pFlushT = null, pWriting = false, pAgain = false, pDirty = false;
+function savePersonal() { pDirty = true; clearTimeout(pFlushT); pFlushT = setTimeout(flushPersonal, 500); }
+async function flushPersonal() {
+  pDirty = false;
+  if (saveMode !== 'cloud') { lsSet('bc-collection', personalObj()); return; }
+  if (pWriting) { pAgain = true; return; }
+  pWriting = true;
+  try {
+    do { pAgain = false; await db.doc(`data/users/${uid}/collection`).set({ items: personalObj(), updatedAt: Date.now() }); } while (pAgain);
+  } catch (e) {
+    console.warn('personal save', e);
+    if (['invalid_argument', 'not_granted', 'revoked', 'capability_disabled'].includes(e?.code)) {
+      lsSet('bc-collection', personalObj());
+      goLocal('Your collection is saved in this browser only, because this view can’t save to your account.');
+    }
+    else if (e?.code === 'quota_exceeded') toast('Storage is full, so that change wasn’t saved.');
+    else toast('Couldn’t save that change. Try again.');
+  } finally { pWriting = false; }
+}
+function goLocal(msg) { saveMode = 'local'; paintSaveMode(msg); }
+function paintSaveMode(msg) {
+  const el = $('saveMode'); if (!el) return;
+  el.hidden = saveMode === 'loading';
+  el.textContent = saveMode === 'cloud' ? 'Saved to your account' : 'Saved in this browser · Sign in';
+  el.title = saveMode === 'cloud' ? 'Your collection follows you to any device where you sign in.' : 'Your collection is kept in this browser only. Sign in to save it to a free account.';
+  el.classList.toggle('local', saveMode === 'local');
+  if (msg) setStatus(msg, true);
+}
+
+/* shared item info, in 16 buckets so no single write gets too big */
+const bucketOf = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) >>> 0; return 'b' + (h % 16); };
+const dirtyBuckets = new Set(); let sFlushT = null, sWriting = false;
+function saveShared(n) { dirtyBuckets.add(bucketOf(n)); clearTimeout(sFlushT); sFlushT = setTimeout(flushShared, 500); }
+async function flushShared() {
+  if (!db || !isOwner || sWriting) return;
+  sWriting = true;
+  try {
+    while (dirtyBuckets.size) {
+      const b = [...dirtyBuckets][0]; dirtyBuckets.delete(b);
+      const items = {}; for (const [n, v] of shared) if (bucketOf(n) === b && SHARED_KEYS.some(k => v[k] != null)) items[n] = v;
+      await db.collection('iteminfo').doc(b).set({ items, updatedAt: Date.now() });
+    }
+  } catch (e) { console.warn('shared save', e); toast('Couldn’t save the shared prices. Try again.'); }
+  finally { sWriting = false; if (dirtyBuckets.size) { clearTimeout(sFlushT); sFlushT = setTimeout(flushShared, 500); } }
+}
+
+/* one entry point for every change to an item:
+   owned is always personal; prices and BrickLink #s are shared when the owner sets them,
+   and a personal override for everyone else */
+function setInfo(n, patch, { quiet } = {}) {
+  const me = { ...(mine.get(n) || {}) };
+  if ('owned' in patch) me.owned = !!patch.owned;
+  const sharedPatch = {};
+  for (const k of SHARED_KEYS) if (k in patch) {
+    if (canCurate()) { sharedPatch[k] = patch[k]; delete me[k]; }
+    else if (patch[k] == null) delete me[k]; else me[k] = patch[k];
+  }
+  mine.set(n, me);
+  if (Object.keys(sharedPatch).length) { shared.set(n, { ...(shared.get(n) || {}), ...sharedPatch }); saveShared(n); }
+  savePersonal();
+  if (!quiet) render();
+}
+const change = (n, patch) => setInfo(n, patch);
+
+/* ---------- filters ---------- */
+const fi = { brand: $('fiBrand'), theme: $('fiTheme'), sub: $('fiSub'), set: $('fiSet'), film: $('fiFilm'), year: $('fiYear') };
+const saved = prefs.filters || {};
+function fill(sel, first, values, keep) {
+  sel.innerHTML = `<option value="">${first}</option>` + values.map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('');
+  sel.value = values.some(([v]) => v === keep) ? keep : '';
+}
+function themeOptions() {
+  brandOptions();
+  const list = kind === 'sets' ? CAT.sets : CAT.figs, counts = new Map();
+  for (const x of list) if (!fi.brand.value || x.brand === fi.brand.value) for (const t of (x.k === 's' ? [x.theme] : x.themes)) counts.set(t, (counts.get(t) || 0) + 1);
+  fill(fi.theme, 'Please select a theme', [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([t, c]) => [t, `${t} (${c.toLocaleString()})`]), fi.theme.value || saved.theme);
+  subOptions(saved.sub); filmOptions(saved.film); saved.film = undefined;
+  const years = new Set(); for (const x of list) { if (x.k === 's') years.add(x.year); else x.years.forEach(y => years.add(y)); }
+  fill(fi.year, 'All', [...years].sort((a, b) => b - a).map(y => [String(y), String(y)]), fi.year.value || saved.year);
+  saved.theme = saved.sub = saved.year = undefined;
+}
+function filmOptions(keep) {
+  const counts = new Map(); let none = 0;
+  for (const x of CAT.sets) { if (fi.theme.value && x.theme !== fi.theme.value) continue; if (fi.brand.value && x.brand !== fi.brand.value) continue; if (x.film) counts.set(x.film, (counts.get(x.film) || 0) + 1); else none++; }
+  const opts = [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([f, c]) => [f, `${f} (${c.toLocaleString()})`]);
+  if (fi.theme.value && none) opts.push(['__none', `Not set (${none.toLocaleString()})`]);
+  fill(fi.film, 'All', opts, keep ?? fi.film.value);
+}
+function subOptions(keep) {
+  if (!fi.theme.value) { fill(fi.sub, 'Please select a theme', [], ''); return; }
+  const list = kind === 'sets' ? CAT.sets : CAT.figs, counts = new Map();
+  for (const x of list) {
+    if (x.k === 's') { if (x.theme === fi.theme.value && x.sub) counts.set(x.sub, (counts.get(x.sub) || 0) + 1); }
+    else if (x.themes.includes(fi.theme.value)) x.subs.forEach(s => counts.set(s, (counts.get(s) || 0) + 1));
+  }
+  fill(fi.sub, counts.size ? 'All subthemes' : 'No subthemes', [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([s, c]) => [s, `${s} (${c.toLocaleString()})`]), keep ?? fi.sub.value);
+}
+const scopedFor = k => !!((k === 'figs' && focus) || fi.brand.value || fi.theme.value || fi.film.value || fi.year.value || fi.set.value !== 'all' || $('q').value.trim());
+const scoped = () => scopedFor(kind);
+function setPasses(s, q) {
+  if (fi.theme.value && s.theme !== fi.theme.value) return false;
+  if (fi.sub.value && s.sub !== fi.sub.value) return false;
+  if (fi.film.value && (fi.film.value === '__none' ? !!s.film : s.film !== fi.film.value)) return false;
+  if (fi.year.value && String(s.year) !== fi.year.value) return false;
+  if (q && !s.key.includes(q)) return false;
+  return true;
+}
+// Sets match the filters directly. Minifigures follow the sets they come in:
+// a minifigure is in view when one of its sets is (or its own name matches the search).
+function inScope(x) {
+  const q = $('q').value.trim().toLowerCase();
+  if (fi.brand.value && x.brand !== fi.brand.value) return false;
+  if (x.k === 's') return setPasses(x, q);
+  if (focus) return x.sets.has(focus);
+  const setFilters = fi.theme.value || fi.sub.value || fi.film.value || fi.year.value;
+  if (!setFilters && !q) return true;
+  if (x.so.some(s => setPasses(s, q))) return true;
+  return !!q && x.key.includes(q) && (!setFilters || x.so.some(s => setPasses(s, '')));
+}
+const owned = x => !!(mine.get(x.n) || {}).owned;
+const canCurate = () => isOwner && !!db;
+function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, currency: prefs.currency, sellPct: prefs.sellPct, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value } }); }
+
+/* ---------- thumbnails ---------- */
+const PAL = ['#e3000b', '#0057a8', '#f2c200', '#00852b', '#ff7e14', '#a83d99', '#069d9f', '#7c5a3a'];
+const imgUrl = x => x.img || (x.brand === 'LEGO' ? `https://cdn.rebrickable.com/media/${x.k === 's' ? 'sets' : 'sets'}/${encodeURIComponent(x.n.toLowerCase())}.jpg` : '');
+const brokenImg = new Set();
+document.addEventListener('error', e => { const t = e.target; if (t && t.tagName === 'IMG' && t.dataset.n) { brokenImg.add(t.dataset.n); t.remove(); if (mcp && hostOk && imgs.get(t.dataset.n) === undefined && t.dataset.lego === '1') { imgWant.add(t.dataset.n); pumpImages(); } } }, true);
+function thumb(x) {
+  const im = imgs.get(x.n);
+  if (im) return `<div class="thumb"><img src="${im}" alt="" loading="lazy"></div>`;
+  const direct = !brokenImg.has(x.n) && imgUrl(x);
+  if (!direct && im === undefined && mcp && hostOk && x.brand === 'LEGO') imgWant.add(x.n);
+  const over = direct ? `<img src="${esc(direct)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-n="${esc(x.n)}" data-lego="${x.brand === 'LEGO' ? 1 : 0}">` : '';
+  let h = 0; for (const c of x.theme || 'x') h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const c = PAL[h % PAL.length];
+  return x.k === 'm'
+    ? `<div class="thumb">${over}<svg width="22" height="28" viewBox="0 0 24 28"><rect x="7" y="1" width="10" height="9" rx="3" fill="${c}"/><rect x="4" y="11" width="16" height="9" rx="2" fill="${c}" opacity=".85"/><rect x="5" y="20" width="6" height="7" rx="1" fill="${c}" opacity=".7"/><rect x="13" y="20" width="6" height="7" rx="1" fill="${c}" opacity=".7"/></svg></div>`
+    : `<div class="thumb">${over}<svg width="26" height="22" viewBox="0 0 26 22"><rect x="1" y="7" width="24" height="14" rx="2" fill="${c}"/><rect x="4" y="2" width="7" height="6" rx="1.5" fill="${c}"/><rect x="15" y="2" width="7" height="6" rx="1.5" fill="${c}"/><rect x="1" y="16" width="24" height="5" fill="#000" opacity=".15"/></svg></div>`;
+}
+
+/* ---------- render ---------- */
+const COLS = () => [
+  { label: '<input type="checkbox" class="chk" id="selAll" aria-label="Mark everything in view as owned">' }, { label: 'Image' },
+  { key: 'name', label: kind === 'sets' ? 'Set name' : 'Minifigure' },
+  { key: 'brand', label: 'Brand' }, { key: 'sub', label: 'Subtheme' }, { key: 'film', label: 'Film / Series' },
+  { key: 'n', label: kind === 'sets' ? 'Set #' : 'Rebrickable #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BrickLink #' }] : []), { key: 'year', label: kind === 'sets' ? 'Year' : 'First year' },
+  { key: 'pieces', label: 'Pieces', cls: 'num' },
+  { key: 'used', label: `Used ${cur()}`, cls: 'num' }, { key: 'new', label: `New ${cur()}`, cls: 'num' },
+  { label: 'Links', cls: 'num' },
+];
+const val = (x, k) => k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
+
+function render() {
+  if (!CAT) return;
+  $('tabSets').setAttribute('aria-selected', kind === 'sets');
+  $('tabFigs').setAttribute('aria-selected', kind === 'figs');
+  const list = kind === 'sets' ? CAT.sets : CAT.figs;
+  const isScoped = scoped();
+  const scope = isScoped ? list.filter(inScope) : list.filter(owned);
+  const ownedIn = scope.filter(owned), needed = scope.filter(x => !owned(x));
+  const ownSets = CAT.sets.filter(owned).length, ownFigs = CAT.figs.filter(owned).length;
+  $('cSets').textContent = (kind === 'sets' ? (isScoped ? scope.length : ownSets) : (scopedFor('sets') ? CAT.sets.filter(inScope).length : ownSets)).toLocaleString();
+  const focusSet = focus ? CAT.sets.find(x => x.n === focus) : null;
+  if (focus && !focusSet) focus = null;
+  const focusFigs = focusSet ? CAT.figs.filter(f => f.sets.has(focus)).length : 0;
+  $('cFigs').textContent = (focusSet ? focusFigs : kind === 'figs' ? (isScoped ? scope.length : ownFigs) : (scopedFor('figs') ? CAT.figs.filter(inScope).length : ownFigs)).toLocaleString();
+  const fb = $('focusbar'); fb.hidden = !focusSet;
+  if (focusSet) fb.innerHTML = kind === 'sets'
+    ? `<span>Selected <b>${esc(focusSet.name)}</b> <span class="mono muted">${esc(focusSet.n)}</span> · ${focusFigs ? `${focusFigs} minifigure${focusFigs > 1 ? 's' : ''}` : 'no minifigures'}</span><span class="spacer"></span>${focusFigs ? '<button class="btn mini primary" data-kind="figs">Show minifigures</button>' : ''}<button class="btn mini" data-clearfocus="1">Clear</button>`
+    : `<span>Minifigures in <b>${esc(focusSet.name)}</b> <span class="mono muted">${esc(focusSet.n)}</span>. Other filters are paused while a set is selected.</span><span class="spacer"></span><button class="btn mini" data-kind="sets">Back to sets</button><button class="btn mini" data-clearfocus="1">Show all minifigures</button>`;
+
+  // stats
+  const sum = (a, f) => a.reduce((s, x) => s + (Number(info(x.n)[f]) || 0), 0);
+  const noun = kind === 'sets' ? 'sets' : 'minifigures';
+  $('kOwned').textContent = kind === 'sets' ? 'Complete sets' : 'Minifigures owned';
+  const pct = isScoped && scope.length ? Math.round(ownedIn.length / scope.length * 1000) / 10 : 0;
+  $('sOwned').innerHTML = `${ownedIn.length.toLocaleString()} <small>${isScoped ? `(${pct}%)` : ''}</small>`;
+  $('sBar').style.width = (isScoped ? pct : 0) + '%';
+  $('sPct').textContent = isScoped ? `of ${scope.length.toLocaleString()} ${noun} in view` : 'Across your whole collection';
+  $('sRemain').textContent = isScoped ? needed.length.toLocaleString() : '—';
+  $('sRemainS').textContent = isScoped ? 'Needed to reach 100%' : 'Pick a theme to see the gap';
+  const unU = needed.filter(x => info(x.n).used == null).length, unN = needed.filter(x => info(x.n).new == null).length;
+  $('sNeedU').innerHTML = `${money(isScoped ? sum(needed, 'used') : 0)} <small>${cur()}</small>`;
+  $('sNeedN').innerHTML = `${money(isScoped ? sum(needed, 'new') : 0)} <small>${cur()}</small>`;
+  $('sNeedUs').textContent = isScoped && unU ? `${unU.toLocaleString()} still unpriced` : 'From the prices you set';
+  $('sNeedNs').textContent = isScoped && unN ? `${unN.toLocaleString()} still unpriced` : 'From the prices you set';
+  $('sValU').innerHTML = `${money(sum(ownedIn, 'used'))} <small>${cur()}</small>`;
+  $('sValN').innerHTML = `${money(sum(ownedIn, 'new'))} <small>${cur()}</small>`;
+  {
+    const pct = Number(prefs.sellPct);
+    const ok = prefs.sellPct !== '' && prefs.sellPct != null && isFinite(pct) && pct > 0;
+    const vu = sum(ownedIn, 'used'), vn = sum(ownedIn, 'new');
+    $('sellU').textContent = ok ? money(vu * pct / 100) : '—';
+    $('sellN').textContent = ok ? money(vn * pct / 100) : '—';
+    $('sValUs').textContent = ok ? `At ${pct}%: ${money(vu * pct / 100)}` : 'What you own, used';
+    $('sValNs').textContent = ok ? `At ${pct}%: ${money(vn * pct / 100)}` : 'What you own, new';
+  }
+
+  // rows
+  let rows = fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope;
+  rows = rows.slice().sort((a, b) => {
+    const A = val(a, sort.key), B = val(b, sort.key);
+    if (A == null || A === '') return 1; if (B == null || B === '') return -1;
+    const r = typeof A === 'number' && typeof B === 'number' ? A - B : String(A).localeCompare(String(B), undefined, { numeric: true });
+    return sort.dir === 'asc' ? r : -r;
+  });
+
+  $('headRow').innerHTML = COLS().map(c => !c.key ? `<th class="${c.cls || ''}">${c.label}</th>`
+    : `<th class="sortable ${c.cls || ''}" data-sort="${c.key}" tabindex="0" aria-sort="${sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${c.label} ${sort.key === c.key ? `<span class="arr">${sort.dir === 'asc' ? '▲' : '▼'}</span>` : ''}</th>`).join('');
+
+  const sa = $('selAll');
+  if (sa) {
+    const own = rows.filter(owned).length;
+    sa.checked = rows.length > 0 && own === rows.length;
+    sa.indeterminate = own > 0 && own < rows.length;
+    sa.disabled = !rows.length;
+    sa.title = rows.length ? (sa.checked ? `Unmark all ${rows.length.toLocaleString()} in view` : `Mark all ${rows.length.toLocaleString()} in view as owned`) : '';
+  }
+  ownRows = rows;
+  { const own = rows.filter(owned).length; const u = $('unselAll'); u.hidden = !own; u.textContent = own ? `Unselect all (${own.toLocaleString()})` : 'Unselect all'; u.title = own ? `Unmark the ${own.toLocaleString()} owned in view` : 'Nothing in view is marked as owned'; }
+  const showRows = isScoped || ownedIn.length;
+  const page = showRows ? rows.slice(0, limit) : [];
+  const blId = x => x.k === 's' ? x.n : info(x.n).bl;
+  const bl = x => blId(x) ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(blId(x))}` : `https://www.bricklink.com/v2/search.page?q=${encodeURIComponent(x.name)}#T=M`;
+  const rb = x => `https://rebrickable.com/${x.k === 's' ? 'sets' : 'minifigs'}/${encodeURIComponent(x.n)}/`;
+  const price = (x, f) => {
+    const v = info(x.n)[f];
+    if (editing === x.n + '|' + f) return `<input class="inp mono" id="edit-price" style="width:92px;text-align:right" type="number" step="0.01" min="0" data-n="${esc(x.n)}" data-f="${f}" value="${toLocal(v) ?? ''}" aria-label="${f} price in ${cur()}">`;
+    return `<button class="btn ghost price ${v != null ? 'has' : ''}" data-price="${f}" data-n="${esc(x.n)}" aria-label="Set ${f} price">${v != null ? money(v) : '—'}</button>`;
+  };
+  const blCell = x => {
+    const v = info(x.n).bl;
+    if (editing === x.n + '|bl') return `<input class="inp mono" id="edit-price" style="width:110px" type="text" maxlength="40" data-n="${esc(x.n)}" data-f="bl" value="${esc(v || '')}" placeholder="sw0001" aria-label="BrickLink number">`;
+    return `<button class="btn ghost price ${v ? 'has' : ''}" style="justify-content:flex-start" data-price="bl" data-n="${esc(x.n)}" aria-label="Set BrickLink number">${v ? esc(v) : 'Add'}</button>`;
+  };
+  const subCell = x => {
+    if (x.k !== 's' || !canCurate()) return esc(x.sub || x.theme);
+    if (editing === x.n + '|sub') return `<input class="inp" id="edit-price" style="width:180px" list="subNames" data-n="${esc(x.n)}" data-f="sub" value="${esc(x.sub)}" placeholder="Subtheme" aria-label="Subtheme">`;
+    return `<button class="subbtn ${x.sub ? '' : 'none'}" data-price="sub" data-n="${esc(x.n)}" title="Change subtheme">${esc(x.sub || x.theme)}</button>`;
+  };
+  const filmCell = x => {
+    if (x.k === 's' && !canCurate()) return x.film ? esc(x.film) : '';
+    if (x.k !== 's') return x.films.length ? `<span class="muted">${esc(x.films.slice(0, 2).join(', '))}${x.films.length > 2 ? ` +${x.films.length - 2}` : ''}</span>` : '';
+    if (editing === x.n + '|film') return `<input class="inp" id="edit-price" style="width:180px" list="filmNames" data-n="${esc(x.n)}" data-f="film" value="${esc(x.film)}" placeholder="Film or series" aria-label="Film or series">`;
+    return `<button class="subbtn ${x.film ? '' : 'none'}" data-price="film" data-n="${esc(x.n)}" title="Change film or series">${x.film ? esc(x.film) : 'Add'}</button>`;
+  };
+  $('filmNames').innerHTML = [...new Set(CAT.sets.map(s => s.film).filter(Boolean))].sort().map(v => `<option value="${esc(v)}">`).join('');
+  $('subNames').innerHTML = [...new Set(CAT.sets.filter(s => !fi.theme.value || s.theme === fi.theme.value).map(s => s.sub).filter(Boolean))].sort().map(v => `<option value="${esc(v)}">`).join('');
+  $('rows').innerHTML = page.map(x => `
+    <tr class="${owned(x) ? 'owned' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
+      <td><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${owned(x) ? 'checked' : ''} aria-label="I own ${esc(x.name)}"></td>
+      <td>${thumb(x)}</td>
+      <td class="nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
+      <td class="muted">${x.brand}</td>
+      <td class="sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}</td>
+      <td>${filmCell(x)}</td>
+      <td class="mono">${esc(x.disp || x.n)}</td>${x.k === 'm' ? `<td>${blCell(x)}</td>` : ''}
+      <td class="muted">${x.year ?? ''}</td>
+      <td class="num">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
+      <td class="num">${price(x, 'used')}${info(x.n).pricedAt ? `<span class="priced">BrickLink ${new Date(info(x.n).pricedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>` : ''}</td>
+      <td class="num">${price(x, 'new')}</td>
+      <td><div class="links">${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener">BrickLink</a><a class="btn mini" href="${rb(x)}" target="_blank" rel="noopener">Rebrickable</a>`}</div></td>
+    </tr>`).join('');
+
+  const empty = $('empty');
+  if (!showRows) {
+    empty.hidden = false;
+    const pop = ['Star Wars', 'Technic', 'Harry Potter', 'Icons', 'Ideas', 'Ninjago'].filter(t => [...fi.theme.options].some(o => o.value === t));
+    const otherBrands = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.brand))].sort();
+    empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brands. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>`;
+  } else if (!rows.length) { empty.hidden = false; empty.innerHTML = '<h3>Nothing matches</h3><p>Try a different search, or reset the filters.</p>'; }
+  else empty.hidden = true;
+  $('foot').hidden = !page.length;
+  document.querySelector('thead').hidden = !page.length;
+  $('footCount').textContent = `${page.length.toLocaleString()} of ${rows.length.toLocaleString()} shown`;
+  $('more').hidden = rows.length <= limit;
+  const ed = $('edit-price'); if (ed) { ed.focus(); ed.select(); }
+  $('syncBtn').hidden = !db;
+  $('syncBtn').title = uid ? 'Fetch the latest BrickLink prices for the sets in view' : 'Sign in to sync prices';
+  $('syncBtn').disabled = syncing || !page.length;
+  $('bulkBtn').hidden = !canCurate();
+  $('addBtn').hidden = !canCurate();
+  $('bulkBtn').disabled = kind !== 'sets' || !isScoped || !rows.length;
+  $('bulkBtn').title = kind !== 'sets' ? 'Switch to Sets to change subthemes' : !isScoped ? 'Filter or search first, then set the subtheme or film for every set in view' : `Set the subtheme or film for the ${rows.length.toLocaleString()} sets in view`;
+  bulkRows = kind === 'sets' && isScoped ? rows : [];
+  if (!$('bulkbar').hidden) { if (!bulkRows.length) $('bulkbar').hidden = true; else $('bulkLabel').textContent = `Set for the ${bulkRows.length.toLocaleString()} set${bulkRows.length > 1 ? 's' : ''} in view`; }
+  $('syncBtn').title = kind === 'figs' ? 'Fetch BrickLink prices for minifigures in view that have a BrickLink #' : 'Fetch BrickLink price guide averages for the sets in view';
+  pumpImages();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-row]');
+  if (tr && !e.target.closest('button,a,input,label')) { focus = focus === tr.dataset.row ? null : tr.dataset.row; savePrefs(); render(); return; }
+  const t = e.target.closest('button,[data-sort]'); if (!t) return;
+  if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
+  if (t.dataset.kind) { kind = t.dataset.kind; limit = PAGE; themeOptions(); savePrefs(); render(); return; }
+  if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
+  if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
+  if (t.dataset.focus) { focus = focus === t.dataset.focus ? null : t.dataset.focus; savePrefs(); render(); return; }
+  if (t.dataset.clearfocus) { focus = null; limit = PAGE; savePrefs(); render(); return; }
+  if (t.dataset.brand) { fi.brand.value = t.dataset.brand; fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
+  if (t.dataset.theme) { fi.theme.value = t.dataset.theme; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
+});
+document.addEventListener('keydown', e => {
+  const el = e.target;
+  if (el.dataset?.sort && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); el.click(); }
+  if (el.id === 'edit-price') { if (e.key === 'Enter') el.blur(); if (e.key === 'Escape') { editing = null; render(); } }
+});
+document.addEventListener('focusout', e => {
+  const el = e.target; if (el.id !== 'edit-price' || !editing) return;
+  editing = null;
+  if (el.dataset.f === 'sub' || el.dataset.f === 'film') { setManualSub(el.dataset.n, el.value.trim(), el.dataset.f); return; }
+  const v = el.dataset.f === 'bl' ? (el.value.trim() || null) : el.value === '' ? null : toAud(Math.max(0, Number(el.value)));
+  const cur = info(el.dataset.n)[el.dataset.f] ?? null;
+  if (cur !== v) change(el.dataset.n, { [el.dataset.f]: v }); else render();
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.id === 'selAll') { bulkOwn(el.checked); return; }
+  if (el.dataset?.own) { change(el.dataset.own, { owned: el.checked }); return; }
+  if (Object.values(fi).includes(el)) { if (el === fi.brand) { fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
+    if (el === fi.theme) { subOptions(''); filmOptions(''); } limit = PAGE; savePrefs(); render(); }
+  Object.values(fi).forEach(s => s.classList.toggle('set-on', s.value !== '' && s.value !== 'all'));
+});
+let qT; $('q').addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => { limit = PAGE; render(); }, 150); });
+$('more').onclick = () => { limit += PAGE; render(); };
+$('fiReset').onclick = () => { Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
+$('hideWelcome').onclick = () => { $('welcome').hidden = true; savePrefs(); };
+$('showWelcome').onclick = () => { $('welcome').hidden = !$('welcome').hidden; savePrefs(); };
+
+/* ---------- local BrickCollect connector: images + BrickLink prices ---------- */
+function hostMessage(e) {
+  switch (e?.code) {
+    case 'server_not_connected': return 'The BrickCollect connector isn’t set up. Add it in claude.ai under Settings → Connectors, then reload this page.';
+    case 'needs_reauth': return 'Reconnect the BrickCollect connector in claude.ai under Settings → Connectors.';
+    case 'selection_required': return 'You have more than one connector called BrickCollect. Choose one when claude.ai asks, or rename the extra one.';
+    case 'not_in_manifest': return 'The BrickCollect connector is turned off for this page. Turn it back on from the page’s Permissions menu.';
+    case 'approval_required': return 'The BrickCollect connector needs your approval. Click Sync Prices again and choose Allow.';
+    case 'cancelled': return 'Cancelled.';
+    case 'blocked_by_policy': return 'Your organization’s settings block this connector.';
+    case 'tool_error': {
+      const r = e.result; const t = r?.content?.find?.(c => c.type === 'text')?.text;
+      return t || e.message || 'The connector reported an error.';
+    }
+    case 'server_unavailable': return 'The connector didn’t answer in time. Try again in a moment.';
+    case 'not_granted': case 'capability_disabled': case 'capability_removed': return 'Connectors aren’t available in this view.';
+    default: return 'Something went wrong talking to the connector. Try again.';
+  }
+}
+async function pumpImages() {
+  if (imgBusy || !mcp || !hostOk || !imgWant.size) return;
+  imgBusy = true;
+  try {
+    while (imgWant.size && hostOk) {
+      const batch = [...imgWant].slice(0, 30); batch.forEach(n => imgWant.delete(n));
+      try {
+        const r = await mcp.callTool(HOST, 'images', { items: batch }, { cache: { staleTime: 604800000, gcTime: 604800000 } });
+        for (const im of (r.payload?.images || [])) imgs.set(im.no, im.data ? `data:${im.type};base64,${im.data}` : false);
+        render();
+      } catch (e) {
+        batch.forEach(n => imgs.set(n, false));
+        if (['server_not_connected', 'not_in_manifest', 'blocked_by_policy', 'needs_reauth', 'selection_required', 'not_granted', 'capability_disabled', 'capability_removed', 'approval_required', 'cancelled'].includes(e?.code)) hostOk = false;
+        console.warn('images', e); break;
+      }
+    }
+  } finally { imgBusy = false; imgWant.clear(); }
+}
+$('syncBtn').onclick = async () => {
+  if (syncing || !CAT) return;
+  if (!uid) { openAuth(); return; }
+  // The rows in view, in the order they're shown.
+  let rows = ownRows.filter(x => x.k === 'm' || x.brand === 'LEGO').slice(0, limit);
+  if (kind === 'figs') { rows = rows.filter(x => info(x.n).bl); if (!rows.length) { setStatus('Add a BrickLink # to the minifigures you want priced, then sync again.', true); return; } }
+  if (!rows.length) { setStatus('Pick a theme or search first, then sync the sets in view.', true); return; }
+  const pairs = rows.slice(0, isOwner ? 400 : 60).map(x => ({ n: x.n, bl: kind === 'sets' ? x.n : info(x.n).bl }));
+  const syncType = kind === 'sets' ? 'SET' : 'MINIFIG';
+  syncing = true; render();
+  let done = 0, fresh = 0, cached = 0, failed = 0, none = 0, left = null, stopped = false;
+  try {
+    for (let i = 0; i < pairs.length; i += 20) {
+      setStatus(`Fetching BrickLink prices… ${done} of ${pairs.length}`);
+      const out = await BC.syncPrices({ type: syncType, items: pairs.slice(i, i + 20) });
+      for (const r of (out.results || [])) {
+        done++;
+        if (r.error) { failed++; continue; }
+        if (r.skipped) continue;
+        if (r.used == null && r.new == null) { none++; continue; }
+        r.cached ? cached++ : fresh++;
+        shared.set(r.n, { ...(shared.get(r.n) || {}), used: r.used, new: r.new, pricedAt: r.pricedAt, priceSource: 'BrickLink' });
+      }
+      left = out.left ?? null; render();
+      if (out.limitReached) { stopped = true; break; }
+    }
+    const parts = [`${fresh} updated from BrickLink`];
+    if (cached) parts.push(`${cached} already up to date`);
+    if (none) parts.push(`${none} with no sales or listings`);
+    if (failed) parts.push(`${failed} not found`);
+    setStatus(`${parts.join(', ')}.${stopped ? ' You’ve reached today’s price sync allowance, so the rest will refresh tomorrow or in the nightly update.' : left != null && !isOwner ? ` ${left} price lookups left today.` : ''}`, stopped);
+  } catch (e) {
+    console.warn('sync', e);
+    if (e.code === 'signed_out') openAuth();
+    setStatus(e.message || 'Price sync didn’t work. Try again in a moment.', true);
+  } finally { syncing = false; render(); }
+};
+
+/* ---------- subthemes: your own edits, saved per theme ---------- */
+const subDocs = new Map(); // slug -> { theme, brickset:{}, manual:{} }
+let bulkRows = [];
+const slug = t => (t || 'Other').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 120) || 'Other';
+function applyOverrides() {
+  if (!CAT) return;
+  const ov = new Map();
+  for (const d of subDocs.values()) { for (const [k, v] of Object.entries(d.brickset || {})) ov.set(k, v); for (const [k, v] of Object.entries(d.manual || {})) ov.set(k, v); }
+  const films = new Map(); for (const d of subDocs.values()) for (const [k, v] of Object.entries(d.films || {})) films.set(k, v);
+  for (const x of CAT.sets) { x.sub = ov.has(x.n) ? ov.get(x.n) : x.rbSub; x.film = films.get(x.n) || ''; }
+  for (const f of CAT.figs) { f.subs = [...new Set(f.so.map(x => x.sub).filter(Boolean))]; f.sub = f.subs[0] || ''; f.films = [...new Set(f.so.map(x => x.film).filter(Boolean))]; }
+  subOptions(fi.sub.value); filmOptions(fi.film.value);
+}
+let subQueue = Promise.resolve();
+function saveSubDoc(theme) {
+  const id = slug(theme), d = subDocs.get(id);
+  subQueue = subQueue.then(async () => {
+    if (!db) return;
+    try { await db.collection('subthemes').doc(id).set({ theme, brickset: d.brickset || {}, manual: d.manual || {}, films: d.films || {}, updatedAt: Date.now() }); }
+    catch (e) {
+      if (e?.code === 'invalid_argument') toast('This view can’t save subtheme changes.');
+      else if (e?.code === 'quota_exceeded') toast('Storage is full, so the subthemes weren’t saved.');
+      else toast('Couldn’t save the subthemes. Try again.');
+      console.warn(e);
+    }
+  });
+  return subQueue;
+}
+function setManualSub(n, value, field = 'sub') {
+  editing = null;
+  const x = CAT.sets.find(s => s.n === n); if (!x) { render(); return; }
+  if (!canCurate()) { toast('Only the site owner can change subthemes.'); render(); return; }
+  const id = slug(x.theme), d = subDocs.get(id) || { theme: x.theme, brickset: {}, manual: {}, films: {} };
+  if (field === 'film') {
+    const films = { ...(d.films || {}) };
+    if (value) films[n] = value; else delete films[n];
+    subDocs.set(id, { ...d, films }); applyOverrides(); render(); saveSubDoc(x.theme); return;
+  }
+  const manual = { ...(d.manual || {}) };
+  const auto = (d.brickset || {})[n] ?? x.rbSub;
+  if (!value || value === auto) delete manual[n]; else manual[n] = value;
+  subDocs.set(id, { ...d, manual }); applyOverrides(); render(); saveSubDoc(x.theme);
+}
+
+function bulkSet(value) {
+  if (!canCurate()) { toast('Only the site owner can change subthemes.'); return; }
+  const field = $('bulkField').value;
+  const rows = bulkRows.slice(); if (!rows.length) return;
+  const touched = new Set();
+  for (const x of rows) {
+    const id = slug(x.theme), d = subDocs.get(id) || { theme: x.theme, brickset: {}, manual: {}, films: {} };
+    if (field === 'film') {
+      const films = { ...(d.films || {}) };
+      if (value) films[x.n] = value; else delete films[x.n];
+      subDocs.set(id, { ...d, theme: x.theme, films });
+    } else {
+      const manual = { ...(d.manual || {}) };
+      if (!value || value === x.rbSub) delete manual[x.n]; else manual[x.n] = value;
+      subDocs.set(id, { ...d, theme: x.theme, manual });
+    }
+    touched.add(x.theme);
+  }
+  applyOverrides(); render();
+  touched.forEach(t => saveSubDoc(t));
+  const what = field === 'film' ? 'film or series' : 'subtheme';
+  toast(value ? `Set ${rows.length.toLocaleString()} sets to ${value}` : `Cleared the ${what} on ${rows.length.toLocaleString()} sets`);
+}
+$('bulkField').onchange = () => { const f = $('bulkField').value; $('bulkSub').setAttribute('list', f === 'film' ? 'filmNames' : 'subNames'); $('bulkSub').placeholder = f === 'film' ? 'e.g. The Mandalorian' : 'e.g. Microfighters'; $('bulkSub').focus(); };
+$('bulkBtn').onclick = () => { $('bulkbar').hidden = false; render(); $('bulkSub').focus(); };
+$('bulkCancel').onclick = () => { $('bulkbar').hidden = true; };
+$('bulkbar').addEventListener('submit', e => { e.preventDefault(); const v = $('bulkSub').value.trim(); if (!v) { $('bulkSub').focus(); return; } bulkSet(v); });
+$('bulkClear').onclick = () => bulkSet('');
+
+/* ---------- select all ---------- */
+let ownRows = [], bulkOwnBusy = false, lastBulk = null;
+function bulkOwn(on) {
+  const targets = ownRows.filter(x => owned(x) !== on);
+  if (!targets.length) { render(); return; }
+  lastBulk = targets.map(x => [x.n, owned(x)]);
+  for (const x of targets) setInfo(x.n, { owned: on }, { quiet: true });
+  const noun = kind === 'sets' ? 'set' : 'minifigure';
+  const label = `${on ? 'Marked' : 'Unmarked'} ${targets.length.toLocaleString()} ${noun}${targets.length > 1 ? 's' : ''}${on ? ' as owned' : ''}.`;
+  const st = $('status'); st.hidden = false; st.classList.remove('warn');
+  st.innerHTML = ''; st.append(document.createTextNode(label));
+  const undo = document.createElement('button'); undo.className = 'btn mini'; undo.textContent = 'Undo'; undo.id = 'undoBulk';
+  undo.onclick = () => {
+    if (!lastBulk) return;
+    const back = lastBulk; lastBulk = null;
+    for (const [n, was] of back) setInfo(n, { owned: was }, { quiet: true });
+    setStatus(`Undone. ${back.length.toLocaleString()} ${noun}${back.length > 1 ? 's' : ''} put back.`);
+    render();
+  };
+  st.append(undo);
+  render();
+}
+
+$('unselAll').onclick = () => bulkOwn(false);
+
+function goHome(e) {
+  e.preventDefault();
+  Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); });
+  $('q').value = ''; focus = null; kind = 'sets'; limit = PAGE; editing = null;
+  $('bulkbar').hidden = true; $('welcome').hidden = false;
+  if (CAT) { themeOptions(); subOptions(''); filmOptions(''); }
+  savePrefs(); render(); scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+$('homeLink').onclick = goHome;
+$('footHome').onclick = e => { e.preventDefault(); scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
+
+/* ---------- sticky totals bar ---------- */
+const topBar = document.querySelector('.top');
+const setTopH = () => document.documentElement.style.setProperty('--toph', topBar.offsetHeight + 'px');
+setTopH();
+try { new ResizeObserver(setTopH).observe(topBar); } catch { addEventListener('resize', setTopH); }
+try {
+  const sentinel = document.createElement('div'); $('boardHead').before(sentinel);
+  new IntersectionObserver(([e]) => $('boardHead').classList.toggle('stuck', !e.isIntersecting), { rootMargin: `-${topBar.offsetHeight + 1}px 0px 0px 0px` }).observe(sentinel);
+} catch {}
+
+/* ---------- other brands (added by the owner, shared with everyone) ---------- */
+const catDocs = new Map(); // brandSlug -> { brand, items: { num: {...} } }
+const brandSlug = b => (b || 'Other').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'Other';
+function applyExtras() {
+  if (!CAT) return;
+  const extras = [];
+  for (const [slugId, d] of catDocs) for (const [num, v] of Object.entries(d.items || {})) {
+    const n = `${slugId}:${num}`;
+    extras.push({ n, disp: num, name: v.name || num, year: v.year ?? null, pieces: v.pieces ?? null, img: v.img || '', theme: v.theme || 'Unsorted', sub: v.sub || '', rbSub: v.sub || '', brand: d.brand, k: 's', extra: true, key: (num + ' ' + (v.name || '')).toLowerCase() });
+  }
+  CAT.sets = CAT.lego.concat(extras);
+  applyOverrides(); themeOptions();
+}
+function brandOptions() {
+  const counts = new Map(); for (const x of CAT.sets) counts.set(x.brand, (counts.get(x.brand) || 0) + 1);
+  const keep = fi.brand.value || saved.brand; saved.brand = undefined;
+  fill(fi.brand, 'All brands', [...counts].sort((a, b) => a[0] === 'LEGO' ? -1 : b[0] === 'LEGO' ? 1 : a[0].localeCompare(b[0])).map(([b, c]) => [b, `${b} (${c.toLocaleString()})`]), keep);
+  $('brandNames').innerHTML = [...counts.keys()].filter(b => b !== 'LEGO').map(b => `<option value="${esc(b)}">`).join('');
+  $('themeNames').innerHTML = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.theme))].map(t => `<option value="${esc(t)}">`).join('');
+}
+let editingSet = null;
+function openAdd(x) {
+  editingSet = x || null;
+  $('addTitle').textContent = x ? `Edit ${x.disp}` : 'Add a set';
+  $('aSave').textContent = x ? 'Save changes' : 'Add set';
+  $('aDelete').hidden = !x;
+  $('aBrand').value = x ? x.brand : (fi.brand.value && fi.brand.value !== 'LEGO' ? fi.brand.value : '');
+  $('aNum').value = x ? x.disp : ''; $('aName').value = x ? x.name : '';
+  $('aTheme').value = x ? x.theme : (fi.theme.value || ''); $('aSub').value = x ? x.rbSub : '';
+  $('aYear').value = x?.year ?? ''; $('aPieces').value = x?.pieces ?? ''; $('aImg').value = x?.img || '';
+  $('aBrand').disabled = $('aNum').disabled = !!x;
+  $('addPanel').hidden = false; (x ? $('aName') : $('aBrand')).focus();
+}
+let catQueue = Promise.resolve();
+function saveCat(slugId) {
+  const d = catDocs.get(slugId);
+  catQueue = catQueue.then(async () => {
+    try {
+      const ref = db.collection('catalog').doc(slugId);
+      if (d && Object.keys(d.items || {}).length) await ref.set({ brand: d.brand, items: d.items, updatedAt: Date.now() }); else await ref.delete();
+    } catch (e) { console.warn('catalog', e); toast(e?.code === 'quota_exceeded' ? 'Storage is full, so the set wasn’t saved.' : 'Couldn’t save the set. Try again.'); }
+  });
+}
+$('addBtn').onclick = () => openAdd();
+$('aCancel').onclick = () => { $('addPanel').hidden = true; };
+$('addPanel').addEventListener('submit', e => {
+  e.preventDefault(); if (!canCurate()) return;
+  const brand = $('aBrand').value.trim(), num = $('aNum').value.trim().replace(/\s+/g, ''), name = $('aName').value.trim();
+  if (!brand || !num || !name) return;
+  if (brand.toLowerCase() === 'lego') { toast('LEGO sets come from Rebrickable, so they’re already here.'); return; }
+  if (!/^[A-Za-z0-9._~@+-]+$/.test(num)) { toast('Use letters, numbers and dashes for the set number.'); return; }
+  const id = brandSlug(brand), d = catDocs.get(id) || { brand, items: {} };
+  if (!editingSet && d.items[num]) { toast(`${brand} ${num} is already listed.`); return; }
+  const num_ = v => v === '' ? null : Number(v);
+  d.items = { ...d.items, [num]: { name, theme: $('aTheme').value.trim() || 'Unsorted', sub: $('aSub').value.trim(), year: num_($('aYear').value), pieces: num_($('aPieces').value), img: /^https:\/\//.test($('aImg').value.trim()) ? $('aImg').value.trim() : '' } };
+  catDocs.set(id, { ...d, brand: d.brand || brand }); applyExtras(); render(); saveCat(id);
+  toast(editingSet ? 'Saved' : `Added ${name}`);
+  if (editingSet) $('addPanel').hidden = true; else { $('aNum').value = ''; $('aName').value = ''; $('aPieces').value = ''; $('aImg').value = ''; $('aNum').focus(); }
+  editingSet = null; $('aBrand').disabled = $('aNum').disabled = false; $('aSave').textContent = 'Add set'; $('aDelete').hidden = true; $('addTitle').textContent = 'Add a set';
+});
+$('aDelete').onclick = () => {
+  if (!editingSet || !canCurate()) return;
+  const btn = $('aDelete');
+  if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.textContent = 'Click again to remove'; setTimeout(() => { btn.dataset.confirm = ''; btn.textContent = 'Remove set'; }, 4000); return; }
+  btn.dataset.confirm = ''; btn.textContent = 'Remove set';
+  const [id, num] = [editingSet.n.slice(0, editingSet.n.indexOf(':')), editingSet.disp];
+  const d = catDocs.get(id); if (!d) return;
+  const items = { ...d.items }; delete items[num]; catDocs.set(id, { ...d, items });
+  applyExtras(); render(); saveCat(id); $('addPanel').hidden = true; toast('Removed'); editingSet = null;
+};
+
+/* ---------- exchange rates: the owner's connector refreshes them daily for everyone ---------- */
+async function refreshRates() {
+  if (!mcp || !canCurate()) return;
+  const age = Date.now() - (rates.fetchedAt || 0);
+  if (rates !== BASE_RATES && age < 20 * 3600 * 1000) return;
+  try {
+    const r = await mcp.callTool(HOST, 'rates', { base: 'AUD' }, { cache: false });
+    const p = r.payload || {};
+    if (!p.rates) return;
+    const next = { base: 'AUD', date: p.date, fetchedAt: Date.now(), rates: { AUD: 1, ...p.rates } };
+    await db.doc('meta/rates').set(next);
+  } catch (e) { console.warn('rates', e); }
+}
+$('curSel').onchange = () => { prefs.currency = $('curSel').value; savePrefs(); paintCurrency(); render(); };
+
+if (prefs.sellPct != null) $('sellPct').value = prefs.sellPct;
+let sellT; $('sellPct').addEventListener('input', () => { clearTimeout(sellT); sellT = setTimeout(() => { const v = $('sellPct').value; prefs.sellPct = v === '' ? null : Math.max(0, Math.min(200, Number(v))); savePrefs(); render(); }, 150); });
+
+/* ---------- CSV export ---------- */
+const cell = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+$('exportBtn').onclick = async () => {
+  if (!CAT) return;
+  // Everything you own, sets then minifigures, whatever the filters are.
+  const rows = [...CAT.sets.filter(owned), ...CAT.figs.filter(owned)];
+  if (!rows.length) { toast('Tick the sets and minifigures you own first, then export.'); return; }
+  const pct = Number(prefs.sellPct), withPct = prefs.sellPct != null && prefs.sellPct !== '' && pct > 0;
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Film / Series', 'Year', 'Pieces', `Used ${cur()}`, `New ${cur()}`, ...(withPct ? [`Used at ${pct}%`, `New at ${pct}%`] : [])];
+  const at = v => v == null ? '' : Math.round(v * pct) / 100;
+  const body = rows.map(x => {
+    const s = info(x.n), u = toLocal(s.used), nw = toLocal(s.new);
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.k === 's' ? x.film : (x.films || []).join('; '), x.year, x.pieces, u, nw, ...(withPct ? [at(u), at(nw)] : [])];
+  });
+  const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
+  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', sumCol(9), sumCol(10), ...(withPct ? [sumCol(11), sumCol(12)] : [])];
+  const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
+  const name = `brickcollect-my-collection-${new Date().toISOString().slice(0, 10)}.csv`;
+  try {
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    toast(`Downloaded your collection: ${rows.length.toLocaleString()} items`);
+  } catch {
+    try { await navigator.clipboard.writeText(csv); toast(`Copied your collection (${rows.length.toLocaleString()} items) as CSV`); }
+    catch { toast('Export didn’t work in this browser.'); }
+  }
+};
+
+/* ---------- account ---------- */
+const dlg = $('authDlg');
+function openAuth() {
+  if (!window.BC?.auth?.available) { toast('Sign-in isn’t set up yet.'); return; }
+  $('authIn').hidden = !!uid; $('authOut').hidden = !uid; $('authSent').hidden = true;
+  const g = !!window.BC_CONFIG?.googleSignIn; $('googleBtn').hidden = !g; dlg.querySelector('.or').hidden = !g;
+  try { dlg.showModal(); } catch { dlg.setAttribute('open', ''); }
+  if (!uid) setTimeout(() => $('authEmail').focus(), 50);
+}
+async function paintAccount() {
+  const email = uid ? await BC.user.email() : null;
+  $('acctBtn').textContent = email ? email.split('@')[0].slice(0, 14) : 'Sign in';
+  $('acctBtn').title = email ? `Signed in as ${email}` : 'Sign in to save your collection to a free account';
+  $('acctEmail').textContent = email || '';
+  $('acctBtn').hidden = !window.BC?.auth?.available;
+}
+$('acctBtn').onclick = openAuth;
+$('authClose').onclick = () => dlg.close();
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+$('saveMode').addEventListener('click', () => { if (saveMode === 'local') openAuth(); });
+$('authForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = $('authEmail').value.trim(); if (!email) return;
+  $('authSend').disabled = true; $('authSend').textContent = 'Sending…';
+  try {
+    await BC.auth.signInWithEmail(email);
+    $('authSentTo').textContent = email; $('authIn').hidden = true; $('authSent').hidden = false;
+  } catch (err) { toast(err.message || 'Couldn’t send the link. Check the address and try again.'); }
+  finally { $('authSend').disabled = false; $('authSend').textContent = 'Email me a sign-in link'; }
+});
+$('googleBtn').onclick = async () => { try { await BC.auth.signInWithGoogle(); } catch (err) { toast(err.message || 'Google sign-in isn’t available right now.'); } };
+$('signOutBtn').onclick = async () => { await BC.auth.signOut(); location.reload(); };
+window.BC?.auth?.onChange?.(() => location.reload());
+
+/* ---------- light / dark ---------- */
+const SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+const MOON = '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>';
+const isDark = () => { const t = document.documentElement.getAttribute('data-theme'); return t ? t === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches; };
+function paintThemeBtn() {
+  const d = isDark();
+  $('themeIcon').innerHTML = d ? SUN : MOON;
+  $('themeBtn').setAttribute('aria-label', d ? 'Switch to light mode' : 'Switch to dark mode');
+  $('themeBtn').title = d ? 'Switch to light mode' : 'Switch to dark mode';
+}
+if (prefs.theme) document.documentElement.setAttribute('data-theme', prefs.theme);
+paintThemeBtn();
+matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', paintThemeBtn);
+$('themeBtn').onclick = () => { prefs.theme = isDark() ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', prefs.theme); paintThemeBtn(); savePrefs(); };
+
+/* ---------- boot ---------- */
+if (saved.set) fi.set.value = saved.set;
+if (saved.brand) fi.brand.value = saved.brand;
+paintCurrency();
+fetch('catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(raw => {
+  CAT = buildCatalog(raw); applyExtras();
+  Object.values(fi).forEach(s => s.classList.toggle('set-on', s.value !== '' && s.value !== 'all'));
+  render();
+}).catch(err => { console.warn(err); $('empty').innerHTML = '<h3>The catalog didn’t load</h3><p>Reload the page to try again.</p>'; });
+
+(async () => {
+  const api = window.BC || {};
+  db = api.db || null;
+  const user = api.user || null;
+  if (user) { try { isOwner = !!(await user.isOwner()); uid = await user.id(); } catch (e) { console.warn('user', e); } }
+  paintAccount();
+  if (!db || !uid) {
+    loadPersonal(lsGet('bc-collection')); goLocal(); render();
+  }
+  if (!db) return;
+  db.collection('subthemes').onSnapshot(snap => {
+    subDocs.clear();
+    for (const d of snap.docs) { const v = d.data() || {}; subDocs.set(d.id, { theme: v.theme, brickset: v.brickset || {}, manual: v.manual || {}, films: v.films || {} }); }
+    applyOverrides(); render();
+  }, err => console.warn('subthemes', err));
+  db.collection('iteminfo').onSnapshot(snap => {
+    if (dirtyBuckets.size || sWriting) return;
+    shared.clear();
+    for (const d of snap.docs) for (const [n, v] of Object.entries((d.data() || {}).items || {})) shared.set(n, v);
+    render();
+  }, err => console.warn('iteminfo', err));
+  db.collection('catalog').onSnapshot(snap => {
+    catDocs.clear();
+    for (const d of snap.docs) { const v = d.data() || {}; catDocs.set(d.id, { brand: v.brand || d.id, items: v.items || {} }); }
+    applyExtras(); render();
+  }, err => console.warn('catalog', err));
+  db.doc('meta/rates').onSnapshot(snap => {
+    if (snap.exists) { const v = snap.data(); if (v?.rates) { rates = { ...v, rates: { ...BASE_RATES.rates, ...v.rates } }; fmtCache.clear(); paintCurrency(); render(); } }
+    refreshRates();
+  }, err => console.warn('rates', err));
+  if (!uid) return;
+  setStatus('Loading your collection…');
+  const timer = setTimeout(() => setStatus('Your collection is taking a while to load, so what you see may be out of date.', true), 10000);
+  let first = true;
+  db.doc(`data/users/${uid}/collection`).onSnapshot(snap => {
+    if (first) {
+      first = false; clearTimeout(timer); setStatus('');
+      saveMode = 'cloud'; paintSaveMode();
+      if (snap.exists) loadPersonal(snap.data().items);
+      else { const local = lsGet('bc-collection'); if (local && Object.keys(local).length) { loadPersonal(local); savePersonal(); toast('Moved the collection saved in this browser to your account'); } }
+      render(); return;
+    }
+    if (snap.metadata.hasPendingWrites || pWriting || pDirty) return;
+    if (snap.exists) { loadPersonal(snap.data().items); render(); }
+  }, err => { clearTimeout(timer); console.warn('collection', err); loadPersonal(lsGet('bc-collection')); goLocal('Your collection is saved in this browser only, because this view can’t reach your account.'); render(); });
+})();
+})();
+</script>
+</body>
+</html>
