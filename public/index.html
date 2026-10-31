@@ -84,7 +84,9 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .sellrows{display:flex;align-items:baseline;gap:6px 20px;margin:0;font-size:13px;font-variant-numeric:tabular-nums;flex-wrap:wrap}
 .sellrows div{display:flex;gap:8px;align-items:baseline}
 .sellrows dt{color:var(--muted)} .sellrows dd{margin:0;font-weight:500;font-size:16px;color:var(--violet)}
-.sellnote{flex:1 1 220px;min-width:0;font-size:12px;color:var(--faint)}
+.selltotal{margin-left:auto}
+.selltotal dt{color:var(--fg);font-weight:500}
+.selltotal dd{font-size:18px;font-weight:700}
 .welcome h2{margin:0;font-family:var(--font-display);font-weight:500;font-size:18px;padding-right:40px}
 .welcome p{margin:0;color:var(--muted);max-width:none}
 .welcome-text{padding-right:40px}
@@ -292,9 +294,9 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 
   <section class="sellbox" aria-labelledby="sellTitle">
     <h3 id="sellTitle">Selling or buying a collection?</h3>
-    <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="70" aria-describedby="sellHelp"><span>% of value</span></div>
-    <dl class="sellrows"><div><dt>Your collection*</dt><dd id="sellU">—</dd></div><div><dt>If all new</dt><dd id="sellAllNew">—</dd></div><div><dt>If all used</dt><dd id="sellN">—</dd></div></dl>
-    <span class="sellnote" id="sellHelp">* Incomplete sets adjusted to 80% of used value.</span>
+    <dl class="sellrows"><div><dt>New</dt><dd id="sellNew">—</dd></div><div><dt>Used</dt><dd id="sellUsed">—</dd></div><div><dt>Used incomplete</dt><dd id="sellInc">—</dd></div></dl>
+    <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="100" aria-label="Percentage of market value"><span>% of value</span></div>
+    <dl class="sellrows selltotal"><div><dt id="sellTotalK">Total</dt><dd id="sellTotal">—</dd></div></dl>
   </section>
 
   <section class="filters" aria-label="Filters">
@@ -665,13 +667,12 @@ const COND = { new: 'New', used: 'Used (complete)', 'used-inc': 'Used (incomplet
 const COND_SHORT = { new: 'New', used: 'Used', 'used-inc': 'Incomplete' };
 const condCell = x => owned(x) ? `<button class="condchip c-${condOf(x)}" data-condmenu="${esc(x.n)}" title="${COND[condOf(x)]}. Click to switch: New → Used → Incomplete" aria-label="Condition: ${COND[condOf(x)]}. Click to change">${COND_SHORT[condOf(x)]}</button>` : fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : '';
 const condOf = x => (mine.get(x.n) || {}).cond || 'used';
-const incPct = () => 80; // Incomplete items count at 80% of the used price
 // What an owned item is worth at its condition, in AUD (null when unpriced).
 function valueOf(x) {
   const i = info(x.n), c = condOf(x);
   if (c === 'new') return i.new ?? null;
   if (i.used == null) return null;
-  return c === 'used-inc' ? i.used * incPct() / 100 : i.used;
+  return i.used; // used and used incomplete both count at the used price
 }
 const canCurate = () => isOwner && !!db;
 function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond: prefs.lastCond, incPct: prefs.incPct, currency: prefs.currency, sellPct: prefs.sellPct, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value } }); }
@@ -772,9 +773,11 @@ function render() {
   {
     const pct = Number(prefs.sellPct);
     const ok = prefs.sellPct !== '' && prefs.sellPct != null && isFinite(pct) && pct > 0;
-    $('sellU').textContent = ok ? money(vc * pct / 100) : money(vc);
-    $('sellN').textContent = ok ? money(vu * pct / 100) : money(vu);
-    $('sellAllNew').textContent = ok ? money(vn * pct / 100) : money(vn);
+    // Market value of what you own, split by condition; the total applies your percentage.
+    const byVal = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => { byVal[condOf(x)] += valueOf(x) || 0; });
+    $('sellNew').textContent = money(byVal.new); $('sellUsed').textContent = money(byVal.used); $('sellInc').textContent = money(byVal['used-inc']);
+    $('sellTotalK').textContent = ok ? `Total at ${pct}%` : 'Total';
+    $('sellTotal').textContent = money(ok ? vc * pct / 100 : vc);
     $('sValUs').textContent = ok ? `At ${pct}%: ${money(vc * pct / 100)}` : (ownedIn.length ? `${byCond.new} new · ${byCond.used} used · ${byCond['used-inc']} incomplete` : 'By each item’s condition');
   }
 
