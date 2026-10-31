@@ -10,11 +10,12 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-# The catalog is large but changes rarely: let browsers keep it for a day.
+# The catalog is large but changes rarely: browsers keep a copy and check it's still current on each visit
+# (a quick "not modified" answer when it is), so a catalog update shows up straight away.
 [[headers]]
   for = "/catalog.json"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/*"
