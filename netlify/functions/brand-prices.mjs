@@ -19,6 +19,9 @@ const BRANDS = [
     ['x-series', 'X Series'], ['vehicle', 'Vehicle'],
   ] },
   { brand: 'Pantasy', shop: 'https://pantasy.com' },
+  // Set numbers that aren't at the end of the product address are found in the address, title or SKU with numRe.
+  { brand: 'CaDA', shop: 'https://decadastore.com', numRe: /\b(C\d{5}[A-Z]?)\b/i },
+  { brand: 'Mould King', shop: 'https://mouldkingcorp.com', numRe: /\b(\d{5})\b/ },
 ];
 
 // The set number is the last number in the address, optionally followed by a region (e.g. pantasy-t-800-87503-us-eu).
@@ -42,7 +45,15 @@ async function allProducts(url) {
   return out;
 }
 
-export async function updateBrand({ brand, shop, series = [] }, rates) {
+function numFor(p, numRe) {
+  if (!numRe) return numFromHandle(p.handle);
+  for (const s of [String(p.handle || '').replace(/-/g, ' '), p.title, ...(p.variants || []).map(v => v.sku)]) {
+    const m = numRe.exec(String(s || '')); if (m) return m[1].toUpperCase();
+  }
+  return null;
+}
+
+export async function updateBrand({ brand, shop, series = [], numRe }, rates) {
   let currency = 'USD';
   try { currency = (await fetchJson(`${shop}/cart.js`)).currency || currency; } catch { /* keep default */ }
   const perAud = currency === 'AUD' ? 1 : rates?.[currency];
@@ -62,7 +73,7 @@ export async function updateBrand({ brand, shop, series = [] }, rates) {
   const updates = new Map(), now = new Date().toISOString();
   let added = 0, priced = 0, linked = 0, themed = 0, pictured = 0;
   for (const p of products) {
-    const num = numFromHandle(p.handle);
+    const num = numFor(p, numRe);
     if (!num) continue;
     const prices = (p.variants || []).map(v => Number(v.price)).filter(v => v > 0);
     if (!items[num]) { items[num] = { name: cleanName(p.title, num), theme: 'Unsorted', sub: '', year: null, pieces: null, img: '' }; added++; }
@@ -76,7 +87,8 @@ export async function updateBrand({ brand, shop, series = [] }, rates) {
       const cur = items[num];
       if (/^https:\/\//.test(img) && cur.img !== img && (!cur.img || cur.imgAuto)) { items[num] = { ...cur, img, imgAuto: true }; pictured++; }
     }
-    const ser = seriesOf.get(p.handle), it = items[num];
+    // Theme: the store's series when it has them, otherwise the store's product type (e.g. "Technic").
+    const ser = seriesOf.get(p.handle) || (series.length ? null : String(p.product_type || '').trim() || null), it = items[num];
     if (ser && it.theme !== ser && (!it.theme || it.theme === 'Unsorted' || it.themeAuto)) { items[num] = { ...it, theme: ser, themeAuto: true }; themed++; }
     if (prices.length) {
       const aud = Math.round(Math.min(...prices) / perAud * 100) / 100;

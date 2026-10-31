@@ -250,6 +250,10 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .buy-pantasy:hover{filter:brightness(1.12)}
 .buy-lumibricks{background:#ff6a00;border:2px solid #fbf8f1;color:#fbf8f1;font-weight:700;letter-spacing:.02em;padding:4px 8px}
 .buy-lumibricks:hover{filter:brightness(1.06)}
+.buy-cada{background:#111214;border:2px solid #e60012;color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
+.buy-cada:hover{filter:brightness(1.3)}
+.buy-mould-king{background:#0b3a82;border:2px solid #f5c400;color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
+.buy-mould-king:hover{filter:brightness(1.12)}
 .totop{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:15;width:44px;height:44px;border-radius:12px;border:1px solid var(--line-2);background:var(--panel);color:var(--fg);display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .totop:hover{border-color:var(--accent);color:var(--accent)}
 .totop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -310,7 +314,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
   <section class="welcome" id="welcome" hidden>
     <div class="welcome-text">
       <h2>Welcome to BrickCollect</h2>
-      <p>Built by an enthusiast, for enthusiasts. BrickCollect covers LEGO and a growing list of other brick brands, starting with LumiBricks and Pantasy. The goal is simple: make everything easy to find in a few clicks, on a clean, fast, easy-to-read site, with the ability to export your collection. Manage your collection, track the sets and minifigures you still need, and see every theme's timeline in one screen. It’s free, and you can sign in to keep your collection on every device.</p>
+      <p>Built by an enthusiast, for enthusiasts. BrickCollect covers LEGO and a growing list of other brick brands, including LumiBricks, Pantasy, CaDA and Mould King. The goal is simple: make everything easy to find in a few clicks, on a clean, fast, easy-to-read site, with the ability to export your collection. Manage your collection, track the sets and minifigures you still need, and see every theme's timeline in one screen. It’s free, and you can sign in to keep your collection on every device.</p>
       <p>It’s also a quick way to value your sets when you’re selling, insuring or trading. Tick what you own and BrickCollect adds up what it’s worth, used and new. Enter a percentage in the bar below to see what you’d ask, or offer, at that share of market value.</p>
       <span class="cta">To get started, select a brand or theme below, or search above.</span>
     </div>
@@ -746,6 +750,8 @@ const BUY = Object.assign({
   LEGO: { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/product/{num}' },
   LumiBricks: { label: 'LU', title: 'Buy at LumiBricks', product: 'https://www.lumibricks.com{path}?ref=opizuyuw', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
   Pantasy: { label: 'PA', title: 'Buy at Pantasy', product: 'https://pantasy.com{path}?ref=fsolyowf', url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
+  CaDA: { label: 'CA', title: 'Buy at CaDA', product: 'https://decadastore.com{path}', url: 'https://decadastore.com/search?q={num}' },
+  'Mould King': { label: 'MK', title: 'Buy at Mould King', product: 'https://mouldkingcorp.com{path}', url: 'https://mouldkingcorp.com/search?q={num}' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
 function buyLink(x) {
   const href = buyHref(x), b = BUY[x.brand];
@@ -1242,7 +1248,7 @@ function applyExtras() {
   const extras = [];
   for (const [slugId, d] of catDocs) for (const [num, v] of Object.entries(d.items || {})) {
     const n = `${slugId}:${num}`;
-    extras.push({ n, disp: num, name: v.name || num, year: v.year ?? null, pieces: v.pieces ?? null, img: v.img || '', url: v.url || '', theme: v.theme || 'Unsorted', sub: v.sub || '', rbSub: v.sub || '', brand: d.brand, k: 's', extra: true, key: (num + ' ' + (v.name || '')).toLowerCase() });
+    extras.push({ n, disp: num, name: v.name || num, year: v.year ?? null, pieces: v.pieces ?? null, img: v.img || '', url: v.url || '', theme: v.theme || 'Unsorted', sub: v.sub || '', rbSub: v.sub || '', brand: d.brand, k: 's', extra: true, key: (num + ' ' + (v.name || '') + (d.brand === 'LumiBricks' ? ' funwhole' : '')).toLowerCase() });
   }
   CAT.sets = CAT.lego.concat(extras);
   applyOverrides(); themeOptions();

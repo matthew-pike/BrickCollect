@@ -15,5 +15,8 @@ window.BC_CONFIG = {
     // product: exact product page ({path} is the set's store address, saved nightly). url: search page when the address isn't known yet.
     LumiBricks: { label: 'LU', title: 'Buy at LumiBricks', product: 'https://www.lumibricks.com{path}?ref=opizuyuw', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
     Pantasy:    { label: 'PA', title: 'Buy at Pantasy',    product: 'https://pantasy.com{path}?ref=fsolyowf',          url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
+    // No affiliate codes yet: add ?ref=… (or the brand's own parameter) to both addresses when you join their programme.
+    CaDA:         { label: 'CA', title: 'Buy at CaDA',       product: 'https://decadastore.com{path}',  url: 'https://decadastore.com/search?q={num}' },
+    'Mould King': { label: 'MK', title: 'Buy at Mould King', product: 'https://mouldkingcorp.com{path}', url: 'https://mouldkingcorp.com/search?q={num}' },
   },
 };
