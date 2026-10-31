@@ -130,7 +130,18 @@
       if (error) throw error;
     },
     async signOut() { await sb.auth.signOut(); },
-    onChange(cb) { if (sb) sb.auth.onAuthStateChange((event, s) => { const before = session && session.user.id; session = s; const after = s && s.user.id; if (before !== after) cb(event); }); },
+    // Call cb only when a different person signs in or out after the page has loaded.
+    // INITIAL_SESSION fires straight away for every page load and TOKEN_REFRESHED every hour;
+    // neither is a change of person, so they must not reload the page.
+    onChange(cb) {
+      if (!sb) return;
+      ready.then(() => sb.auth.onAuthStateChange((event, s) => {
+        const before = session ? session.user.id : null, after = s ? s.user.id : null;
+        session = s;
+        if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') return;
+        if (before !== after) cb(event);
+      }));
+    },
   };
 
   /* ---------- Sync Prices ---------- */
