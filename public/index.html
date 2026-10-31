@@ -75,18 +75,31 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 
 .welcome{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:16px;position:relative}
 .welcome-text{display:flex;flex-direction:column;gap:8px;min-width:0}
-.sellbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;display:flex;align-items:center;flex-wrap:wrap;gap:10px 24px}
-.sellbox h3{margin:0;font-size:14px;font-weight:500;white-space:nowrap}
+.sellbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 20px;align-items:center}
+.sellhead{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sellbox h3{margin:0;font-size:15px;font-weight:500}
+.sellhead p{margin:0;font-size:12.5px;color:var(--muted)}
 .sellbox p{font-size:12.5px}
-.pct{display:flex;align-items:center;gap:8px}
-.pct input{width:90px;text-align:right;font-family:var(--font-mono)}
+.pct{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pct input{width:76px;text-align:right;font-family:var(--font-mono)}
 .pct span{color:var(--muted);font-size:13px}
-.sellrows{display:flex;align-items:baseline;gap:6px 20px;margin:0;font-size:13px;font-variant-numeric:tabular-nums;flex-wrap:wrap}
-.sellrows div{display:flex;gap:8px;align-items:baseline}
-.sellrows dt{color:var(--muted)} .sellrows dd{margin:0;font-weight:500;font-size:16px;color:var(--violet)}
-.selltotal{margin-left:auto}
-.selltotal dt{color:var(--fg);font-weight:500}
-.selltotal dd{font-size:18px;font-weight:700}
+.pctchips{display:flex;gap:4px}
+.pctchip{border:1px solid var(--line-2);background:var(--panel-2);color:var(--muted);border-radius:7px;padding:5px 9px;font:inherit;font-size:12.5px;font-variant-numeric:tabular-nums;cursor:pointer}
+.pctchip:hover{color:var(--fg);border-color:var(--accent)}
+.pctchip[aria-pressed="true"]{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+.sellgrid{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.35fr);gap:10px;margin:0}
+.selltile{border:1px solid var(--line);background:var(--panel-2);border-radius:9px;padding:10px 12px 11px;display:flex;flex-direction:column;gap:3px;min-width:0;border-top:3px solid var(--c)}
+.selltile dt{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:6px}
+.selltile dd{margin:0;font-size:20px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--fg);line-height:1.15}
+.selltile small{font-size:11.5px;color:var(--faint)}
+.t-new{--c:var(--good)} .t-used{--c:var(--accent)} .t-inc{--c:var(--stud)}
+.selltotalbox{border-radius:9px;padding:10px 14px 11px;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;background:color-mix(in srgb,var(--violet) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.selltotalbox dt{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--violet);font-weight:500}
+.selltotalbox dd{margin:0;font-size:24px;font-weight:700;color:var(--violet);font-variant-numeric:tabular-nums;line-height:1.15}
+.selltotalbox .full{font-size:12px;color:var(--muted)}
+.selltotalbox .full b{color:var(--fg);font-weight:500;font-variant-numeric:tabular-nums}
+@media (max-width:820px){.sellgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.selltotalbox{grid-column:1/-1}}
+@media (max-width:560px){.sellbox{grid-template-columns:1fr}.pct{justify-content:flex-start}.sellgrid{grid-template-columns:1fr;gap:8px}.selltile{display:grid;grid-template-columns:1fr auto;grid-template-areas:"k v" "n v";align-items:center;border-top-width:1px;border-left:3px solid var(--c)}.selltile dt{grid-area:k}.selltile small{grid-area:n}.selltile dd{grid-area:v;font-size:18px}}
 .selltotal.both div:first-child dd{font-size:16px;font-weight:500}
 .welcome h2{margin:0;font-family:var(--font-display);font-weight:500;font-size:18px;padding-right:40px}
 .welcome p{margin:0;color:var(--muted);max-width:none}
@@ -294,10 +307,14 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
   </section>
 
   <section class="sellbox" aria-labelledby="sellTitle">
-    <h3 id="sellTitle">Selling or buying a collection?</h3>
-    <dl class="sellrows"><div><dt>New</dt><dd id="sellNew">—</dd></div><div><dt>Used</dt><dd id="sellUsed">—</dd></div><div><dt>Used incomplete</dt><dd id="sellInc">—</dd></div></dl>
-    <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="100" aria-label="Percentage of market value"><span>% of value</span></div>
-    <dl class="sellrows selltotal"><div><dt>Total at 100%</dt><dd id="sellFull">—</dd></div><div id="sellPctRow" hidden><dt id="sellTotalK">Total</dt><dd id="sellTotal">—</dd></div></dl>
+    <div class="sellhead"><h3 id="sellTitle">Selling or buying a collection?</h3><p>Market value of what you own, by condition. Pick a percentage to see what you’d ask or offer.</p></div>
+    <div class="pct"><div class="pctchips" role="group" aria-label="Quick percentages"><button class="pctchip" data-pct="60">60%</button><button class="pctchip" data-pct="70">70%</button><button class="pctchip" data-pct="80">80%</button><button class="pctchip" data-pct="100">100%</button></div><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="100" aria-label="Percentage of market value"><span>%</span></div>
+    <dl class="sellgrid">
+      <div class="selltile t-new"><dt>New</dt><dd id="sellNew">—</dd><small id="sellNewN"></small></div>
+      <div class="selltile t-used"><dt>Used</dt><dd id="sellUsed">—</dd><small id="sellUsedN"></small></div>
+      <div class="selltile t-inc"><dt>Used incomplete</dt><dd id="sellInc">—</dd><small id="sellIncN"></small></div>
+      <div class="selltotalbox"><dt id="sellTotalK">Total</dt><dd id="sellTotal">—</dd><span class="full" id="sellPctRow" hidden>At 100%: <b id="sellFull">—</b></span></div>
+    </dl>
   </section>
 
   <section class="filters" aria-label="Filters">
@@ -777,11 +794,14 @@ function render() {
     // Market value of what you own, split by condition; the total applies your percentage.
     const byVal = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => { byVal[condOf(x)] += valueOf(x) || 0; });
     $('sellNew').textContent = money(byVal.new); $('sellUsed').textContent = money(byVal.used); $('sellInc').textContent = money(byVal['used-inc']);
+    const cnt = (n, c) => n ? `${n.toLocaleString()} item${n > 1 ? 's' : ''}` : 'None';
+    $('sellNewN').textContent = cnt(byCond.new); $('sellUsedN').textContent = cnt(byCond.used); $('sellIncN').textContent = cnt(byCond['used-inc']);
+    const at = ok && pct !== 100;
     $('sellFull').textContent = money(vc);
-    $('sellPctRow').hidden = !ok || pct === 100;
-    $('sellPctRow').parentElement.classList.toggle('both', !$('sellPctRow').hidden);
-    $('sellTotalK').textContent = `Total at ${pct}%`;
-    $('sellTotal').textContent = money(vc * pct / 100);
+    $('sellPctRow').hidden = !at;
+    $('sellTotalK').textContent = at ? `Total at ${pct}%` : 'Total at 100%';
+    $('sellTotal').textContent = money(at ? vc * pct / 100 : vc);
+    document.querySelectorAll('.pctchip').forEach(b => b.setAttribute('aria-pressed', String(ok ? Number(b.dataset.pct) === pct : b.dataset.pct === '100')));
     $('sValUs').textContent = ok ? `At ${pct}%: ${money(vc * pct / 100)}` : (ownedIn.length ? `${byCond.new} new · ${byCond.used} used · ${byCond['used-inc']} incomplete` : 'By each item’s condition');
   }
 
@@ -1234,6 +1254,7 @@ async function refreshRates() {
 $('curSel').onchange = () => { prefs.currency = $('curSel').value; savePrefs(); paintCurrency(); render(); };
 
 if (prefs.sellPct != null) $('sellPct').value = prefs.sellPct;
+document.querySelectorAll('.pctchip').forEach(b => b.addEventListener('click', () => { $('sellPct').value = b.dataset.pct; prefs.sellPct = Number(b.dataset.pct); savePrefs(); render(); }));
 let sellT; $('sellPct').addEventListener('input', () => { clearTimeout(sellT); sellT = setTimeout(() => { const v = $('sellPct').value; prefs.sellPct = v === '' ? null : Math.max(0, Math.min(200, Number(v))); savePrefs(); render(); }, 150); });
 
 /* ---------- CSV export ---------- */
