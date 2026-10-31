@@ -189,6 +189,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .pill[aria-pressed="true"] b{color:inherit}
 .incnote{font-size:12px;color:var(--faint);white-space:nowrap}
 .incnote.on{color:var(--stud)}
+.footleft{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .ownc{display:flex;align-items:center;gap:8px}
 .star{all:unset;cursor:pointer;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;color:var(--faint)}
 .star:hover{color:var(--stud)}
@@ -306,7 +307,6 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
         <button class="pill" data-view="wanted" aria-pressed="false">Wanted <b id="cWanted">0</b></button>
       </div>
       <button class="btn" id="unselAll" title="Unmark everything in view">Unselect all</button>
-      <span class="savemode" id="saveMode" hidden></span>
       <span class="spacer"></span>
       <a class="btn" href="https://store.bricklink.com/TheArtofBricks#/shop" target="_blank" rel="noopener" title="The Art of Bricks store on BrickLink">BrickLink Store ↗</a>
       <button class="btn" id="exportBtn" title="Download everything you own as a spreadsheet">Export my collection</button>
@@ -345,7 +345,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
       </table>
     </div>
     <div class="empty" id="empty"><h3>Loading the catalog…</h3></div>
-    <div class="foot" id="foot" hidden><span id="footCount"></span><button class="btn" id="more">Show 200 more</button><span id="footHint">Click a set to see its minifigures · click a price or subtheme to change it</span></div>
+    <div class="foot" id="foot" hidden><span class="footleft"><span id="footCount"></span><span class="savemode" id="saveMode" hidden></span></span><button class="btn" id="more">Show 200 more</button><span id="footHint">Click a set to see its minifigures · click a price or subtheme to change it</span></div>
   </section>
 </main>
 <footer class="foot-site">
