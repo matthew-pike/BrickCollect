@@ -187,6 +187,8 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .pill b{font-family:var(--font-mono);font-weight:500;margin-left:3px;color:var(--accent)}
 .pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .pill[aria-pressed="true"] b{color:inherit}
+.incnote{font-size:12px;color:var(--faint);white-space:nowrap}
+.incnote.on{color:var(--stud)}
 .ownc{display:flex;align-items:center;gap:8px}
 .star{all:unset;cursor:pointer;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;color:var(--faint)}
 .star:hover{color:var(--stud)}
@@ -265,7 +267,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
     <h3 id="sellTitle">Selling or buying a collection?</h3>
     <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="70" aria-describedby="sellHelp"><span>% of value</span></div>
     <dl class="sellrows"><div><dt>Your collection</dt><dd id="sellU">—</dd></div><div><dt>If all new</dt><dd id="sellAllNew">—</dd></div><div><dt>If all used</dt><dd id="sellN">—</dd></div></dl>
-    <div class="pct"><input class="inp" id="incPct" type="number" min="0" max="100" step="5" inputmode="numeric" placeholder="60" aria-label="Value of incomplete sets, as a percentage of the used price"><span>% of used for incomplete sets</span></div>
+    <div class="pct"><input class="inp" id="incPct" type="number" min="0" max="100" step="5" inputmode="numeric" placeholder="60" aria-label="Value of incomplete sets, as a percentage of the used price"><span>% of used for incomplete sets</span><span class="incnote" id="incNote"></span></div>
     <span class="sellnote" id="sellHelp">Each owned item counts at its condition: new price for New, used price for Used, and the percentage you set for Used (incomplete). Items without a price count as zero.</span>
   </section>
 
@@ -720,6 +722,7 @@ function render() {
   const vc = ownedIn.reduce((t, x) => t + (valueOf(x) || 0), 0), vu = sum(ownedIn, 'used'), vn = sum(ownedIn, 'new');
   $('sValU').innerHTML = `${money(vc)} <small>${cur()}</small>`;
   const byCond = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => byCond[condOf(x)]++);
+  { const n = byCond['used-inc'], el = $('incNote'); el.textContent = n ? `· applies to ${n} incomplete ${n === 1 ? 'item' : 'items'}` : '· no items marked Incomplete yet'; el.classList.toggle('on', !!n); }
   const wantList = (isScoped ? list.filter(inScope) : list).filter(wanted);
   $('sValN').innerHTML = `${money(sum(wantList, 'new'))} <small>${cur()}</small>`;
   $('sValNs').textContent = wantList.length ? `${wantList.length} wanted · ${money(sum(wantList, 'used'))} used` : 'Star sets to add them';
