@@ -137,6 +137,7 @@ tbody tr.picked td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .subbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
 .subbtn.none{color:var(--faint);font-weight:400}
 .focusbar .spacer{flex:1}
+tr.fromset .nm::after{white-space:nowrap;display:inline-block;content:"IN YOUR SETS";font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);border-radius:4px;padding:0 5px;margin-left:8px;vertical-align:1px}
 tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--good);border:1px solid color-mix(in srgb,var(--good) 50%,transparent);border-radius:4px;padding:0 5px;margin-left:8px;vertical-align:1px}
 .num{text-align:right}
 .mono{font-family:var(--font-mono);font-size:12.5px}
@@ -181,6 +182,21 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 @media (max-width:760px){.addgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .addactions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .btn.danger{color:var(--danger)}
+.pills{display:flex;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px}
+.pill{border:0;background:transparent;color:var(--muted);font-weight:500;font-size:13px;padding:5px 12px;border-radius:999px;cursor:pointer}
+.pill b{font-family:var(--font-mono);font-weight:500;margin-left:3px;color:var(--accent)}
+.pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.pill[aria-pressed="true"] b{color:inherit}
+.ownc{display:flex;align-items:center;gap:8px}
+.star{all:unset;cursor:pointer;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;color:var(--faint)}
+.star:hover{color:var(--stud)}
+.star[aria-pressed="true"]{color:var(--stud)}
+.star:focus-visible{outline:2px solid var(--accent)}
+.cond{margin-top:4px;width:auto;padding:3px 6px;font-size:12px;border-radius:6px}
+.cond.c-new{border-color:color-mix(in srgb,var(--good) 55%,transparent)}
+.cond.c-used-inc{border-color:color-mix(in srgb,var(--stud) 60%,transparent)}
+.buy{background:var(--stud);border-color:var(--stud);color:#1a1300;font-weight:600}
+.buy:hover{filter:brightness(1.05)}
 .acct{height:34px;padding:0 12px}
 .dlg{border:1px solid var(--line-2);border-radius:12px;background:var(--panel);color:var(--fg);padding:22px;width:min(420px,calc(100vw - 32px))}
 .dlg::backdrop{background:rgba(5,10,20,.55)}
@@ -228,8 +244,8 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
     <div class="stat"><span class="k">Remaining</span><span class="v accent" id="sRemain">—</span><span class="s" id="sRemainS">Pick a theme to see the gap</span></div>
     <div class="stat"><span class="k">Needed (used)</span><span class="v good" id="sNeedU">$0.00</span><span class="s" id="sNeedUs">Live used avg</span></div>
     <div class="stat"><span class="k">Needed (new)</span><span class="v good" id="sNeedN">$0.00</span><span class="s" id="sNeedNs">Live new avg</span></div>
-    <div class="stat"><span class="k">Total value (used)</span><span class="v violet" id="sValU">$0.00</span><span class="s" id="sValUs">What you own, used</span></div>
-    <div class="stat"><span class="k">Total value (new)</span><span class="v violet" id="sValN">$0.00</span><span class="s" id="sValNs">What you own, new</span></div>
+    <div class="stat"><span class="k">Collection value</span><span class="v violet" id="sValU">$0.00</span><span class="s" id="sValUs">By each item’s condition</span></div>
+    <div class="stat"><span class="k">Wanted list</span><span class="v accent" id="sValN">$0.00</span><span class="s" id="sValNs">Star sets to add them</span></div>
   </section>
 
   <section class="welcome" id="welcome">
@@ -245,8 +261,9 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
   <section class="sellbox" aria-labelledby="sellTitle">
     <h3 id="sellTitle">Selling or buying a collection?</h3>
     <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="70" aria-describedby="sellHelp"><span>% of value</span></div>
-    <dl class="sellrows"><div><dt>Used</dt><dd id="sellU">—</dd></div><div><dt>New</dt><dd id="sellN">—</dd></div></dl>
-    <span class="sellnote" id="sellHelp">Based on what you’ve ticked as owned in the current view. Sets without a price count as zero.</span>
+    <dl class="sellrows"><div><dt>Your collection</dt><dd id="sellU">—</dd></div><div><dt>If all new</dt><dd id="sellN">—</dd></div></dl>
+    <div class="pct"><input class="inp" id="incPct" type="number" min="0" max="100" step="5" inputmode="numeric" placeholder="60" aria-label="Value of incomplete sets, as a percentage of the used price"><span>% of used for incomplete sets</span></div>
+    <span class="sellnote" id="sellHelp">Each owned item counts at its condition: new price for New, used price for Used, and the percentage you set for Used (incomplete). Items without a price count as zero.</span>
   </section>
 
   <section class="filters" aria-label="Filters">
@@ -267,6 +284,11 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
       <div class="tabs" role="tablist">
         <button class="tab" role="tab" id="tabFigs" data-kind="figs" aria-selected="false">Minifigures <b id="cFigs">0</b></button>
         <button class="tab" role="tab" id="tabSets" data-kind="sets" aria-selected="true">Sets <b id="cSets">0</b></button>
+      </div>
+      <div class="pills" role="group" aria-label="Show">
+        <button class="pill" data-view="all" aria-pressed="true">All</button>
+        <button class="pill" data-view="owned" aria-pressed="false">Owned <b id="cOwned">0</b></button>
+        <button class="pill" data-view="wanted" aria-pressed="false">Wanted <b id="cWanted">0</b></button>
       </div>
       <button class="btn" id="unselAll" title="Unmark everything in view">Unselect all</button>
       <span class="savemode" id="saveMode" hidden></span>
@@ -323,7 +345,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
     </nav>
   </div>
   <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span id="ratesNote"></span></p>
-  <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © Rebrickable, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Converted prices are approximate.</p>
+  <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © Rebrickable, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Converted prices are approximate. Some buy links are affiliate links: if you buy through them, The Art of Bricks may earn a small commission at no extra cost to you.</p>
 </footer>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -369,7 +391,7 @@ let db = null, mcp = null, hostOk = true, syncing = false;
 const HOST = 'BrickCollect';
 const imgs = new Map(); // number -> data URI | false
 const imgWant = new Set(); let imgBusy = false;
-let kind = 'sets', sort = { key: 'year', dir: 'desc' }, limit = PAGE, editing = null, focus = null;
+let kind = 'sets', sort = { key: 'year', dir: 'desc' }, limit = PAGE, editing = null, focus = null, listView = 'all';
 
 const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -377,6 +399,7 @@ const prefs = lsGet('bc-prefs') || {};
 if (prefs.kind) kind = prefs.kind;
 if (prefs.sort) sort = prefs.sort;
 if (prefs.focus) focus = prefs.focus;
+if (prefs.listView) listView = prefs.listView;
 if (prefs.hideWelcome) $('welcome').hidden = true;
 
 /* ---------- currency: prices are stored in AUD and shown in the visitor's currency ---------- */
@@ -463,7 +486,7 @@ function info(n) {
   out.owned = !!me.owned;
   return out;
 }
-const hasMineData = v => v && (v.owned || SHARED_KEYS.some(k => v[k] != null));
+const hasMineData = v => v && (v.owned || v.wanted || SHARED_KEYS.some(k => v[k] != null));
 const personalObj = () => { const o = {}; for (const [k, v] of mine) if (hasMineData(v)) o[k] = v; return o; };
 function loadPersonal(items) { mine.clear(); for (const [k, v] of Object.entries(items || {})) if (v && typeof v === 'object') mine.set(k, v); }
 
@@ -518,7 +541,14 @@ async function flushShared() {
    and a personal override for everyone else */
 function setInfo(n, patch, { quiet } = {}) {
   const me = { ...(mine.get(n) || {}) };
-  if ('owned' in patch) me.owned = !!patch.owned;
+  if ('owned' in patch) {
+    me.owned = !!patch.owned;
+    if (me.owned) { me.wanted = false; if (!me.cond) me.cond = prefs.lastCond || 'used'; }
+    else delete me.cond;
+  }
+  if ('cond' in patch && me.owned) { me.cond = patch.cond; prefs.lastCond = patch.cond; savePrefs(); }
+  if ('wanted' in patch) me.wanted = !!patch.wanted && !me.owned;
+  if (!me.wanted) delete me.wanted;
   const sharedPatch = {};
   for (const k of SHARED_KEYS) if (k in patch) {
     if (canCurate()) { sharedPatch[k] = patch[k]; delete me[k]; }
@@ -587,8 +617,36 @@ function inScope(x) {
   return !!q && x.key.includes(q) && (!setFilters || x.so.some(s => setPasses(s, '')));
 }
 const owned = x => !!(mine.get(x.n) || {}).owned;
+const wanted = x => !!(mine.get(x.n) || {}).wanted;
+// Minifigures that come with a set you own count as in your collection (but aren't valued twice).
+const fromSet = x => x.k === 'm' && !owned(x) && x.so.some(owned);
+const has = x => owned(x) || fromSet(x);
+const COND = { new: 'New', used: 'Used (complete)', 'used-inc': 'Used (incomplete)' };
+const condOf = x => (mine.get(x.n) || {}).cond || 'used';
+const incPct = () => { const v = Number(prefs.incPct); return prefs.incPct != null && prefs.incPct !== '' && isFinite(v) ? v : 60; };
+// What an owned item is worth at its condition, in AUD (null when unpriced).
+function valueOf(x) {
+  const i = info(x.n), c = condOf(x);
+  if (c === 'new') return i.new ?? null;
+  if (i.used == null) return null;
+  return c === 'used-inc' ? i.used * incPct() / 100 : i.used;
+}
 const canCurate = () => isOwner && !!db;
-function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, currency: prefs.currency, sellPct: prefs.sellPct, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value } }); }
+function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond: prefs.lastCond, incPct: prefs.incPct, currency: prefs.currency, sellPct: prefs.sellPct, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value } }); }
+
+/* ---------- buy links (affiliate links when set up) ----------
+   Each brand has a link template; {num} is the set number (75192 for LEGO 75192-1) and {name} the set name.
+   On the website these come from buyLinks in config.js, so affiliate links can be swapped in without code changes. */
+const BUY = Object.assign({
+  LEGO: { label: 'Buy', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
+}, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
+function buyLink(x) {
+  if (x.k !== 's') return '';
+  const b = BUY[x.brand]; if (!b || !b.url) return '';
+  const num = x.brand === 'LEGO' ? x.n.replace(/-\d+$/, '') : (x.disp || x.n);
+  const href = b.url.replace(/\{num\}/g, encodeURIComponent(num)).replace(/\{name\}/g, encodeURIComponent(x.name));
+  return `<a class="btn mini buy" href="${esc(href)}" target="_blank" rel="sponsored noopener" title="${esc(b.title || 'Buy')}">${esc(b.label || 'Buy')}</a>`;
+}
 
 /* ---------- thumbnails ---------- */
 const PAL = ['#e3000b', '#0057a8', '#f2c200', '#00852b', '#ff7e14', '#a83d99', '#069d9f', '#7c5a3a'];
@@ -626,9 +684,9 @@ function render() {
   $('tabFigs').setAttribute('aria-selected', kind === 'figs');
   const list = kind === 'sets' ? CAT.sets : CAT.figs;
   const isScoped = scoped();
-  const scope = isScoped ? list.filter(inScope) : list.filter(owned);
-  const ownedIn = scope.filter(owned), needed = scope.filter(x => !owned(x));
-  const ownSets = CAT.sets.filter(owned).length, ownFigs = CAT.figs.filter(owned).length;
+  const scope = isScoped ? list.filter(inScope) : list.filter(has);
+  const ownedIn = scope.filter(owned), hasIn = scope.filter(has), needed = scope.filter(x => !has(x));
+  const ownSets = CAT.sets.filter(owned).length, ownFigs = CAT.figs.filter(has).length;
   $('cSets').textContent = (kind === 'sets' ? (isScoped ? scope.length : ownSets) : (scopedFor('sets') ? CAT.sets.filter(inScope).length : ownSets)).toLocaleString();
   const focusSet = focus ? CAT.sets.find(x => x.n === focus) : null;
   if (focus && !focusSet) focus = null;
@@ -643,8 +701,8 @@ function render() {
   const sum = (a, f) => a.reduce((s, x) => s + (Number(info(x.n)[f]) || 0), 0);
   const noun = kind === 'sets' ? 'sets' : 'minifigures';
   $('kOwned').textContent = kind === 'sets' ? 'Complete sets' : 'Minifigures owned';
-  const pct = isScoped && scope.length ? Math.round(ownedIn.length / scope.length * 1000) / 10 : 0;
-  $('sOwned').innerHTML = `${ownedIn.length.toLocaleString()} <small>${isScoped ? `(${pct}%)` : ''}</small>`;
+  const pct = isScoped && scope.length ? Math.round(hasIn.length / scope.length * 1000) / 10 : 0;
+  $('sOwned').innerHTML = `${hasIn.length.toLocaleString()} <small>${isScoped ? `(${pct}%)` : ''}</small>`;
   $('sBar').style.width = (isScoped ? pct : 0) + '%';
   $('sPct').textContent = isScoped ? `of ${scope.length.toLocaleString()} ${noun} in view` : 'Across your whole collection';
   $('sRemain').textContent = isScoped ? needed.length.toLocaleString() : '—';
@@ -654,20 +712,27 @@ function render() {
   $('sNeedN').innerHTML = `${money(isScoped ? sum(needed, 'new') : 0)} <small>${cur()}</small>`;
   $('sNeedUs').textContent = isScoped && unU ? `${unU.toLocaleString()} still unpriced` : 'From the prices you set';
   $('sNeedNs').textContent = isScoped && unN ? `${unN.toLocaleString()} still unpriced` : 'From the prices you set';
-  $('sValU').innerHTML = `${money(sum(ownedIn, 'used'))} <small>${cur()}</small>`;
-  $('sValN').innerHTML = `${money(sum(ownedIn, 'new'))} <small>${cur()}</small>`;
+  const vc = ownedIn.reduce((t, x) => t + (valueOf(x) || 0), 0), vn = sum(ownedIn, 'new');
+  $('sValU').innerHTML = `${money(vc)} <small>${cur()}</small>`;
+  const byCond = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => byCond[condOf(x)]++);
+  const wantList = (isScoped ? list.filter(inScope) : list).filter(wanted);
+  $('sValN').innerHTML = `${money(sum(wantList, 'new'))} <small>${cur()}</small>`;
+  $('sValNs').textContent = wantList.length ? `${wantList.length} wanted · ${money(sum(wantList, 'used'))} used` : 'Star sets to add them';
   {
     const pct = Number(prefs.sellPct);
     const ok = prefs.sellPct !== '' && prefs.sellPct != null && isFinite(pct) && pct > 0;
-    const vu = sum(ownedIn, 'used'), vn = sum(ownedIn, 'new');
-    $('sellU').textContent = ok ? money(vu * pct / 100) : '—';
-    $('sellN').textContent = ok ? money(vn * pct / 100) : '—';
-    $('sValUs').textContent = ok ? `At ${pct}%: ${money(vu * pct / 100)}` : 'What you own, used';
-    $('sValNs').textContent = ok ? `At ${pct}%: ${money(vn * pct / 100)}` : 'What you own, new';
+    $('sellU').textContent = ok ? money(vc * pct / 100) : money(vc);
+    $('sellN').textContent = ok ? money(vn * pct / 100) : money(vn);
+    $('sValUs').textContent = ok ? `At ${pct}%: ${money(vc * pct / 100)}` : (ownedIn.length ? `${byCond.new} new · ${byCond.used} used · ${byCond['used-inc']} incomplete` : 'By each item’s condition');
   }
 
   // rows
-  let rows = fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope;
+  const base = isScoped ? list.filter(inScope) : list;
+  let rows = listView === 'owned' ? base.filter(has) : listView === 'wanted' ? base.filter(wanted)
+    : fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope;
+  $('cOwned').textContent = list.filter(has).length.toLocaleString();
+  $('cWanted').textContent = list.filter(wanted).length.toLocaleString();
+  document.querySelectorAll('.pill').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === listView)));
   rows = rows.slice().sort((a, b) => {
     const A = val(a, sort.key), B = val(b, sort.key);
     if (A == null || A === '') return 1; if (B == null || B === '') return -1;
@@ -688,7 +753,7 @@ function render() {
   }
   ownRows = rows;
   { const own = rows.filter(owned).length; const u = $('unselAll'); u.hidden = !own; u.textContent = own ? `Unselect all (${own.toLocaleString()})` : 'Unselect all'; u.title = own ? `Unmark the ${own.toLocaleString()} owned in view` : 'Nothing in view is marked as owned'; }
-  const showRows = isScoped || ownedIn.length;
+  const showRows = isScoped || hasIn.length || listView !== 'all';
   const page = showRows ? rows.slice(0, limit) : [];
   const blId = x => x.k === 's' ? x.n : info(x.n).bl;
   const bl = x => blId(x) ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(blId(x))}` : `https://www.bricklink.com/v2/search.page?q=${encodeURIComponent(x.name)}#T=M`;
@@ -717,10 +782,10 @@ function render() {
   $('filmNames').innerHTML = [...new Set(CAT.sets.map(s => s.film).filter(Boolean))].sort().map(v => `<option value="${esc(v)}">`).join('');
   $('subNames').innerHTML = [...new Set(CAT.sets.filter(s => !fi.theme.value || s.theme === fi.theme.value).map(s => s.sub).filter(Boolean))].sort().map(v => `<option value="${esc(v)}">`).join('');
   $('rows').innerHTML = page.map(x => `
-    <tr class="${owned(x) ? 'owned' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
-      <td><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${owned(x) ? 'checked' : ''} aria-label="I own ${esc(x.name)}"></td>
+    <tr class="${owned(x) ? 'owned' : fromSet(x) ? 'fromset' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
+      <td><div class="ownc"><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${has(x) ? 'checked' : ''} ${fromSet(x) ? 'disabled title="Comes with a set you own"' : ''} aria-label="I own ${esc(x.name)}">${has(x) ? '' : `<button class="star" data-want="${esc(x.n)}" aria-pressed="${wanted(x)}" title="${wanted(x) ? 'Remove from wanted' : 'Add to wanted'}" aria-label="${wanted(x) ? 'Remove' : 'Add'} ${esc(x.name)} ${wanted(x) ? 'from' : 'to'} wanted"><svg width="16" height="16" viewBox="0 0 24 24" fill="${wanted(x) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg></button>`}</div></td>
       <td>${thumb(x)}</td>
-      <td class="nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
+      <td class="nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}${owned(x) ? `<div><select class="inp cond c-${condOf(x)}" data-cond="${esc(x.n)}" aria-label="Condition of ${esc(x.name)}">${Object.entries(COND).map(([k, l]) => `<option value="${k}"${condOf(x) === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>` : ''}</td>
       <td class="muted">${x.brand}</td>
       <td class="sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}</td>
       <td>${filmCell(x)}</td>
@@ -729,7 +794,7 @@ function render() {
       <td class="num">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
       <td class="num">${price(x, 'used')}${info(x.n).pricedAt ? `<span class="priced">BrickLink ${new Date(info(x.n).pricedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>` : ''}</td>
       <td class="num">${price(x, 'new')}</td>
-      <td><div class="links">${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener">BrickLink</a><a class="btn mini" href="${rb(x)}" target="_blank" rel="noopener">Rebrickable</a>`}</div></td>
+      <td><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener">BrickLink</a>`}</div></td>
     </tr>`).join('');
 
   const empty = $('empty');
@@ -738,7 +803,9 @@ function render() {
     const pop = ['Star Wars', 'Technic', 'Harry Potter', 'Icons', 'Ideas', 'Ninjago'].filter(t => [...fi.theme.options].some(o => o.value === t));
     const otherBrands = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.brand))].sort();
     empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brands. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>`;
-  } else if (!rows.length) { empty.hidden = false; empty.innerHTML = '<h3>Nothing matches</h3><p>Try a different search, or reset the filters.</p>'; }
+  } else if (!rows.length && listView === 'wanted') { empty.hidden = false; empty.innerHTML = '<h3>Your wanted list is empty</h3><p>Tap the star next to any set or minifigure to add it here.</p>'; }
+  else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Tick the sets and minifigures you own and they’ll show here.</p>'; }
+  else if (!rows.length) { empty.hidden = false; empty.innerHTML = '<h3>Nothing matches</h3><p>Try a different search, or reset the filters.</p>'; }
   else empty.hidden = true;
   $('foot').hidden = !page.length;
   document.querySelector('thead').hidden = !page.length;
@@ -766,6 +833,8 @@ document.addEventListener('click', e => {
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
   if (t.dataset.kind) { kind = t.dataset.kind; limit = PAGE; themeOptions(); savePrefs(); render(); return; }
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
+  if (t.dataset.want) { setInfo(t.dataset.want, { wanted: !wanted({ n: t.dataset.want }) }); return; }
+  if (t.dataset.view) { listView = t.dataset.view; limit = PAGE; savePrefs(); render(); return; }
   if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
   if (t.dataset.focus) { focus = focus === t.dataset.focus ? null : t.dataset.focus; savePrefs(); render(); return; }
   if (t.dataset.clearfocus) { focus = null; limit = PAGE; savePrefs(); render(); return; }
@@ -788,6 +857,7 @@ document.addEventListener('focusout', e => {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'selAll') { bulkOwn(el.checked); return; }
+  if (el.dataset?.cond) { setInfo(el.dataset.cond, { cond: el.value }); return; }
   if (el.dataset?.own) { change(el.dataset.own, { owned: el.checked }); return; }
   if (Object.values(fi).includes(el)) { if (el === fi.brand) { fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
     if (el === fi.theme) { subOptions(''); filmOptions(''); } limit = PAGE; savePrefs(); render(); }
@@ -950,7 +1020,7 @@ $('bulkClear').onclick = () => bulkSet('');
 /* ---------- select all ---------- */
 let ownRows = [], bulkOwnBusy = false, lastBulk = null;
 function bulkOwn(on) {
-  const targets = ownRows.filter(x => owned(x) !== on);
+  const targets = ownRows.filter(x => !fromSet(x) && owned(x) !== on);
   if (!targets.length) { render(); return; }
   lastBulk = targets.map(x => [x.n, owned(x)]);
   for (const x of targets) setInfo(x.n, { owned: on }, { quiet: true });
@@ -975,7 +1045,7 @@ $('unselAll').onclick = () => bulkOwn(false);
 function goHome(e) {
   e.preventDefault();
   Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); });
-  $('q').value = ''; focus = null; kind = 'sets'; limit = PAGE; editing = null;
+  $('q').value = ''; focus = null; kind = 'sets'; listView = 'all'; limit = PAGE; editing = null;
   $('bulkbar').hidden = true; $('welcome').hidden = false;
   if (CAT) { themeOptions(); subOptions(''); filmOptions(''); }
   savePrefs(); render(); scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
@@ -1080,6 +1150,8 @@ async function refreshRates() {
 $('curSel').onchange = () => { prefs.currency = $('curSel').value; savePrefs(); paintCurrency(); render(); };
 
 if (prefs.sellPct != null) $('sellPct').value = prefs.sellPct;
+if (prefs.incPct != null) $('incPct').value = prefs.incPct;
+let incT; $('incPct').addEventListener('input', () => { clearTimeout(incT); incT = setTimeout(() => { const v = $('incPct').value; prefs.incPct = v === '' ? null : Math.max(0, Math.min(100, Number(v))); savePrefs(); render(); }, 150); });
 let sellT; $('sellPct').addEventListener('input', () => { clearTimeout(sellT); sellT = setTimeout(() => { const v = $('sellPct').value; prefs.sellPct = v === '' ? null : Math.max(0, Math.min(200, Number(v))); savePrefs(); render(); }, 150); });
 
 /* ---------- CSV export ---------- */
@@ -1090,14 +1162,14 @@ $('exportBtn').onclick = async () => {
   const rows = [...CAT.sets.filter(owned), ...CAT.figs.filter(owned)];
   if (!rows.length) { toast('Tick the sets and minifigures you own first, then export.'); return; }
   const pct = Number(prefs.sellPct), withPct = prefs.sellPct != null && prefs.sellPct !== '' && pct > 0;
-  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Film / Series', 'Year', 'Pieces', `Used ${cur()}`, `New ${cur()}`, ...(withPct ? [`Used at ${pct}%`, `New at ${pct}%`] : [])];
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Film / Series', 'Year', 'Pieces', 'Condition', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : [])];
   const at = v => v == null ? '' : Math.round(v * pct) / 100;
   const body = rows.map(x => {
-    const s = info(x.n), u = toLocal(s.used), nw = toLocal(s.new);
-    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.k === 's' ? x.film : (x.films || []).join('; '), x.year, x.pieces, u, nw, ...(withPct ? [at(u), at(nw)] : [])];
+    const s = info(x.n), u = toLocal(s.used), nw = toLocal(s.new), v = toLocal(valueOf(x));
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.k === 's' ? x.film : (x.films || []).join('; '), x.year, x.pieces, COND[condOf(x)], u, nw, v, ...(withPct ? [at(v)] : [])];
   });
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
-  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', sumCol(9), sumCol(10), ...(withPct ? [sumCol(11), sumCol(12)] : [])];
+  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), sumCol(11), sumCol(12), ...(withPct ? [sumCol(13)] : [])];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   const name = `brickcollect-my-collection-${new Date().toISOString().slice(0, 10)}.csv`;
   try {
