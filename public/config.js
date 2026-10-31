@@ -11,7 +11,7 @@ window.BC_CONFIG = {
   // "Buy" buttons. {num} is the set number (75192 for LEGO 75192-1), {name} the set name.
   // Swap in your affiliate links when you have them; a brand with no url shows no Buy button.
   buyLinks: {
-    LEGO:       { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
+    LEGO:       { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/product/{num}' },
     // product: exact product page ({path} is the set's store address, saved nightly). url: search page when the address isn't known yet.
     LumiBricks: { label: 'LU', title: 'Buy at LumiBricks', product: 'https://www.lumibricks.com{path}?ref=opizuyuw', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
     Pantasy:    { label: 'PA', title: 'Buy at Pantasy',    product: 'https://pantasy.com{path}?ref=fsolyowf',          url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
