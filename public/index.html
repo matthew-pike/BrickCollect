@@ -333,7 +333,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
       </table>
     </div>
     <div class="empty" id="empty"><h3>Loading the catalog…</h3></div>
-    <div class="foot" id="foot" hidden><span id="footCount"></span><button class="btn" id="more">Show 200 more</button><span id="footHint">Click a set to see its minifigures · click a price, subtheme or film to change it</span></div>
+    <div class="foot" id="foot" hidden><span id="footCount"></span><button class="btn" id="more">Show 200 more</button><span id="footHint">Click a set to see its minifigures · click a price or subtheme to change it</span></div>
   </section>
 </main>
 <footer class="foot-site">
@@ -675,7 +675,7 @@ function thumb(x) {
 const COLS = () => [
   { label: '<input type="checkbox" class="chk" id="selAll" aria-label="Mark everything in view as owned">' }, { label: 'Image' },
   { key: 'name', label: kind === 'sets' ? 'Set name' : 'Minifigure' }, { key: 'cond', label: 'Condition' },
-  { key: 'brand', label: 'Brand' }, { key: 'sub', label: 'Subtheme' }, { key: 'film', label: 'Film / Series' },
+  { key: 'brand', label: 'Brand' }, { key: 'sub', label: 'Subtheme' },
   { key: 'n', label: kind === 'sets' ? 'Set #' : 'Rebrickable #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BrickLink #' }] : []), { key: 'year', label: kind === 'sets' ? 'Year' : 'First year' },
   { key: 'pieces', label: 'Pieces', cls: 'num' },
   { key: 'used', label: `Used ${cur()}`, cls: 'num' }, { key: 'new', label: `New ${cur()}`, cls: 'num' },
@@ -796,7 +796,6 @@ function render() {
       <td>${condCell(x)}</td>
       <td class="muted">${x.brand}</td>
       <td class="sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}</td>
-      <td>${filmCell(x)}</td>
       <td class="mono">${esc(x.disp || x.n)}</td>${x.k === 'm' ? `<td>${blCell(x)}</td>` : ''}
       <td class="muted">${x.year ?? ''}</td>
       <td class="num">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
