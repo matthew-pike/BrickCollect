@@ -1,7 +1,8 @@
 // Daily: fetch retail prices from brands' own Shopify stores (LumiBricks and Pantasy) and save them
 // as the "new" price for those sets, converted to AUD. Sets the store sells that aren't in
 // BrickCollect yet are added to that brand's list (name and number; theme left as "Unsorted").
-// Each set's exact product address is saved too, so the site's Buy button links straight to it.
+// Each set's exact product address is saved too, so the site's Buy button links straight to it,
+// along with the store's product photo and the series it belongs to (as the set's theme).
 //
 // Shopify stores publish their product list at /products.json and the store currency at /cart.js.
 // Product addresses end in the set number (e.g. /products/edinburgh-corner-15021).
@@ -59,7 +60,7 @@ export async function updateBrand({ brand, shop, series = [] }, rates) {
   const cat = catRows?.[0]?.data || { brand, items: {} };
   const items = { ...(cat.items || {}) };
   const updates = new Map(), now = new Date().toISOString();
-  let added = 0, priced = 0, linked = 0, themed = 0;
+  let added = 0, priced = 0, linked = 0, themed = 0, pictured = 0;
   for (const p of products) {
     const num = numFromHandle(p.handle);
     if (!num) continue;
@@ -68,6 +69,13 @@ export async function updateBrand({ brand, shop, series = [] }, rates) {
     const path = `/products/${p.handle}`;
     if (items[num].url !== path) { items[num] = { ...items[num], url: path }; linked++; }
     // Set the theme from the store's series, unless you've set one yourself (themeAuto marks ones set here).
+    // Product photo from the store, unless you've set a picture yourself (imgAuto marks ones set here).
+    const src = p.images?.[0]?.src || p.image?.src;
+    if (src) {
+      const img = src.replace(/^\/\//, 'https://') + (src.includes('?') ? '&' : '?') + 'width=640';
+      const cur = items[num];
+      if (/^https:\/\//.test(img) && cur.img !== img && (!cur.img || cur.imgAuto)) { items[num] = { ...cur, img, imgAuto: true }; pictured++; }
+    }
     const ser = seriesOf.get(p.handle), it = items[num];
     if (ser && it.theme !== ser && (!it.theme || it.theme === 'Unsorted' || it.themeAuto)) { items[num] = { ...it, theme: ser, themeAuto: true }; themed++; }
     if (prices.length) {
@@ -76,9 +84,9 @@ export async function updateBrand({ brand, shop, series = [] }, rates) {
       priced++;
     }
   }
-  if (added || linked || themed) await upsertShared('catalog', brand, { ...cat, brand, items, updatedAt: Date.now() });
+  if (added || linked || themed || pictured) await upsertShared('catalog', brand, { ...cat, brand, items, updatedAt: Date.now() });
   await savePrices(updates);
-  return { brand, currency, products: products.length, priced, added, linked, themed };
+  return { brand, currency, products: products.length, priced, added, linked, themed, pictured };
 }
 
 export default async () => {

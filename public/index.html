@@ -1194,6 +1194,7 @@ $('addPanel').addEventListener('submit', e => {
   const prev = d.items[num] || {}, theme = $('aTheme').value.trim() || 'Unsorted';
   // Keep fields the daily store job saves (product address); a theme you change by hand is yours from then on.
   d.items = { ...d.items, [num]: { ...prev, themeAuto: !!prev.themeAuto && theme === prev.theme, name, theme, sub: $('aSub').value.trim(), year: num_($('aYear').value), pieces: num_($('aPieces').value), img: /^https:\/\//.test($('aImg').value.trim()) ? $('aImg').value.trim() : '' } };
+  d.items[num].imgAuto = !!prev.imgAuto && d.items[num].img === prev.img;
   catDocs.set(id, { ...d, brand: d.brand || brand }); applyExtras(); render(); saveCat(id);
   toast(editingSet ? 'Saved' : `Added ${name}`);
   if (editingSet) $('addPanel').hidden = true; else { $('aNum').value = ''; $('aName').value = ''; $('aPieces').value = ''; $('aImg').value = ''; $('aNum').focus(); }
