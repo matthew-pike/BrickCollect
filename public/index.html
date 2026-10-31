@@ -193,16 +193,10 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .star[aria-pressed="true"]{color:var(--stud)}
 .star:focus-visible{outline:2px solid var(--accent)}
 .condchip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px 3px 9px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid;white-space:nowrap;background:transparent}
-.condchip::after{content:"";width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:4px solid currentColor;opacity:.7}
 .condchip.c-new{color:var(--good);border-color:color-mix(in srgb,var(--good) 50%,transparent);background:color-mix(in srgb,var(--good) 10%,transparent)}
 .condchip.c-used{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,transparent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .condchip.c-used-inc{color:var(--stud);border-color:color-mix(in srgb,var(--stud) 55%,transparent);background:color-mix(in srgb,var(--stud) 10%,transparent)}
 .condchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.condmenu{position:fixed;z-index:30;background:var(--panel);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:5px;display:flex;flex-direction:column;min-width:200px}
-.condmenu button{all:unset;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:13px;display:flex;flex-direction:column;gap:1px}
-.condmenu button small{color:var(--muted);font-size:11.5px}
-.condmenu button:hover,.condmenu button:focus-visible{background:var(--panel-2)}
-.condmenu button[aria-checked="true"]{color:var(--accent);font-weight:500}
 .buy{background:var(--stud);border-color:var(--stud);color:#1a1300;font-weight:600}
 .buy:hover{filter:brightness(1.05)}
 .acct{height:34px;padding:0 12px}
@@ -381,11 +375,6 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
   </div>
   <button class="icon-btn dlg-x" type="button" id="authClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
 </dialog>
-<div class="condmenu" id="condMenu" role="menu" aria-label="Condition" hidden>
-  <button role="menuitemradio" data-setcond="new">New<small>Sealed or unbuilt, valued at the new price</small></button>
-  <button role="menuitemradio" data-setcond="used">Used, complete<small>Built, with all parts, valued at the used price</small></button>
-  <button role="menuitemradio" data-setcond="used-inc">Used, incomplete<small>Missing parts, valued at a share of the used price</small></button>
-</div>
 <datalist id="subNames"></datalist>
 <datalist id="filmNames"></datalist>
 <datalist id="brandNames"></datalist>
@@ -636,7 +625,7 @@ const fromSet = x => x.k === 'm' && !owned(x) && x.so.some(owned);
 const has = x => owned(x) || fromSet(x);
 const COND = { new: 'New', used: 'Used (complete)', 'used-inc': 'Used (incomplete)' };
 const COND_SHORT = { new: 'New', used: 'Used', 'used-inc': 'Incomplete' };
-const condCell = x => owned(x) ? `<button class="condchip c-${condOf(x)}" data-condmenu="${esc(x.n)}" aria-haspopup="menu" title="${COND[condOf(x)]}. Click to change">${COND_SHORT[condOf(x)]}</button>` : fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : '';
+const condCell = x => owned(x) ? `<button class="condchip c-${condOf(x)}" data-condmenu="${esc(x.n)}" title="${COND[condOf(x)]}. Click to switch: New → Used → Incomplete" aria-label="Condition: ${COND[condOf(x)]}. Click to change">${COND_SHORT[condOf(x)]}</button>` : fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : '';
 const condOf = x => (mine.get(x.n) || {}).cond || 'used';
 const incPct = () => { const v = Number(prefs.incPct); return prefs.incPct != null && prefs.incPct !== '' && isFinite(v) ? v : 60; };
 // What an owned item is worth at its condition, in AUD (null when unpriced).
@@ -648,22 +637,6 @@ function valueOf(x) {
 }
 const canCurate = () => isOwner && !!db;
 function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond: prefs.lastCond, incPct: prefs.incPct, currency: prefs.currency, sellPct: prefs.sellPct, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value } }); }
-
-/* ---------- condition menu ---------- */
-function openCondMenu(btn) {
-  const m = $('condMenu'), n = btn.dataset.condmenu, c = condOf({ n });
-  m.dataset.n = n;
-  m.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.setcond === c)));
-  m.hidden = false;
-  const r = btn.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
-  m.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
-  m.style.top = (r.bottom + h + 8 > innerHeight ? r.top - h - 6 : r.bottom + 6) + 'px';
-  (m.querySelector('[aria-checked="true"]') || m.querySelector('button')).focus();
-}
-function closeCondMenu() { $('condMenu').hidden = true; }
-document.addEventListener('pointerdown', e => { if (!$('condMenu').hidden && !e.target.closest('#condMenu,[data-condmenu]')) closeCondMenu(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('condMenu').hidden) closeCondMenu(); });
-addEventListener('scroll', () => { if (!$('condMenu').hidden) closeCondMenu(); }, { passive: true });
 
 /* ---------- buy links (affiliate links when set up) ----------
    Each brand has a link template; {num} is the set number (75192 for LEGO 75192-1) and {name} the set name.
@@ -865,8 +838,7 @@ document.addEventListener('click', e => {
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
   if (t.dataset.kind) { kind = t.dataset.kind; limit = PAGE; themeOptions(); savePrefs(); render(); return; }
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
-  if (t.dataset.condmenu) { openCondMenu(t); return; }
-  if (t.dataset.setcond) { const n = $('condMenu').dataset.n; closeCondMenu(); if (n) setInfo(n, { cond: t.dataset.setcond }); return; }
+  if (t.dataset.condmenu) { const order = ['new', 'used', 'used-inc'], n = t.dataset.condmenu, c = condOf({ n }); setInfo(n, { cond: order[(order.indexOf(c) + 1) % order.length] }); requestAnimationFrame(() => document.querySelector(`[data-condmenu="${CSS.escape(n)}"]`)?.focus()); return; }
   if (t.dataset.want) { setInfo(t.dataset.want, { wanted: !wanted({ n: t.dataset.want }) }); return; }
   if (t.dataset.view) { listView = t.dataset.view; limit = PAGE; savePrefs(); render(); return; }
   if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
