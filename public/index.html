@@ -169,6 +169,8 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .foot-row{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap}
 .foot-brand b{color:var(--fg);font-weight:700}
 .foot-links{display:flex;gap:8px 20px;flex-wrap:wrap}
+.foot-aob{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:baseline}
+.foot-label{color:var(--fg);font-weight:500}
 .foot-site a{color:var(--accent);text-decoration:none}
 .foot-site a:hover{text-decoration:underline;text-underline-offset:3px}
 .foot-src{margin:0;display:flex;gap:6px 18px;flex-wrap:wrap;font-size:12.5px}
@@ -355,9 +357,10 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
   <div class="foot-row">
     <div class="foot-brand"><b>BrickCollect</b> <span class="muted">is an Art of Bricks project.</span></div>
     <nav class="foot-links" aria-label="The Art of Bricks">
-      <a href="https://www.youtube.com/@TheArtofBricks" target="_blank" rel="noopener">The Art of Bricks on YouTube</a>
-      <a href="https://store.bricklink.com/TheArtofBricks#/shop" target="_blank" rel="noopener">Our BrickLink store</a>
-      <a href="https://www.instagram.com/the_artofbricks/" target="_blank" rel="noopener">Instagram</a>
+      <span class="foot-aob"><span class="foot-label">The Art of Bricks:</span>
+        <a href="https://www.youtube.com/@TheArtofBricks" target="_blank" rel="noopener">YouTube</a>
+        <a href="https://store.bricklink.com/TheArtofBricks#/shop" target="_blank" rel="noopener">BrickLink Store</a>
+        <a href="https://www.instagram.com/the_artofbricks/" target="_blank" rel="noopener">Instagram</a></span>
       <a href="/privacy.html">Privacy</a>
       <a href="#" id="footHome">Back to top</a>
     </nav>
