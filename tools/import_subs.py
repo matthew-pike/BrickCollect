@@ -30,6 +30,10 @@ for f in sys.argv[2:]:
         else: theme, sub = L[i + 2].strip(), ''
         num = m.group(1) if '-' in m.group(1) else m.group(1) + '-1'
         found[num] = (m.group(2), theme, sub)
+# Same subtheme spelled differently (e.g. MicroFighters / Microfighters): use the most common spelling.
+spell = collections.Counter(v[2] for v in found.values() if v[2]); best = {}
+for k, n in spell.most_common(): best.setdefault(k.lower(), k)
+found = {k: (a, t, best.get(s.lower(), s)) for k, (a, t, s) in found.items()}
 c = json.load(open(CAT))
 th = {t[0]: t for t in c['themes']}
 def chain(i):

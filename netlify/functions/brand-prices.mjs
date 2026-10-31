@@ -7,8 +7,16 @@
 // Product addresses end in the set number (e.g. /products/edinburgh-corner-15021).
 import { env, sb, upsertShared, savePrices } from '../lib/common.mjs';
 
+// series: the store's collections that are product lines, in priority order (a set in two takes the first).
+// Their names become the set's theme on BrickCollect. Cross-cutting ones (X Series, Vehicle) come last.
 const BRANDS = [
-  { brand: 'LumiBricks', shop: 'https://www.lumibricks.com' },
+  { brand: 'LumiBricks', shop: 'https://www.lumibricks.com', series: [
+    ['blade-runner-2049', 'Blade Runner 2049'], ['cyberpunk', 'Cyberpunk Neoncity'], ['town-life', 'Town Life'],
+    ['street-fusion', 'Street Fusion'], ['lumibrickscanvas', 'LumiBricks Canvas'], ['the-old-west', 'The Old West'],
+    ['retro-house', 'Retro House'], ['middle-ages', 'Middle Ages'], ['steampunk-world', 'Steampunk World'],
+    ['road-trip', 'Road Trip'], ['vacation', 'Vacation'], ['farm-life', 'Farm Life'],
+    ['x-series', 'X Series'], ['vehicle', 'Vehicle'],
+  ] },
   { brand: 'Pantasy', shop: 'https://pantasy.com' },
 ];
 
@@ -22,25 +30,36 @@ async function fetchJson(url) {
   return res.json();
 }
 
-export async function updateBrand({ brand, shop }, rates) {
+async function allProducts(url) {
+  const out = [];
+  for (let page = 1; page <= 20; page++) {
+    const { products: list } = await fetchJson(`${url}/products.json?limit=250&page=${page}`);
+    if (!list?.length) break;
+    out.push(...list);
+    if (list.length < 250) break;
+  }
+  return out;
+}
+
+export async function updateBrand({ brand, shop, series = [] }, rates) {
   let currency = 'USD';
   try { currency = (await fetchJson(`${shop}/cart.js`)).currency || currency; } catch { /* keep default */ }
   const perAud = currency === 'AUD' ? 1 : rates?.[currency];
   if (!perAud) throw new Error(`No exchange rate for ${currency}`);
 
-  const products = [];
-  for (let page = 1; page <= 20; page++) {
-    const { products: list } = await fetchJson(`${shop}/products.json?limit=250&page=${page}`);
-    if (!list?.length) break;
-    products.push(...list);
-    if (list.length < 250) break;
+  const products = await allProducts(shop);
+  // Which series (theme) each product belongs to: the first matching collection in the brand's list.
+  const seriesOf = new Map();
+  for (const [handle, name] of series) {
+    try { for (const p of await allProducts(`${shop}/collections/${handle}`)) if (!seriesOf.has(p.handle)) seriesOf.set(p.handle, name); }
+    catch (e) { console.log(`brand-prices: ${brand} series ${handle} skipped:`, e.message); }
   }
 
   const catRows = await sb(`shared_docs?select=data&collection=eq.catalog&id=eq.${encodeURIComponent(brand)}`);
   const cat = catRows?.[0]?.data || { brand, items: {} };
   const items = { ...(cat.items || {}) };
   const updates = new Map(), now = new Date().toISOString();
-  let added = 0, priced = 0, linked = 0;
+  let added = 0, priced = 0, linked = 0, themed = 0;
   for (const p of products) {
     const num = numFromHandle(p.handle);
     if (!num) continue;
@@ -48,15 +67,18 @@ export async function updateBrand({ brand, shop }, rates) {
     if (!items[num]) { items[num] = { name: cleanName(p.title, num), theme: 'Unsorted', sub: '', year: null, pieces: null, img: '' }; added++; }
     const path = `/products/${p.handle}`;
     if (items[num].url !== path) { items[num] = { ...items[num], url: path }; linked++; }
+    // Set the theme from the store's series, unless you've set one yourself (themeAuto marks ones set here).
+    const ser = seriesOf.get(p.handle), it = items[num];
+    if (ser && it.theme !== ser && (!it.theme || it.theme === 'Unsorted' || it.themeAuto)) { items[num] = { ...it, theme: ser, themeAuto: true }; themed++; }
     if (prices.length) {
       const aud = Math.round(Math.min(...prices) / perAud * 100) / 100;
       updates.set(`${brand}:${num}`, { new: aud, pricedAt: now, checkedAt: now, priceSource: brand });
       priced++;
     }
   }
-  if (added || linked) await upsertShared('catalog', brand, { ...cat, brand, items, updatedAt: Date.now() });
+  if (added || linked || themed) await upsertShared('catalog', brand, { ...cat, brand, items, updatedAt: Date.now() });
   await savePrices(updates);
-  return { brand, currency, products: products.length, priced, added, linked };
+  return { brand, currency, products: products.length, priced, added, linked, themed };
 }
 
 export default async () => {
