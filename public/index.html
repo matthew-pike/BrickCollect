@@ -201,6 +201,8 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .condchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .buy{background:var(--stud);border-color:var(--stud);color:#1a1300;font-weight:600}
 .buy:hover{filter:brightness(1.05)}
+.buy-lego{background:#e3000b;border-color:#e3000b;color:#fff;font-weight:700;letter-spacing:.02em}
+.buy-lego:hover{filter:brightness(1.08)}
 .acct{height:34px;padding:0 12px}
 .dlg{border:1px solid var(--line-2);border-radius:12px;background:var(--panel);color:var(--fg);padding:22px;width:min(420px,calc(100vw - 32px))}
 .dlg::backdrop{background:rgba(5,10,20,.55)}
@@ -645,14 +647,14 @@ function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond
    Each brand has a link template; {num} is the set number (75192 for LEGO 75192-1) and {name} the set name.
    On the website these come from buyLinks in config.js, so affiliate links can be swapped in without code changes. */
 const BUY = Object.assign({
-  LEGO: { label: 'Buy', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
+  LEGO: { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
 function buyLink(x) {
   if (x.k !== 's') return '';
   const b = BUY[x.brand]; if (!b || !b.url) return '';
   const num = x.brand === 'LEGO' ? x.n.replace(/-\d+$/, '') : (x.disp || x.n);
   const href = b.url.replace(/\{num\}/g, encodeURIComponent(num)).replace(/\{name\}/g, encodeURIComponent(x.name));
-  return `<a class="btn mini buy" href="${esc(href)}" target="_blank" rel="sponsored noopener" title="${esc(b.title || 'Buy')}">${esc(b.label || 'Buy')}</a>`;
+  return `<a class="btn mini buy buy-${esc(String(x.brand).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}" href="${esc(href)}" target="_blank" rel="sponsored noopener" title="${esc(b.title || 'Buy')}">${esc(b.label || 'Buy')}</a>`;
 }
 
 /* ---------- thumbnails ---------- */
