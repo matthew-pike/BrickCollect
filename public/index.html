@@ -211,6 +211,8 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .totop:hover{border-color:var(--accent);color:var(--accent)}
 .totop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .acct{height:34px;padding:0 12px}
+.acct .short{display:none}
+@media (max-width:640px){.acct .full{display:none}.acct .short{display:inline}.acct{padding:0;width:34px;border-radius:50%;font-weight:600}.top .wrap{flex-wrap:wrap}.brand{flex:1 1 auto}}
 .dlg{border:1px solid var(--line-2);border-radius:12px;background:var(--panel);color:var(--fg);padding:22px;width:min(420px,calc(100vw - 32px))}
 .dlg::backdrop{background:rgba(5,10,20,.55)}
 .dlg h2{margin:0 0 8px;font-size:18px;font-weight:500;padding-right:36px}
@@ -281,8 +283,8 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 
   <section class="filters" aria-label="Filters">
     <div class="field"><label for="fiBrand">Brand</label><select id="fiBrand"><option value="">All brands</option><option value="LEGO">LEGO</option></select></div>
-    <div class="field"><label for="fiTheme">Theme</label><select id="fiTheme"><option value="">Please select a theme</option></select></div>
-    <div class="field"><label for="fiSub">Subtheme</label><select id="fiSub"><option value="">Please select a theme</option></select></div>
+    <div class="field"><label for="fiTheme">Theme</label><select id="fiTheme"><option value="">All themes</option></select></div>
+    <div class="field"><label for="fiSub">Subtheme</label><select id="fiSub"><option value="">Pick a theme first</option></select></div>
     <div class="field"><label for="fiSet">Set</label><select id="fiSet"><option value="all">All sets</option><option value="owned">Owned</option><option value="missing">Still needed</option></select></div>
     <div class="field"><label for="fiFilm">Film / Series</label><select id="fiFilm"><option value="">All</option></select></div>
     <div class="field"><label for="fiYear">Year</label><select id="fiYear"><option value="">All</option></select></div>
@@ -587,7 +589,7 @@ function themeOptions() {
   brandOptions();
   const list = kind === 'sets' ? CAT.sets : CAT.figs, counts = new Map();
   for (const x of list) if (!fi.brand.value || x.brand === fi.brand.value) for (const t of (x.k === 's' ? [x.theme] : x.themes)) counts.set(t, (counts.get(t) || 0) + 1);
-  fill(fi.theme, 'Please select a theme', [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([t, c]) => [t, `${t} (${c.toLocaleString()})`]), fi.theme.value || saved.theme);
+  fill(fi.theme, 'All themes', [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([t, c]) => [t, `${t} (${c.toLocaleString()})`]), fi.theme.value || saved.theme);
   subOptions(saved.sub); filmOptions(saved.film); saved.film = undefined;
   const years = new Set(); for (const x of list) { if (x.k === 's') years.add(x.year); else x.years.forEach(y => years.add(y)); }
   fill(fi.year, 'All', [...years].sort((a, b) => b - a).map(y => [String(y), String(y)]), fi.year.value || saved.year);
@@ -601,7 +603,7 @@ function filmOptions(keep) {
   fill(fi.film, 'All', opts, keep ?? fi.film.value);
 }
 function subOptions(keep) {
-  if (!fi.theme.value) { fill(fi.sub, 'Please select a theme', [], ''); return; }
+  if (!fi.theme.value) { fill(fi.sub, 'Pick a theme first', [], ''); return; }
   const list = kind === 'sets' ? CAT.sets : CAT.figs, counts = new Map();
   for (const x of list) {
     if (x.k === 's') { if (x.theme === fi.theme.value && x.sub) counts.set(x.sub, (counts.get(x.sub) || 0) + 1); }
@@ -711,11 +713,11 @@ function render() {
   const scope = isScoped ? list.filter(inScope) : list.filter(has);
   const ownedIn = scope.filter(owned), hasIn = scope.filter(has), needed = scope.filter(x => !has(x));
   const ownSets = CAT.sets.filter(owned).length, ownFigs = CAT.figs.filter(has).length;
-  $('cSets').textContent = (kind === 'sets' ? (isScoped ? scope.length : ownSets) : (scopedFor('sets') ? CAT.sets.filter(inScope).length : ownSets)).toLocaleString();
+  $('cSets').textContent = (scopedFor('sets') ? CAT.sets.filter(inScope).length : CAT.sets.filter(x => has(x) || wanted(x)).length).toLocaleString();
   let focusSet = focus ? CAT.sets.find(x => x.n === focus) : null;
   if (focus && (!focusSet || (scopedFor('sets') ? !inScope(focusSet) : !has(focusSet)))) { focus = null; savePrefs(); return render(); }
   const focusFigs = focusSet ? CAT.figs.filter(f => f.sets.has(focus)).length : 0;
-  $('cFigs').textContent = (focusSet ? focusFigs : kind === 'figs' ? (isScoped ? scope.length : ownFigs) : (scopedFor('figs') ? CAT.figs.filter(inScope).length : ownFigs)).toLocaleString();
+  $('cFigs').textContent = (focusSet ? focusFigs : scopedFor('figs') ? CAT.figs.filter(inScope).length : CAT.figs.filter(x => has(x) || wanted(x)).length).toLocaleString();
   const fb = $('focusbar'); fb.hidden = !focusSet;
   if (focusSet) fb.innerHTML = kind === 'sets'
     ? `<span>Selected <b>${esc(focusSet.name)}</b> <span class="mono muted">${esc(focusSet.n)}</span> · ${focusFigs ? `${focusFigs} minifigure${focusFigs > 1 ? 's' : ''}` : 'no minifigures'}</span><span class="spacer"></span>${focusFigs ? '<button class="btn mini primary" data-kind="figs">Show minifigures</button>' : ''}<button class="btn mini" data-clearfocus="1">Clear</button>`
@@ -732,10 +734,10 @@ function render() {
   $('sRemain').textContent = isScoped ? needed.length.toLocaleString() : '—';
   $('sRemainS').textContent = isScoped ? 'Needed to reach 100%' : 'Pick a theme to see the gap';
   const unU = needed.filter(x => info(x.n).used == null).length, unN = needed.filter(x => info(x.n).new == null).length;
-  $('sNeedU').innerHTML = `${money(isScoped ? sum(needed, 'used') : 0)} <small>${cur()}</small>`;
-  $('sNeedN').innerHTML = `${money(isScoped ? sum(needed, 'new') : 0)} <small>${cur()}</small>`;
-  $('sNeedUs').textContent = isScoped && unU ? `${unU.toLocaleString()} still unpriced` : 'From the prices you set';
-  $('sNeedNs').textContent = isScoped && unN ? `${unN.toLocaleString()} still unpriced` : 'From the prices you set';
+  $('sNeedU').innerHTML = isScoped ? `${money(sum(needed, 'used'))} <small>${cur()}</small>` : '—';
+  $('sNeedN').innerHTML = isScoped ? `${money(sum(needed, 'new'))} <small>${cur()}</small>` : '—';
+  $('sNeedUs').textContent = !isScoped ? 'Pick a theme to see the cost' : unU ? `${unU.toLocaleString()} still unpriced` : 'To finish, at used prices';
+  $('sNeedNs').textContent = !isScoped ? 'Pick a theme to see the cost' : unN ? `${unN.toLocaleString()} still unpriced` : 'To finish, at new prices';
   const vc = ownedIn.reduce((t, x) => t + (valueOf(x) || 0), 0), vu = sum(ownedIn, 'used'), vn = sum(ownedIn, 'new');
   $('sValU').innerHTML = `${money(vc)} <small>${cur()}</small>`;
   const byCond = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => byCond[condOf(x)]++);
@@ -1228,7 +1230,8 @@ function openAuth() {
 }
 async function paintAccount() {
   const email = uid ? await BC.user.email() : null;
-  $('acctBtn').textContent = email ? email.split('@')[0].slice(0, 14) : 'Sign in';
+  const nm = email ? email.split('@')[0] : '';
+  $('acctBtn').innerHTML = email ? `<span class="full">${esc(nm.slice(0, 14))}</span><span class="short" aria-hidden="true">${esc(nm.slice(0, 1).toUpperCase())}</span>` : 'Sign in';
   $('acctBtn').title = email ? `Signed in as ${email}` : 'Sign in to save your collection to a free account';
   $('acctEmail').textContent = email || '';
   $('acctBtn').hidden = !window.BC?.auth?.available;
