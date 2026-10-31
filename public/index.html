@@ -127,6 +127,31 @@ select.set-on{border-color:var(--accent)}
 .board-head.stuck{box-shadow:0 8px 16px -10px rgba(0,0,0,.35)}
 .status button{margin-left:8px}
 .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.timeline{padding:4px 0 18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.tl-head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.tl-frs{display:flex;flex-wrap:wrap;gap:6px}
+.tl-note{font-size:12px;color:var(--muted)}
+.tl-strip{list-style:none;margin:0;padding:6px 2px 10px;display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;position:relative}
+.tl-strip li{flex:0 0 172px;scroll-snap-align:start;position:relative}
+.tl-strip li::before{content:"";position:absolute;left:-10px;right:0;top:19px;height:2px;background:var(--line-2);z-index:0}
+.tl-strip li:first-child::before{left:50%}
+.tl-card{all:unset;box-sizing:border-box;position:relative;z-index:1;cursor:pointer;width:100%;height:100%;display:flex;flex-direction:column;gap:4px;padding:10px 12px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.tl-card:hover{border-color:var(--accent)}
+.tl-card.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
+.tl-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tl-card.none{opacity:.6}
+.tl-card b{font-size:13.5px;font-weight:500;line-height:1.25;color:var(--fg)}
+.tl-era{align-self:flex-start;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent);border-radius:999px;padding:2px 8px;font-weight:500}
+.tl-kind{font-size:11.5px;color:var(--muted)}
+.tl-count{font-size:12px;color:var(--fg);margin-top:auto;font-variant-numeric:tabular-nums}
+.tl-bar{height:4px;border-radius:2px;background:var(--line);overflow:hidden}.tl-bar i{display:block;height:100%;background:var(--good)}
+.tl-detail{display:grid;grid-template-columns:minmax(0,1fr) minmax(200px,auto);gap:14px 24px;align-items:center;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:14px 16px}
+.tl-detail h3{margin:2px 0 4px;font-size:18px;font-weight:500}
+.tl-detail p{margin:0;color:var(--muted);font-size:13.5px;max-width:62ch}
+.tl-dstats{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.tl-dstats b{font-size:22px;font-weight:500;font-variant-numeric:tabular-nums}
+.tl-dstats span{font-size:12px;color:var(--muted)}
+@media (max-width:640px){.tl-detail{grid-template-columns:1fr}.tl-strip li{flex-basis:150px}}
 .tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px}
 .tab{border:0;background:transparent;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-weight:500;font-size:13px}
 .tab[aria-selected="true"]{background:var(--panel-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-2)}
@@ -370,6 +395,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
       <div class="tabs" role="tablist">
         <button class="tab" role="tab" id="tabFigs" data-kind="figs" aria-selected="false">Minifigures <b id="cFigs">0</b></button>
         <button class="tab" role="tab" id="tabSets" data-kind="sets" aria-selected="true">Sets <b id="cSets">0</b></button>
+        <button class="tab" role="tab" id="tabTl" data-tl="1" aria-selected="false">Timeline</button>
       </div>
       <div class="pills" role="group" aria-label="Show">
         <button class="pill" data-view="all" aria-pressed="true">All</button>
@@ -409,7 +435,8 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     <div class="focusbar" id="focusbar" hidden></div>
     <div class="status" id="status" hidden></div>
     </div>
-    <div class="table-scroll">
+    <div class="timeline" id="timeline" hidden></div>
+    <div class="table-scroll" id="tableScroll">
       <table>
         <thead><tr id="headRow"></tr></thead>
         <tbody id="rows"></tbody>
@@ -706,9 +733,10 @@ function subOptions(keep) {
   }
   fill(fi.sub, counts.size ? 'All subthemes' : 'No subthemes', [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([s, c]) => [s, `${s} (${c.toLocaleString()})`]), keep ?? fi.sub.value);
 }
-const scopedFor = k => !!((k === 'figs' && focus) || fi.brand.value || fi.theme.value || fi.film.value || fi.year.value || fi.set.value !== 'all' || $('q').value.trim());
+const scopedFor = k => !!((k === 'figs' && focus) || tlFilter || fi.brand.value || fi.theme.value || fi.film.value || fi.year.value || fi.set.value !== 'all' || $('q').value.trim());
 const scoped = () => scopedFor(kind);
 function setPasses(s, q) {
+  if (tlFilter) { const fr = TIMELINES.find(f => f.id === tlFilter.fr); if (fr && !tlMatches(fr, fr.entries[tlFilter.i], s)) return false; }
   if (fi.theme.value && s.theme !== fi.theme.value) return false;
   if (fi.sub.value && s.sub !== fi.sub.value) return false;
   if (fi.film.value && (fi.film.value === '__none' ? s.tags.length > 0 : !s.tags.includes(fi.film.value))) return false;
@@ -723,7 +751,7 @@ function inScope(x) {
   if (fi.brand.value && x.brand !== fi.brand.value) return false;
   if (x.k === 's') return setPasses(x, q);
   if (focus) return x.sets.has(focus);
-  const setFilters = fi.theme.value || fi.sub.value || fi.film.value || fi.year.value;
+  const setFilters = tlFilter || fi.theme.value || fi.sub.value || fi.film.value || fi.year.value;
   if (!setFilters && !q) return true;
   if (x.so.some(s => setPasses(s, q))) return true;
   return !!q && x.key.includes(q) && (!setFilters || x.so.some(s => setPasses(s, '')));
@@ -817,6 +845,104 @@ function thumb(x) {
     : `${open}${over}<svg width="26" height="22" viewBox="0 0 26 22"><rect x="1" y="7" width="24" height="14" rx="2" fill="${c}"/><rect x="4" y="2" width="7" height="6" rx="1.5" fill="${c}"/><rect x="15" y="2" width="7" height="6" rx="1.5" fill="${c}"/><rect x="1" y="16" width="24" height="5" fill="#000" opacity=".15"/></svg>${close}`;
 }
 
+/* ---------- timelines: films and shows in story order, with the sets from each ---------- */
+// Each entry matches sets by subtheme, tag or theme name (match), or by words in the set name (kw).
+// A franchise covers its LEGO theme(s) plus any brand's sets whose name or theme mentions it (brandKw).
+const TIMELINES = [
+  { id: 'star-wars', name: 'Star Wars', themes: ['Star Wars'], brandKw: /star wars/i, unit: 'BBY / ABY', entries: [
+    { t: 'Young Jedi Adventures', k: 'Series', y: '2023–2025', era: 'About 232 BBY', match: ['Young Jedi Adventures'], d: 'Young Jedi train during the High Republic, centuries before the Skywalker saga.' },
+    { t: 'The Phantom Menace', k: 'Film', y: '1999', era: '32 BBY', match: ['Episode I', 'The Phantom Menace'], d: 'Episode I. Two Jedi find young Anakin Skywalker on Tatooine as the Trade Federation blockades Naboo.' },
+    { t: 'Attack of the Clones', k: 'Film', y: '2002', era: '22 BBY', match: ['Episode II', 'Attack of the Clones'], d: 'Episode II. A secret clone army is revealed and the Clone Wars begin at Geonosis.' },
+    { t: 'The Clone Wars', k: 'Series', y: '2008–2020', era: '22–19 BBY', match: ['The Clone Wars', 'Clone Wars'], d: 'Anakin, Obi-Wan, Ahsoka and the clone troopers fight across the galaxy.' },
+    { t: 'Revenge of the Sith', k: 'Film', y: '2005', era: '19 BBY', match: ['Episode III', 'Revenge of the Sith'], d: 'Episode III. Order 66, the fall of the Jedi and the birth of Darth Vader.' },
+    { t: 'The Bad Batch', k: 'Series', y: '2021–2024', era: '19–18 BBY', match: ['The Bad Batch', 'Bad Batch'], d: 'Clone Force 99 goes on the run as the Republic becomes the Empire.' },
+    { t: 'Jedi: Fallen Order', k: 'Game', y: '2019', era: '14 BBY', match: ['Jedi Fallen Order', 'Jedi: Fallen Order', 'Jedi Survivor'], d: 'A surviving Jedi, Cal Kestis, hides from the Empire’s Inquisitors.' },
+    { t: 'Solo', k: 'Film', y: '2018', era: '13–10 BBY', match: ['Solo', 'Solo: A Star Wars Story'], d: 'Young Han meets Chewbacca and Lando and makes the Kessel Run.' },
+    { t: 'Obi-Wan Kenobi', k: 'Series', y: '2022', era: '9 BBY', match: ['Obi-Wan Kenobi'], d: 'Obi-Wan leaves Tatooine to rescue a young Leia, and faces Vader again.' },
+    { t: 'Andor', k: 'Series', y: '2022–2025', era: '5–0 BBY', match: ['Andor'], d: 'Cassian Andor’s path from thief to rebel in the years before Rogue One.' },
+    { t: 'Rebels', k: 'Series', y: '2014–2018', era: '5–0 BBY', match: ['Rebels', 'Star Wars Rebels'], d: 'The crew of the Ghost fights the Empire from Lothal.' },
+    { t: 'Rogue One', k: 'Film', y: '2016', era: '0 BBY', match: ['Rogue One', 'Rogue One: A Star Wars Story'], d: 'Rebels steal the Death Star plans at Scarif.' },
+    { t: 'A New Hope', k: 'Film', y: '1977', era: '0 BBY', match: ['Episode IV', 'A New Hope'], d: 'Episode IV. Luke, Leia and Han destroy the Death Star.' },
+    { t: 'The Empire Strikes Back', k: 'Film', y: '1980', era: '3 ABY', match: ['Episode V', 'The Empire Strikes Back'], d: 'Episode V. Hoth, Dagobah, Cloud City and the truth about Luke’s father.' },
+    { t: 'Return of the Jedi', k: 'Film', y: '1983', era: '4 ABY', match: ['Episode VI', 'Return of the Jedi'], d: 'Episode VI. Jabba’s palace, Endor and the end of the Emperor.' },
+    { t: 'The Mandalorian', k: 'Series', y: '2019–2023', era: '9 ABY', match: ['The Mandalorian'], d: 'Din Djarin, a lone bounty hunter, protects Grogu after the fall of the Empire.' },
+    { t: 'The Book of Boba Fett', k: 'Series', y: '2021–2022', era: '9 ABY', match: ['The Book of Boba Fett'], d: 'Boba Fett claims Jabba’s old territory on Tatooine.' },
+    { t: 'Skeleton Crew', k: 'Series', y: '2024–2025', era: 'About 9 ABY', match: ['Skeleton Crew'], d: 'Four kids lost in the galaxy try to find their way home.' },
+    { t: 'The Mandalorian and Grogu', k: 'Film', y: '2026', era: 'After 9 ABY', match: ['The Mandalorian and Grogu'], d: 'Din Djarin and Grogu’s story continues on the big screen.' },
+    { t: 'Ahsoka', k: 'Series', y: '2023', era: 'About 11 ABY', match: ['Ahsoka'], d: 'Ahsoka Tano searches for Ezra Bridger and Grand Admiral Thrawn.' },
+    { t: 'Resistance', k: 'Series', y: '2018–2020', era: '34 ABY', match: ['Resistance', 'Star Wars Resistance'], d: 'A young pilot spies on the First Order for the Resistance.' },
+    { t: 'The Force Awakens', k: 'Film', y: '2015', era: '34 ABY', match: ['Episode VII', 'The Force Awakens'], d: 'Episode VII. Rey, Finn and Poe face the First Order and Kylo Ren.' },
+    { t: 'The Last Jedi', k: 'Film', y: '2017', era: '34 ABY', match: ['Episode VIII', 'The Last Jedi'], d: 'Episode VIII. Rey finds Luke on Ahch-To as the Resistance flees.' },
+    { t: 'The Rise of Skywalker', k: 'Film', y: '2019', era: '35 ABY', match: ['Episode IX', 'The Rise of Skywalker'], d: 'Episode IX. The final battle with the returned Emperor at Exegol.' },
+  ] },
+  { id: 'harry-potter', name: 'Harry Potter', themes: ['Harry Potter'], brandKw: /harry potter|hogwarts/i, entries: [
+    { t: 'Fantastic Beasts and Where to Find Them', k: 'Film', y: '2016', era: '1926', match: ['Fantastic Beasts', 'Fantastic Beasts and Where to Find Them'], d: 'Newt Scamander’s case of creatures gets loose in New York.' },
+    { t: 'The Crimes of Grindelwald', k: 'Film', y: '2018', era: '1927', match: ['The Crimes of Grindelwald', 'Crimes of Grindelwald'], d: 'Dumbledore sends Newt to Paris to stop Grindelwald.' },
+    { t: 'The Secrets of Dumbledore', k: 'Film', y: '2022', era: '1932', match: ['The Secrets of Dumbledore', 'Secrets of Dumbledore'], d: 'Dumbledore and Newt work against Grindelwald’s bid for power.' },
+    { t: 'Philosopher’s Stone', k: 'Film', y: '2001', era: '1991–92', match: ["Philosopher's Stone", "Sorcerer's Stone", 'Philosopher’s Stone', 'Sorcerer’s Stone'], d: 'Year 1. Harry arrives at Hogwarts and finds the Philosopher’s (Sorcerer’s) Stone.' },
+    { t: 'Chamber of Secrets', k: 'Film', y: '2002', era: '1992–93', match: ['Chamber of Secrets'], d: 'Year 2. A hidden chamber opens and students are petrified.' },
+    { t: 'Prisoner of Azkaban', k: 'Film', y: '2004', era: '1993–94', match: ['Prisoner of Azkaban'], d: 'Year 3. Sirius Black escapes, and the Knight Bus, Buckbeak and time-turners.' },
+    { t: 'Goblet of Fire', k: 'Film', y: '2005', era: '1994–95', match: ['Goblet of Fire'], d: 'Year 4. The Triwizard Tournament and Voldemort’s return.' },
+    { t: 'Order of the Phoenix', k: 'Film', y: '2007', era: '1995–96', match: ['Order of the Phoenix'], d: 'Year 5. Umbridge, Dumbledore’s Army and the Ministry battle.' },
+    { t: 'Half-Blood Prince', k: 'Film', y: '2009', era: '1996–97', match: ['Half-Blood Prince'], d: 'Year 6. Horcruxes and the Astronomy Tower.' },
+    { t: 'Deathly Hallows', k: 'Film', y: '2010–2011', era: '1997–98', match: ['Deathly Hallows', 'Deathly Hallows Part 1', 'Deathly Hallows Part 2'], d: 'The hunt for Horcruxes and the Battle of Hogwarts.' },
+  ] },
+  { id: 'marvel', name: 'Marvel', themes: ['Super Heroes Marvel', 'Marvel'], brandKw: /marvel|avengers/i, entries: [
+    { t: 'Captain America: The First Avenger', k: 'Film', y: '2011', era: '1943–45', match: ['Captain America: The First Avenger', 'The First Avenger'], d: 'Steve Rogers becomes Captain America in World War II.' },
+    { t: 'Captain Marvel', k: 'Film', y: '2019', era: '1995', match: ['Captain Marvel'], d: 'Carol Danvers discovers her past during the Kree–Skrull war.' },
+    { t: 'Iron Man', k: 'Films', y: '2008–2013', era: '2008–2012', match: ['Iron Man', 'Iron Man 2', 'Iron Man 3'], d: 'Tony Stark builds the suits, from the cave to the Hall of Armor.' },
+    { t: 'Thor', k: 'Films', y: '2011–2022', era: '2011–2024', match: ['Thor', 'Thor: Ragnarok', 'Thor: Love and Thunder'], d: 'Asgard, Ragnarok and the Bifrost.', kw: /\bthor\b|asgard|bifrost|ragnarok/i },
+    { t: 'The Avengers', k: 'Film', y: '2012', era: '2012', match: ['The Avengers', 'Avengers Assemble'], d: 'Earth’s mightiest heroes assemble for the Battle of New York.' },
+    { t: 'Guardians of the Galaxy', k: 'Films', y: '2014–2023', era: '2014–2026', match: ['Guardians of the Galaxy'], d: 'Star-Lord, Gamora, Drax, Rocket and Groot, the Milano and the Benatar.', kw: /guardians|milano|benatar/i },
+    { t: 'Age of Ultron', k: 'Film', y: '2015', era: '2015', match: ['Avengers: Age of Ultron', 'Age of Ultron'], d: 'The Avengers face Ultron and the battle of Sokovia.', kw: /ultron|sokovia/i },
+    { t: 'Black Panther', k: 'Films', y: '2018–2022', era: '2016–2025', match: ['Black Panther', 'Wakanda Forever'], d: 'Wakanda, T’Challa and Shuri.', kw: /black panther|wakanda/i },
+    { t: 'Spider-Man', k: 'Films', y: '2017–2021', era: '2016–2024', match: ['Spider-Man', 'Spider-Man: Homecoming', 'Spider-Man: Far From Home', 'Spider-Man: No Way Home'], d: 'Peter Parker’s MCU trilogy, from Homecoming to No Way Home.' },
+    { t: 'Infinity War and Endgame', k: 'Films', y: '2018–2019', era: '2018–2023', match: ['The Infinity Saga', 'Avengers: Infinity War', 'Avengers: Endgame', 'Infinity Saga'], d: 'Thanos, the Infinity Stones and the final battle.', kw: /thanos|infinity gauntlet|endgame|infinity war/i },
+  ] },
+  { id: 'blade-runner', name: 'Blade Runner', themes: [], brandKw: /blade runner|replicant|spinner/i, entries: [
+    { t: 'Blade Runner', k: 'Film', y: '1982', era: '2019', match: ['Blade Runner'], d: 'Rick Deckard hunts replicants in a rain-soaked Los Angeles.', kw: /blade runner(?! 2049)/i },
+    { t: 'Blade Runner 2049', k: 'Film', y: '2017', era: '2049', match: ['Blade Runner 2049'], d: 'Officer K uncovers a secret that leads him to Deckard.', kw: /2049|replicant|k's spinner/i },
+  ] },
+  { id: 'terminator', name: 'Terminator', themes: [], brandKw: /terminator|t-800|skynet/i, entries: [
+    { t: 'The Terminator', k: 'Film', y: '1984', era: '1984', match: ['The Terminator'], d: 'A cyborg assassin is sent back to 1984 to kill Sarah Connor.', kw: /the terminator\b|tech noir/i },
+    { t: 'Terminator 2: Judgment Day', k: 'Film', y: '1991', era: '1995', match: ['Terminator 2', 'Judgment Day'], d: 'A reprogrammed T-800 protects young John Connor from the T-1000.', kw: /terminator 2|judgment day|t-1000/i },
+    { t: 'Later films', k: 'Films', y: '2003–2019', era: '2004 onward', match: ['Terminator 3', 'Terminator Salvation', 'Terminator Genisys', 'Terminator: Dark Fate'], d: 'Rise of the Machines, Salvation, Genisys and Dark Fate.', kw: /salvation|genisys|dark fate|rise of the machines/i },
+  ] },
+];
+let tlOpen = false, tlId = 'star-wars', tlPick = null, tlFilter = null; // tlFilter: { fr, i } when showing one entry's sets
+const tlLow = a => (a || []).map(s => String(s).toLowerCase());
+function inFranchise(fr, s) {
+  if (fr.themes.includes(s.theme)) return true;
+  return fr.brandKw.test(`${s.name} ${s.theme} ${s.sub || ''} ${(s.tags || []).join(' ')}`);
+}
+function tlMatches(fr, e, s) {
+  if (!inFranchise(fr, s)) return false;
+  const names = tlLow(e.match), have = [s.sub, s.theme, ...(s.tags || [])].filter(Boolean).map(v => v.toLowerCase());
+  if (have.some(v => names.includes(v))) return true;
+  return !!(e.kw && e.kw.test(s.name));
+}
+function tlSetsFor(fr, e) { return CAT.sets.filter(s => tlMatches(fr, e, s)); }
+function renderTimeline() {
+  const el = $('timeline'), fr = TIMELINES.find(f => f.id === tlId) || TIMELINES[0];
+  const stats = fr.entries.map(e => { const sets = tlSetsFor(fr, e); return { sets, own: sets.filter(owned).length }; });
+  if (tlPick == null || tlPick >= fr.entries.length) tlPick = Math.max(0, stats.findIndex(s => s.sets.length));
+  const e = fr.entries[tlPick], st = stats[tlPick];
+  const brands = [...new Set(st.sets.map(s => s.brand))].map(b => `${b} ${st.sets.filter(s => s.brand === b).length}`).join(' · ');
+  el.innerHTML = `
+    <div class="tl-head"><div class="tl-frs" role="group" aria-label="Franchise">${TIMELINES.map(f => `<button class="pill" data-tlfr="${f.id}" aria-pressed="${f.id === fr.id}">${esc(f.name)}</button>`).join('')}</div>
+      <span class="tl-note">In story order${fr.unit ? ` · ${fr.unit}` : ''} <button type="button" class="tip" data-tip="Each film or show lists the sets from it across every brand, using subthemes and tags. Sets without a subtheme or tag yet won't appear here." aria-label="What is this?">i</button></span></div>
+    <ol class="tl-strip">${fr.entries.map((x, i) => { const s = stats[i], pct = s.sets.length ? Math.round(s.own / s.sets.length * 100) : 0; return `
+      <li><button class="tl-card ${i === tlPick ? 'on' : ''} ${s.sets.length ? '' : 'none'}" data-tlpick="${i}" aria-pressed="${i === tlPick}">
+        <span class="tl-era">${esc(x.era || x.y)}</span><b>${esc(x.t)}</b><span class="tl-kind">${esc(x.k)} · ${esc(x.y)}</span>
+        <span class="tl-count">${s.sets.length ? `${s.own}/${s.sets.length} sets` : 'No sets yet'}</span><span class="tl-bar"><i style="width:${pct}%"></i></span>
+      </button></li>`; }).join('')}</ol>
+    <div class="tl-detail">
+      <div class="tl-dtext"><span class="tl-kind">${esc(e.k)} · released ${esc(e.y)}${e.era ? ` · set in ${esc(e.era)}` : ''}</span><h3>${esc(e.t)}</h3><p>${esc(e.d)}</p></div>
+      <div class="tl-dstats"><b>${st.sets.length ? `${st.own} of ${st.sets.length}` : '0'}</b><span>${st.sets.length ? `sets owned${brands ? ` · ${esc(brands)}` : ''}` : 'No sets matched yet. Give sets this subtheme or tag to add them.'}</span>
+        ${st.sets.length ? `<button class="btn primary" data-tlshow="${tlPick}">Show ${st.sets.length === 1 ? 'this set' : `these ${st.sets.length} sets`}</button>` : ''}</div>
+    </div>`;
+}
+
 /* ---------- render ---------- */
 const COLS = () => [
   { label: '<input type="checkbox" class="chk" id="selAll" aria-label="Mark everything in view as owned">' }, { label: 'Image' },
@@ -832,8 +958,9 @@ const val = (x, k) => k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 
 
 function render() {
   if (!CAT) return;
-  $('tabSets').setAttribute('aria-selected', kind === 'sets');
-  $('tabFigs').setAttribute('aria-selected', kind === 'figs');
+  $('tabSets').setAttribute('aria-selected', !tlOpen && kind === 'sets');
+  $('tabFigs').setAttribute('aria-selected', !tlOpen && kind === 'figs');
+  $('tabTl').setAttribute('aria-selected', tlOpen);
   const list = kind === 'sets' ? CAT.sets : CAT.figs;
   const isScoped = scoped();
   const scope = isScoped ? list.filter(inScope) : list.filter(has);
@@ -844,7 +971,8 @@ function render() {
   if (focus && (!focusSet || (scopedFor('sets') ? !inScope(focusSet) : !has(focusSet)))) { focus = null; savePrefs(); return render(); }
   const focusFigs = focusSet ? CAT.figs.filter(f => f.sets.has(focus)).length : 0;
   $('cFigs').textContent = (focusSet ? focusFigs : scopedFor('figs') ? CAT.figs.filter(inScope).length : CAT.figs.filter(x => has(x) || wanted(x)).length).toLocaleString();
-  const fb = $('focusbar'); fb.hidden = !focusSet;
+  const fb = $('focusbar'); fb.hidden = !focusSet && !(tlFilter && !tlOpen);
+  if (!focusSet && tlFilter && !tlOpen) { const fr = TIMELINES.find(f => f.id === tlFilter.fr), e = fr?.entries[tlFilter.i]; fb.innerHTML = `<span>${kind === 'sets' ? 'Sets' : 'Minifigures'} from <b>${esc(e?.t || '')}</b> (${esc(fr?.name || '')}), across every brand</span><span class="spacer"></span><button class="btn mini" data-tlback="1">Back to timeline</button><button class="btn mini" data-tlclear="1">Clear</button>`; }
   if (focusSet) fb.innerHTML = kind === 'sets'
     ? `<span>Selected <b>${esc(focusSet.name)}</b> <span class="mono muted">${esc(focusSet.n)}</span> · ${focusFigs ? `${focusFigs} minifigure${focusFigs > 1 ? 's' : ''}` : 'no minifigures'}</span><span class="spacer"></span>${focusFigs ? '<button class="btn mini primary" data-kind="figs">Show minifigures</button>' : ''}<button class="btn mini" data-clearfocus="1">Clear</button>`
     : `<span>Minifigures in <b>${esc(focusSet.name)}</b> <span class="mono muted">${esc(focusSet.n)}</span>. Other filters are paused while a set is selected.</span><span class="spacer"></span><button class="btn mini" data-kind="sets">Back to sets</button><button class="btn mini" data-clearfocus="1">Show all minifigures</button>`;
@@ -985,8 +1113,9 @@ function render() {
   else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Tick the sets and minifigures you own and they’ll show here.</p>'; }
   else if (!rows.length) { empty.hidden = false; empty.innerHTML = '<h3>Nothing matches</h3><p>Try a different search, or reset the filters.</p>'; }
   else empty.hidden = true;
-  $('foot').hidden = !page.length;
+  $('foot').hidden = !page.length || tlOpen;
   document.querySelector('thead').hidden = !page.length;
+  $('timeline').hidden = !tlOpen; $('tableScroll').hidden = tlOpen; if (tlOpen) { empty.hidden = true; renderTimeline(); }
   $('footCount').textContent = `${page.length.toLocaleString()} of ${rows.length.toLocaleString()} shown`;
   $('more').hidden = rows.length <= limit;
   const ed = $('edit-price'); if (ed) { ed.focus(); ed.select(); }
@@ -1069,7 +1198,13 @@ document.addEventListener('click', e => {
   if (tr && !e.target.closest('button,a,input,label')) { focus = focus === tr.dataset.row ? null : tr.dataset.row; savePrefs(); render(); return; }
   const t = e.target.closest('button,[data-sort]'); if (!t) return;
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
-  if (t.dataset.kind) { kind = t.dataset.kind; limit = PAGE; themeOptions(); savePrefs(); render(); return; }
+  if (t.dataset.tl) { tlOpen = true; savePrefs(); render(); return; }
+  if (t.dataset.tlfr) { tlId = t.dataset.tlfr; tlPick = null; render(); return; }
+  if (t.dataset.tlpick) { tlPick = Number(t.dataset.tlpick); render(); document.querySelector('.tl-card.on')?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' }); return; }
+  if (t.dataset.tlshow) { tlFilter = { fr: tlId, i: Number(t.dataset.tlshow) }; tlOpen = false; kind = 'sets'; focus = null; listView = 'all'; Object.values(fi).forEach(f => { f.value = f === fi.set ? 'all' : ''; }); $('q').value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); $('boardHead').scrollIntoView({ behavior: 'smooth' }); return; }
+  if (t.dataset.tlback) { tlOpen = true; if (tlFilter) { tlId = tlFilter.fr; tlPick = tlFilter.i; } render(); document.querySelector('.tl-card.on')?.scrollIntoView({ inline: 'center', block: 'nearest' }); return; }
+  if (t.dataset.tlclear) { tlFilter = null; limit = PAGE; render(); return; }
+  if (t.dataset.kind) { tlOpen = false; kind = t.dataset.kind; limit = PAGE; themeOptions(); savePrefs(); render(); return; }
   if (t.dataset.untag) { const x = CAT.sets.find(s => s.n === t.dataset.n); if (x) editTags([x], t.dataset.untag, true); return; }
   if (t.dataset.tagfilter) { focus = null; fill(fi.film, 'All', [[t.dataset.tagfilter, t.dataset.tagfilter]], t.dataset.tagfilter); filmOptions(t.dataset.tagfilter); limit = PAGE; savePrefs(); render(); window.scrollTo({ top: $('fiFilm').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth' }); return; }
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
@@ -1108,7 +1243,7 @@ document.addEventListener('change', e => {
 });
 let qT; $('q').addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => { if (kind === 'sets') focus = null; limit = PAGE; render(); }, 150); });
 $('more').onclick = () => { limit += PAGE; render(); };
-$('fiReset').onclick = () => { focus = null; Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
+$('fiReset').onclick = () => { focus = null; tlFilter = null; Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; savePrefs(); };
 $('showWelcome').onclick = () => { $('welcome').hidden = !$('welcome').hidden; savePrefs(); };
 
