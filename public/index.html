@@ -272,8 +272,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
     <h3 id="sellTitle">Selling or buying a collection?</h3>
     <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="70" aria-describedby="sellHelp"><span>% of value</span></div>
     <dl class="sellrows"><div><dt>Your collection</dt><dd id="sellU">—</dd></div><div><dt>If all new</dt><dd id="sellAllNew">—</dd></div><div><dt>If all used</dt><dd id="sellN">—</dd></div></dl>
-    <div class="pct"><input class="inp" id="incPct" type="number" min="0" max="100" step="5" inputmode="numeric" placeholder="60" aria-label="Value of incomplete sets, as a percentage of the used price"><span>% of used for incomplete sets</span><span class="incnote" id="incNote"></span></div>
-    <span class="sellnote" id="sellHelp">Each owned item counts at its condition: new price for New, used price for Used, and the percentage you set for Used (incomplete). Items without a price count as zero.</span>
+    <span class="sellnote" id="sellHelp">Each owned item counts at its condition: the new price for New, the used price for Used, and 60% of the used price for Incomplete. Items without a price count as zero.</span>
   </section>
 
   <section class="filters" aria-label="Filters">
@@ -635,7 +634,7 @@ const COND = { new: 'New', used: 'Used (complete)', 'used-inc': 'Used (incomplet
 const COND_SHORT = { new: 'New', used: 'Used', 'used-inc': 'Incomplete' };
 const condCell = x => owned(x) ? `<button class="condchip c-${condOf(x)}" data-condmenu="${esc(x.n)}" title="${COND[condOf(x)]}. Click to switch: New → Used → Incomplete" aria-label="Condition: ${COND[condOf(x)]}. Click to change">${COND_SHORT[condOf(x)]}</button>` : fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : '';
 const condOf = x => (mine.get(x.n) || {}).cond || 'used';
-const incPct = () => { const v = Number(prefs.incPct); return prefs.incPct != null && prefs.incPct !== '' && isFinite(v) ? v : 60; };
+const incPct = () => 60; // Incomplete items count at 60% of the used price
 // What an owned item is worth at its condition, in AUD (null when unpriced).
 function valueOf(x) {
   const i = info(x.n), c = condOf(x);
@@ -728,7 +727,6 @@ function render() {
   const vc = ownedIn.reduce((t, x) => t + (valueOf(x) || 0), 0), vu = sum(ownedIn, 'used'), vn = sum(ownedIn, 'new');
   $('sValU').innerHTML = `${money(vc)} <small>${cur()}</small>`;
   const byCond = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => byCond[condOf(x)]++);
-  { const n = byCond['used-inc'], el = $('incNote'); el.textContent = n ? `· applies to ${n} incomplete ${n === 1 ? 'item' : 'items'}` : '· no items marked Incomplete yet'; el.classList.toggle('on', !!n); }
   const wantList = (isScoped ? list.filter(inScope) : list).filter(wanted);
   $('sValN').innerHTML = `${money(sum(wantList, 'new'))} <small>${cur()}</small>`;
   $('sValNs').textContent = wantList.length ? `${wantList.length} wanted · ${money(sum(wantList, 'used'))} used` : 'Star sets to add them';
@@ -1167,8 +1165,6 @@ async function refreshRates() {
 $('curSel').onchange = () => { prefs.currency = $('curSel').value; savePrefs(); paintCurrency(); render(); };
 
 if (prefs.sellPct != null) $('sellPct').value = prefs.sellPct;
-if (prefs.incPct != null) $('incPct').value = prefs.incPct;
-let incT; $('incPct').addEventListener('input', () => { clearTimeout(incT); incT = setTimeout(() => { const v = $('incPct').value; prefs.incPct = v === '' ? null : Math.max(0, Math.min(100, Number(v))); savePrefs(); render(); }, 150); });
 let sellT; $('sellPct').addEventListener('input', () => { clearTimeout(sellT); sellT = setTimeout(() => { const v = $('sellPct').value; prefs.sellPct = v === '' ? null : Math.max(0, Math.min(200, Number(v))); savePrefs(); render(); }, 150); });
 
 /* ---------- CSV export ---------- */
