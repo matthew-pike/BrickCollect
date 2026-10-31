@@ -1,6 +1,11 @@
 [build]
   publish = "public"
 
+# The Supabase project address is public by design (it's in public/config.js so browsers can reach it),
+# so the secrets scan shouldn't treat it as a secret. Every real secret key is still checked.
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
+
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
