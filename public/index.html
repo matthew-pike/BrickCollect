@@ -800,7 +800,7 @@ function render() {
       <td class="mono">${esc(x.disp || x.n)}</td>${x.k === 'm' ? `<td>${blCell(x)}</td>` : ''}
       <td class="muted">${x.year ?? ''}</td>
       <td class="num">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
-      <td class="num">${price(x, 'used')}${info(x.n).pricedAt ? `<span class="priced">BrickLink ${new Date(info(x.n).pricedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>` : ''}</td>
+      <td class="num">${price(x, 'used')}${info(x.n).pricedAt ? `<span class="priced" title="BrickLink price, updated ${new Date(info(x.n).pricedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}">${new Date(info(x.n).pricedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}</span>` : ''}</td>
       <td class="num">${price(x, 'new')}</td>
       <td><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="View on BrickLink" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
