@@ -1069,7 +1069,7 @@ function bulkSet(value) {
       subDocs.set(id, { ...d, theme: x.theme, films });
     } else {
       const manual = { ...(d.manual || {}) };
-      if (!value || value === x.rbSub) delete manual[x.n]; else manual[x.n] = value;
+      if (!value || value === ((d.brickset || {})[x.n] ?? x.rbSub)) delete manual[x.n]; else manual[x.n] = value;
       subDocs.set(id, { ...d, theme: x.theme, manual });
     }
     touched.add(x.theme);
