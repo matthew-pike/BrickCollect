@@ -151,6 +151,16 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .sub small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
 .thumb{width:48px;height:40px;border-radius:7px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line);overflow:hidden;position:relative}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+button.thumb{padding:0;font:inherit;color:inherit;cursor:zoom-in}
+button.thumb:not([data-zoom]){cursor:default}
+button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline:none}
+.zoomwrap{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(5,10,20,.72);padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.zoombox{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;width:min(640px,100%);max-height:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.zoombox img{display:block;width:100%;max-height:calc(100vh - 170px);object-fit:contain;background:#fff;border-radius:8px}
+.zoomcap{display:flex;flex-direction:column;gap:2px;padding-right:40px;min-width:0}
+.zoomcap b{font-size:16px;color:var(--fg)}
+.zoomcap span{color:var(--muted);font-size:13px}
+.zoomx{position:absolute;top:10px;right:10px}
 .priced{display:block;font-size:10.5px;color:var(--faint);font-family:var(--font-body)}
 .price{font-family:var(--font-mono);font-size:12.5px;color:var(--faint);min-width:76px;justify-content:flex-end;padding:5px 8px}
 .price.has{color:var(--fg)}
@@ -369,6 +379,13 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
   <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © Rebrickable, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Converted prices are approximate.</p>
   <p class="fine"><b>Affiliate disclosure:</b> some links on BrickCollect are affiliate links, including the buttons to retailers’ websites. If you buy something through them, The Art of Bricks may earn a small commission at no extra cost to you. This helps keep BrickCollect free, and it never affects the prices shown or which sets are listed.</p>
 </footer>
+<div class="zoomwrap" id="zoom" hidden role="dialog" aria-modal="true" aria-labelledby="zoomName">
+  <div class="zoombox">
+    <button class="icon-btn zoomx" id="zoomClose" aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="zoomcap"><b id="zoomName"></b><span id="zoomMeta"></span></div>
+    <img id="zoomImg" alt="">
+  </div>
+</div>
 </div>
 <div class="toast" id="toast" hidden></div>
 <dialog class="dlg" id="authDlg" aria-labelledby="authTitle">
@@ -684,18 +701,20 @@ function buyLink(x) {
 const PAL = ['#e3000b', '#0057a8', '#f2c200', '#00852b', '#ff7e14', '#a83d99', '#069d9f', '#7c5a3a'];
 const imgUrl = x => x.img || (x.brand === 'LEGO' ? `https://cdn.rebrickable.com/media/${x.k === 's' ? 'sets' : 'sets'}/${encodeURIComponent(x.n.toLowerCase())}.jpg` : '');
 const brokenImg = new Set();
-document.addEventListener('error', e => { const t = e.target; if (t && t.tagName === 'IMG' && t.dataset.n) { brokenImg.add(t.dataset.n); t.remove(); if (mcp && hostOk && imgs.get(t.dataset.n) === undefined && t.dataset.lego === '1') { imgWant.add(t.dataset.n); pumpImages(); } } }, true);
+document.addEventListener('error', e => { const t = e.target; if (t && t.tagName === 'IMG' && t.dataset.n) { brokenImg.add(t.dataset.n); const z = t.closest('[data-zoom]'); if (z) { z.removeAttribute('data-zoom'); z.removeAttribute('title'); z.style.cursor = 'default'; } t.remove(); if (mcp && hostOk && imgs.get(t.dataset.n) === undefined && t.dataset.lego === '1') { imgWant.add(t.dataset.n); pumpImages(); } } }, true);
 function thumb(x) {
   const im = imgs.get(x.n);
-  if (im) return `<div class="thumb"><img src="${im}" alt="" loading="lazy"></div>`;
+  const zoom = `class="thumb" data-zoom="${esc(x.n)}" title="View larger picture" aria-label="View a larger picture of ${esc(x.name)}"`;
+  if (im) return `<button ${zoom}><img src="${im}" alt="" loading="lazy"></button>`;
   const direct = !brokenImg.has(x.n) && imgUrl(x);
   if (!direct && im === undefined && mcp && hostOk && x.brand === 'LEGO') imgWant.add(x.n);
   const over = direct ? `<img src="${esc(direct)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-n="${esc(x.n)}" data-lego="${x.brand === 'LEGO' ? 1 : 0}">` : '';
   let h = 0; for (const c of x.theme || 'x') h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const c = PAL[h % PAL.length];
+  const open = over ? `<button ${zoom}>` : '<div class="thumb">', close = over ? '</button>' : '</div>';
   return x.k === 'm'
-    ? `<div class="thumb">${over}<svg width="22" height="28" viewBox="0 0 24 28"><rect x="7" y="1" width="10" height="9" rx="3" fill="${c}"/><rect x="4" y="11" width="16" height="9" rx="2" fill="${c}" opacity=".85"/><rect x="5" y="20" width="6" height="7" rx="1" fill="${c}" opacity=".7"/><rect x="13" y="20" width="6" height="7" rx="1" fill="${c}" opacity=".7"/></svg></div>`
-    : `<div class="thumb">${over}<svg width="26" height="22" viewBox="0 0 26 22"><rect x="1" y="7" width="24" height="14" rx="2" fill="${c}"/><rect x="4" y="2" width="7" height="6" rx="1.5" fill="${c}"/><rect x="15" y="2" width="7" height="6" rx="1.5" fill="${c}"/><rect x="1" y="16" width="24" height="5" fill="#000" opacity=".15"/></svg></div>`;
+    ? `${open}${over}<svg width="22" height="28" viewBox="0 0 24 28"><rect x="7" y="1" width="10" height="9" rx="3" fill="${c}"/><rect x="4" y="11" width="16" height="9" rx="2" fill="${c}" opacity=".85"/><rect x="5" y="20" width="6" height="7" rx="1" fill="${c}" opacity=".7"/><rect x="13" y="20" width="6" height="7" rx="1" fill="${c}" opacity=".7"/></svg>${close}`
+    : `${open}${over}<svg width="26" height="22" viewBox="0 0 26 22"><rect x="1" y="7" width="24" height="14" rx="2" fill="${c}"/><rect x="4" y="2" width="7" height="6" rx="1.5" fill="${c}"/><rect x="15" y="2" width="7" height="6" rx="1.5" fill="${c}"/><rect x="1" y="16" width="24" height="5" fill="#000" opacity=".15"/></svg>${close}`;
 }
 
 /* ---------- render ---------- */
@@ -860,7 +879,21 @@ function render() {
 }
 
 /* ---------- events ---------- */
+let zoomFrom = null;
+function openZoom(btn) {
+  const pic = btn.querySelector('img'); if (!pic) return;
+  const n = btn.dataset.zoom, x = CAT.sets.find(s => s.n === n) || CAT.figs.find(f => f.n === n) || { n };
+  $('zoomImg').src = pic.src; $('zoomImg').alt = x.name || '';
+  $('zoomName').textContent = x.name || n;
+  $('zoomMeta').textContent = [x.brand, x.disp || x.n, x.year, x.pieces ? x.pieces.toLocaleString() + ' pieces' : ''].filter(Boolean).join(' · ');
+  zoomFrom = btn; $('zoom').hidden = false; $('zoomClose').focus();
+}
+function closeZoom() { if ($('zoom').hidden) return; $('zoom').hidden = true; $('zoomImg').removeAttribute('src'); zoomFrom?.focus(); zoomFrom = null; }
+$('zoom').addEventListener('click', e => { if (e.target === $('zoom') || e.target.closest('#zoomClose')) closeZoom(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeZoom(); });
 document.addEventListener('click', e => {
+  if (e.target.closest('#zoom')) return;
+  const zb = e.target.closest('[data-zoom]'); if (zb) { openZoom(zb); return; }
   const tr = e.target.closest('tr[data-row]');
   if (tr && !e.target.closest('button,a,input,label')) { focus = focus === tr.dataset.row ? null : tr.dataset.row; savePrefs(); render(); return; }
   const t = e.target.closest('button,[data-sort]'); if (!t) return;
