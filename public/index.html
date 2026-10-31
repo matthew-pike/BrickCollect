@@ -81,7 +81,7 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .sellrows{display:flex;align-items:baseline;gap:6px 20px;margin:0;font-size:13px;font-variant-numeric:tabular-nums;flex-wrap:wrap}
 .sellrows div{display:flex;gap:8px;align-items:baseline}
 .sellrows dt{color:var(--muted)} .sellrows dd{margin:0;font-weight:500;font-size:16px;color:var(--violet)}
-.sellnote{flex:1 1 100%;font-size:11.5px;color:var(--faint);margin-top:-2px}
+.sellnote{flex:1 1 220px;min-width:0;font-size:12px;color:var(--faint)}
 .welcome h2{margin:0;font-family:var(--font-display);font-weight:500;font-size:18px;padding-right:40px}
 .welcome p{margin:0;color:var(--muted);max-width:none}
 .welcome-text{padding-right:40px}
@@ -274,7 +274,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
     <h3 id="sellTitle">Selling or buying a collection?</h3>
     <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="70" aria-describedby="sellHelp"><span>% of value</span></div>
     <dl class="sellrows"><div><dt>Your collection*</dt><dd id="sellU">—</dd></div><div><dt>If all new</dt><dd id="sellAllNew">—</dd></div><div><dt>If all used</dt><dd id="sellN">—</dd></div></dl>
-    <span class="sellnote" id="sellHelp">* Each owned item counts at its condition: the new price for New, the used price for Used, and 60% of the used price for Incomplete. Items without a price count as zero.</span>
+    <span class="sellnote" id="sellHelp">* Incomplete sets adjusted to 80% of used value.</span>
   </section>
 
   <section class="filters" aria-label="Filters">
@@ -637,7 +637,7 @@ const COND = { new: 'New', used: 'Used (complete)', 'used-inc': 'Used (incomplet
 const COND_SHORT = { new: 'New', used: 'Used', 'used-inc': 'Incomplete' };
 const condCell = x => owned(x) ? `<button class="condchip c-${condOf(x)}" data-condmenu="${esc(x.n)}" title="${COND[condOf(x)]}. Click to switch: New → Used → Incomplete" aria-label="Condition: ${COND[condOf(x)]}. Click to change">${COND_SHORT[condOf(x)]}</button>` : fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : '';
 const condOf = x => (mine.get(x.n) || {}).cond || 'used';
-const incPct = () => 60; // Incomplete items count at 60% of the used price
+const incPct = () => 80; // Incomplete items count at 80% of the used price
 // What an owned item is worth at its condition, in AUD (null when unpriced).
 function valueOf(x) {
   const i = info(x.n), c = condOf(x);
