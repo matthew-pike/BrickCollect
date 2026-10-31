@@ -87,6 +87,7 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .selltotal{margin-left:auto}
 .selltotal dt{color:var(--fg);font-weight:500}
 .selltotal dd{font-size:18px;font-weight:700}
+.selltotal div:first-child:not(:only-child) dd{font-size:16px;font-weight:500}
 .welcome h2{margin:0;font-family:var(--font-display);font-weight:500;font-size:18px;padding-right:40px}
 .welcome p{margin:0;color:var(--muted);max-width:none}
 .welcome-text{padding-right:40px}
@@ -296,7 +297,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     <h3 id="sellTitle">Selling or buying a collection?</h3>
     <dl class="sellrows"><div><dt>New</dt><dd id="sellNew">—</dd></div><div><dt>Used</dt><dd id="sellUsed">—</dd></div><div><dt>Used incomplete</dt><dd id="sellInc">—</dd></div></dl>
     <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="100" aria-label="Percentage of market value"><span>% of value</span></div>
-    <dl class="sellrows selltotal"><div><dt id="sellTotalK">Total</dt><dd id="sellTotal">—</dd></div></dl>
+    <dl class="sellrows selltotal"><div><dt>Total at 100%</dt><dd id="sellFull">—</dd></div><div id="sellPctRow" hidden><dt id="sellTotalK">Total</dt><dd id="sellTotal">—</dd></div></dl>
   </section>
 
   <section class="filters" aria-label="Filters">
@@ -682,7 +683,7 @@ function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond
    'product' is used when the set's exact store address is known ({path} = /products/…).
    On the website these come from buyLinks in config.js, so affiliate links can be swapped in without code changes. */
 const BUY = Object.assign({
-  LEGO: { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
+  LEGO: { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/product/{num}' },
   LumiBricks: { label: 'LU', title: 'Buy at LumiBricks', product: 'https://www.lumibricks.com{path}?ref=opizuyuw', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
   Pantasy: { label: 'PA', title: 'Buy at Pantasy', product: 'https://pantasy.com{path}?ref=fsolyowf', url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
@@ -776,8 +777,10 @@ function render() {
     // Market value of what you own, split by condition; the total applies your percentage.
     const byVal = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => { byVal[condOf(x)] += valueOf(x) || 0; });
     $('sellNew').textContent = money(byVal.new); $('sellUsed').textContent = money(byVal.used); $('sellInc').textContent = money(byVal['used-inc']);
-    $('sellTotalK').textContent = ok ? `Total at ${pct}%` : 'Total';
-    $('sellTotal').textContent = money(ok ? vc * pct / 100 : vc);
+    $('sellFull').textContent = money(vc);
+    $('sellPctRow').hidden = !ok || pct === 100;
+    $('sellTotalK').textContent = `Total at ${pct}%`;
+    $('sellTotal').textContent = money(vc * pct / 100);
     $('sValUs').textContent = ok ? `At ${pct}%: ${money(vc * pct / 100)}` : (ownedIn.length ? `${byCond.new} new · ${byCond.used} used · ${byCond['used-inc']} incomplete` : 'By each item’s condition');
   }
 
