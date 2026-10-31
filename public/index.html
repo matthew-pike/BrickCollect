@@ -345,6 +345,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
       <span class="spacer"></span>
       <a class="btn" href="https://store.bricklink.com/TheArtofBricks#/shop" target="_blank" rel="noopener" title="The Art of Bricks store on BrickLink">BrickLink Store ↗</a>
       <button class="btn" id="exportBtn" title="Download everything you own as a spreadsheet">Export my collection</button>
+      <button class="btn" id="exportWantBtn" title="Download your wanted list as a spreadsheet, with prices and where to buy">Export wanted list</button>
       <button class="btn primary" id="syncBtn" title="Fetch BrickLink price guide averages for the sets in view">Sync Prices</button>
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
@@ -705,6 +706,11 @@ const BUY = Object.assign({
   Pantasy: { label: 'PA', title: 'Buy at Pantasy', product: 'https://pantasy.com{path}?ref=fsolyowf', url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
 function buyLink(x) {
+  const href = buyHref(x), b = BUY[x.brand];
+  if (!href) return '';
+  return `<a class="btn mini buy buy-${esc(String(x.brand).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}" href="${esc(href)}" target="_blank" rel="sponsored noopener" title="${esc(b.title || 'Buy')}">${esc(b.label || 'Buy')}</a>`;
+}
+function buyHref(x) {
   if (x.k !== 's') return '';
   const b = BUY[x.brand]; if (!b || !(b.url || b.product)) return '';
   const num = x.brand === 'LEGO' ? x.n.replace(/-\d+$/, '') : (x.disp || x.n);
@@ -712,8 +718,7 @@ function buyLink(x) {
   const href = (x.url && b.product && /^\/products\/[A-Za-z0-9._~-]+$/.test(x.url))
     ? b.product.replace('{path}', x.url)
     : (b.url || '').replace(/\{num\}/g, encodeURIComponent(num)).replace(/\{name\}/g, encodeURIComponent(x.name));
-  if (!href) return '';
-  return `<a class="btn mini buy buy-${esc(String(x.brand).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}" href="${esc(href)}" target="_blank" rel="sponsored noopener" title="${esc(b.title || 'Buy')}">${esc(b.label || 'Buy')}</a>`;
+  return href || '';
 }
 
 /* ---------- thumbnails ---------- */
@@ -1274,17 +1279,35 @@ $('exportBtn').onclick = async () => {
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
   const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), sumCol(11), sumCol(12), ...(withPct ? [sumCol(13)] : [])];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
-  const name = `brickcollect-my-collection-${new Date().toISOString().slice(0, 10)}.csv`;
+  await saveCsv(`brickcollect-my-collection-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your collection: ${rows.length.toLocaleString()} items`);
+};
+$('exportWantBtn').onclick = async () => {
+  if (!CAT) return;
+  // Everything on your wanted list that you don't own yet, sets then minifigures.
+  const rows = [...CAT.sets, ...CAT.figs].filter(x => wanted(x) && !has(x));
+  if (!rows.length) { toast('Star the sets and minifigures you want first, then export.'); return; }
+  const blUrl = x => { const id = x.k === 's' ? x.n : info(x.n).bl; return x.extra ? '' : id ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(id)}` : ''; };
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Film / Series', 'Year', 'Pieces', `Used ${cur()}`, `New ${cur()}`, 'Buy', 'BrickLink'];
+  const body = rows.map(x => {
+    const s = info(x.n);
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.k === 's' ? x.film : (x.films || []).join('; '), x.year, x.pieces, toLocal(s.used), toLocal(s.new), buyHref(x), blUrl(x)];
+  });
+  const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
+  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', sumCol(9), sumCol(10), '', ''];
+  const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
+  await saveCsv(`brickcollect-wanted-list-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your wanted list: ${rows.length.toLocaleString()} items`);
+};
+async function saveCsv(name, csv, what) {
   try {
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
-    toast(`Downloaded your collection: ${rows.length.toLocaleString()} items`);
+    toast(`Downloaded ${what}`);
   } catch {
-    try { await navigator.clipboard.writeText(csv); toast(`Copied your collection (${rows.length.toLocaleString()} items) as CSV`); }
+    try { await navigator.clipboard.writeText(csv); toast(`Copied ${what} as CSV`); }
     catch { toast('Export didn’t work in this browser.'); }
   }
-};
+}
 
 /* ---------- account ---------- */
 const dlg = $('authDlg');
