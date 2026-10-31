@@ -250,7 +250,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
     <div class="stat"><span class="k">Wanted list</span><span class="v accent" id="sValN">$0.00</span><span class="s" id="sValNs">Star sets to add them</span></div>
   </section>
 
-  <section class="welcome" id="welcome">
+  <section class="welcome" id="welcome" hidden>
     <div class="welcome-text">
       <h2>Welcome to BrickCollect</h2>
       <p>Built by an enthusiast, for enthusiasts. BrickCollect covers LEGO and a growing list of other brick brands, starting with LumiBricks and Pantasy. The goal is simple: make everything easy to find in a few clicks, on a clean, fast, easy-to-read site, with the ability to export your collection. Manage your collection, track the sets and minifigures you still need, and see every theme's timeline in one screen. It’s free, and you can sign in to keep your collection on every device.</p>
@@ -402,7 +402,7 @@ if (prefs.kind) kind = prefs.kind;
 if (prefs.sort) sort = prefs.sort;
 if (prefs.focus) focus = prefs.focus;
 if (prefs.listView) listView = prefs.listView;
-if (prefs.hideWelcome) $('welcome').hidden = true;
+// The About panel stays closed unless the visitor opens it with the (i) button.
 
 /* ---------- currency: prices are stored in AUD and shown in the visitor's currency ---------- */
 const BASE_RATES = { base: 'AUD', date: '2026-10-31', rates: { AUD: 1, USD: 0.70175, EUR: 0.62559, GBP: 0.52414, JPY: 110.23, CHF: 0.57763 } };
@@ -1053,7 +1053,7 @@ function goHome(e) {
   e.preventDefault();
   Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); });
   $('q').value = ''; focus = null; kind = 'sets'; listView = 'all'; limit = PAGE; editing = null;
-  $('bulkbar').hidden = true; $('welcome').hidden = false;
+  $('bulkbar').hidden = true;
   if (CAT) { themeOptions(); subOptions(''); filmOptions(''); }
   savePrefs(); render(); scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
