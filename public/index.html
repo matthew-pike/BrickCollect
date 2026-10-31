@@ -195,7 +195,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .sub small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;max-width:260px}
 .tagchip{display:inline-flex;align-items:center;border:1px solid var(--line-2);background:var(--panel-2);border-radius:999px;font-size:11px;line-height:1;overflow:hidden}
-.tagbtn{all:unset;cursor:pointer;padding:3px 8px;color:var(--muted)}
+.tagbtn{all:unset;cursor:pointer;padding:3px 8px;color:var(--muted);max-width:16ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tagbtn:hover{color:var(--accent)}
 .tagx{all:unset;cursor:pointer;padding:3px 6px 3px 0;color:var(--faint)}
 .tagx:hover{color:var(--danger)}
@@ -1072,7 +1072,7 @@ function render() {
   };
   const tagCell = x => {
     const list = x.tags || [], admin = x.k === 's' && canCurate();
-    const chips = list.slice(0, x.k === 's' ? 8 : 3).map(t => `<span class="tagchip"><button class="tagbtn" data-tagfilter="${esc(t)}" title="Show everything tagged ${esc(t)}">${esc(t)}</button>${admin ? `<button class="tagx" data-untag="${esc(t)}" data-n="${esc(x.n)}" aria-label="Remove tag ${esc(t)}" title="Remove tag">×</button>` : ''}</span>`).join('');
+    const chips = list.slice(0, x.k === 's' ? 8 : 3).map(t => `<span class="tagchip"><button class="tagbtn" data-tagfilter="${esc(t)}" title="${esc(t)}: show everything with this tag">${esc(t)}</button>${admin ? `<button class="tagx" data-untag="${esc(t)}" data-n="${esc(x.n)}" aria-label="Remove tag ${esc(t)}" title="Remove tag">×</button>` : ''}</span>`).join('');
     const more = x.k !== 's' && list.length > 3 ? `<span class="tagmore">+${list.length - 3}</span>` : '';
     const addBtn = !admin ? '' : editing === x.n + '|tag'
       ? `<input class="inp tagin" id="edit-price" list="filmNames" data-n="${esc(x.n)}" data-f="tag" placeholder="New tag" aria-label="New tag">`
