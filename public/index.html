@@ -203,6 +203,9 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .buy:hover{filter:brightness(1.05)}
 .buy-lego{background:#e3000b;border-color:#e3000b;color:#fff;font-weight:700;letter-spacing:.02em}
 .buy-lego:hover{filter:brightness(1.08)}
+.buy-lumibricks{background:#14161c;border-color:#14161c;color:#fff;font-weight:700;letter-spacing:.02em}
+:root[data-theme="dark"] .buy-lumibricks{background:#fff;border-color:#fff;color:#14161c}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .buy-lumibricks{background:#fff;border-color:#fff;color:#14161c}}
 .acct{height:34px;padding:0 12px}
 .dlg{border:1px solid var(--line-2);border-radius:12px;background:var(--panel);color:var(--fg);padding:22px;width:min(420px,calc(100vw - 32px))}
 .dlg::backdrop{background:rgba(5,10,20,.55)}
@@ -648,6 +651,7 @@ function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond
    On the website these come from buyLinks in config.js, so affiliate links can be swapped in without code changes. */
 const BUY = Object.assign({
   LEGO: { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
+  LumiBricks: { label: 'LU', title: 'Find it at LumiBricks', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
 function buyLink(x) {
   if (x.k !== 's') return '';

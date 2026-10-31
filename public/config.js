@@ -12,7 +12,7 @@ window.BC_CONFIG = {
   // Swap in your affiliate links when you have them; a brand with no url shows no Buy button.
   buyLinks: {
     LEGO:       { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
-    LumiBricks: { label: 'Buy', title: 'Find it at LumiBricks', url: '' },
+    LumiBricks: { label: 'LU', title: 'Find it at LumiBricks', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
     Pantasy:    { label: 'Buy', title: 'Find it at Pantasy',    url: '' },
   },
 };
