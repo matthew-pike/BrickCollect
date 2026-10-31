@@ -263,7 +263,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
   <section class="sellbox" aria-labelledby="sellTitle">
     <h3 id="sellTitle">Selling or buying a collection?</h3>
     <div class="pct"><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="70" aria-describedby="sellHelp"><span>% of value</span></div>
-    <dl class="sellrows"><div><dt>Your collection</dt><dd id="sellU">—</dd></div><div><dt>If all used</dt><dd id="sellN">—</dd></div></dl>
+    <dl class="sellrows"><div><dt>Your collection</dt><dd id="sellU">—</dd></div><div><dt>If all new</dt><dd id="sellAllNew">—</dd></div><div><dt>If all used</dt><dd id="sellN">—</dd></div></dl>
     <div class="pct"><input class="inp" id="incPct" type="number" min="0" max="100" step="5" inputmode="numeric" placeholder="60" aria-label="Value of incomplete sets, as a percentage of the used price"><span>% of used for incomplete sets</span></div>
     <span class="sellnote" id="sellHelp">Each owned item counts at its condition: new price for New, used price for Used, and the percentage you set for Used (incomplete). Items without a price count as zero.</span>
   </section>
@@ -716,7 +716,7 @@ function render() {
   $('sNeedN').innerHTML = `${money(isScoped ? sum(needed, 'new') : 0)} <small>${cur()}</small>`;
   $('sNeedUs').textContent = isScoped && unU ? `${unU.toLocaleString()} still unpriced` : 'From the prices you set';
   $('sNeedNs').textContent = isScoped && unN ? `${unN.toLocaleString()} still unpriced` : 'From the prices you set';
-  const vc = ownedIn.reduce((t, x) => t + (valueOf(x) || 0), 0), vu = sum(ownedIn, 'used');
+  const vc = ownedIn.reduce((t, x) => t + (valueOf(x) || 0), 0), vu = sum(ownedIn, 'used'), vn = sum(ownedIn, 'new');
   $('sValU').innerHTML = `${money(vc)} <small>${cur()}</small>`;
   const byCond = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => byCond[condOf(x)]++);
   const wantList = (isScoped ? list.filter(inScope) : list).filter(wanted);
@@ -727,6 +727,7 @@ function render() {
     const ok = prefs.sellPct !== '' && prefs.sellPct != null && isFinite(pct) && pct > 0;
     $('sellU').textContent = ok ? money(vc * pct / 100) : money(vc);
     $('sellN').textContent = ok ? money(vu * pct / 100) : money(vu);
+    $('sellAllNew').textContent = ok ? money(vn * pct / 100) : money(vn);
     $('sValUs').textContent = ok ? `At ${pct}%: ${money(vc * pct / 100)}` : (ownedIn.length ? `${byCond.new} new · ${byCond.used} used · ${byCond['used-inc']} incomplete` : 'By each item’s condition');
   }
 
