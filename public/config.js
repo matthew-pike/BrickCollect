@@ -6,7 +6,7 @@ window.BC_CONFIG = {
   supabaseUrl: 'https://gsvoqohfznlhmyhmnnca.supabase.co',
   supabaseKey: 'sb_publishable_gDOxpyIJ3kXLThLdOhWH3Q_XrLpNnE5',
   // Turn on once Google sign-in is set up in Supabase (Authentication → Sign In / Providers → Google).
-  googleSignIn: false,
+  googleSignIn: true,
   // "Buy" buttons. {num} is the set number (75192 for LEGO 75192-1), {name} the set name.
   // Swap in your affiliate links when you have them; a brand with no url shows no Buy button.
   buyLinks: {

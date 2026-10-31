@@ -692,8 +692,8 @@ function render() {
   const ownedIn = scope.filter(owned), hasIn = scope.filter(has), needed = scope.filter(x => !has(x));
   const ownSets = CAT.sets.filter(owned).length, ownFigs = CAT.figs.filter(has).length;
   $('cSets').textContent = (kind === 'sets' ? (isScoped ? scope.length : ownSets) : (scopedFor('sets') ? CAT.sets.filter(inScope).length : ownSets)).toLocaleString();
-  const focusSet = focus ? CAT.sets.find(x => x.n === focus) : null;
-  if (focus && !focusSet) focus = null;
+  let focusSet = focus ? CAT.sets.find(x => x.n === focus) : null;
+  if (focus && (!focusSet || (scopedFor('sets') ? !inScope(focusSet) : !has(focusSet)))) { focus = null; savePrefs(); return render(); }
   const focusFigs = focusSet ? CAT.figs.filter(f => f.sets.has(focus)).length : 0;
   $('cFigs').textContent = (focusSet ? focusFigs : kind === 'figs' ? (isScoped ? scope.length : ownFigs) : (scopedFor('figs') ? CAT.figs.filter(inScope).length : ownFigs)).toLocaleString();
   const fb = $('focusbar'); fb.hidden = !focusSet;
@@ -845,8 +845,8 @@ document.addEventListener('click', e => {
   if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
   if (t.dataset.focus) { focus = focus === t.dataset.focus ? null : t.dataset.focus; savePrefs(); render(); return; }
   if (t.dataset.clearfocus) { focus = null; limit = PAGE; savePrefs(); render(); return; }
-  if (t.dataset.brand) { fi.brand.value = t.dataset.brand; fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
-  if (t.dataset.theme) { fi.theme.value = t.dataset.theme; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
+  if (t.dataset.brand) { focus = null; fi.brand.value = t.dataset.brand; fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
+  if (t.dataset.theme) { focus = null; fi.theme.value = t.dataset.theme; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
 });
 document.addEventListener('keydown', e => {
   const el = e.target;
@@ -866,13 +866,13 @@ document.addEventListener('change', e => {
   if (el.id === 'selAll') { bulkOwn(el.checked); return; }
   if (el.dataset?.cond) { setInfo(el.dataset.cond, { cond: el.value }); return; }
   if (el.dataset?.own) { change(el.dataset.own, { owned: el.checked }); return; }
-  if (Object.values(fi).includes(el)) { if (el === fi.brand) { fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
+  if (Object.values(fi).includes(el)) { focus = null; if (el === fi.brand) { fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
     if (el === fi.theme) { subOptions(''); filmOptions(''); } limit = PAGE; savePrefs(); render(); }
   Object.values(fi).forEach(s => s.classList.toggle('set-on', s.value !== '' && s.value !== 'all'));
 });
-let qT; $('q').addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => { limit = PAGE; render(); }, 150); });
+let qT; $('q').addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => { if (kind === 'sets') focus = null; limit = PAGE; render(); }, 150); });
 $('more').onclick = () => { limit += PAGE; render(); };
-$('fiReset').onclick = () => { Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
+$('fiReset').onclick = () => { focus = null; Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; savePrefs(); };
 $('showWelcome').onclick = () => { $('welcome').hidden = !$('welcome').hidden; savePrefs(); };
 
