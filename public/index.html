@@ -828,7 +828,7 @@ function render() {
   $('footCount').textContent = `${page.length.toLocaleString()} of ${rows.length.toLocaleString()} shown`;
   $('more').hidden = rows.length <= limit;
   const ed = $('edit-price'); if (ed) { ed.focus(); ed.select(); }
-  $('syncBtn').hidden = !db;
+  $('syncBtn').hidden = !db || (kind === 'sets' && !page.some(x => x.brand === 'LEGO'));
   $('syncBtn').title = uid ? 'Fetch the latest BrickLink prices for the sets in view' : 'Sign in to sync prices';
   $('syncBtn').disabled = syncing || !page.length;
   $('bulkBtn').hidden = !canCurate();
