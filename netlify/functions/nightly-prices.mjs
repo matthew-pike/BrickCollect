@@ -22,7 +22,7 @@ export default async () => {
   // LEGO sets (Rebrickable numbers like 75192-1) and minifigures that have a BrickLink number.
   const queue = [...counts].sort((a, b) => b[1] - a[1]).map(([n]) => n)
     .filter(n => !n.includes(':') && !isFresh(shared.get(n), STALE))
-    .map(n => n.startsWith('fig-') ? (shared.get(n)?.bl ? { n, type: 'MINIFIG', bl: shared.get(n).bl } : null) : { n, type: 'SET', bl: n })
+    .map(n => n.startsWith('fig-') ? (shared.get(n)?.bl ? { n, type: 'MINIFIG', bl: shared.get(n).bl } : null) : { n, type: 'SET', bl: shared.get(n)?.bl || n })
     .filter(Boolean);
   if (!queue.length) { console.log('nightly: nothing to refresh'); return; }
 

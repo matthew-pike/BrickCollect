@@ -1,4 +1,6 @@
 // Hourly: fill in BrickLink numbers (e.g. sw0001) for minifigures, which Rebrickable numbers differently (fig-000123).
+// Step 1 (once per mapping file): copy Rebrickable's own BrickLink numbers from public/bl-numbers.json.
+// Step 2 (each run): for minifigures still without one, match by name within each set using BrickLink's set lists.
 // For each set, BrickLink lists the minifigures inside it. Those are paired with Rebrickable's minifigures from the
 // same set by name, and a number is saved only when the pairing is clear. Numbers you set or clear by hand are never touched.
 //
@@ -60,6 +62,22 @@ export default async (req) => {
   const stateRows = await sb('shared_docs?select=data&collection=eq.meta&id=eq.minifig-numbers');
   const state = stateRows?.[0]?.data || { checked: {}, matched: 0, unsure: 0 };
   state.checked ||= {};
+
+  // First, Rebrickable's own BrickLink numbers (public/bl-numbers.json, built from set_mappings.csv):
+  // copied once per new version, only where no number has been set or cleared by hand.
+  try {
+    const map = await (await fetch(`${site}/bl-numbers.json`)).json();
+    if (map?.version && map.version !== state.mappingVersion) {
+      const copy = new Map();
+      for (const [n, no] of [...Object.entries(map.figs || {}), ...Object.entries(map.sets || {})]) if (!decided(n)) copy.set(n, { bl: no, blAuto: true });
+      await savePrices(copy);
+      for (const [n, v] of copy) { shared.set(n, { ...(shared.get(n) || {}), ...v }); usedBl.add(v.bl); }
+      state.mappingVersion = map.version; state.mappingCopied = copy.size;
+      await upsertShared('meta', 'minifig-numbers', { ...state, updatedAt: Date.now() });
+      console.log(`minifig-numbers: copied ${copy.size} BrickLink numbers from Rebrickable's mappings`);
+      return; // leave the BrickLink lookups for the next run, to stay well inside the time limit
+    }
+  } catch (e) { console.log('minifig-numbers: no mapping file:', e.message); }
 
   // Sets that still have a minifigure without a number, most-owned first, then newest first.
   const figsIn = new Map(); // set index -> [{ n, name }]

@@ -840,7 +840,7 @@ function render() {
   { const own = rows.filter(owned).length; const u = $('unselAll'); u.hidden = !own; u.textContent = own ? `Unselect all (${own.toLocaleString()})` : 'Unselect all'; u.title = own ? `Unmark the ${own.toLocaleString()} owned in view` : 'Nothing in view is marked as owned'; }
   const showRows = isScoped || hasIn.length || listView !== 'all' || list.some(wanted);
   const page = showRows ? rows.slice(0, limit) : [];
-  const blId = x => x.k === 's' ? x.n : info(x.n).bl;
+  const blId = x => x.k === 's' ? (info(x.n).bl || x.n) : info(x.n).bl;
   const bl = x => blId(x) ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(blId(x))}` : `https://www.bricklink.com/v2/search.page?q=${encodeURIComponent(x.name)}#T=M`;
   const rb = x => `https://rebrickable.com/${x.k === 's' ? 'sets' : 'minifigs'}/${encodeURIComponent(x.n)}/`;
   const price = (x, f) => {
@@ -1013,7 +1013,7 @@ $('syncBtn').onclick = async () => {
   let rows = ownRows.filter(x => x.k === 'm' || x.brand === 'LEGO').slice(0, limit);
   if (kind === 'figs') { rows = rows.filter(x => info(x.n).bl); if (!rows.length) { setStatus('Add a BrickLink # to the minifigures you want priced, then sync again.', true); return; } }
   if (!rows.length) { setStatus('Pick a theme or search first, then sync the sets in view.', true); return; }
-  const pairs = rows.slice(0, isOwner ? 400 : 60).map(x => ({ n: x.n, bl: kind === 'sets' ? x.n : info(x.n).bl }));
+  const pairs = rows.slice(0, isOwner ? 400 : 60).map(x => ({ n: x.n, bl: kind === 'sets' ? (info(x.n).bl || x.n) : info(x.n).bl }));
   const syncType = kind === 'sets' ? 'SET' : 'MINIFIG';
   syncing = true; render();
   let done = 0, fresh = 0, cached = 0, failed = 0, none = 0, left = null, stopped = false;
@@ -1286,7 +1286,7 @@ $('exportWantBtn').onclick = async () => {
   // Everything on your wanted list that you don't own yet, sets then minifigures.
   const rows = [...CAT.sets, ...CAT.figs].filter(x => wanted(x) && !has(x));
   if (!rows.length) { toast('Star the sets and minifigures you want first, then export.'); return; }
-  const blUrl = x => { const id = x.k === 's' ? x.n : info(x.n).bl; return x.extra ? '' : id ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(id)}` : ''; };
+  const blUrl = x => { const id = x.k === 's' ? (info(x.n).bl || x.n) : info(x.n).bl; return x.extra ? '' : id ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(id)}` : ''; };
   const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Film / Series', 'Year', 'Pieces', `Used ${cur()}`, `New ${cur()}`, 'Buy', 'BrickLink'];
   const body = rows.map(x => {
     const s = info(x.n);

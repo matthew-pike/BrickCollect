@@ -32,7 +32,7 @@ export default async (req) => {
   const results = [], stale = [];
   for (const it of items) {
     const entry = entryOf(it.n);
-    const bl = type === 'SET' ? it.n : (admin && valid(it.bl) ? it.bl : entry?.bl);
+    const bl = type === 'SET' ? (entry?.bl || it.n) : (admin && valid(it.bl) ? it.bl : entry?.bl);
     if (!bl) { results.push({ n: it.n, error: 'no BrickLink number' }); continue; }
     if (isFresh(entry, DAY)) { results.push({ n: it.n, used: entry.used ?? null, new: entry.new ?? null, pricedAt: entry.pricedAt, cached: true }); continue; }
     stale.push({ n: it.n, bl });
