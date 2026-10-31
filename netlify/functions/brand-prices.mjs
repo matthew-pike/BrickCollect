@@ -1,6 +1,7 @@
 // Daily: fetch retail prices from brands' own Shopify stores (LumiBricks and Pantasy) and save them
 // as the "new" price for those sets, converted to AUD. Sets the store sells that aren't in
 // BrickCollect yet are added to that brand's list (name and number; theme left as "Unsorted").
+// Each set's exact product address is saved too, so the site's Buy button links straight to it.
 //
 // Shopify stores publish their product list at /products.json and the store currency at /cart.js.
 // Product addresses end in the set number (e.g. /products/edinburgh-corner-15021).
@@ -39,21 +40,23 @@ export async function updateBrand({ brand, shop }, rates) {
   const cat = catRows?.[0]?.data || { brand, items: {} };
   const items = { ...(cat.items || {}) };
   const updates = new Map(), now = new Date().toISOString();
-  let added = 0, priced = 0;
+  let added = 0, priced = 0, linked = 0;
   for (const p of products) {
     const num = numFromHandle(p.handle);
     if (!num) continue;
     const prices = (p.variants || []).map(v => Number(v.price)).filter(v => v > 0);
     if (!items[num]) { items[num] = { name: cleanName(p.title, num), theme: 'Unsorted', sub: '', year: null, pieces: null, img: '' }; added++; }
+    const path = `/products/${p.handle}`;
+    if (items[num].url !== path) { items[num] = { ...items[num], url: path }; linked++; }
     if (prices.length) {
       const aud = Math.round(Math.min(...prices) / perAud * 100) / 100;
       updates.set(`${brand}:${num}`, { new: aud, pricedAt: now, checkedAt: now, priceSource: brand });
       priced++;
     }
   }
-  if (added) await upsertShared('catalog', brand, { ...cat, brand, items, updatedAt: Date.now() });
+  if (added || linked) await upsertShared('catalog', brand, { ...cat, brand, items, updatedAt: Date.now() });
   await savePrices(updates);
-  return { brand, currency, products: products.length, priced, added };
+  return { brand, currency, products: products.length, priced, added, linked };
 }
 
 export default async () => {

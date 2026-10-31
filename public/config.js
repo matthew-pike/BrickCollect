@@ -12,7 +12,8 @@ window.BC_CONFIG = {
   // Swap in your affiliate links when you have them; a brand with no url shows no Buy button.
   buyLinks: {
     LEGO:       { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
-    LumiBricks: { label: 'LU', title: 'Find it at LumiBricks', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
-    Pantasy:    { label: 'PA', title: 'Find it at Pantasy',    url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
+    // product: exact product page ({path} is the set's store address, saved nightly). url: search page when the address isn't known yet.
+    LumiBricks: { label: 'LU', title: 'Buy at LumiBricks', product: 'https://www.lumibricks.com{path}?ref=opizuyuw', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
+    Pantasy:    { label: 'PA', title: 'Buy at Pantasy',    product: 'https://pantasy.com{path}?ref=fsolyowf',          url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
   },
 };

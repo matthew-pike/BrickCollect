@@ -649,17 +649,22 @@ function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond
 
 /* ---------- buy links (affiliate links when set up) ----------
    Each brand has a link template; {num} is the set number (75192 for LEGO 75192-1) and {name} the set name.
+   'product' is used when the set's exact store address is known ({path} = /products/…).
    On the website these come from buyLinks in config.js, so affiliate links can be swapped in without code changes. */
 const BUY = Object.assign({
   LEGO: { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/search?q={num}' },
-  LumiBricks: { label: 'LU', title: 'Find it at LumiBricks', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
-  Pantasy: { label: 'PA', title: 'Find it at Pantasy', url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
+  LumiBricks: { label: 'LU', title: 'Buy at LumiBricks', product: 'https://www.lumibricks.com{path}?ref=opizuyuw', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
+  Pantasy: { label: 'PA', title: 'Buy at Pantasy', product: 'https://pantasy.com{path}?ref=fsolyowf', url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
 function buyLink(x) {
   if (x.k !== 's') return '';
-  const b = BUY[x.brand]; if (!b || !b.url) return '';
+  const b = BUY[x.brand]; if (!b || !(b.url || b.product)) return '';
   const num = x.brand === 'LEGO' ? x.n.replace(/-\d+$/, '') : (x.disp || x.n);
-  const href = b.url.replace(/\{num\}/g, encodeURIComponent(num)).replace(/\{name\}/g, encodeURIComponent(x.name));
+  // Exact product page when we know it (saved nightly from the brand's store), otherwise the store's search.
+  const href = (x.url && b.product && /^\/products\/[A-Za-z0-9._~-]+$/.test(x.url))
+    ? b.product.replace('{path}', x.url)
+    : (b.url || '').replace(/\{num\}/g, encodeURIComponent(num)).replace(/\{name\}/g, encodeURIComponent(x.name));
+  if (!href) return '';
   return `<a class="btn mini buy buy-${esc(String(x.brand).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}" href="${esc(href)}" target="_blank" rel="sponsored noopener" title="${esc(b.title || 'Buy')}">${esc(b.label || 'Buy')}</a>`;
 }
 
@@ -1089,7 +1094,7 @@ function applyExtras() {
   const extras = [];
   for (const [slugId, d] of catDocs) for (const [num, v] of Object.entries(d.items || {})) {
     const n = `${slugId}:${num}`;
-    extras.push({ n, disp: num, name: v.name || num, year: v.year ?? null, pieces: v.pieces ?? null, img: v.img || '', theme: v.theme || 'Unsorted', sub: v.sub || '', rbSub: v.sub || '', brand: d.brand, k: 's', extra: true, key: (num + ' ' + (v.name || '')).toLowerCase() });
+    extras.push({ n, disp: num, name: v.name || num, year: v.year ?? null, pieces: v.pieces ?? null, img: v.img || '', url: v.url || '', theme: v.theme || 'Unsorted', sub: v.sub || '', rbSub: v.sub || '', brand: d.brand, k: 's', extra: true, key: (num + ' ' + (v.name || '')).toLowerCase() });
   }
   CAT.sets = CAT.lego.concat(extras);
   applyOverrides(); themeOptions();
