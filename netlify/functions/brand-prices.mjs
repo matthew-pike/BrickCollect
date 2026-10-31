@@ -6,7 +6,7 @@
 //
 // Shopify stores publish their product list at /products.json and the store currency at /cart.js.
 // Product addresses end in the set number (e.g. /products/edinburgh-corner-15021).
-import { env, sb, upsertShared, savePrices } from '../lib/common.mjs';
+import { env, sb, upsertShared, savePrices, readBuckets } from '../lib/common.mjs';
 
 // series: the store's collections that are product lines, in priority order (a set in two takes the first).
 // Their names become the set's theme on BrickCollect. Cross-cutting ones (X Series, Vehicle) come last.
@@ -53,7 +53,7 @@ function numFor(p, numRe) {
   return null;
 }
 
-export async function updateBrand({ brand, shop, series = [], numRe }, rates) {
+export async function updateBrand({ brand, shop, series = [], numRe }, rates, manual = new Set()) {
   let currency = 'USD';
   try { currency = (await fetchJson(`${shop}/cart.js`)).currency || currency; } catch { /* keep default */ }
   const perAud = currency === 'AUD' ? 1 : rates?.[currency];
@@ -92,7 +92,7 @@ export async function updateBrand({ brand, shop, series = [], numRe }, rates) {
     if (ser && it.theme !== ser && (!it.theme || it.theme === 'Unsorted' || it.themeAuto)) { items[num] = { ...it, theme: ser, themeAuto: true }; themed++; }
     if (prices.length) {
       const aud = Math.round(Math.min(...prices) / perAud * 100) / 100;
-      updates.set(`${brand}:${num}`, { new: aud, pricedAt: now, checkedAt: now, priceSource: brand });
+      if (!manual.has(`${brand}:${num}`)) updates.set(`${brand}:${num}`, { new: aud, pricedAt: now, checkedAt: now, priceSource: brand });
       priced++;
     }
   }
@@ -113,8 +113,11 @@ export default async () => {
       await upsertShared('meta', 'rates', { base: 'AUD', date: d.date, fetchedAt: Date.now(), rates });
     } catch (e) { console.log('brand-prices: no exchange rates available:', e.message); return; }
   }
+  // Prices the site owner typed in by hand are left alone.
+  const manual = new Set();
+  for (const items of (await readBuckets()).values()) for (const [n, v] of Object.entries(items)) if (v?.manualPrice) manual.add(n);
   for (const b of BRANDS) {
-    try { console.log('brand-prices:', JSON.stringify(await updateBrand(b, rates))); }
+    try { console.log('brand-prices:', JSON.stringify(await updateBrand(b, rates, manual))); }
     catch (e) { console.log(`brand-prices: ${b.brand} failed:`, e.message); }
   }
 };

@@ -34,7 +34,8 @@ export default async (req) => {
     const entry = entryOf(it.n);
     const bl = type === 'SET' ? (entry?.bl || it.n) : (admin && valid(it.bl) ? it.bl : entry?.bl);
     if (!bl) { results.push({ n: it.n, error: 'no BrickLink number' }); continue; }
-    if (isFresh(entry, DAY)) { results.push({ n: it.n, used: entry.used ?? null, new: entry.new ?? null, pricedAt: entry.pricedAt, cached: true }); continue; }
+    // Prices the site owner typed in are kept; otherwise anything checked in the last day comes from the database.
+    if (entry?.manualPrice || isFresh(entry, DAY)) { results.push({ n: it.n, used: entry.used ?? null, new: entry.new ?? null, pricedAt: entry.pricedAt, cached: true }); continue; }
     stale.push({ n: it.n, bl });
   }
 

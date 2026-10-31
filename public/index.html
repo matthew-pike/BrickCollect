@@ -151,6 +151,9 @@ tbody tr.picked td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .pick:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
 .focusbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 9%,var(--panel));font-size:13px}
 .focusbar b{font-weight:500}
+.price.mine{font-style:italic}
+.price.mine::after,.price.manual::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--violet);margin-left:5px;display:inline-block;vertical-align:2px}
+.price.manual::after{background:var(--stud)}
 .subbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:500;border-bottom:1px dashed transparent}
 .subbtn:hover{border-bottom-color:var(--accent)}
 .subbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
@@ -165,6 +168,17 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .nm small{display:block;font-weight:400;color:var(--faint);font-size:11.5px}
 .sub{color:var(--accent);font-weight:500}
 .sub small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;max-width:260px}
+.tagchip{display:inline-flex;align-items:center;border:1px solid var(--line-2);background:var(--panel-2);border-radius:999px;font-size:11px;line-height:1;overflow:hidden}
+.tagbtn{all:unset;cursor:pointer;padding:3px 8px;color:var(--muted)}
+.tagbtn:hover{color:var(--accent)}
+.tagx{all:unset;cursor:pointer;padding:3px 6px 3px 0;color:var(--faint)}
+.tagx:hover{color:var(--danger)}
+.tagadd{all:unset;cursor:pointer;font-size:11px;color:var(--faint);padding:3px 6px;border:1px dashed var(--line-2);border-radius:999px}
+.tagadd:hover{color:var(--accent);border-color:var(--accent)}
+.tagmore{font-size:11px;color:var(--faint);align-self:center}
+.tagin{width:150px;padding:3px 8px;font-size:12px;height:auto}
+.tagbtn:focus-visible,.tagx:focus-visible,.tagadd:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .thumb{width:48px;height:40px;border-radius:7px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line);overflow:hidden;position:relative}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
 button.thumb{padding:0;font:inherit;color:inherit;cursor:zoom-in}
@@ -343,10 +357,10 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     <div class="field"><label for="fiTheme">Theme</label><select id="fiTheme"><option value="">All themes</option></select></div>
     <div class="field"><label for="fiSub">Subtheme</label><select id="fiSub"><option value="">Pick a theme first</option></select></div>
     <div class="field"><label for="fiSet">Set</label><select id="fiSet"><option value="all">All sets</option><option value="owned">Owned</option><option value="missing">Still needed</option></select></div>
-    <div class="field"><label for="fiFilm">Film / Series</label><select id="fiFilm"><option value="">All</option></select></div>
+    <div class="field"><label for="fiFilm">Tag</label><select id="fiFilm"><option value="">All</option></select></div>
     <div class="field"><label for="fiYear">Year</label><select id="fiYear"><option value="">All</option></select></div>
     <button class="btn" id="addBtn" hidden title="Add a set from another brand">Add set</button>
-    <button class="btn" id="bulkBtn" title="Set the subtheme or film for every set in view">Bulk edit</button>
+    <button class="btn" id="bulkBtn" title="Set the subtheme, or add or remove a tag, for every set in view">Bulk edit</button>
     <button class="btn" id="fiReset" title="Reset filters" aria-label="Reset filters"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
   </section>
 
@@ -371,7 +385,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
       <b id="bulkLabel">Set for the sets in view</b>
-      <select id="bulkField" aria-label="Field to set" style="width:auto"><option value="sub">Subtheme</option><option value="film">Film / Series</option></select>
+      <select id="bulkField" aria-label="Field to set" style="width:auto"><option value="sub">Set subtheme</option><option value="tag">Add tag</option><option value="untag">Remove tag</option></select>
       <input class="inp" id="bulkSub" list="subNames" placeholder="e.g. Microfighters" aria-label="Value" style="width:240px;max-width:100%">
       <button class="btn mini primary" type="submit" id="bulkApply">Apply</button>
       <button class="btn mini" type="button" id="bulkClear" title="Remove this value from these sets">Clear</button>
@@ -560,11 +574,12 @@ function buildCatalog(raw) {
    Shared (curated by the site owner): prices, BrickLink #s, subthemes, films, other brands, rates. */
 let uid = null, isOwner = false, saveMode = 'loading'; // 'cloud' | 'local' | 'loading'
 const shared = new Map(); // n -> { used, new, bl, pricedAt, priceSource }
-const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource'];
+const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice'];
 function info(n) {
   const sh = shared.get(n) || {}, me = mine.get(n) || {};
   const out = { ...sh };
-  for (const k of SHARED_KEYS) if (me[k] !== undefined && me[k] !== null) out[k] = me[k];
+  // Your own price overrides the shared one (for you only). BrickLink numbers are always the shared ones.
+  for (const k of ['used', 'new']) if (me[k] !== undefined && me[k] !== null) out[k] = me[k];
   out.owned = !!me.owned;
   return out;
 }
@@ -643,7 +658,12 @@ function setInfo(n, patch, { quiet } = {}) {
   if (!me.wanted) delete me.wanted;
   const sharedPatch = {};
   for (const k of SHARED_KEYS) if (k in patch) {
-    if (canCurate()) { sharedPatch[k] = patch[k]; delete me[k]; }
+    if (canCurate()) {
+      sharedPatch[k] = patch[k]; delete me[k];
+      // A price you type stays put: the nightly refresh skips it until you clear it.
+      if ((k === 'used' || k === 'new') && !('manualPrice' in patch)) sharedPatch.manualPrice = patch[k] != null ? true : null;
+    }
+    else if (k === 'bl' || k === 'manualPrice') continue; // only the site owner sets BrickLink numbers
     else if (patch[k] == null) delete me[k]; else me[k] = patch[k];
   }
   mine.set(n, me);
@@ -672,9 +692,9 @@ function themeOptions() {
 }
 function filmOptions(keep) {
   const counts = new Map(); let none = 0;
-  for (const x of CAT.sets) { if (fi.theme.value && x.theme !== fi.theme.value) continue; if (fi.brand.value && x.brand !== fi.brand.value) continue; if (x.film) counts.set(x.film, (counts.get(x.film) || 0) + 1); else none++; }
+  for (const x of CAT.sets) { if (fi.theme.value && x.theme !== fi.theme.value) continue; if (fi.brand.value && x.brand !== fi.brand.value) continue; if (x.tags.length) x.tags.forEach(t => counts.set(t, (counts.get(t) || 0) + 1)); else none++; }
   const opts = [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([f, c]) => [f, `${f} (${c.toLocaleString()})`]);
-  if (fi.theme.value && none) opts.push(['__none', `Not set (${none.toLocaleString()})`]);
+  if (fi.theme.value && none) opts.push(['__none', `No tag (${none.toLocaleString()})`]);
   fill(fi.film, 'All', opts, keep ?? fi.film.value);
 }
 function subOptions(keep) {
@@ -691,7 +711,7 @@ const scoped = () => scopedFor(kind);
 function setPasses(s, q) {
   if (fi.theme.value && s.theme !== fi.theme.value) return false;
   if (fi.sub.value && s.sub !== fi.sub.value) return false;
-  if (fi.film.value && (fi.film.value === '__none' ? !!s.film : s.film !== fi.film.value)) return false;
+  if (fi.film.value && (fi.film.value === '__none' ? s.tags.length > 0 : !s.tags.includes(fi.film.value))) return false;
   if (fi.year.value && String(s.year) !== fi.year.value) return false;
   if (q && !s.key.includes(q)) return false;
   return true;
@@ -904,10 +924,16 @@ function render() {
   const price = (x, f) => {
     const v = info(x.n)[f];
     if (editing === x.n + '|' + f) return `<input class="inp mono" id="edit-price" style="width:92px;text-align:right" type="number" step="0.01" min="0" data-n="${esc(x.n)}" data-f="${f}" value="${toLocal(v) ?? ''}" aria-label="${f} price in ${cur()}">`;
-    return `<button class="btn ghost price ${v != null ? 'has' : ''}" data-price="${f}" data-n="${esc(x.n)}" aria-label="Set ${f} price">${v != null ? money(v) : '—'}</button>`;
+    const mineV = (mine.get(x.n) || {})[f], sh = shared.get(x.n) || {}, isMine = mineV != null && !canCurate(), isManual = !isMine && canCurate() && sh.manualPrice && sh[f] != null;
+    const src = sh.priceSource && sh.priceSource !== 'BrickLink' ? sh.priceSource : 'BrickLink';
+    const title = isMine ? `Your price, for you only.${sh[f] != null ? ` ${src}: ${money(sh[f])}.` : ''} Click and clear it to go back.`
+      : isManual ? 'Set by you for everyone. The nightly refresh leaves it alone; clear it to go back to BrickLink.'
+      : `Click to set your own ${f} price`;
+    return `<button class="btn ghost price ${v != null ? 'has' : ''} ${isMine ? 'mine' : ''} ${isManual ? 'manual' : ''}" data-price="${f}" data-n="${esc(x.n)}" title="${esc(title)}" aria-label="${esc(title)}">${v != null ? money(v) : '—'}</button>`;
   };
   const blCell = x => {
     const v = info(x.n).bl;
+    if (!canCurate()) return v ? `<span class="mono">${esc(v)}</span>` : '<span class="muted">—</span>';
     if (editing === x.n + '|bl') return `<input class="inp mono" id="edit-price" style="width:110px" type="text" maxlength="40" data-n="${esc(x.n)}" data-f="bl" value="${esc(v || '')}" placeholder="sw0001" aria-label="BrickLink number">`;
     return `<button class="btn ghost price ${v ? 'has' : ''}" style="justify-content:flex-start" data-price="bl" data-n="${esc(x.n)}" aria-label="Set BrickLink number">${v ? esc(v) : 'Add'}</button>`;
   };
@@ -916,13 +942,22 @@ function render() {
     if (editing === x.n + '|sub') return `<input class="inp" id="edit-price" style="width:180px" list="subNames" data-n="${esc(x.n)}" data-f="sub" value="${esc(x.sub)}" placeholder="Subtheme" aria-label="Subtheme">`;
     return `<button class="subbtn ${x.sub ? '' : 'none'}" data-price="sub" data-n="${esc(x.n)}" title="Change subtheme">${esc(x.sub || x.theme)}</button>`;
   };
+  const tagCell = x => {
+    const list = x.tags || [], admin = x.k === 's' && canCurate();
+    const chips = list.slice(0, x.k === 's' ? 8 : 3).map(t => `<span class="tagchip"><button class="tagbtn" data-tagfilter="${esc(t)}" title="Show everything tagged ${esc(t)}">${esc(t)}</button>${admin ? `<button class="tagx" data-untag="${esc(t)}" data-n="${esc(x.n)}" aria-label="Remove tag ${esc(t)}" title="Remove tag">×</button>` : ''}</span>`).join('');
+    const more = x.k !== 's' && list.length > 3 ? `<span class="tagmore">+${list.length - 3}</span>` : '';
+    const addBtn = !admin ? '' : editing === x.n + '|tag'
+      ? `<input class="inp tagin" id="edit-price" list="filmNames" data-n="${esc(x.n)}" data-f="tag" placeholder="New tag" aria-label="New tag">`
+      : `<button class="tagadd" data-price="tag" data-n="${esc(x.n)}" title="Add a tag">+ Tag</button>`;
+    return chips || more || addBtn ? `<div class="tags">${chips}${more}${addBtn}</div>` : '';
+  };
   const filmCell = x => {
     if (x.k === 's' && !canCurate()) return x.film ? esc(x.film) : '';
     if (x.k !== 's') return x.films.length ? `<span class="muted">${esc(x.films.slice(0, 2).join(', '))}${x.films.length > 2 ? ` +${x.films.length - 2}` : ''}</span>` : '';
     if (editing === x.n + '|film') return `<input class="inp" id="edit-price" style="width:180px" list="filmNames" data-n="${esc(x.n)}" data-f="film" value="${esc(x.film)}" placeholder="Film or series" aria-label="Film or series">`;
     return `<button class="subbtn ${x.film ? '' : 'none'}" data-price="film" data-n="${esc(x.n)}" title="Change film or series">${x.film ? esc(x.film) : 'Add'}</button>`;
   };
-  $('filmNames').innerHTML = [...new Set(CAT.sets.map(s => s.film).filter(Boolean))].sort().map(v => `<option value="${esc(v)}">`).join('');
+  $('filmNames').innerHTML = [...new Set(CAT.sets.flatMap(s => s.tags))].sort().map(v => `<option value="${esc(v)}">`).join('');
   $('subNames').innerHTML = [...new Set(CAT.sets.filter(s => !fi.theme.value || s.theme === fi.theme.value).map(s => s.sub).filter(Boolean))].sort().map(v => `<option value="${esc(v)}">`).join('');
   $('rows').innerHTML = page.map(x => `
     <tr class="${owned(x) ? 'owned' : fromSet(x) ? 'fromset' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
@@ -931,7 +966,7 @@ function render() {
       <td class="nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
       <td>${condCell(x)}</td>
       <td class="muted">${x.brand}</td>
-      <td class="sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}</td>
+      <td class="sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}${tagCell(x)}</td>
       <td class="mono">${esc(shownNum(x))}</td>${x.k === 'm' ? `<td>${blCell(x)}</td>` : ''}
       <td class="muted">${x.year ?? ''}</td>
       <td class="num">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
@@ -961,7 +996,7 @@ function render() {
   $('bulkBtn').hidden = !canCurate();
   $('addBtn').hidden = !canCurate();
   $('bulkBtn').disabled = kind !== 'sets' || !isScoped || !rows.length;
-  $('bulkBtn').title = kind !== 'sets' ? 'Switch to Sets to change subthemes' : !isScoped ? 'Filter or search first, then set the subtheme or film for every set in view' : `Set the subtheme or film for the ${rows.length.toLocaleString()} sets in view`;
+  $('bulkBtn').title = kind !== 'sets' ? 'Switch to Sets to change subthemes' : !isScoped ? 'Filter or search first, then set the subtheme or a tag for every set in view' : `Set the subtheme or a tag for the ${rows.length.toLocaleString()} sets in view`;
   bulkRows = kind === 'sets' && isScoped ? rows : [];
   if (!$('bulkbar').hidden) { if (!bulkRows.length) $('bulkbar').hidden = true; else $('bulkLabel').textContent = `Set for the ${bulkRows.length.toLocaleString()} set${bulkRows.length > 1 ? 's' : ''} in view`; }
   $('syncBtn').title = kind === 'figs' ? 'Fetch BrickLink prices for minifigures in view that have a BrickLink #' : 'Fetch BrickLink price guide averages for the sets in view';
@@ -1035,6 +1070,8 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button,[data-sort]'); if (!t) return;
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
   if (t.dataset.kind) { kind = t.dataset.kind; limit = PAGE; themeOptions(); savePrefs(); render(); return; }
+  if (t.dataset.untag) { const x = CAT.sets.find(s => s.n === t.dataset.n); if (x) editTags([x], t.dataset.untag, true); return; }
+  if (t.dataset.tagfilter) { focus = null; fill(fi.film, 'All', [[t.dataset.tagfilter, t.dataset.tagfilter]], t.dataset.tagfilter); filmOptions(t.dataset.tagfilter); limit = PAGE; savePrefs(); render(); window.scrollTo({ top: $('fiFilm').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth' }); return; }
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
   if (t.dataset.condmenu) { copiesFor === t.dataset.condmenu ? closeCopies() : openCopies(t.dataset.condmenu); return; }
   if (t.dataset.copy) { const n = copiesFor, q = copiesOf({ n }); q[t.dataset.copy] += Number(t.dataset.d); setInfo(n, { qty: q }); if (copyCount({ n })) placeCopies(); else closeCopies(); return; }
@@ -1054,6 +1091,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('focusout', e => {
   const el = e.target; if (el.id !== 'edit-price' || !editing) return;
   editing = null;
+  if (el.dataset.f === 'tag') { const x = CAT.sets.find(s => s.n === el.dataset.n); if (x && el.value.trim()) editTags([x], el.value); else render(); return; }
   if (el.dataset.f === 'sub' || el.dataset.f === 'film') { setManualSub(el.dataset.n, el.value.trim(), el.dataset.f); return; }
   const v = el.dataset.f === 'bl' ? (el.value.trim() || null) : el.value === '' ? null : toAud(Math.max(0, Number(el.value)));
   const cur = info(el.dataset.n)[el.dataset.f] ?? null;
@@ -1157,9 +1195,11 @@ function applyOverrides() {
   if (!CAT) return;
   const ov = new Map();
   for (const d of subDocs.values()) { for (const [k, v] of Object.entries(d.brickset || {})) ov.set(k, v); for (const [k, v] of Object.entries(d.manual || {})) ov.set(k, v); }
-  const films = new Map(); for (const d of subDocs.values()) for (const [k, v] of Object.entries(d.films || {})) films.set(k, v);
-  for (const x of CAT.sets) { x.sub = ov.has(x.n) ? ov.get(x.n) : x.rbSub; x.film = films.get(x.n) || ''; }
-  for (const f of CAT.figs) { f.subs = [...new Set(f.so.map(x => x.sub).filter(Boolean))]; f.sub = f.subs[0] || ''; f.films = [...new Set(f.so.map(x => x.film).filter(Boolean))]; }
+  // Tags: any number per set. The older single Film / Series value counts as a tag too.
+  const tags = new Map(), add = (k, v) => { if (!v) return; if (!tags.has(k)) tags.set(k, []); if (!tags.get(k).includes(v)) tags.get(k).push(v); };
+  for (const d of subDocs.values()) { for (const [k, v] of Object.entries(d.films || {})) add(k, v); for (const [k, v] of Object.entries(d.tags || {})) (Array.isArray(v) ? v : []).forEach(t => add(k, t)); }
+  for (const x of CAT.sets) { x.sub = ov.has(x.n) ? ov.get(x.n) : x.rbSub; x.tags = tags.get(x.n) || []; x.film = x.tags[0] || ''; }
+  for (const f of CAT.figs) { f.subs = [...new Set(f.so.map(x => x.sub).filter(Boolean))]; f.sub = f.subs[0] || ''; f.tags = [...new Set(f.so.flatMap(x => x.tags))]; f.films = f.tags; }
   subOptions(fi.sub.value); filmOptions(fi.film.value);
 }
 let subQueue = Promise.resolve();
@@ -1167,7 +1207,7 @@ function saveSubDoc(theme) {
   const id = slug(theme), d = subDocs.get(id);
   subQueue = subQueue.then(async () => {
     if (!db) return;
-    try { await db.collection('subthemes').doc(id).set({ theme, brickset: d.brickset || {}, manual: d.manual || {}, films: d.films || {}, updatedAt: Date.now() }); }
+    try { await db.collection('subthemes').doc(id).set({ theme, brickset: d.brickset || {}, manual: d.manual || {}, films: d.films || {}, tags: d.tags || {}, updatedAt: Date.now() }); }
     catch (e) {
       if (e?.code === 'invalid_argument') toast('This view can’t save subtheme changes.');
       else if (e?.code === 'quota_exceeded') toast('Storage is full, so the subthemes weren’t saved.');
@@ -1193,10 +1233,35 @@ function setManualSub(n, value, field = 'sub') {
   subDocs.set(id, { ...d, manual }); applyOverrides(); render(); saveSubDoc(x.theme);
 }
 
+// Add or remove a tag on sets (site owner only). Folds any old Film / Series value into the tag list.
+function editTags(sets, tag, remove) {
+  if (!canCurate()) { toast('Only the site owner can change tags.'); return 0; }
+  tag = String(tag || '').trim().slice(0, 80); if (!tag) return 0;
+  const touched = new Set(); let n = 0;
+  for (const x of sets) {
+    const id = slug(x.theme), d = subDocs.get(id) || { theme: x.theme, brickset: {}, manual: {}, films: {}, tags: {} };
+    const films = { ...(d.films || {}) }, all = { ...(d.tags || {}) };
+    let list = [...new Set([...(films[x.n] ? [films[x.n]] : []), ...(all[x.n] || [])])];
+    delete films[x.n];
+    const had = list.includes(tag);
+    list = remove ? list.filter(t => t !== tag) : had ? list : [...list, tag];
+    if (list.length) all[x.n] = list; else delete all[x.n];
+    if (had === !!remove) n++;
+    subDocs.set(id, { ...d, theme: x.theme, films, tags: all }); touched.add(x.theme);
+  }
+  applyOverrides(); render(); touched.forEach(t => saveSubDoc(t));
+  return n;
+}
 function bulkSet(value) {
   if (!canCurate()) { toast('Only the site owner can change subthemes.'); return; }
   const field = $('bulkField').value;
   const rows = bulkRows.slice(); if (!rows.length) return;
+  if (field === 'tag' || field === 'untag') {
+    if (!value) return;
+    const n = editTags(rows, value, field === 'untag');
+    toast(field === 'untag' ? `Removed “${value}” from ${n.toLocaleString()} sets` : `Tagged ${n.toLocaleString()} sets “${value}”`);
+    return;
+  }
   const touched = new Set();
   for (const x of rows) {
     const id = slug(x.theme), d = subDocs.get(id) || { theme: x.theme, brickset: {}, manual: {}, films: {} };
@@ -1216,7 +1281,7 @@ function bulkSet(value) {
   const what = field === 'film' ? 'film or series' : 'subtheme';
   toast(value ? `Set ${rows.length.toLocaleString()} sets to ${value}` : `Cleared the ${what} on ${rows.length.toLocaleString()} sets`);
 }
-$('bulkField').onchange = () => { const f = $('bulkField').value; $('bulkSub').setAttribute('list', f === 'film' ? 'filmNames' : 'subNames'); $('bulkSub').placeholder = f === 'film' ? 'e.g. The Mandalorian' : 'e.g. Microfighters'; $('bulkSub').focus(); };
+$('bulkField').onchange = () => { const f = $('bulkField').value, t = f !== 'sub'; $('bulkSub').setAttribute('list', t ? 'filmNames' : 'subNames'); $('bulkSub').placeholder = t ? 'e.g. Helmet Collection' : 'e.g. Microfighters'; $('bulkClear').hidden = t; $('bulkSub').focus(); };
 $('bulkBtn').onclick = () => { $('bulkbar').hidden = false; render(); $('bulkSub').focus(); };
 $('bulkCancel').onclick = () => { $('bulkbar').hidden = true; };
 $('bulkbar').addEventListener('submit', e => { e.preventDefault(); const v = $('bulkSub').value.trim(); if (!v) { $('bulkSub').focus(); return; } bulkSet(v); });
@@ -1375,11 +1440,11 @@ $('exportBtn').onclick = async () => {
   const rows = [...CAT.sets.filter(owned), ...CAT.figs.filter(owned)];
   if (!rows.length) { toast('Tick the sets and minifigures you own first, then export.'); return; }
   const pct = Number(prefs.sellPct), withPct = prefs.sellPct != null && prefs.sellPct !== '' && pct > 0;
-  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Film / Series', 'Year', 'Pieces', 'Condition', 'Copies', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : [])];
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', 'Condition', 'Copies', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : [])];
   const at = v => v == null ? '' : Math.round(v * pct) / 100;
   const body = rows.map(x => {
     const s = info(x.n), u = toLocal(s.used), nw = toLocal(s.new), v = toLocal(valueOf(x));
-    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.k === 's' ? x.film : (x.films || []).join('; '), x.year, x.pieces, condLabel(x).long, copyCount(x), u, nw, v, ...(withPct ? [at(v)] : [])];
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, condLabel(x).long, copyCount(x), u, nw, v, ...(withPct ? [at(v)] : [])];
   });
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
   const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), '', '', sumCol(13), ...(withPct ? [sumCol(14)] : [])];
@@ -1392,10 +1457,10 @@ $('exportWantBtn').onclick = async () => {
   const rows = [...CAT.sets, ...CAT.figs].filter(x => wanted(x) && !has(x));
   if (!rows.length) { toast('Star the sets and minifigures you want first, then export.'); return; }
   const blUrl = x => { const id = x.k === 's' ? (info(x.n).bl || x.n) : info(x.n).bl; return x.extra ? '' : id ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(id)}` : ''; };
-  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Film / Series', 'Year', 'Pieces', `Used ${cur()}`, `New ${cur()}`, 'Buy', 'BrickLink'];
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', `Used ${cur()}`, `New ${cur()}`, 'Buy', 'BrickLink'];
   const body = rows.map(x => {
     const s = info(x.n);
-    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.k === 's' ? x.film : (x.films || []).join('; '), x.year, x.pieces, toLocal(s.used), toLocal(s.new), buyHref(x), blUrl(x)];
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, toLocal(s.used), toLocal(s.new), buyHref(x), blUrl(x)];
   });
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
   const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', sumCol(9), sumCol(10), '', ''];
@@ -1489,7 +1554,7 @@ fetch('catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return r
   if (!db) return;
   db.collection('subthemes').onSnapshot(snap => {
     subDocs.clear();
-    for (const d of snap.docs) { const v = d.data() || {}; subDocs.set(d.id, { theme: v.theme, brickset: v.brickset || {}, manual: v.manual || {}, films: v.films || {} }); }
+    for (const d of snap.docs) { const v = d.data() || {}; subDocs.set(d.id, { theme: v.theme, brickset: v.brickset || {}, manual: v.manual || {}, films: v.films || {}, tags: v.tags || {} }); }
     applyOverrides(); render();
   }, err => console.warn('subthemes', err));
   db.collection('iteminfo').onSnapshot(snap => {
