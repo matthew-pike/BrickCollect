@@ -5,8 +5,9 @@
 window.BC_CONFIG = {
   supabaseUrl: 'https://gsvoqohfznlhmyhmnnca.supabase.co',
   supabaseKey: 'sb_publishable_gDOxpyIJ3kXLThLdOhWH3Q_XrLpNnE5',
-  // Turn on once Google sign-in is set up in Supabase (Authentication → Sign In / Providers → Google).
-  googleSignIn: true,
+  // Social sign-in buttons, in this order. Add a provider here only after it's switched on in
+  // Supabase (Authentication → Sign In / Providers). Options: google, discord, facebook, apple, twitter, github, azure.
+  socialSignIn: ['google'],
   // "Buy" buttons. {num} is the set number (75192 for LEGO 75192-1), {name} the set name.
   // Swap in your affiliate links when you have them; a brand with no url shows no Buy button.
   buyLinks: {

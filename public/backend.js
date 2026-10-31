@@ -125,10 +125,11 @@
       const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
       if (error) throw error;
     },
-    async signInWithGoogle() {
-      const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+    async signInWith(provider) {
+      const { error } = await sb.auth.signInWithOAuth({ provider, options: { redirectTo: location.origin + location.pathname } });
       if (error) throw error;
     },
+    signInWithGoogle() { return this.signInWith('google'); },
     async signOut() { await sb.auth.signOut(); },
     // Call cb only when a different person signs in or out after the page has loaded.
     // INITIAL_SESSION fires straight away for every page load and TOKEN_REFRESHED every hour;

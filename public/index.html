@@ -207,6 +207,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
 .dlg form{display:flex;flex-direction:column;gap:8px}
 .dlg label{font-size:12px;color:var(--muted)}
 .dlg .btn{justify-content:center;width:100%}
+.socials{display:flex;flex-direction:column;gap:8px}
 .dlg .or{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--faint);font-size:12px}
 .dlg .or::before,.dlg .or::after{content:"";flex:1;border-top:1px solid var(--line)}
 .dlg .fine{margin:14px 0 0}
@@ -361,7 +362,7 @@ tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font
       <button class="btn primary" type="submit" id="authSend">Email me a sign-in link</button>
     </form>
     <div class="or"><span>or</span></div>
-    <button class="btn" type="button" id="googleBtn">Continue with Google</button>
+    <div class="socials" id="socialBtns"></div>
     <p class="fine">By signing in you agree to our <a href="/privacy.html">privacy policy</a>. Anything you’ve ticked in this browser moves into your account.</p>
   </div>
   <div id="authSent" hidden>
@@ -1195,7 +1196,10 @@ const dlg = $('authDlg');
 function openAuth() {
   if (!window.BC?.auth?.available) { toast('Sign-in isn’t set up yet.'); return; }
   $('authIn').hidden = !!uid; $('authOut').hidden = !uid; $('authSent').hidden = true;
-  const g = !!window.BC_CONFIG?.googleSignIn; $('googleBtn').hidden = !g; dlg.querySelector('.or').hidden = !g;
+  const NAMES = { google: 'Google', discord: 'Discord', facebook: 'Facebook', apple: 'Apple', twitter: 'X', github: 'GitHub', azure: 'Microsoft' };
+  const list = (window.BC_CONFIG?.socialSignIn || (window.BC_CONFIG?.googleSignIn ? ['google'] : [])).filter(k => NAMES[k]);
+  $('socialBtns').innerHTML = list.map(k => `<button class="btn" type="button" data-provider="${k}">Continue with ${NAMES[k]}</button>`).join('');
+  dlg.querySelector('.or').hidden = !list.length;
   try { dlg.showModal(); } catch { dlg.setAttribute('open', ''); }
   if (!uid) setTimeout(() => $('authEmail').focus(), 50);
 }
@@ -1220,7 +1224,7 @@ $('authForm').addEventListener('submit', async e => {
   } catch (err) { toast(err.message || 'Couldn’t send the link. Check the address and try again.'); }
   finally { $('authSend').disabled = false; $('authSend').textContent = 'Email me a sign-in link'; }
 });
-$('googleBtn').onclick = async () => { try { await BC.auth.signInWithGoogle(); } catch (err) { toast(err.message || 'Google sign-in isn’t available right now.'); } };
+$('socialBtns').addEventListener('click', async e => { const b = e.target.closest('[data-provider]'); if (!b) return; try { await BC.auth.signInWith(b.dataset.provider); } catch (err) { toast(err.message || 'That sign-in option isn’t available right now.'); } });
 $('signOutBtn').onclick = async () => { await BC.auth.signOut(); location.reload(); };
 window.BC?.auth?.onChange?.(() => location.reload());
 
