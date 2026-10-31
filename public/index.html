@@ -735,6 +735,7 @@ function render() {
   // rows
   const base = isScoped ? list.filter(inScope) : list;
   let rows = listView === 'owned' ? base.filter(has) : listView === 'wanted' ? base.filter(wanted)
+    : !isScoped ? list.filter(x => has(x) || wanted(x))
     : fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope;
   $('cOwned').textContent = list.filter(has).length.toLocaleString();
   $('cWanted').textContent = list.filter(wanted).length.toLocaleString();
@@ -759,7 +760,7 @@ function render() {
   }
   ownRows = rows;
   { const own = rows.filter(owned).length; const u = $('unselAll'); u.hidden = !own; u.textContent = own ? `Unselect all (${own.toLocaleString()})` : 'Unselect all'; u.title = own ? `Unmark the ${own.toLocaleString()} owned in view` : 'Nothing in view is marked as owned'; }
-  const showRows = isScoped || hasIn.length || listView !== 'all';
+  const showRows = isScoped || hasIn.length || listView !== 'all' || list.some(wanted);
   const page = showRows ? rows.slice(0, limit) : [];
   const blId = x => x.k === 's' ? x.n : info(x.n).bl;
   const bl = x => blId(x) ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(blId(x))}` : `https://www.bricklink.com/v2/search.page?q=${encodeURIComponent(x.name)}#T=M`;
