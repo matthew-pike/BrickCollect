@@ -5,6 +5,7 @@
 //   SUPABASE_SECRET_KEY          Supabase "secret" key (sb_secret_…) or the legacy service_role key. Never put this in the site.
 //   BRICKLINK_CONSUMER_KEY, BRICKLINK_CONSUMER_SECRET, BRICKLINK_TOKEN_VALUE, BRICKLINK_TOKEN_SECRET
 //   SYNC_DAILY_ITEMS             optional: price lookups each signed-in person may trigger per day (default 60)
+//   MINIFIG_SETS_PER_RUN         optional: sets the hourly minifig-numbers job checks on BrickLink per run (default 120)
 
 export const env = k => (globalThis.Netlify?.env?.get?.(k)) ?? process.env[k];
 
@@ -89,7 +90,7 @@ async function oauthHeader(method, url, query) {
   return 'OAuth realm="", ' + Object.keys(oauth).map(k => `${k}="${enc(oauth[k])}"`).join(', ');
 }
 export class BrickLinkAuthError extends Error {}
-async function blGet(path, query) {
+export async function blGet(path, query) {
   const url = API + path;
   const qs = Object.keys(query).map(k => `${enc(k)}=${enc(query[k])}`).join('&');
   const res = await fetch(`${url}?${qs}`, { headers: { Authorization: await oauthHeader('GET', url, query) } });
