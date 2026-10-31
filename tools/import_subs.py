@@ -42,25 +42,29 @@ def chain(i):
     return out or ['Other']
 cat = {s[0]: s for s in c['sets']}
 slug = lambda t: re.sub(r'^-+|-+$', '', re.sub(r'[^A-Za-z0-9]+', '-', t or 'Other'))[:120] or 'Other'
-per = collections.defaultdict(dict); missing = []; nosub = 0; changes = collections.Counter(); same = 0; other = 0
+per = collections.defaultdict(dict); covered = collections.defaultdict(list); missing = []; nosub = 0; changes = collections.Counter(); same = 0; other = 0
 for num, (name, theme, sub) in found.items():
     if not sub: nosub += 1; continue
     if num not in cat: missing.append(f'{num} {name}'); continue
     ch = chain(cat[num][3]); ctheme = ch[0]; rb = ch[1] if len(ch) > 1 else ''
     if theme != ctheme: other += 1; continue
+    covered[ctheme].append(num)
     if sub == rb: same += 1; continue
     per[ctheme][num] = sub; changes[(ctheme, sub)] += 1
 print(f'pages read: {len(sys.argv) - 2}   sets found: {len(found)}   no subtheme given: {nosub}   already right: {same}   to set: {sum(len(v) for v in per.values())}   not in catalog: {len(missing)}   filed under another theme here: {other}')
 for m in missing: print('  not in catalog:', m)
 for (t, s), n in sorted(changes.items()): print(f'  {t} / {s}: {n}')
 sql = ['-- Subthemes imported from saved set-list pages. Safe to re-run.',
-       '-- Merges into each theme\'s automatic subthemes; subthemes you set by hand on the site still win.']
-for t, m in sorted(per.items()):
+       '-- Merges into each theme\'s automatic subthemes. Earlier hand edits for the sets in these pages are cleared,',
+       '-- so the imported subtheme shows; hand edits for other sets, and any you make after this, still win.']
+for t in sorted(set(per) | set(covered)):
+    m = per.get(t, {})
+    keys = "array[" + ",".join("'" + k.replace("'", "''") + "'" for k in sorted(covered[t])) + "]::text[]" if covered[t] else "array[]::text[]"
     js = json.dumps(m, ensure_ascii=False).replace("'", "''")
     tj = json.dumps(t).replace("'", "''")
     sql.append(f"""insert into public.shared_docs (collection, id, data)
 values ('subthemes', '{slug(t)}', jsonb_build_object('theme', '{tj}'::jsonb #>> '{{}}', 'brickset', '{js}'::jsonb, 'manual', '{{}}'::jsonb, 'films', '{{}}'::jsonb))
 on conflict (collection, id) do update set
-  data = shared_docs.data || jsonb_build_object('brickset', coalesce(shared_docs.data->'brickset', '{{}}'::jsonb) || excluded.data->'brickset', 'updatedAt', (extract(epoch from now()) * 1000)::bigint),
+  data = shared_docs.data || jsonb_build_object('brickset', coalesce(shared_docs.data->'brickset', '{{}}'::jsonb) || excluded.data->'brickset', 'manual', coalesce(shared_docs.data->'manual', '{{}}'::jsonb) - {keys}, 'updatedAt', (extract(epoch from now()) * 1000)::bigint),
   updated_at = now();""")
 open(sys.argv[1], 'w').write('\n\n'.join(sql) + '\n')
