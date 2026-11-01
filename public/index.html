@@ -48,6 +48,7 @@ button,input,select{font:inherit;color:inherit}
 .top .wrap{display:flex;align-items:center;gap:16px;padding-block:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand h1{font-family:var(--font-display);font-weight:700;font-size:20px;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.beta.preview{background:var(--stud);color:#1a1300}
 .beta{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.08em;padding:2px 6px;border-radius:4px;background:var(--accent);color:var(--accent-ink)}
 .brand p{margin:0;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 @media (max-width:640px){.brand p{display:none}.top .wrap{gap:10px}}
@@ -356,7 +357,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
   <div class="wrap">
     <div class="brand">
       <div>
-        <h1><a href="#" class="home" id="homeLink" title="Back to home">BrickCollect</a> <span class="beta">BETA</span></h1>
+        <h1><a href="#" class="home" id="homeLink" title="Back to home">BrickCollect</a> <span class="beta">BETA</span> <span class="beta preview" id="previewBadge" hidden title="You’re on the preview site: changes here aren’t live yet">PREVIEW</span></h1>
         <p>Collect. Track. Value. Export. In one place.</p>
       </div>
     </div>
@@ -535,6 +536,8 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 <script>
 (() => {
 const $ = id => document.getElementById(id);
+// Show a PREVIEW badge on the preview site (Netlify's preview--… address) so it's never mistaken for the live one.
+if (/^preview--/.test(location.hostname)) { $('previewBadge').hidden = false; document.title = 'Preview · ' + document.title; }
 const PAGE = 200;
 let CAT = null;                       // { themes: Map, sets: [], figs: [] }
 const mine = new Map();               // number -> { owned, used, new }
