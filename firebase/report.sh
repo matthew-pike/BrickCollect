@@ -6,5 +6,6 @@ log="$(mktemp)"
 "$@" >"$log" 2>&1; code=$?
 if [ $code -eq 0 ]; then cat "$log"; exit 0; fi
 cat "$log"
-grep -v '^\s*$' "$log" | tail -n 25 | sed -E 's/%/%25/g' | while IFS= read -r line; do echo "::error title=$title::${line:0:400}"; done
+# GitHub keeps only 10 annotations per step, so send the last 60 lines as 6 annotations of 10 lines each.
+grep -v '^\s*$' "$log" | sed -E 's/\x1b\[[0-9;]*m//g' | tail -n 60 | cut -c1-300 | awk -v t="$title" '{ buf = buf (buf ? " ⏎ " : "") $0 } NR % 10 == 0 { gsub(/%/, "%25", buf); print "::error title=" t "::" buf; buf = "" } END { if (buf) { gsub(/%/, "%25", buf); print "::error title=" t "::" buf } }'
 exit $code
