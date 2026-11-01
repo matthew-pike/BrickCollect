@@ -435,13 +435,6 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 
 <div class="wrap">
 <main>
-  <section class="stats" aria-label="Collection summary">
-    <div class="stat"><span class="k"><span id="kOwned">Complete sets</span><button type="button" class="tip" data-tip="How many of the sets in view you own, in any condition. Pick a brand, theme or subtheme to see how complete that range is. Extra copies of a set don&#x27;t count twice." aria-label="What is this?">i</button></span><span class="v" id="sOwned">0</span><div class="bar"><i id="sBar"></i></div><span class="s" id="sPct">Across your whole collection</span></div>
-    <div class="stat"><span class="k">Remaining<button type="button" class="tip" data-tip="Sets in view you don&#x27;t own yet. Minifigures that come with a set you own count as owned." aria-label="What is this?">i</button></span><span class="v accent" id="sRemain">—</span><span class="s" id="sRemainS">Pick a theme to see the gap</span></div>
-    <div class="stat"><span class="k">To complete<button type="button" class="tip" data-tip="What the sets in view you don&#x27;t own yet would cost at the average used or new price, in your currency. Sets without a price yet aren&#x27;t included." aria-label="What is this?">i</button><span class="seg" role="group" aria-label="Price"><button data-need="used" aria-pressed="true">Used</button><button data-need="new" aria-pressed="false">New</button></span></span><span class="v good" id="sNeed">—</span><span class="s" id="sNeedS">Pick a theme to see the cost</span></div>
-    <div class="stat"><span class="k">Collection value<button type="button" class="tip" data-tip="What everything you own is worth: new copies at the new price, used and incomplete copies at the used price, times how many copies you have." aria-label="What is this?">i</button></span><span class="v violet" id="sValU">$0.00</span><span class="s" id="sValUs">By each item’s condition</span></div>
-  </section>
-
   <section class="welcome" id="welcome" hidden aria-labelledby="welcomeTitle">
     <div class="welcome-text">
       <h2 id="welcomeTitle">Getting started</h2>
@@ -455,6 +448,13 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     <div class="welcome-foot"><span class="hint">Open the Timeline tab to see Star Wars, Harry Potter and Marvel sets in story order. Selling? “Selling or buying a collection?” shows what it’s worth.</span><button class="btn primary" type="button" id="gotIt">Got it</button></div>
     <button class="icon-btn x" id="hideWelcome" aria-label="Hide getting started"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </section>
+  <section class="stats" aria-label="Collection summary">
+    <div class="stat"><span class="k"><span id="kOwned">Complete sets</span><button type="button" class="tip" data-tip="How many of the sets in view you own, in any condition. Pick a brand, theme or subtheme to see how complete that range is. Extra copies of a set don&#x27;t count twice." aria-label="What is this?">i</button></span><span class="v" id="sOwned">0</span><div class="bar"><i id="sBar"></i></div><span class="s" id="sPct">Across your whole collection</span></div>
+    <div class="stat"><span class="k">Remaining<button type="button" class="tip" data-tip="Sets in view you don&#x27;t own yet. Minifigures that come with a set you own count as owned." aria-label="What is this?">i</button></span><span class="v accent" id="sRemain">—</span><span class="s" id="sRemainS">Pick a theme to see the gap</span></div>
+    <div class="stat"><span class="k">To complete<button type="button" class="tip" data-tip="What the sets in view you don&#x27;t own yet would cost at the average used or new price, in your currency. Sets without a price yet aren&#x27;t included." aria-label="What is this?">i</button><span class="seg" role="group" aria-label="Price"><button data-need="used" aria-pressed="true">Used</button><button data-need="new" aria-pressed="false">New</button></span></span><span class="v good" id="sNeed">—</span><span class="s" id="sNeedS">Pick a theme to see the cost</span></div>
+    <div class="stat"><span class="k">Collection value<button type="button" class="tip" data-tip="What everything you own is worth: new copies at the new price, used and incomplete copies at the used price, times how many copies you have." aria-label="What is this?">i</button></span><span class="v violet" id="sValU">$0.00</span><span class="s" id="sValUs">By each item’s condition</span></div>
+  </section>
+
 
   <section class="sellbox" id="sellbox" aria-labelledby="sellTitle">
     <button class="sellopen" id="sellToggle" aria-expanded="false" aria-controls="sellBody"><span class="sellq"><b>Selling or buying a collection?</b> <span class="muted">See what it’s worth</span></span><span class="sellpeek" id="sellPeek"></span><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
