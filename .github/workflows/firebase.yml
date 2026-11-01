@@ -1,16 +1,18 @@
-# Firebase jobs: test and publish the database rules, then copy data from Supabase.
-# Runs when firebase/RUN changes on the preview branch (edit the number in that file to run it again).
+# BrickCollect on Firebase.
+#   main branch    -> tests and publishes the rules, the price jobs and the live site (brickcollect.app).
+#   preview branch -> publishes the site to the preview channel only (a separate address for trying changes).
+# The one-off copy from Supabase runs on main only until switchover is marked done (private/settings jobsLive).
 name: Firebase
 on:
   push:
-    branches: [preview]
-    paths: ['firebase/RUN']
+    branches: [main, preview]
   workflow_dispatch:
 
-concurrency: firebase
+concurrency: firebase-${{ github.ref }}
 
 jobs:
   rules:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: firebase } }
     steps:
@@ -28,9 +30,9 @@ jobs:
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Publish rules" npx firebase deploy --only firestore:rules --project brickcollect-app --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
-          echo "::notice title=Rules::Rules tested and published to brickcollect-app"
+          echo "::notice title=Rules::Rules tested and published"
 
-  copy:
+  switchover:
     needs: rules
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: firebase } }
@@ -39,18 +41,45 @@ jobs:
       - uses: actions/setup-node@v5
         with: { node-version: 22 }
       - run: ./report.sh "npm install" npm install --no-audit --no-fund
-      - name: Copy data from Supabase
+      - name: Final copy from Supabase, then mark Firebase as live (skipped once done)
         env:
           SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
           SUPABASE_URL: https://gsvoqohfznlhmyhmnnca.supabase.co
           SUPABASE_SECRET_KEY: '${{ secrets.SUPABASE_SECRET_KEY }}'
         run: |
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
-          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Copy" node copy-from-supabase.mjs
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          if node settings.mjs check | grep -q "live=true"; then
+            echo "::notice title=Switchover::Already done; nothing copied"
+          else
+            ./report.sh "Copy" node copy-from-supabase.mjs
+            ./report.sh "Go live" node settings.mjs live
+          fi
           rm -f "$RUNNER_TEMP/sa.json"
 
+  jobs:
+    needs: switchover
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firebase } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: ./report.sh "npm install" npm install --no-audit --no-fund
+      - run: ./report.sh "npm install (jobs)" npm install --prefix functions --no-audit --no-fund
+      - name: Check the jobs load
+        run: ./report.sh "Load jobs" node -e "import('./functions/index.mjs').then(m => console.log(Object.keys(m).join(', ')))"
+      - name: Publish the jobs
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Publish jobs" npx firebase deploy --only functions --project brickcollect-app --non-interactive --force
+          rm -f "$RUNNER_TEMP/sa.json"
+          echo "::notice title=Jobs::Price jobs published"
+
   site:
-    needs: [rules, jobs]
+    needs: [rules, switchover, jobs]
+    if: ${{ !cancelled() && !failure() }}
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: firebase } }
     steps:
@@ -59,38 +88,17 @@ jobs:
         with: { node-version: 22 }
       - run: ./report.sh "npm install" npm install --no-audit --no-fund
       - run: ./report.sh "Build site" node build-hosting.mjs
-      - name: Publish the test site to brickcollect-app.web.app
-        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+      - name: Publish the site (main -> brickcollect.app, preview -> preview channel)
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}', BRANCH: '${{ github.ref_name }}' }
         run: |
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
-          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Publish site" npx firebase deploy --only hosting --project brickcollect-app --non-interactive
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          if [ "$BRANCH" = "main" ]; then
+            ./report.sh "Publish site" npx firebase deploy --only hosting --project brickcollect-app --non-interactive
+            echo "::notice title=Site::Live site published to https://brickcollect.app"
+          else
+            ./report.sh "Publish preview" npx firebase hosting:channel:deploy preview --expires 30d --project brickcollect-app --non-interactive | tee "$RUNNER_TEMP/out.txt"
+            url=$(grep -o 'https://brickcollect-app--preview[^ ]*web.app' "$RUNNER_TEMP/out.txt" | head -1)
+            echo "::notice title=Preview::Preview published to ${url:-the preview channel}"
+          fi
           rm -f "$RUNNER_TEMP/sa.json"
-          echo "::notice title=Site::Test site published to https://brickcollect-app.web.app"
-
-  jobs:
-    needs: rules
-    runs-on: ubuntu-latest
-    defaults: { run: { working-directory: firebase } }
-    steps:
-      - uses: actions/checkout@v5
-      - id: go
-        name: Publish jobs only once firebase/JOBS exists (after the BrickLink keys are in Secret Manager)
-        run: if [ -f JOBS ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "::notice title=Jobs::Skipped (no firebase/JOBS yet)"; fi
-      - if: steps.go.outputs.go == 'true'
-        uses: actions/setup-node@v5
-        with: { node-version: 22 }
-      - if: steps.go.outputs.go == 'true'
-        run: ./report.sh "npm install" npm install --no-audit --no-fund
-      - if: steps.go.outputs.go == 'true'
-        run: ./report.sh "npm install (jobs)" npm install --prefix functions --no-audit --no-fund
-      - if: steps.go.outputs.go == 'true'
-        name: Check the jobs load
-        run: ./report.sh "Load jobs" node -e "import('./functions/index.mjs').then(m => console.log(Object.keys(m).join(', ')))"
-      - if: steps.go.outputs.go == 'true'
-        name: Publish the jobs
-        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
-        run: |
-          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
-          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Publish jobs" npx firebase deploy --only functions --project brickcollect-app --non-interactive --force
-          rm -f "$RUNNER_TEMP/sa.json"
-          echo "::notice title=Jobs::Price jobs published to brickcollect-app"

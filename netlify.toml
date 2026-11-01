@@ -1,24 +1,5 @@
+# BrickCollect moved to Google Firebase at https://brickcollect.app on 1 November 2026.
+# This Netlify site now only forwards old links there. No functions or scheduled jobs run on Netlify any more
+# (their code is kept in netlify/ for reference; the live jobs are in firebase/functions).
 [build]
-  publish = "public"
-
-# The Supabase project address is public by design (it's in public/config.js so browsers can reach it),
-# so the secrets scan shouldn't treat it as a secret. Every real secret key is still checked.
-[build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
-
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-
-# The catalog is large but changes rarely: browsers keep a copy and check it's still current on each visit
-# (a quick "not modified" answer when it is), so a catalog update shows up straight away.
-[[headers]]
-  for = "/catalog.json"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
+  publish = "netlify-redirect"
