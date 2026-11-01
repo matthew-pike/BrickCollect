@@ -22,11 +22,13 @@ const BRANDS = [
   // Set numbers that aren't at the end of the product address are found in the address, title or SKU with numRe.
   { brand: 'CaDA', shop: 'https://decadastore.com', numRe: /\b(C\d{5}[A-Z]?)\b/i },
   { brand: 'Mould King', shop: 'https://mouldkingcorp.com', numRe: /\b(\d{5})\b/ },
+  // JMBricklayer set numbers are 5 digits (e.g. 61031), usually in the product title or SKU.
+  { brand: 'JMBricklayer', shop: 'https://jmbricklayer.com', numRe: /\b(\d{5})\b/ },
 ];
 
 // The set number is the last number in the address, optionally followed by a region (e.g. pantasy-t-800-87503-us-eu).
 const numFromHandle = h => { const m = /-([a-z]?\d{4,6})(?:-[a-z]{2,3})*$/i.exec(h || ''); return m ? m[1].toUpperCase() : null; };
-const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy)\b[\s:–-]*/i, '').trim() || num;
+const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy|JMBricklayer|JM\s?Bricklayer)\b[\s:–-]*/i, '').trim() || num;
 
 async function fetchJson(url) {
   const res = await fetch(url, { headers: { 'User-Agent': 'BrickCollect price updater (an Art of Bricks project)', Accept: 'application/json' } });
