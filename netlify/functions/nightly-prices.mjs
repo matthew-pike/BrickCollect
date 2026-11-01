@@ -1,6 +1,6 @@
-// Nightly (3am Sydney): refresh BrickLink prices for the sets people own most,
-// so most prices stay current without anyone pressing Sync.
-// Works through the most-owned sets whose price is more than 3 days old, for about 25 seconds a night.
+// Twice a day (3am and 3pm Sydney): refresh BrickLink prices for the sets and minifigures people own or want,
+// most-owned first, plus each seller location those collectors have picked. Only the site owner can Sync by hand.
+// Works through items whose price is more than 3 days old, for about 25 seconds a run.
 import { env, sb, readBuckets, savePrices, isFresh, priceItemAll, validLoc, locFresh, bricklinkReady, pool, BrickLinkAuthError } from '../lib/common.mjs';
 
 const STALE = 3 * 24 * 3600 * 1000;
@@ -15,8 +15,9 @@ export default async () => {
     const rows = await sb(`user_docs?select=data&id=eq.collection&order=user_id&limit=1000&offset=${offset}`);
     for (const r of rows || []) {
       const loc = validLoc(r.data?.loc);
-      for (const [n, v] of Object.entries(r.data?.items || {})) if (v?.owned) {
-        counts.set(n, (counts.get(n) || 0) + 1);
+      // Owned and wanted items both get kept up to date (owned first: they count double).
+      for (const [n, v] of Object.entries(r.data?.items || {})) if (v?.owned || v?.wanted) {
+        counts.set(n, (counts.get(n) || 0) + (v.owned ? 2 : 1));
         if (loc) { if (!locsOf.has(n)) locsOf.set(n, new Set()); locsOf.get(n).add(loc); }
       }
     }
@@ -44,5 +45,5 @@ export default async () => {
   console.log(`nightly: refreshed ${updates.size} of ${queue.length} stale owned items`);
 };
 
-// 16:00 UTC is 3am in Sydney during daylight saving (2am the rest of the year).
-export const config = { schedule: '0 16 * * *' };
+// Twice a day: 16:00 UTC (3am Sydney in daylight saving) and 04:00 UTC (3pm Sydney).
+export const config = { schedule: '0 4,16 * * *' };

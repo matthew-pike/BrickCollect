@@ -25,6 +25,8 @@ export default async (req) => {
   if (!items.length) return json(400, { code: 'bad_request', message: 'Nothing to sync.' });
 
   const admin = await isAdmin(user.email);
+  // Only the site owner syncs by hand; everyone else's prices come from the twice-daily refresh.
+  if (!admin) return json(403, { code: 'admin_only', message: 'Prices refresh automatically twice a day.' });
   const buckets = await readBuckets([...new Set(items.map(x => bucketOf(x.n)))]);
   const entryOf = n => (buckets.get(bucketOf(n)) || {})[n];
 

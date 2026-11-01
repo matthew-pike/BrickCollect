@@ -452,7 +452,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
       <label class="regsel" title="Which BrickLink sellers the prices come from. W marks a worldwide price where there are no local sales."><span>Prices from</span><select id="regionSel" aria-label="BrickLink prices from"><option value="AU">Australia</option><option value="US">United States</option><option value="CA">Canada</option><option value="EU">Europe (EU)</option><option value="UK">United Kingdom</option><option value="world">Worldwide (W)</option></select></label>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button></div></div>
-      <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view. Prices also refresh every night for sets people own. Sign in to sync, up to 60 items a day.">Sync Prices</button>
+      <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view (site owner only; everyone else's prices refresh twice a day).">Sync Prices</button>
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
       <b id="bulkLabel">Set for the sets in view</b>
@@ -751,7 +751,7 @@ function setInfo(n, patch, { quiet } = {}) {
   for (const k of SHARED_KEYS) if (k in patch) {
     if (canCurate()) {
       sharedPatch[k] = patch[k]; delete me[k];
-      // A price you type stays put: the nightly refresh skips it until you clear it.
+      // A price you type stays put: the twice-daily refresh skips it until you clear it.
       if ((k === 'used' || k === 'new') && !('manualPrice' in patch)) sharedPatch.manualPrice = patch[k] != null ? true : null;
     }
     else if (k === 'bl' || k === 'manualPrice') continue; // only the site owner sets BrickLink numbers
@@ -1138,8 +1138,8 @@ function render() {
     const mineV = (mine.get(x.n) || {})[f], sh = shared.get(x.n) || {}, isMine = mineV != null && !canCurate(), isManual = !isMine && canCurate() && sh.manualPrice && sh[f] != null;
     const src = sh.priceSource && sh.priceSource !== 'BrickLink' ? sh.priceSource : 'BrickLink';
     const title = isMine ? `Your price, for you only.${sh[f] != null ? ` ${src}: ${money(sh[f])}.` : ''} Click and clear it to go back.`
-      : isManual ? 'Set by you for everyone. The nightly refresh leaves it alone; clear it to go back to BrickLink.'
-      : (info(x.n).worldFor || {})[f] ? `${(sh.loc || {})[priceRegion()] ? 'No recent sales from' : 'Not yet checked for'} sellers in ${LOCS[priceRegion()]}, so this is the worldwide average (W). Sync Prices fetches it. Click to set your own ${f} price`
+      : isManual ? 'Set by you for everyone. The twice-daily refresh leaves it alone; clear it to go back to BrickLink.'
+      : (info(x.n).worldFor || {})[f] ? `${(sh.loc || {})[priceRegion()] ? 'No recent sales from' : 'Not yet checked for'} sellers in ${LOCS[priceRegion()]}, so this is the worldwide average (W). It’s fetched in the next twice-daily refresh. Click to set your own ${f} price`
       : priceRegion() !== 'world' && v != null && (sh.priceSource || 'BrickLink') === 'BrickLink' ? `Average ${f} price from sellers in ${LOCS[priceRegion()]} on BrickLink. Click to set your own` : `Click to set your own ${f} price`;
     return `<button class="btn ghost price ${v != null ? 'has' : ''} ${isMine ? 'mine' : ''} ${isManual ? 'manual' : ''} ${!isMine && (info(x.n).worldFor || {})[f] ? 'world' : ''}" data-price="${f}" data-n="${esc(x.n)}" title="${esc(title)}" aria-label="${esc(title)}">${v != null ? money(v) : '—'}</button>`;
   };
@@ -1208,8 +1208,7 @@ function render() {
   $('footCount').textContent = `${page.length.toLocaleString()} of ${rows.length.toLocaleString()} shown`;
   $('more').hidden = rows.length <= limit;
   const ed = $('edit-price'); if (ed) { ed.focus(); ed.select(); }
-  $('syncBtn').hidden = !db || (kind === 'sets' && !page.some(x => x.brand === 'LEGO'));
-  $('syncBtn').title = uid ? 'Fetch the latest BrickLink prices for the sets in view' : 'Sign in to sync prices';
+  $('syncBtn').hidden = !db || !canCurate() || (kind === 'sets' && !page.some(x => x.brand === 'LEGO'));
   $('syncBtn').disabled = syncing || !page.length;
   $('bulkBtn').hidden = !canCurate();
   $('addBtn').hidden = !canCurate();
