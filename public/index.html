@@ -203,8 +203,9 @@ tbody tr.picked td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .price.mine{font-style:italic}
 .price.world{color:var(--muted)}
 .price.world::after{content:"W";font-size:9px;font-weight:600;color:var(--faint);margin-left:4px;vertical-align:3px}
-.regsel{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
-.regsel select{width:auto;padding-block:6px;font-size:13px}
+.menu button[aria-checked="true"]{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.menu button[aria-checked="true"]::before{content:"✓";position:absolute;right:12px;top:9px;color:var(--accent);font-weight:700}
+.menu button{position:relative;padding-right:30px}
 .price.mine::after,.price.manual::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--violet);margin-left:5px;display:inline-block;vertical-align:2px}
 .price.manual::after{background:var(--stud)}
 .subbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:500;border-bottom:1px dashed transparent}
@@ -449,7 +450,8 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
         <button class="pill" data-view="sale" aria-pressed="false" title="Copies you've marked for sale or trade">Sale/trade <b id="cSale">0</b></button>
       </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
       <span class="spacer"></span>
-      <label class="regsel" title="Which BrickLink sellers the prices come from. W marks a worldwide price where there are no local sales."><span>Prices from</span><select id="regionSel" aria-label="BrickLink prices from"><option value="AU">Australia</option><option value="US">United States</option><option value="CA">Canada</option><option value="EU">Europe (EU)</option><option value="UK">United Kingdom</option><option value="world">Worldwide (W)</option></select></label>
+      <div class="menuwrap"><button class="btn" id="regionBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="regionMenu" title="Which BrickLink sellers the prices come from"><span class="muted">Prices:</span> <span id="regionLabel">Australia</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="menu" id="regionMenu" role="menu" hidden><button role="menuitemradio" data-loc="AU">Australia<small>BrickLink sellers in Australia</small></button><button role="menuitemradio" data-loc="US">United States<small>Sellers in the US</small></button><button role="menuitemradio" data-loc="CA">Canada<small>Sellers in Canada</small></button><button role="menuitemradio" data-loc="EU">Europe (EU)<small>Sellers in the European Union</small></button><button role="menuitemradio" data-loc="UK">United Kingdom<small>Sellers in the UK</small></button><button role="menuitemradio" data-loc="world">Worldwide (W)<small>All sellers. Shown greyed with a W wherever a local price is missing</small></button></div></div>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button></div></div>
       <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view (site owner only; everyone else's prices refresh twice a day).">Sync Prices</button>
@@ -1034,7 +1036,8 @@ function render() {
   $('tabSets').setAttribute('aria-selected', !tlOpen && kind === 'sets');
   $('tabFigs').setAttribute('aria-selected', !tlOpen && kind === 'figs');
   $('tabTl').setAttribute('aria-selected', tlOpen);
-  if ($('regionSel').value !== priceRegion()) $('regionSel').value = priceRegion();
+  $('regionLabel').textContent = LOCS[priceRegion()].replace(' (EU)', '').replace('United States', 'US').replace('United Kingdom', 'UK');
+  document.querySelectorAll('[data-loc]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.loc === priceRegion())));
   { const n = [fi.brand, fi.theme, fi.sub, fi.film, fi.year].filter(f => f.value).length + (fi.set.value !== 'all' ? 1 : 0); $('filtLabel').textContent = n ? `Filters · ${n}` : 'Filters'; }
   const list = kind === 'sets' ? CAT.sets : CAT.figs;
   const isScoped = scoped();
@@ -1669,7 +1672,11 @@ async function refreshRates() {
     await db.doc('meta/rates').set(next);
   } catch (e) { console.warn('rates', e); }
 }
-$('regionSel').onchange = () => { prefs.region = $('regionSel').value; savePrefs(); savePersonal(); render(); };
+function setRegionMenu(open) { $('regionMenu').hidden = !open; $('regionBtn').setAttribute('aria-expanded', open); if (open) (document.querySelector('[data-loc][aria-checked="true"]') || document.querySelector('[data-loc]')).focus(); }
+$('regionBtn').onclick = e => { e.stopPropagation(); setExportMenu(false); setRegionMenu($('regionMenu').hidden); };
+document.querySelectorAll('[data-loc]').forEach(b => b.addEventListener('click', () => { prefs.region = b.dataset.loc; savePrefs(); savePersonal(); setRegionMenu(false); render(); $('regionBtn').focus(); }));
+document.addEventListener('click', e => { if (!e.target.closest('#regionMenu,#regionBtn')) setRegionMenu(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('regionMenu').hidden) { setRegionMenu(false); $('regionBtn').focus(); } });
 $('curSel').onchange = () => { prefs.currency = $('curSel').value; savePrefs(); paintCurrency(); render(); };
 
 if (prefs.sellPct != null) $('sellPct').value = prefs.sellPct;
@@ -1682,7 +1689,7 @@ let sellT; $('sellPct').addEventListener('input', () => { clearTimeout(sellT); s
 /* ---------- CSV export ---------- */
 const cell = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 function setExportMenu(open) { $('exportMenu').hidden = !open; $('exportMenuBtn').setAttribute('aria-expanded', open); if (open) $('exportBtn').focus(); }
-$('exportMenuBtn').onclick = e => { e.stopPropagation(); setExportMenu($('exportMenu').hidden); };
+$('exportMenuBtn').onclick = e => { e.stopPropagation(); if (typeof setRegionMenu === 'function') setRegionMenu(false); setExportMenu($('exportMenu').hidden); };
 document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) setExportMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('exportMenu').hidden) { setExportMenu(false); $('exportMenuBtn').focus(); } });
 ['exportBtn', 'exportWantBtn', 'exportSaleBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
