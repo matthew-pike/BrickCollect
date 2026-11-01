@@ -390,7 +390,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     </div>
     <label class="search" for="q">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="q" type="search" placeholder="Search set name or #…" autocomplete="off" aria-label="Search set name or number">
+      <input id="q" type="search" placeholder="Search name, set #, subtheme or tag…" autocomplete="off" aria-label="Search by set name, number, subtheme or tag">
     </label>
     <div class="top-actions">
       <button class="btn acct" id="acctBtn" type="button">Sign in</button>
@@ -819,7 +819,8 @@ function setPasses(s, q) {
   if (fi.sub.value && s.sub !== fi.sub.value) return false;
   if (fi.film.value && (fi.film.value === '__none' ? s.tags.length > 0 : !s.tags.includes(fi.film.value))) return false;
   if (fi.year.value && String(s.year) !== fi.year.value) return false;
-  if (q && !s.key.includes(q)) return false;
+  // Search matches the set number and name, and also its subtheme and tags (e.g. "battle packs").
+  if (q && !s.key.includes(q) && !(s.sub || '').toLowerCase().includes(q) && !(s.tags || []).some(t => t.toLowerCase().includes(q))) return false;
   return true;
 }
 // Sets match the filters directly. Minifigures follow the sets they come in:
