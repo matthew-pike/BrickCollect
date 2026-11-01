@@ -445,7 +445,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
       <li><b>Tick what you own</b><span>Tick the box beside a set. Tap its condition to set new, used or incomplete and how many copies.</span></li>
       <li><b>Star what you want</b><span>Starred sets go on your Wanted list with prices and Buy buttons. Export any list as a spreadsheet.</span></li>
     </ol>
-    <div class="welcome-foot"><span class="hint">Open the Timeline tab to see Star Wars, Harry Potter and Marvel sets in story order. Selling? “Selling or buying a collection?” shows what it’s worth.</span><button class="btn primary" type="button" id="gotIt">Got it</button></div>
+    <div class="welcome-foot"><span class="hint">Open the Timeline tab to see Star Wars, Harry Potter, Marvel and Ninjago sets in story order. Selling? “Selling or buying a collection?” shows what it’s worth.</span><button class="btn primary" type="button" id="gotIt">Got it</button></div>
     <button class="icon-btn x" id="hideWelcome" aria-label="Hide getting started"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </section>
   <section class="stats" aria-label="Collection summary">
@@ -984,6 +984,7 @@ function thumb(x) {
 const TIMELINES = [
   { id: 'star-wars', name: 'Star Wars', themes: ['Star Wars'], brandKw: /star wars/i, unit: 'BBY / ABY', entries: [
     { t: 'Young Jedi Adventures', k: 'Series', y: '2023–2025', era: 'About 232 BBY', match: ['Young Jedi Adventures'], d: 'Young Jedi train during the High Republic, centuries before the Skywalker saga.' },
+    { t: 'The Acolyte', k: 'Series', y: '2024', era: 'About 132 BBY', match: ['The Acolyte', 'Acolyte'], kw: /acolyte/i, d: 'A Jedi Master investigates a string of crimes at the end of the High Republic, as a hidden Sith rises.' },
     { t: 'The Phantom Menace', k: 'Film', y: '1999', era: '32 BBY', match: ['Episode I', 'The Phantom Menace'], d: 'Episode I. Two Jedi find young Anakin Skywalker on Tatooine as the Trade Federation blockades Naboo.' },
     { t: 'Attack of the Clones', k: 'Film', y: '2002', era: '22 BBY', match: ['Episode II', 'Attack of the Clones'], d: 'Episode II. A secret clone army is revealed and the Clone Wars begin at Geonosis.' },
     { t: 'The Clone Wars', k: 'Series', y: '2008–2020', era: '22–19 BBY', match: ['The Clone Wars', 'Clone Wars'], d: 'Anakin, Obi-Wan, Ahsoka and the clone troopers fight across the galaxy.' },
@@ -1038,6 +1039,22 @@ const TIMELINES = [
     { t: 'Shang-Chi', k: 'Film', y: '2021', era: '2024', match: ['Shang-Chi'], d: 'Shang-Chi faces his father and the Ten Rings.' },
     { t: 'Eternals', k: 'Film', y: '2021', era: '2024', match: ['Eternals'], d: 'Ancient immortals reunite to stop the Emergence.' },
   ] },
+  { id: 'ninjago', name: 'Ninjago', themes: ['Ninjago'], brandKw: /ninjago/i, entries: [
+    { t: 'Pilot episodes', k: 'Series', y: '2011', era: 'Pilot', yrs: [2011, 2011], match: ['Spinjitzu', 'Pilot', 'Way of the Ninja'], d: 'Kai joins Sensei Wu, Cole, Jay and Zane to stop Lord Garmadon’s skeleton army.' },
+    { t: 'Rise of the Snakes', k: 'Series', y: '2012', era: 'Season 1', yrs: [2012, 2012], match: ['Rise of the Snakes'], d: 'The Serpentine are freed, and the hunt begins for the Green Ninja.' },
+    { t: 'Legacy of the Green Ninja', k: 'Series', y: '2013', era: 'Season 2', yrs: [2013, 2013], match: ['Legacy of the Green Ninja'], d: 'Lloyd trains as the Green Ninja against the Overlord.' },
+    { t: 'Rebooted', k: 'Series', y: '2014', era: 'Season 3', yrs: [2014, 2014], match: ['Rebooted'], d: 'New Ninjago City, techno blades and the Digital Overlord.' },
+    { t: 'Tournament of Elements and Possession', k: 'Series', y: '2015', era: 'Seasons 4–5', yrs: [2015, 2015], match: ['Tournament of Elements', 'Possession'], d: 'Master Chen’s tournament, then Morro’s ghosts possess Lloyd.' },
+    { t: 'Skybound and Day of the Departed', k: 'Series', y: '2016', era: 'Season 6', yrs: [2016, 2016], match: ['Skybound', 'Day of the Departed'], d: 'Nadakhan’s sky pirates, then old villains return on the Day of the Departed.' },
+    { t: 'Hands of Time', k: 'Series', y: '2017', era: 'Season 7', yrs: [2017, 2017], match: ['Hands of Time'], d: 'Acronix and Krux, the Time Twins, return to change history.' },
+    { t: 'The LEGO Ninjago Movie', k: 'Film', y: '2017', era: 'Separate story', match: ['The LEGO Ninjago Movie'], d: 'A big-screen retelling where Lloyd faces his father, Garmadon, and Meowthra.' },
+    { t: 'Sons of Garmadon and Hunted', k: 'Series', y: '2018', era: 'Seasons 8–9', yrs: [2018, 2018], match: ['Sons of Garmadon', 'Hunted'], d: 'A biker gang revives Garmadon, and the ninja are stranded in the Realm of Oni and Dragons.' },
+    { t: 'March of the Oni and Legacy', k: 'Series', y: '2019', era: 'Season 10', yrs: [2019, 2019], match: ['March of the Oni', 'Legacy'], d: 'The Oni attack Ninjago. Legacy sets remake classic builds from earlier seasons.' },
+    { t: 'Secrets of the Forbidden Spinjitzu and Prime Empire', k: 'Series', y: '2020', era: 'Seasons 11–12', yrs: [2020, 2020], match: ['Secrets of the Forbidden Spinjitzu', 'Forbidden Spinjitzu', 'Prime Empire'], d: 'Fire and ice temples, then a video game the ninja must play to escape.' },
+    { t: 'Master of the Mountain, The Island and Seabound', k: 'Series', y: '2021', era: 'Seasons 13–14', yrs: [2021, 2021], match: ['Master of the Mountain', 'The Island', 'Seabound'], d: 'The Skull Sorcerer’s Shintaro, a lost island, and Nya’s battle under the sea.' },
+    { t: 'Crystalized', k: 'Series', y: '2022', era: 'Season 15', yrs: [2022, 2022], match: ['Crystalized'], d: 'The Crystal King and the final season of the original show.' },
+    { t: 'Dragons Rising', k: 'Series', y: '2023–', era: 'New era', yrs: [2023, 2027], match: ['Dragons Rising', 'Core'], d: 'The realms merge, dragons return, and the ninja face the Wolf Clan in a new series.' },
+  ] },
   { id: 'blade-runner', name: 'Blade Runner', themes: [], brandKw: /blade runner|replicant|spinner/i, entries: [
     { t: 'Blade Runner', k: 'Film', y: '1982', era: '2019', match: ['Blade Runner'], d: 'Rick Deckard hunts replicants in a rain-soaked Los Angeles.', kw: /blade runner(?! 2049)/i },
     { t: 'Blade Runner 2049', k: 'Film', y: '2017', era: '2049', match: ['Blade Runner 2049'], d: 'Officer K uncovers a secret that leads him to Deckard.', kw: /2049|replicant|k's spinner/i },
@@ -1058,7 +1075,10 @@ function tlMatches(fr, e, s) {
   if (!inFranchise(fr, s)) return false;
   const names = tlLow(e.match), have = [s.sub, s.theme, ...(s.tags || [])].filter(Boolean).map(v => v.toLowerCase());
   if (have.some(v => names.includes(v))) return true;
-  return !!(e.kw && e.kw.test(s.name));
+  if (e.kw && e.kw.test(s.name)) return true;
+  // Waves by year (Ninjago): a set from those years that no other entry claims by name.
+  if (e.yrs && s.year >= e.yrs[0] && s.year <= e.yrs[1]) return !fr.entries.some(o => o !== e && tlLow(o.match).some(m => have.includes(m)));
+  return false;
 }
 function tlSetsFor(fr, e) { return CAT.sets.filter(s => tlMatches(fr, e, s)); }
 function renderTimeline() {
