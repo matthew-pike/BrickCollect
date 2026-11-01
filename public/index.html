@@ -305,8 +305,9 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .tip{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:5px;border-radius:50%;border:1px solid currentColor;background:transparent;color:var(--faint);font:italic 600 9.5px/1 Georgia,serif;cursor:help;padding:0;vertical-align:1px;text-transform:none;letter-spacing:0;opacity:.85}
 .tip:hover,.tip:focus-visible,.tip[aria-expanded="true"]{color:var(--accent);opacity:1;outline:none}
 .tipbox{position:absolute;z-index:40;max-width:min(280px,calc(100vw - 24px));background:var(--fg);color:var(--bg);font-size:12.5px;line-height:1.45;padding:9px 11px;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.3);text-transform:none;letter-spacing:0;font-weight:400}
+.salemark{margin-left:6px;padding-left:6px;border-left:1px solid currentColor;color:var(--violet);font-weight:600}
 .condchip.c-mixed{color:var(--violet);border-color:color-mix(in srgb,var(--violet) 50%,transparent);background:color-mix(in srgb,var(--violet) 10%,transparent)}
-.copies{position:absolute;z-index:30;background:var(--panel);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 12px 36px rgba(0,0,0,.28);padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:220px}
+.copies{position:absolute;z-index:30;max-width:calc(100vw - 16px);background:var(--panel);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 12px 36px rgba(0,0,0,.28);padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:220px}
 .copies h4{margin:0 0 2px;font-size:12px;font-weight:500;color:var(--muted)}
 .copyrow{display:flex;align-items:center;gap:10px}
 .copyrow .lab{flex:1;display:flex;align-items:center;gap:7px;font-size:13px}
@@ -316,6 +317,15 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .copyrow button:hover{border-color:var(--accent)}
 .copyrow button:disabled{opacity:.35;cursor:default}
 .copies .hint{font-size:11.5px;color:var(--faint)}
+.copyhead{display:grid;grid-template-columns:1fr 104px 104px;gap:10px;align-items:end}.copyhead h4:first-child{grid-column:2}.copyhead h4{text-align:center;margin:0;font-size:11px;font-weight:500;color:var(--muted)}
+.copyhead h4:last-child{color:var(--violet)}
+.copyrow{display:grid!important;grid-template-columns:1fr 104px 104px;gap:10px}
+.stepper{display:flex;align-items:center;justify-content:center;gap:4px}
+.stepper + .stepper .n{color:var(--violet)}
+.soldbtn{all:unset;cursor:pointer;margin-top:4px;text-align:center;font-size:12.5px;font-weight:500;padding:7px 10px;border-radius:8px;border:1px solid color-mix(in srgb,var(--violet) 45%,transparent);color:var(--violet)}
+.soldbtn:hover{background:color-mix(in srgb,var(--violet) 10%,transparent)}
+.soldbtn.confirm{background:var(--violet);color:#fff}
+.soldbtn:focus-visible{outline:2px solid var(--accent)}
 .buy{background:var(--stud);border-color:var(--stud);color:#1a1300;font-weight:600}
 .buy:hover{filter:brightness(1.05)}
 .buy-lego{background:#e3000b;border:2px solid #ffcf00;color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
@@ -432,10 +442,11 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
         <button class="pill" data-view="all" aria-pressed="true">All</button>
         <button class="pill" data-view="owned" aria-pressed="false">Owned <b id="cOwned">0</b></button>
         <button class="pill" data-view="wanted" aria-pressed="false">Wanted <b id="cWanted">0</b></button>
+        <button class="pill" data-view="sale" aria-pressed="false" title="Copies you've marked for sale or trade">Sale/trade <b id="cSale">0</b></button>
       </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
       <span class="spacer"></span>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button></div></div>
+        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button></div></div>
       <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view. Prices also refresh every night for sets people own. Sign in to sync, up to 60 items a day.">Sync Prices</button>
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
@@ -699,18 +710,25 @@ function setInfo(n, patch, { quiet } = {}) {
   if ('owned' in patch) {
     me.owned = !!patch.owned;
     if (me.owned) { me.wanted = false; if (!me.cond) me.cond = prefs.lastCond || 'used'; }
-    else { delete me.cond; delete me.qty; }
+    else { delete me.cond; delete me.qty; delete me.sale; }
   }
   if ('cond' in patch && me.owned) { me.cond = patch.cond; delete me.qty; prefs.lastCond = patch.cond; savePrefs(); }
   // qty: how many copies you own in each condition, e.g. { new: 1, used: 2 }. One copy is stored as just cond.
   if ('qty' in patch) {
     const q = {}; for (const c of CONDS) { const v = Math.max(0, Math.min(999, Math.floor(Number(patch.qty[c]) || 0))); if (v) q[c] = v; }
     const total = Object.values(q).reduce((a, b) => a + b, 0);
-    if (!total) { me.owned = false; delete me.cond; delete me.qty; }
+    if (!total) { me.owned = false; delete me.cond; delete me.qty; delete me.sale; }
     else {
       me.owned = true; me.wanted = false; me.cond = CONDS.find(c => q[c]);
       if (total === 1) delete me.qty; else me.qty = q;
     }
+  }
+  // sale: copies you've put up for sale or trade, per condition (never more than you own).
+  if ('sale' in patch) me.sale = patch.sale || {};
+  if (me.sale) {
+    const own = copiesOf({ n }, me), q = {};
+    for (const c of CONDS) { const v = Math.max(0, Math.min(own[c], Math.floor(Number(me.sale[c]) || 0))); if (v) q[c] = v; }
+    if (Object.keys(q).length) me.sale = q; else delete me.sale;
   }
   if ('wanted' in patch) me.wanted = !!patch.wanted && !me.owned;
   if (!me.wanted) delete me.wanted;
@@ -800,17 +818,20 @@ function condLabel(x) {
   if (parts.length === 1) return { cls: parts[0], text: `${q[parts[0]]} ${COND_SHORT[parts[0]]}`, long: `${q[parts[0]]} × ${COND[parts[0]]}` };
   return { cls: 'mixed', text: parts.map(c => `${q[c]} ${COND_SHORT[c]}`).join(' · '), long: parts.map(c => `${q[c]} × ${COND[c]}`).join(', ') };
 }
-const condCell = x => { if (!owned(x)) return fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : ''; const l = condLabel(x); return `<button class="condchip c-${l.cls}" data-condmenu="${esc(x.n)}" aria-haspopup="dialog" title="${esc(l.long)}. Click to change condition or add copies" aria-label="Condition: ${esc(l.long)}. Click to change">${esc(l.text)}</button>`; };
+const condCell = x => { if (!owned(x)) return fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : ''; const l = condLabel(x), ns = saleCount(x); return `<button class="condchip c-${l.cls}" data-condmenu="${esc(x.n)}" aria-haspopup="dialog" title="${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change condition, copies or sale" aria-label="Condition: ${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change">${esc(l.text)}${ns ? `<span class="salemark">${ns} for sale</span>` : ''}</button>`; };
 const condOf = x => (mine.get(x.n) || {}).cond || 'used';
 const CONDS = ['new', 'used', 'used-inc'];
 // Copies you own in each condition: { new, used, 'used-inc' } (0 when not owned).
-function copiesOf(x) {
-  const me = mine.get(x.n) || {}, out = { new: 0, used: 0, 'used-inc': 0 };
+function copiesOf(x, entry) {
+  const me = entry || mine.get(x.n) || {}, out = { new: 0, used: 0, 'used-inc': 0 };
   if (!me.owned) return out;
   if (me.qty && typeof me.qty === 'object') { for (const c of CONDS) out[c] = Math.max(0, Number(me.qty[c]) || 0); if (out.new + out.used + out['used-inc']) return out; }
   out[me.cond || 'used'] = 1; return out;
 }
 const copyCount = x => { const q = copiesOf(x); return q.new + q.used + q['used-inc']; };
+// Copies you've marked for sale or trade, per condition.
+function saleOf(x) { const own = copiesOf(x), s = (mine.get(x.n) || {}).sale || {}, out = {}; for (const c of CONDS) out[c] = Math.min(own[c], Math.max(0, Number(s[c]) || 0)); return out; }
+const saleCount = x => { const q = saleOf(x); return q.new + q.used + q['used-inc']; };
 // What an owned item is worth at its condition, in AUD (null when unpriced).
 // Value of every copy you own (new copies at the new price, used and incomplete at the used price).
 function valueOf(x) {
@@ -1040,27 +1061,32 @@ function render() {
     const pct = Number(prefs.sellPct);
     const ok = prefs.sellPct !== '' && prefs.sellPct != null && isFinite(pct) && pct > 0;
     // Market value of what you own, split by condition; the total applies your percentage.
-    const byVal = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => { const q = copiesOf(x), i = info(x.n); for (const c of CONDS) if (q[c]) byVal[c] += (valueOne(i, c) || 0) * q[c]; });
+    // In the Sale/trade view, only the copies marked for sale or trade count.
+    const saleMode = listView === 'sale', src = saleMode ? (isScoped ? list.filter(inScope) : list).filter(x => saleCount(x) > 0) : ownedIn, qOf = saleMode ? saleOf : copiesOf;
+    const byVal = { new: 0, used: 0, 'used-inc': 0 }, byN = { new: 0, used: 0, 'used-inc': 0 }; src.forEach(x => { const q = qOf(x), i = info(x.n); for (const c of CONDS) if (q[c]) { byVal[c] += (valueOne(i, c) || 0) * q[c]; byN[c] += q[c]; } });
+    const tot = byVal.new + byVal.used + byVal['used-inc'];
+    $('sellToggle').querySelector('.sellq b').textContent = saleMode ? 'Your sale or trade list' : 'Selling or buying a collection?';
     $('sellNew').textContent = money(byVal.new); $('sellUsed').textContent = money(byVal.used); $('sellInc').textContent = money(byVal['used-inc']);
     const cnt = (n, c) => n ? `${n.toLocaleString()} item${n > 1 ? 's' : ''}` : 'None';
-    $('sellNewN').textContent = cnt(byCond.new); $('sellUsedN').textContent = cnt(byCond.used); $('sellIncN').textContent = cnt(byCond['used-inc']);
+    $('sellNewN').textContent = cnt(byN.new); $('sellUsedN').textContent = cnt(byN.used); $('sellIncN').textContent = cnt(byN['used-inc']);
     const at = ok && pct !== 100;
-    $('sellFull').textContent = money(vc);
+    $('sellFull').textContent = money(tot);
     $('sellPctRow').hidden = !at;
     $('sellTotalK').textContent = at ? `Total at ${pct}%` : 'Total at 100%';
-    $('sellTotal').textContent = money(at ? vc * pct / 100 : vc);
-    $('sellPeek').textContent = ownedIn.length ? (at ? `${money(vc * pct / 100)} at ${pct}%` : money(vc)) : '';
+    $('sellTotal').textContent = money(at ? tot * pct / 100 : tot);
+    $('sellPeek').textContent = src.length ? (at ? `${money(tot * pct / 100)} at ${pct}%` : money(tot)) : '';
     document.querySelectorAll('.pctchip').forEach(b => b.setAttribute('aria-pressed', String(ok ? Number(b.dataset.pct) === pct : b.dataset.pct === '100')));
     $('sValUs').textContent = ok ? `At ${pct}%: ${money(vc * pct / 100)}` : (ownedIn.length ? `${byCond.new} new · ${byCond.used} used · ${byCond['used-inc']} incomplete` : 'By each item’s condition');
   }
 
   // rows
   const base = isScoped ? list.filter(inScope) : list;
-  let rows = listView === 'owned' ? base.filter(has) : listView === 'wanted' ? base.filter(wanted)
+  let rows = listView === 'owned' ? base.filter(has) : listView === 'wanted' ? base.filter(wanted) : listView === 'sale' ? (isScoped ? base : list).filter(x => saleCount(x) > 0)
     : !isScoped ? list.filter(x => has(x) || wanted(x))
     : fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope;
   $('cOwned').textContent = list.filter(has).length.toLocaleString();
   $('cWanted').textContent = list.filter(wanted).length.toLocaleString();
+  $('cSale').textContent = list.filter(x => saleCount(x) > 0).length.toLocaleString();
   document.querySelectorAll('.pill').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === listView)));
   rows = rows.slice().sort((a, b) => {
     const A = val(a, sort.key), B = val(b, sort.key);
@@ -1152,7 +1178,8 @@ function render() {
     const pop = ['Star Wars', 'Technic', 'Harry Potter', 'Icons', 'Ideas', 'Ninjago'].filter(t => [...fi.theme.options].some(o => o.value === t));
     const otherBrands = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.brand))].sort();
     empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brands. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>`;
-  } else if (!rows.length && listView === 'wanted') { empty.hidden = false; empty.innerHTML = '<h3>Your wanted list is empty</h3><p>Tap the star next to any set or minifigure to add it here.</p>'; }
+  } else if (!rows.length && listView === 'sale') { empty.hidden = false; empty.innerHTML = '<h3>Nothing marked for sale or trade</h3><p>Click a set’s condition chip and use the Sale or trade column to choose which copies you’re letting go.</p>'; }
+  else if (!rows.length && listView === 'wanted') { empty.hidden = false; empty.innerHTML = '<h3>Your wanted list is empty</h3><p>Tap the star next to any set or minifigure to add it here.</p>'; }
   else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Tick the sets and minifigures you own and they’ll show here.</p>'; }
   else if (!rows.length) { empty.hidden = false; empty.innerHTML = '<h3>Nothing matches</h3><p>Try a different search, or reset the filters.</p>'; }
   else empty.hidden = true;
@@ -1216,9 +1243,13 @@ window.addEventListener('scroll', hideTip, { passive: true });
 let copiesFor = null;
 const copiesEl = document.createElement('div'); copiesEl.className = 'copies'; copiesEl.hidden = true; copiesEl.setAttribute('role', 'dialog'); copiesEl.setAttribute('aria-label', 'Copies you own');
 document.body.append(copiesEl);
+let soldConfirm = false;
 function paintCopies() {
-  const q = copiesOf({ n: copiesFor }), colour = { new: 'var(--good)', used: 'var(--accent)', 'used-inc': 'var(--stud)' };
-  copiesEl.innerHTML = `<h4>Copies you own</h4>${CONDS.map(c => `<div class="copyrow"><span class="lab"><span class="dot" style="--c:${colour[c]}"></span>${COND[c]}</span><button data-copy="${c}" data-d="-1" aria-label="One fewer ${COND[c]}" ${q[c] ? '' : 'disabled'}>−</button><span class="n" aria-live="polite">${q[c]}</span><button data-copy="${c}" data-d="1" aria-label="One more ${COND[c]}">+</button></div>`).join('')}<span class="hint">Set all to 0 to remove it from your collection.</span>`;
+  const x = { n: copiesFor }, q = copiesOf(x), sq = saleOf(x), ns = saleCount(x), colour = { new: 'var(--good)', used: 'var(--accent)', 'used-inc': 'var(--stud)' };
+  const step = (kind, c, v, max) => `<span class="stepper"><button data-${kind}="${c}" data-d="-1" aria-label="One fewer ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${v ? '' : 'disabled'}>−</button><span class="n" aria-live="polite">${v}</span><button data-${kind}="${c}" data-d="1" aria-label="One more ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${max != null && v >= max ? 'disabled' : ''}>+</button></span>`;
+  copiesEl.innerHTML = `<div class="copyhead"><h4>Copies you own</h4><h4>Sale or trade</h4></div>${CONDS.map(c => `<div class="copyrow"><span class="lab"><span class="dot" style="--c:${colour[c]}"></span>${COND[c]}</span>${step('copy', c, q[c])}${step('sale', c, sq[c], q[c])}</div>`).join('')}
+    ${ns ? `<button class="soldbtn ${soldConfirm ? 'confirm' : ''}" data-sold="1">${soldConfirm ? `Remove ${ns} sold or traded ${ns === 1 ? 'copy' : 'copies'} from your collection?` : `Sold or traded (${ns})…`}</button>` : ''}
+    <span class="hint">Set all copies to 0 to remove it from your collection.</span>`;
 }
 function placeCopies() {
   const chip = document.querySelector(`[data-condmenu="${CSS.escape(copiesFor)}"]`);
@@ -1260,7 +1291,15 @@ document.addEventListener('click', e => {
   if (t.dataset.tagfilter) { focus = null; fill(fi.film, 'All', [[t.dataset.tagfilter, t.dataset.tagfilter]], t.dataset.tagfilter); filmOptions(t.dataset.tagfilter); limit = PAGE; savePrefs(); render(); window.scrollTo({ top: $('fiFilm').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth' }); return; }
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
   if (t.dataset.condmenu) { copiesFor === t.dataset.condmenu ? closeCopies() : openCopies(t.dataset.condmenu); return; }
-  if (t.dataset.copy) { const n = copiesFor, q = copiesOf({ n }); q[t.dataset.copy] += Number(t.dataset.d); setInfo(n, { qty: q }); if (copyCount({ n })) placeCopies(); else closeCopies(); return; }
+  if (t.dataset.sale) { soldConfirm = false; const n = copiesFor, q = saleOf({ n }); q[t.dataset.sale] += Number(t.dataset.d); setInfo(n, { sale: q }); placeCopies(); return; }
+  if (t.dataset.sold) {
+    const n = copiesFor;
+    if (!soldConfirm) { soldConfirm = true; paintCopies(); return; }
+    soldConfirm = false; const own = copiesOf({ n }), sq = saleOf({ n }), left = {}; for (const c of CONDS) left[c] = own[c] - sq[c];
+    const k = saleCount({ n }); setInfo(n, { qty: left, sale: {} }); toast(`Removed ${k} sold or traded ${k === 1 ? 'copy' : 'copies'}`);
+    if (copyCount({ n })) placeCopies(); else closeCopies(); return;
+  }
+  if (t.dataset.copy) { soldConfirm = false; const n = copiesFor, q = copiesOf({ n }); q[t.dataset.copy] += Number(t.dataset.d); setInfo(n, { qty: q }); if (copyCount({ n })) placeCopies(); else closeCopies(); return; }
   if (t.dataset.want) { setInfo(t.dataset.want, { wanted: !wanted({ n: t.dataset.want }) }); return; }
   if (t.dataset.view) { listView = t.dataset.view; limit = PAGE; savePrefs(); render(); return; }
   if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
@@ -1627,7 +1666,7 @@ function setExportMenu(open) { $('exportMenu').hidden = !open; $('exportMenuBtn'
 $('exportMenuBtn').onclick = e => { e.stopPropagation(); setExportMenu($('exportMenu').hidden); };
 document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) setExportMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('exportMenu').hidden) { setExportMenu(false); $('exportMenuBtn').focus(); } });
-['exportBtn', 'exportWantBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
+['exportBtn', 'exportWantBtn', 'exportSaleBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
 $('exportBtn').onclick = async () => {
   if (!CAT) return;
   // Everything you own, sets then minifigures, whatever the filters are.
@@ -1644,6 +1683,23 @@ $('exportBtn').onclick = async () => {
   const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), '', '', sumCol(13), ...(withPct ? [sumCol(14)] : [])];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-my-collection-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your collection: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
+};
+$('exportSaleBtn').onclick = async () => {
+  if (!CAT) return;
+  const rows = [...CAT.sets, ...CAT.figs].filter(x => saleCount(x) > 0);
+  if (!rows.length) { toast('Mark copies for sale or trade first: click a set’s condition chip.'); return; }
+  const pct = Number(prefs.sellPct), withPct = prefs.sellPct != null && prefs.sellPct !== '' && pct > 0 && pct !== 100;
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Year', 'Pieces', 'Condition', 'Copies', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Price at ${pct}%`] : [])];
+  const body = rows.map(x => {
+    const q = saleOf(x), i = info(x.n); let v = 0, priced = false;
+    for (const c of CONDS) if (q[c]) { const p = valueOne(i, c); if (p != null) { v += p * q[c]; priced = true; } }
+    const vl = priced ? toLocal(v) : null;
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.year, x.pieces, CONDS.filter(c => q[c]).map(c => `${q[c]} × ${COND[c]}`).join(', '), saleCount(x), toLocal(i.used), toLocal(i.new), vl, ...(withPct ? [vl == null ? '' : Math.round(vl * pct) / 100] : [])];
+  });
+  const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
+  const total = ['Total', '', `${rows.length} item${rows.length === 1 ? '' : 's'}`, '', '', '', '', '', '', sumCol(9), '', '', sumCol(12), ...(withPct ? [sumCol(13)] : [])];
+  const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
+  await saveCsv(`brickcollect-sale-or-trade-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your sale or trade list: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
 };
 $('exportWantBtn').onclick = async () => {
   if (!CAT) return;
