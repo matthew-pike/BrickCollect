@@ -4,9 +4,46 @@
     "indexes": "firestore.indexes.json"
   },
   "emulators": {
-    "firestore": { "port": 8080 },
-    "auth": { "port": 9099 },
-    "ui": { "enabled": false },
+    "firestore": {
+      "port": 8080
+    },
+    "auth": {
+      "port": 9099
+    },
+    "ui": {
+      "enabled": false
+    },
     "singleProjectMode": true
+  },
+  "hosting": {
+    "public": "hosting",
+    "ignore": [
+      "**/.*"
+    ],
+    "cleanUrls": true,
+    "headers": [
+      {
+        "source": "/catalog.json",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          }
+        ]
+      }
+    ]
   }
 }

@@ -48,3 +48,21 @@ jobs:
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Copy" node copy-from-supabase.mjs
           rm -f "$RUNNER_TEMP/sa.json"
+
+  site:
+    needs: rules
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firebase } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: ./report.sh "npm install" npm install --no-audit --no-fund
+      - run: ./report.sh "Build site" node build-hosting.mjs
+      - name: Publish the test site to brickcollect-app.web.app
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Publish site" npx firebase deploy --only hosting --project brickcollect-app --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
+          echo "::notice title=Site::Test site published to https://brickcollect-app.web.app"
