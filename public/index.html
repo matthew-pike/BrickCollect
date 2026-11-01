@@ -174,8 +174,9 @@ select.set-on{border-color:var(--accent)}
 .menuwrap{position:relative}
 .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:250px;background:var(--panel);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 12px 36px rgba(0,0,0,.25);padding:6px;display:flex;flex-direction:column}
 .menu button{all:unset;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:13px;font-weight:500;display:flex;flex-direction:column;gap:2px}
-.menu button small{font-weight:400;font-size:11.5px;color:var(--muted)}
+.menu button small{font-weight:400;font-size:11.5px;color:var(--faint)}
 .menu button:hover,.menu button:focus-visible{background:var(--panel-2);outline:none}
+.menu button + button{margin-top:1px}
 .tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px}
 .tab{border:0;background:transparent;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font-weight:500;font-size:13px}
 .tab[aria-selected="true"]{background:var(--panel-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-2)}
@@ -203,9 +204,9 @@ tbody tr.picked td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .price.mine{font-style:italic}
 .price.world{color:var(--muted)}
 .price.world::after{content:"W";font-size:9px;font-weight:600;color:var(--faint);margin-left:4px;vertical-align:3px}
-.menu button[aria-checked="true"]{background:color-mix(in srgb,var(--accent) 12%,transparent)}
-.menu button[aria-checked="true"]::before{content:"✓";position:absolute;right:12px;top:9px;color:var(--accent);font-weight:700}
-.menu button{position:relative;padding-right:30px}
+.menu button{position:relative;padding-right:30px;color:var(--fg)}
+.menu button[aria-checked="true"]::before{content:"";position:absolute;right:12px;top:13px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.menu button[aria-checked="true"]{font-weight:600}
 .price.mine::after,.price.manual::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--violet);margin-left:5px;display:inline-block;vertical-align:2px}
 .price.manual::after{background:var(--stud)}
 .subbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:500;border-bottom:1px dashed transparent}
@@ -450,7 +451,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
         <button class="pill" data-view="sale" aria-pressed="false" title="Copies you've marked for sale or trade">Sale/trade <b id="cSale">0</b></button>
       </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
       <span class="spacer"></span>
-      <div class="menuwrap"><button class="btn" id="regionBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="regionMenu" title="Which BrickLink sellers the prices come from"><span class="muted">Prices:</span> <span id="regionLabel">Australia</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="menuwrap"><button class="btn" id="regionBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="regionMenu" title="Which BrickLink sellers the prices come from">Prices: <span id="regionLabel">Australia</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="menu" id="regionMenu" role="menu" hidden><button role="menuitemradio" data-loc="AU">Australia<small>BrickLink sellers in Australia</small></button><button role="menuitemradio" data-loc="US">United States<small>Sellers in the US</small></button><button role="menuitemradio" data-loc="CA">Canada<small>Sellers in Canada</small></button><button role="menuitemradio" data-loc="EU">Europe (EU)<small>Sellers in the European Union</small></button><button role="menuitemradio" data-loc="UK">United Kingdom<small>Sellers in the UK</small></button><button role="menuitemradio" data-loc="world">Worldwide (W)<small>All sellers. Shown greyed with a W wherever a local price is missing</small></button></div></div>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button></div></div>
