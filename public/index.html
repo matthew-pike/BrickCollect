@@ -159,6 +159,8 @@ select.set-on{border-color:var(--accent)}
 .tl-card.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
 .tl-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .tl-card.none{opacity:.6}
+.tl-card.soon{border-style:dashed;opacity:.85}
+.tl-card.soon .tl-count{color:var(--accent)}
 .tl-card b{font-size:13.5px;font-weight:500;line-height:1.25;color:var(--fg)}
 .tl-era{align-self:flex-start;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent);border-radius:999px;padding:2px 8px;font-weight:500}
 .tl-kind{font-size:11.5px;color:var(--muted)}
@@ -941,10 +943,12 @@ const TIMELINES = [
     { t: 'Skeleton Crew', k: 'Series', y: '2024–2025', era: 'About 9 ABY', match: ['Skeleton Crew'], d: 'Four kids lost in the galaxy try to find their way home.' },
     { t: 'The Mandalorian and Grogu', k: 'Film', y: '2026', era: 'After 9 ABY', match: ['The Mandalorian and Grogu'], d: 'Din Djarin and Grogu’s story continues on the big screen.' },
     { t: 'Ahsoka', k: 'Series', y: '2023', era: 'About 11 ABY', match: ['Ahsoka'], d: 'Ahsoka Tano searches for Ezra Bridger and Grand Admiral Thrawn.' },
+    { t: 'Ahsoka Season 2', k: 'Series', y: '2027', soon: 'Early 2027', era: 'About 11 ABY', match: ['Ahsoka Season 2'], d: 'Ahsoka’s story continues after the first season’s journey to Peridea.' },
     { t: 'Resistance', k: 'Series', y: '2018–2020', era: '34 ABY', match: ['Resistance', 'Star Wars Resistance'], d: 'A young pilot spies on the First Order for the Resistance.' },
     { t: 'The Force Awakens', k: 'Film', y: '2015', era: '34 ABY', match: ['Episode VII', 'The Force Awakens'], d: 'Episode VII. Rey, Finn and Poe face the First Order and Kylo Ren.' },
     { t: 'The Last Jedi', k: 'Film', y: '2017', era: '34 ABY', match: ['Episode VIII', 'The Last Jedi'], d: 'Episode VIII. Rey finds Luke on Ahch-To as the Resistance flees.' },
     { t: 'The Rise of Skywalker', k: 'Film', y: '2019', era: '35 ABY', match: ['Episode IX', 'The Rise of Skywalker'], d: 'Episode IX. The final battle with the returned Emperor at Exegol.' },
+    { t: 'Starfighter', k: 'Film', y: '2027', soon: '28 May 2027', era: 'About 40 ABY', match: ['Starfighter', 'Star Wars: Starfighter'], d: 'A new standalone adventure set about five years after The Rise of Skywalker, in a time the saga hasn’t shown before.' },
   ] },
   { id: 'harry-potter', name: 'Harry Potter', themes: ['Harry Potter'], brandKw: /harry potter|hogwarts/i, entries: [
     { t: 'Fantastic Beasts and Where to Find Them', k: 'Film', y: '2016', era: '1926', match: ['Fantastic Beasts and Where to Find Them'], d: 'Newt Scamander’s case of creatures gets loose in New York.' },
@@ -1008,12 +1012,12 @@ function renderTimeline() {
     <div class="tl-head"><div class="tl-frs" role="group" aria-label="Franchise">${TIMELINES.map(f => `<button class="pill" data-tlfr="${f.id}" aria-pressed="${f.id === fr.id}">${esc(f.name)}</button>`).join('')}</div>
       <span class="tl-note">In story order${fr.unit ? ` · ${fr.unit}` : ''} <button type="button" class="tip" data-tip="Each film or show lists the sets from it across every brand, using subthemes and tags. Sets without a subtheme or tag yet won't appear here." aria-label="What is this?">i</button></span></div>
     <ol class="tl-strip">${fr.entries.map((x, i) => { const s = stats[i], pct = s.sets.length ? Math.round(s.own / s.sets.length * 100) : 0; return `
-      <li><button class="tl-card ${i === tlPick ? 'on' : ''} ${s.sets.length ? '' : 'none'}" data-tlpick="${i}" aria-pressed="${i === tlPick}">
+      <li><button class="tl-card ${i === tlPick ? 'on' : ''} ${s.sets.length ? '' : 'none'} ${x.soon ? 'soon' : ''}" data-tlpick="${i}" aria-pressed="${i === tlPick}">
         <span class="tl-era">${esc(x.era || x.y)}</span><b>${esc(x.t)}</b><span class="tl-kind">${esc(x.k)} · ${esc(x.y)}</span>
-        <span class="tl-count">${s.sets.length ? `${s.own}/${s.sets.length} set${s.sets.length === 1 ? '' : 's'}` : 'No sets yet'}</span><span class="tl-bar"><i style="width:${pct}%"></i></span>
+        <span class="tl-count">${s.sets.length ? `${s.own}/${s.sets.length} set${s.sets.length === 1 ? '' : 's'}` : x.soon ? `Coming ${esc(x.soon)}` : 'No sets yet'}</span><span class="tl-bar"><i style="width:${pct}%"></i></span>
       </button></li>`; }).join('')}</ol>
     <div class="tl-detail">
-      <div class="tl-dtext"><span class="tl-kind">${esc(e.k)} · released ${esc(e.y)}${e.era ? ` · set in ${esc(e.era)}` : ''}</span><h3>${esc(e.t)}</h3><p>${esc(e.d)}</p></div>
+      <div class="tl-dtext"><span class="tl-kind">${esc(e.k)} · ${e.soon ? `coming ${esc(e.soon)}` : `released ${esc(e.y)}`}${e.era ? ` · set in ${esc(e.era)}` : ''}</span><h3>${esc(e.t)}</h3><p>${esc(e.d)}</p></div>
       <div class="tl-dstats"><b>${st.sets.length ? `${st.own} of ${st.sets.length}` : '0'}</b><span>${st.sets.length ? `sets owned${brands ? ` · ${esc(brands)}` : ''}` : 'No sets matched yet. Give sets this subtheme or tag to add them.'}</span>
         ${st.sets.length ? `<button class="btn primary" data-tlshow="${tlPick}">Show ${st.sets.length === 1 ? 'this set' : `these ${st.sets.length} sets`}</button>` : ''}</div>
     </div>`;
