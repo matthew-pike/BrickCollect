@@ -20,7 +20,7 @@
 :root{
   --bg:#0a1120; --panel:#0f192d; --panel-2:#131f37; --line:#1e2b47; --line-2:#2a3a5c;
   --fg:#e5ebf6; --muted:#8693ae; --faint:#5b6886;
-  --accent:#1fb3e5; --accent-ink:#04121b; --good:#2fcf7c; --violet:#a98bff; --stud:#f2c200; --danger:#f0566a;
+  --accent:#1fb3e5; --accent-ink:#04121b;--bl-hv:#ffffff; --good:#2fcf7c; --violet:#a98bff; --stud:#f2c200; --danger:#f0566a;
   --font-display:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
   --font-body:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
   --font-mono:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -29,12 +29,12 @@
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
   --bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1;
   --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab;
-  --accent:#0a86b8; --accent-ink:#ffffff; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
+  --accent:#0a86b8; --accent-ink:#ffffff;--bl-hv:#04121b; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
   color-scheme:light}}
 :root[data-theme="light"]{
   --bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1;
   --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab;
-  --accent:#0a86b8; --accent-ink:#ffffff; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
+  --accent:#0a86b8; --accent-ink:#ffffff;--bl-hv:#04121b; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
   color-scheme:light}
 
 *{box-sizing:border-box}
@@ -343,18 +343,17 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .soldbtn:hover{background:color-mix(in srgb,var(--violet) 10%,transparent)}
 .soldbtn.confirm{background:var(--violet);color:#fff}
 .soldbtn:focus-visible{outline:2px solid var(--accent)}
-.buy{--bd:var(--stud);background:var(--stud);border-color:var(--bd);color:#1a1300;font-weight:600}
-.buy-lego{--bd:#ffcf00;background:#e3000b;border:2px solid var(--bd);color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
-.buy-pantasy{--bd:#f2bedb;background:#14259a;border:2px solid var(--bd);color:#f2bedb;font-weight:700;letter-spacing:.02em;padding:4px 8px}
-.buy-lumibricks{--bd:#fbf8f1;background:#ff6a00;border:2px solid var(--bd);color:#fbf8f1;font-weight:700;letter-spacing:.02em;padding:4px 8px}
-.buy-cada{--bd:#e60012;background:#111214;border:2px solid var(--bd);color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
-.buy-mould-king{--bd:#f5c400;background:#0b3a82;border:2px solid var(--bd);color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
-/* Hover: the chip keeps its brand colours and lifts slightly, like a brick being picked up */
-.btn.buy{transition:transform .12s ease,box-shadow .12s ease}
-.btn.buy:hover{border-color:var(--bd);transform:translateY(-2px);box-shadow:0 3px 0 rgb(0 0 0/.22),0 6px 12px rgb(0 0 0/.18)}
-.btn.buy:active{transform:translateY(0);box-shadow:none}
-.btn.buy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){.btn.buy{transition:none}.btn.buy:hover{transform:none}}
+.buy{--bd:var(--stud);--hv:#000;background:var(--stud);border-color:var(--bd);color:#1a1300;font-weight:600}
+.buy-lego{--bd:#ffcf00;--hv:#ffcf00;background:#e3000b;border:2px solid var(--bd);color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
+.buy-pantasy{--bd:#f2bedb;--hv:#fff;background:#14259a;border:2px solid var(--bd);color:#f2bedb;font-weight:700;letter-spacing:.02em;padding:4px 8px}
+.buy-lumibricks{--bd:#fbf8f1;--hv:#3a1500;background:#ff6a00;border:2px solid var(--bd);color:#fbf8f1;font-weight:700;letter-spacing:.02em;padding:4px 8px}
+.buy-cada{--bd:#e60012;--hv:#ff4d5a;background:#111214;border:2px solid var(--bd);color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
+.buy-mould-king{--bd:#f5c400;--hv:#f5c400;background:#0b3a82;border:2px solid var(--bd);color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
+/* Hover: the chip keeps its brand colours and only the letters change colour */
+.btn.buy,.btn.bl{transition:color .15s ease}
+.btn.buy:hover{border-color:var(--bd);color:var(--hv)}
+.btn.bl:hover{border-color:var(--accent);color:var(--bl-hv)}
+.btn.buy:focus-visible,.btn.bl:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .totop{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:15;width:44px;height:44px;border-radius:12px;border:1px solid var(--line-2);background:var(--panel);color:var(--fg);display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .totop:hover{border-color:var(--accent);color:var(--accent)}
 .totop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
