@@ -158,6 +158,11 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .welcome{background:color-mix(in srgb,var(--accent) 12%,var(--panel));border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
 .welcome .steps li{background:var(--panel);border-color:color-mix(in srgb,var(--accent) 25%,var(--line))}
 .welcome .welcome-foot .hint{color:var(--muted)}
+/* Light mode needs a stronger tint so it doesn't look washed out */
+:root[data-theme="light"] .welcome{background:color-mix(in srgb,var(--accent) 18%,#fff);border-color:var(--accent)}
+:root[data-theme="light"] .welcome h2{color:var(--accent)}
+:root[data-theme="light"] .welcome .steps li{background:#fff}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]):not([data-theme="mid"]) .welcome{background:color-mix(in srgb,var(--accent) 18%,#fff);border-color:var(--accent)}:root:not([data-theme="dark"]):not([data-theme="mid"]) .welcome h2{color:var(--accent)}:root:not([data-theme="dark"]):not([data-theme="mid"]) .welcome .steps li{background:#fff}}
 .welcome .steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;counter-reset:st}
 .welcome .steps li{counter-increment:st;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 46px;position:relative;display:flex;flex-direction:column;gap:3px;min-width:0}
 .welcome .steps li::before{content:counter(st);position:absolute;left:12px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:13px;display:grid;place-items:center}
