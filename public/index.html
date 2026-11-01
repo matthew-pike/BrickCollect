@@ -203,11 +203,8 @@ tbody tr.picked td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .price.mine{font-style:italic}
 .price.world{color:var(--muted)}
 .price.world::after{content:"W";font-size:9px;font-weight:600;color:var(--faint);margin-left:4px;vertical-align:3px}
-.regseg{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;align-items:stretch}
-.regseg span{font-size:11.5px;color:var(--muted);padding:0 8px;display:flex;align-items:center;border-right:1px solid var(--line-2)}
-.regseg button{all:unset;cursor:pointer;font-size:12px;font-weight:500;padding:6px 10px;color:var(--muted)}
-.regseg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
-.regseg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.regsel{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.regsel select{width:auto;padding-block:6px;font-size:13px}
 .price.mine::after,.price.manual::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--violet);margin-left:5px;display:inline-block;vertical-align:2px}
 .price.manual::after{background:var(--stud)}
 .subbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:500;border-bottom:1px dashed transparent}
@@ -452,7 +449,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
         <button class="pill" data-view="sale" aria-pressed="false" title="Copies you've marked for sale or trade">Sale/trade <b id="cSale">0</b></button>
       </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
       <span class="spacer"></span>
-      <span class="regseg" role="group" aria-label="BrickLink prices from" title="Which BrickLink sellers the prices come from"><span>Prices</span><button data-region="AU" aria-pressed="false">Australia</button><button data-region="world" aria-pressed="false">Worldwide</button></span>
+      <label class="regsel" title="Which BrickLink sellers the prices come from. W marks a worldwide price where there are no local sales."><span>Prices from</span><select id="regionSel" aria-label="BrickLink prices from"><option value="AU">Australia</option><option value="US">United States</option><option value="CA">Canada</option><option value="EU">Europe (EU)</option><option value="UK">United Kingdom</option><option value="world">Worldwide (W)</option></select></label>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button></div></div>
       <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view. Prices also refresh every night for sets people own. Sign in to sync, up to 60 items a day.">Sync Prices</button>
@@ -651,16 +648,19 @@ function buildCatalog(raw) {
    Shared (curated by the site owner): prices, BrickLink #s, subthemes, films, other brands, rates. */
 let uid = null, isOwner = false, saveMode = 'loading'; // 'cloud' | 'local' | 'loading'
 const shared = new Map(); // n -> { used, new, bl, pricedAt, priceSource }
-const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice', 'au'];
-// Where BrickLink prices come from: 'AU' (Australian sellers) or 'world'. Defaults to Australia for visitors there.
-const priceRegion = () => prefs.region || (/^Australia\//.test(Intl.DateTimeFormat().resolvedOptions().timeZone || '') ? 'AU' : 'world');
+const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice', 'loc'];
+// Where BrickLink prices come from: sellers in one location, or 'world'. Defaults to the location that matches your currency.
+const LOCS = { AU: 'Australia', US: 'United States', CA: 'Canada', EU: 'Europe (EU)', UK: 'United Kingdom', world: 'Worldwide' };
+const LOC_FOR_CUR = { AUD: 'AU', USD: 'US', CAD: 'CA', EUR: 'EU', GBP: 'UK' };
+const priceRegion = () => (prefs.region && LOCS[prefs.region]) ? prefs.region : (LOC_FOR_CUR[curPref()] || 'world');
 function info(n) {
   const sh = shared.get(n) || {}, me = mine.get(n) || {};
   const out = { ...sh };
   // Australian sellers' price when chosen and known; otherwise the worldwide one (out.worldFor marks which fell back).
-  if (priceRegion() === 'AU' && !sh.manualPrice && (sh.priceSource || 'BrickLink') === 'BrickLink' && (sh.used != null || sh.new != null)) {
-    out.worldFor = {};
-    for (const f of ['used', 'new']) { if (sh.au && sh.au[f] != null) out[f] = sh.au[f]; else if (sh[f] != null) out.worldFor[f] = true; }
+  const rg = priceRegion();
+  if (rg !== 'world' && !sh.manualPrice && (sh.priceSource || 'BrickLink') === 'BrickLink' && (sh.used != null || sh.new != null)) {
+    out.worldFor = {}; const lp = (sh.loc || {})[rg];
+    for (const f of ['used', 'new']) { if (lp && lp[f] != null) out[f] = lp[f]; else if (sh[f] != null) out.worldFor[f] = true; }
   }
   // Your own price overrides the shared one (for you only). BrickLink numbers are always the shared ones.
   for (const k of ['used', 'new']) if (me[k] !== undefined && me[k] !== null) out[k] = me[k];
@@ -679,7 +679,7 @@ async function flushPersonal() {
   if (pWriting) { pAgain = true; return; }
   pWriting = true;
   try {
-    do { pAgain = false; await db.doc(`data/users/${uid}/collection`).set({ items: personalObj(), updatedAt: Date.now() }); } while (pAgain);
+    do { pAgain = false; await db.doc(`data/users/${uid}/collection`).set({ items: personalObj(), loc: priceRegion(), updatedAt: Date.now() }); } while (pAgain);
   } catch (e) {
     console.warn('personal save', e);
     if (['invalid_argument', 'not_granted', 'revoked', 'capability_disabled'].includes(e?.code)) {
@@ -1023,8 +1023,8 @@ const COLS = () => [
   ...(fi.brand.value ? [] : [{ key: 'brand', label: 'Brand' }]), { key: 'sub', label: 'Subtheme' },
   { key: 'n', label: kind === 'sets' ? 'Set #' : 'Rebrickable #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BrickLink #' }] : []), { key: 'year', label: kind === 'sets' ? 'Year' : 'First year' },
   { key: 'pieces', label: 'Pieces', cls: 'num' },
-  { key: 'used', label: `Used ${cur()}`, cls: 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() === 'AU' ? 'by Australian sellers (worldwide, greyed with a W, where there are none)' : 'worldwide'}, or current listings if nothing sold. In your currency.` },
-  { key: 'new', label: `New ${cur()}`, cls: 'num', tip: `Average new price on BrickLink ${priceRegion() === 'AU' ? 'from Australian sellers (worldwide, greyed with a W, where there are none)' : 'worldwide'}, or the brand’s own store price for LumiBricks, Pantasy, CaDA and Mould King. In your currency.` },
+  { key: 'used', label: `Used ${cur()}`, cls: 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
+  { key: 'new', label: `New ${cur()}`, cls: 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or the brand’s own store price for LumiBricks, Pantasy, CaDA and Mould King. In your currency.` },
   { label: 'Links', cls: 'num', tip: 'The coloured button opens the set at the brand’s own store (some are affiliate links that support BrickCollect). BL opens it on BrickLink.' },
 ];
 const val = (x, k) => k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
@@ -1034,7 +1034,7 @@ function render() {
   $('tabSets').setAttribute('aria-selected', !tlOpen && kind === 'sets');
   $('tabFigs').setAttribute('aria-selected', !tlOpen && kind === 'figs');
   $('tabTl').setAttribute('aria-selected', tlOpen);
-  document.querySelectorAll('[data-region]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.region === priceRegion())));
+  if ($('regionSel').value !== priceRegion()) $('regionSel').value = priceRegion();
   { const n = [fi.brand, fi.theme, fi.sub, fi.film, fi.year].filter(f => f.value).length + (fi.set.value !== 'all' ? 1 : 0); $('filtLabel').textContent = n ? `Filters · ${n}` : 'Filters'; }
   const list = kind === 'sets' ? CAT.sets : CAT.figs;
   const isScoped = scoped();
@@ -1129,7 +1129,7 @@ function render() {
   const page = showRows ? rows.slice(0, limit) : [];
   const blId = x => x.k === 's' ? (info(x.n).bl || x.n) : info(x.n).bl;
   // With Australia picked, BrickLink opens on the For Sale tab filtered to Australian sellers, matching the price shown.
-  const blLoc = priceRegion() === 'AU' ? '#T=S&O={%22loc%22:%22AU%22,%22iconly%22:0}' : '';
+  const blLoc = ['AU', 'US', 'CA', 'UK'].includes(priceRegion()) ? `#T=S&O={%22loc%22:%22${priceRegion()}%22,%22iconly%22:0}` : '';
   const bl = x => blId(x) ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(blId(x))}${blLoc}` : `https://www.bricklink.com/v2/search.page?q=${encodeURIComponent(x.name)}#T=M`;
   const rb = x => `https://rebrickable.com/${x.k === 's' ? 'sets' : 'minifigs'}/${encodeURIComponent(x.n)}/`;
   const price = (x, f) => {
@@ -1139,8 +1139,8 @@ function render() {
     const src = sh.priceSource && sh.priceSource !== 'BrickLink' ? sh.priceSource : 'BrickLink';
     const title = isMine ? `Your price, for you only.${sh[f] != null ? ` ${src}: ${money(sh[f])}.` : ''} Click and clear it to go back.`
       : isManual ? 'Set by you for everyone. The nightly refresh leaves it alone; clear it to go back to BrickLink.'
-      : (info(x.n).worldFor || {})[f] ? `No recent sales from Australian sellers, so this is the worldwide average. Click to set your own ${f} price`
-      : priceRegion() === 'AU' && v != null && (sh.priceSource || 'BrickLink') === 'BrickLink' ? `Average ${f} price from Australian sellers on BrickLink. Click to set your own` : `Click to set your own ${f} price`;
+      : (info(x.n).worldFor || {})[f] ? `${(sh.loc || {})[priceRegion()] ? 'No recent sales from' : 'Not yet checked for'} sellers in ${LOCS[priceRegion()]}, so this is the worldwide average (W). Sync Prices fetches it. Click to set your own ${f} price`
+      : priceRegion() !== 'world' && v != null && (sh.priceSource || 'BrickLink') === 'BrickLink' ? `Average ${f} price from sellers in ${LOCS[priceRegion()]} on BrickLink. Click to set your own` : `Click to set your own ${f} price`;
     return `<button class="btn ghost price ${v != null ? 'has' : ''} ${isMine ? 'mine' : ''} ${isManual ? 'manual' : ''} ${!isMine && (info(x.n).worldFor || {})[f] ? 'world' : ''}" data-price="${f}" data-n="${esc(x.n)}" title="${esc(title)}" aria-label="${esc(title)}">${v != null ? money(v) : '—'}</button>`;
   };
   const blCell = x => {
@@ -1188,7 +1188,7 @@ function render() {
       <td class="num">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
       <td class="num">${price(x, 'used')}</td>
       <td class="num">${price(x, 'new')}</td>
-      <td><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? 'View on BrickLink, Australian sellers' : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
+      <td><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
 
   const empty = $('empty');
@@ -1292,7 +1292,6 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button,[data-sort]'); if (!t) return;
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
   if (t.id === 'filtToggle') { const o = !$('filters').classList.contains('open'); $('filters').classList.toggle('open', o); t.setAttribute('aria-expanded', o); return; }
-  if (t.dataset.region) { prefs.region = t.dataset.region; savePrefs(); render(); return; }
   if (t.dataset.need) { prefs.needMode = t.dataset.need; savePrefs(); render(); return; }
   if (t.dataset.tl) { tlOpen = true; savePrefs(); render(); return; }
   if (t.dataset.tlfr) { tlId = t.dataset.tlfr; tlPick = null; render(); return; }
@@ -1408,14 +1407,14 @@ $('syncBtn').onclick = async () => {
   try {
     for (let i = 0; i < pairs.length; i += 20) {
       setStatus(`Fetching BrickLink prices… ${done} of ${pairs.length}`);
-      const out = await BC.syncPrices({ type: syncType, items: pairs.slice(i, i + 20) });
+      const out = await BC.syncPrices({ type: syncType, items: pairs.slice(i, i + 20), loc: priceRegion() === 'world' ? undefined : priceRegion() });
       for (const r of (out.results || [])) {
         done++;
         if (r.error) { failed++; continue; }
         if (r.skipped) continue;
         if (r.used == null && r.new == null) { none++; continue; }
         r.cached ? cached++ : fresh++;
-        shared.set(r.n, { ...(shared.get(r.n) || {}), used: r.used, new: r.new, au: r.au, pricedAt: r.pricedAt, priceSource: 'BrickLink' });
+        { const prev = shared.get(r.n) || {}; shared.set(r.n, { ...prev, used: r.used, new: r.new, loc: { ...(prev.loc || {}), ...(r.loc || {}) }, pricedAt: r.pricedAt, priceSource: 'BrickLink' }); }
       }
       left = out.left ?? null; render();
       if (out.limitReached) { stopped = true; break; }
@@ -1671,6 +1670,7 @@ async function refreshRates() {
     await db.doc('meta/rates').set(next);
   } catch (e) { console.warn('rates', e); }
 }
+$('regionSel').onchange = () => { prefs.region = $('regionSel').value; savePrefs(); savePersonal(); render(); };
 $('curSel').onchange = () => { prefs.currency = $('curSel').value; savePrefs(); paintCurrency(); render(); };
 
 if (prefs.sellPct != null) $('sellPct').value = prefs.sellPct;

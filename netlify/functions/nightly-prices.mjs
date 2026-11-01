@@ -1,7 +1,7 @@
 // Nightly (3am Sydney): refresh BrickLink prices for the sets people own most,
 // so most prices stay current without anyone pressing Sync.
 // Works through the most-owned sets whose price is more than 3 days old, for about 25 seconds a night.
-import { env, sb, readBuckets, savePrices, isFresh, priceItemAll, bricklinkReady, pool, BrickLinkAuthError } from '../lib/common.mjs';
+import { env, sb, readBuckets, savePrices, isFresh, priceItemAll, validLoc, locFresh, bricklinkReady, pool, BrickLinkAuthError } from '../lib/common.mjs';
 
 const STALE = 3 * 24 * 3600 * 1000;
 
@@ -10,10 +10,16 @@ export default async () => {
   if (!env('SUPABASE_URL') || !env('SUPABASE_SECRET_KEY') || !bricklinkReady()) { console.log('nightly: settings missing'); return; }
 
   // Count how many people own each item.
-  const counts = new Map();
+  const counts = new Map(), locsOf = new Map(); // item -> seller locations its owners have picked
   for (let offset = 0; ; offset += 1000) {
     const rows = await sb(`user_docs?select=data&id=eq.collection&order=user_id&limit=1000&offset=${offset}`);
-    for (const r of rows || []) for (const [n, v] of Object.entries(r.data?.items || {})) if (v?.owned) counts.set(n, (counts.get(n) || 0) + 1);
+    for (const r of rows || []) {
+      const loc = validLoc(r.data?.loc);
+      for (const [n, v] of Object.entries(r.data?.items || {})) if (v?.owned) {
+        counts.set(n, (counts.get(n) || 0) + 1);
+        if (loc) { if (!locsOf.has(n)) locsOf.set(n, new Set()); locsOf.get(n).add(loc); }
+      }
+    }
     if (!rows || rows.length < 1000) break;
   }
   const shared = new Map();
@@ -21,15 +27,15 @@ export default async () => {
 
   // LEGO sets (Rebrickable numbers like 75192-1) and minifigures that have a BrickLink number.
   const queue = [...counts].sort((a, b) => b[1] - a[1]).map(([n]) => n)
-    .filter(n => !n.includes(':') && !shared.get(n)?.manualPrice && !(isFresh(shared.get(n), STALE) && shared.get(n)?.au))
+    .filter(n => !n.includes(':') && !shared.get(n)?.manualPrice && !(isFresh(shared.get(n), STALE) && [...(locsOf.get(n) || [])].every(l => locFresh(shared.get(n), l, STALE))))
     .map(n => n.startsWith('fig-') ? (shared.get(n)?.bl ? { n, type: 'MINIFIG', bl: shared.get(n).bl } : null) : { n, type: 'SET', bl: shared.get(n)?.bl || n })
     .filter(Boolean);
   if (!queue.length) { console.log('nightly: nothing to refresh'); return; }
 
   const updates = new Map(), now = new Date().toISOString();
   try {
-    const out = await pool(queue, 8, started + 24000, async q => { try { return await priceItemAll(q.type, q.bl); } catch (e) { if (e instanceof BrickLinkAuthError) throw e; return null; } });
-    queue.forEach((q, k) => { const p = out[k]; if (p) updates.set(q.n, { used: p.used, new: p.new, au: p.au, pricedAt: now, checkedAt: now, priceSource: 'BrickLink', ...(q.type === 'MINIFIG' ? { bl: q.bl } : {}) }); });
+    const out = await pool(queue, 8, started + 24000, async q => { try { return await priceItemAll(q.type, q.bl, [...(locsOf.get(q.n) || [])]); } catch (e) { if (e instanceof BrickLinkAuthError) throw e; return null; } });
+    queue.forEach((q, k) => { const p = out[k]; if (p) updates.set(q.n, { used: p.used, new: p.new, loc: p.loc, pricedAt: now, checkedAt: now, priceSource: 'BrickLink', ...(q.type === 'MINIFIG' ? { bl: q.bl } : {}) }); });
   } catch (e) {
     if (e instanceof BrickLinkAuthError) { console.log('nightly: BrickLink refused the keys:', e.message); return; }
     throw e;

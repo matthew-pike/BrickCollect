@@ -62,7 +62,8 @@ export async function savePrices(updates) {
   const current = await readBuckets([...byBucket.keys()]);
   for (const [b, list] of byBucket) {
     const items = { ...(current.get(b) || {}) };
-    for (const [n, entry] of list) items[n] = { ...(items[n] || {}), ...entry };
+    // Location prices merge, so refreshing one location keeps the others.
+    for (const [n, entry] of list) items[n] = { ...(items[n] || {}), ...entry, ...(entry.loc ? { loc: { ...(items[n]?.loc || {}), ...entry.loc } } : {}) };
     await upsertShared('iteminfo', b, { items, updatedAt: Date.now() });
   }
 }
@@ -104,9 +105,9 @@ export async function blGet(path, query) {
   return body.data;
 }
 const num = v => (v == null || v === '' ? null : Math.round(Number(v) * 100) / 100);
-async function guide(type, no, cond, country) {
+async function guide(type, no, cond, where) {
   const path = `/items/${type}/${encodeURIComponent(no)}/price`;
-  const q = { guide_type: 'sold', new_or_used: cond, currency_code: 'AUD', vat: 'N', ...(country ? { country_code: country } : {}) };
+  const q = { guide_type: 'sold', new_or_used: cond, currency_code: 'AUD', vat: 'N', ...(where || {}) };
   let d = await blGet(path, q);
   if (!Number(d.total_quantity)) d = await blGet(path, { ...q, guide_type: 'stock' });
   if (!Number(d.total_quantity)) return null;
@@ -116,20 +117,31 @@ export function bricklinkReady() {
   return ['BRICKLINK_CONSUMER_KEY', 'BRICKLINK_CONSUMER_SECRET', 'BRICKLINK_TOKEN_VALUE', 'BRICKLINK_TOKEN_SECRET'].every(k => env(k));
 }
 // Used and new average prices in AUD for one BrickLink item (null when nothing has sold or is listed).
-// country (e.g. 'AU') limits it to sellers in that country.
-export async function priceItem(type, bl, country) {
-  const [used, neu] = await Promise.all([guide(type, bl, 'U', country), guide(type, bl, 'N', country)]);
+// Seller locations a visitor can pick (besides worldwide). BrickLink filters by seller country or region.
+export const LOCATIONS = {
+  AU: { country_code: 'AU' }, US: { country_code: 'US' }, CA: { country_code: 'CA' },
+  UK: { country_code: 'UK' }, EU: { region: 'eu' },
+};
+// loc (e.g. 'AU') limits it to sellers there; leave it out for worldwide.
+export async function priceItem(type, bl, loc) {
+  const where = loc ? LOCATIONS[loc] : null;
+  let [used, neu] = await Promise.all([guide(type, bl, 'U', where), guide(type, bl, 'N', where)]);
+  // BrickLink lists the United Kingdom as UK; try GB as well in case that changes.
+  if (loc === 'UK' && used == null && neu == null) [used, neu] = await Promise.all([guide(type, bl, 'U', { country_code: 'GB' }), guide(type, bl, 'N', { country_code: 'GB' })]).catch(() => [null, null]);
   return { used, new: neu };
 }
-// Countries that get their own price as well as the worldwide one (shown when a visitor picks that country).
-export const PRICE_COUNTRIES = ['AU'];
-// Worldwide price plus each country's, e.g. { used, new, au: { used, new } }.
-export async function priceItemAll(type, bl) {
-  const [world, ...local] = await Promise.all([priceItem(type, bl), ...PRICE_COUNTRIES.map(c => priceItem(type, bl, c))]);
-  const out = { ...world };
-  PRICE_COUNTRIES.forEach((c, k) => { out[c.toLowerCase()] = local[k]; });
+// Worldwide price plus the given locations', e.g. { used, new, loc: { AU: { used, new } } }.
+export async function priceItemAll(type, bl, locs = []) {
+  const list = [...new Set(locs)].filter(l => LOCATIONS[l]);
+  const [world, ...local] = await Promise.all([priceItem(type, bl), ...list.map(l => priceItem(type, bl, l))]);
+  const out = { ...world, loc: {} };
+  const at = new Date().toISOString();
+  list.forEach((l, k) => { out.loc[l] = { ...local[k], at }; });
   return out;
 }
+export const validLoc = l => (LOCATIONS[l] ? l : null);
+// Whether a location's price for this item was checked within maxAgeMs.
+export const locFresh = (entry, l, maxAgeMs) => !!(entry?.loc?.[l]?.at && Date.now() - Date.parse(entry.loc[l].at) < maxAgeMs);
 
 /* ---------- run tasks a few at a time, stopping at a deadline ---------- */
 export async function pool(items, size, deadline, fn) {
