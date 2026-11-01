@@ -1,7 +1,7 @@
 // Twice a day (3am and 3pm Sydney): refresh BrickLink prices for the sets and minifigures people own or want,
 // most-owned first, plus each seller location those collectors have picked. Only the site owner can Sync by hand.
 // Works through items whose price is more than 3 days old, for about 25 seconds a run.
-import { forEachCollection, readBuckets, savePrices, isFresh, priceItemAll, validLoc, locFresh, bricklinkReady, pool, BrickLinkAuthError } from '../lib/common.mjs';
+import { env, forEachCollection, readBuckets, savePrices, isFresh, priceItemAll, validLoc, locFresh, bricklinkReady, pool, BrickLinkAuthError } from '../lib/common.mjs';
 
 const STALE = 3 * 24 * 3600 * 1000;
 
@@ -26,7 +26,8 @@ export default async () => {
   const queue = [...counts].sort((a, b) => b[1] - a[1]).map(([n]) => n)
     .filter(n => !n.includes(':') && !shared.get(n)?.manualPrice && !(isFresh(shared.get(n), STALE) && [...(locsOf.get(n) || [])].every(l => locFresh(shared.get(n), l, STALE))))
     .map(n => n.startsWith('fig-') ? (shared.get(n)?.bl ? { n, type: 'MINIFIG', bl: shared.get(n).bl } : null) : { n, type: 'SET', bl: shared.get(n)?.bl || n })
-    .filter(Boolean);
+    .filter(Boolean)
+    .slice(0, Number(env('NIGHTLY_MAX_ITEMS') || Infinity));
   if (!queue.length) { console.log('nightly: nothing to refresh'); return; }
 
   const updates = new Map(), now = new Date().toISOString();

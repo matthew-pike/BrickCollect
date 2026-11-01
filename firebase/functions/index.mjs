@@ -9,12 +9,21 @@ import rates from './jobs/rates.mjs';
 import brandPrices from './jobs/brand-prices.mjs';
 import minifigNumbers from './jobs/minifig-numbers.mjs';
 import syncPricesHandler from './jobs/sync-prices.mjs';
+import { readShared } from './lib/common.mjs';
 
 const BL = ['BRICKLINK_CONSUMER_KEY', 'BRICKLINK_CONSUMER_SECRET', 'BRICKLINK_TOKEN_VALUE', 'BRICKLINK_TOKEN_SECRET'].map(defineSecret);
 // Guard rails against runaway costs: one copy of each job at a time, small machines, short time limits.
 setGlobalOptions({ region: 'australia-southeast1', maxInstances: 1, memory: '256MiB' });
 const TZ = 'Australia/Sydney';
-const sched = (schedule, fn, timeoutSeconds = 60) => onSchedule({ schedule, timeZone: TZ, secrets: BL, timeoutSeconds, retryCount: 0 }, async () => { await fn(); });
+// Until switchover the Netlify jobs still run, and BrickLink allows about 5,000 calls a day in total.
+// So unless private/settings has jobsLive: true, the BrickLink jobs do a tiny run (3 items) just to prove they work.
+async function trialLimits() {
+  const live = (await readShared('private', 'settings'))?.jobsLive === true;
+  process.env.NIGHTLY_MAX_ITEMS = live ? '' : '3';
+  process.env.MINIFIG_SETS_PER_RUN = live ? '' : '3';
+  if (!live) console.log('trial mode: BrickLink jobs limited to 3 items (set private/settings jobsLive: true at switchover)');
+}
+const sched = (schedule, fn, timeoutSeconds = 60) => onSchedule({ schedule, timeZone: TZ, secrets: BL, timeoutSeconds, retryCount: 0 }, async () => { await trialLimits(); await fn(); });
 
 // BrickLink prices for owned and wanted sets: 3am and 3pm Sydney.
 export const nightlyPrices = sched('0 3,15 * * *', nightly);

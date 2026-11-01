@@ -8,7 +8,6 @@
 // leaving room for the nightly price refresh and Sync Prices. Progress is kept in shared_docs meta/minifig-numbers.
 import { env, readShared, forEachCollection, readBuckets, savePrices, upsertShared, bricklinkReady, blGet, pool, BrickLinkAuthError } from '../lib/common.mjs';
 
-const SETS_PER_RUN = Number(env('MINIFIG_SETS_PER_RUN') || 120);
 
 const STOP = new Set(['the', 'a', 'an', 'and', 'with', 'of', 'in', 'on', 'from', 'minifig', 'minifigure', 'figure', 'lego', 'pattern', 'printed', 'print']);
 const words = s => new Set(String(s || '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9]+/g, ' ').split(' ').filter(w => w.length > 1 && !STOP.has(w)));
@@ -49,6 +48,7 @@ export function matchSet(rb, bl) {
 
 export default async (req) => {
   const started = Date.now();
+  const SETS_PER_RUN = Number(env('MINIFIG_SETS_PER_RUN') || 120);
   if (!bricklinkReady()) { console.log('minifig-numbers: settings missing'); return; }
   const site = env('SITE_URL') || 'https://brickcollect-app.web.app';
   const cat = await (await fetch(`${site}/catalog.json`)).json();
