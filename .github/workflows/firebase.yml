@@ -1,0 +1,50 @@
+# Firebase jobs: test and publish the database rules, then copy data from Supabase.
+# Runs when firebase/RUN changes on the preview branch (edit the number in that file to run it again).
+name: Firebase
+on:
+  push:
+    branches: [preview]
+    paths: ['firebase/RUN']
+  workflow_dispatch:
+
+concurrency: firebase
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firebase } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - run: npm install --no-audit --no-fund
+      - name: Test the rules against the emulator
+        run: npx firebase emulators:exec --only firestore --project demo-brickcollect "node --test rules.test.mjs"
+      - name: Publish the rules
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" npx firebase deploy --only firestore:rules --project brickcollect-app --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
+          echo "::notice title=Rules::Rules tested and published to brickcollect-app"
+
+  copy:
+    needs: rules
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firebase } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --no-audit --no-fund
+      - name: Copy data from Supabase
+        env:
+          SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          SUPABASE_URL: https://gsvoqohfznlhmyhmnnca.supabase.co
+          SUPABASE_SECRET_KEY: '${{ secrets.SUPABASE_SECRET_KEY }}'
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node copy-from-supabase.mjs
+          rm -f "$RUNNER_TEMP/sa.json"
