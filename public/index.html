@@ -876,7 +876,7 @@ const TIMELINES = [
     { t: 'The Rise of Skywalker', k: 'Film', y: '2019', era: '35 ABY', match: ['Episode IX', 'The Rise of Skywalker'], d: 'Episode IX. The final battle with the returned Emperor at Exegol.' },
   ] },
   { id: 'harry-potter', name: 'Harry Potter', themes: ['Harry Potter'], brandKw: /harry potter|hogwarts/i, entries: [
-    { t: 'Fantastic Beasts and Where to Find Them', k: 'Film', y: '2016', era: '1926', match: ['Fantastic Beasts', 'Fantastic Beasts and Where to Find Them'], d: 'Newt Scamander’s case of creatures gets loose in New York.' },
+    { t: 'Fantastic Beasts and Where to Find Them', k: 'Film', y: '2016', era: '1926', match: ['Fantastic Beasts and Where to Find Them'], d: 'Newt Scamander’s case of creatures gets loose in New York.' },
     { t: 'The Crimes of Grindelwald', k: 'Film', y: '2018', era: '1927', match: ['The Crimes of Grindelwald', 'Crimes of Grindelwald'], d: 'Dumbledore sends Newt to Paris to stop Grindelwald.' },
     { t: 'The Secrets of Dumbledore', k: 'Film', y: '2022', era: '1932', match: ['The Secrets of Dumbledore', 'Secrets of Dumbledore'], d: 'Dumbledore and Newt work against Grindelwald’s bid for power.' },
     { t: 'Philosopher’s Stone', k: 'Film', y: '2001', era: '1991–92', match: ["Philosopher's Stone", "Sorcerer's Stone", 'Philosopher’s Stone', 'Sorcerer’s Stone'], d: 'Year 1. Harry arrives at Hogwarts and finds the Philosopher’s (Sorcerer’s) Stone.' },
@@ -888,16 +888,21 @@ const TIMELINES = [
     { t: 'Deathly Hallows', k: 'Film', y: '2010–2011', era: '1997–98', match: ['Deathly Hallows', 'Deathly Hallows Part 1', 'Deathly Hallows Part 2'], d: 'The hunt for Horcruxes and the Battle of Hogwarts.' },
   ] },
   { id: 'marvel', name: 'Marvel', themes: ['Super Heroes Marvel', 'Marvel'], brandKw: /marvel|avengers/i, entries: [
-    { t: 'Captain America: The First Avenger', k: 'Film', y: '2011', era: '1943–45', match: ['Captain America: The First Avenger', 'The First Avenger'], d: 'Steve Rogers becomes Captain America in World War II.' },
+    { t: 'Captain America: The First Avenger', k: 'Film', y: '2011', era: '1943–45', match: ['Captain America: The First Avenger'], d: 'Steve Rogers becomes Captain America in World War II.' },
     { t: 'Captain Marvel', k: 'Film', y: '2019', era: '1995', match: ['Captain Marvel'], d: 'Carol Danvers discovers her past during the Kree–Skrull war.' },
-    { t: 'Iron Man', k: 'Films', y: '2008–2013', era: '2008–2012', match: ['Iron Man', 'Iron Man 2', 'Iron Man 3'], d: 'Tony Stark builds the suits, from the cave to the Hall of Armor.' },
-    { t: 'Thor', k: 'Films', y: '2011–2022', era: '2011–2024', match: ['Thor', 'Thor: Ragnarok', 'Thor: Love and Thunder'], d: 'Asgard, Ragnarok and the Bifrost.', kw: /\bthor\b|asgard|bifrost|ragnarok/i },
-    { t: 'The Avengers', k: 'Film', y: '2012', era: '2012', match: ['The Avengers', 'Avengers Assemble'], d: 'Earth’s mightiest heroes assemble for the Battle of New York.' },
-    { t: 'Guardians of the Galaxy', k: 'Films', y: '2014–2023', era: '2014–2026', match: ['Guardians of the Galaxy'], d: 'Star-Lord, Gamora, Drax, Rocket and Groot, the Milano and the Benatar.', kw: /guardians|milano|benatar/i },
-    { t: 'Age of Ultron', k: 'Film', y: '2015', era: '2015', match: ['Avengers: Age of Ultron', 'Age of Ultron'], d: 'The Avengers face Ultron and the battle of Sokovia.', kw: /ultron|sokovia/i },
-    { t: 'Black Panther', k: 'Films', y: '2018–2022', era: '2016–2025', match: ['Black Panther', 'Wakanda Forever'], d: 'Wakanda, T’Challa and Shuri.', kw: /black panther|wakanda/i },
-    { t: 'Spider-Man', k: 'Films', y: '2017–2021', era: '2016–2024', match: ['Spider-Man', 'Spider-Man: Homecoming', 'Spider-Man: Far From Home', 'Spider-Man: No Way Home'], d: 'Peter Parker’s MCU trilogy, from Homecoming to No Way Home.' },
-    { t: 'Infinity War and Endgame', k: 'Films', y: '2018–2019', era: '2018–2023', match: ['The Infinity Saga', 'Avengers: Infinity War', 'Avengers: Endgame', 'Infinity Saga'], d: 'Thanos, the Infinity Stones and the final battle.', kw: /thanos|infinity gauntlet|endgame|infinity war/i },
+    { t: 'Iron Man', k: 'Films', y: '2008–2013', era: '2008–2012', match: ['Iron Man films'], d: 'Tony Stark builds the suits, from the cave to Malibu and the Extremis battle.' },
+    { t: 'Thor', k: 'Films', y: '2011–2022', era: '2011–2024', match: ['Thor films'], d: 'Asgard, Ragnarok and New Asgard.' },
+    { t: 'The Avengers', k: 'Film', y: '2012', era: '2012', match: ['The Avengers'], d: 'Earth’s mightiest heroes assemble for the Battle of New York.' },
+    { t: 'Guardians of the Galaxy', k: 'Films', y: '2014–2023', era: '2014–2026', match: ['Guardians of the Galaxy'], d: 'Star-Lord, Gamora, Drax, Rocket and Groot, from the Milano to the Bowie.' },
+    { t: 'Age of Ultron', k: 'Film', y: '2015', era: '2015', match: ['Age of Ultron'], d: 'The Avengers face Ultron and the battle of Sokovia.' },
+    { t: 'Ant-Man', k: 'Films', y: '2015–2018', era: '2015–2018', match: ['Ant-Man'], d: 'Scott Lang shrinks down, and into the Quantum Realm.' },
+    { t: 'Captain America: Civil War', k: 'Film', y: '2016', era: '2016', match: ['Captain America: Civil War'], d: 'The Avengers split over the Sokovia Accords, with the airport battle.' },
+    { t: 'Black Panther', k: 'Films', y: '2018–2022', era: '2016–2025', match: ['Black Panther'], d: 'Wakanda, T’Challa, Shuri and Namor.' },
+    { t: 'Spider-Man', k: 'Films', y: '2017–2021', era: '2016–2024', match: ['Spider-Man (MCU)'], d: 'Peter Parker’s MCU trilogy, from Homecoming to No Way Home.' },
+    { t: 'Doctor Strange', k: 'Films', y: '2016–2022', era: '2016–2024', match: ['Doctor Strange'], d: 'Stephen Strange, the Sanctum Sanctorum and the multiverse.' },
+    { t: 'Infinity War and Endgame', k: 'Films', y: '2018–2019', era: '2018–2023', match: ['Infinity War and Endgame'], d: 'Thanos, the Infinity Stones and the final battle.' },
+    { t: 'Shang-Chi', k: 'Film', y: '2021', era: '2024', match: ['Shang-Chi'], d: 'Shang-Chi faces his father and the Ten Rings.' },
+    { t: 'Eternals', k: 'Film', y: '2021', era: '2024', match: ['Eternals'], d: 'Ancient immortals reunite to stop the Emergence.' },
   ] },
   { id: 'blade-runner', name: 'Blade Runner', themes: [], brandKw: /blade runner|replicant|spinner/i, entries: [
     { t: 'Blade Runner', k: 'Film', y: '1982', era: '2019', match: ['Blade Runner'], d: 'Rick Deckard hunts replicants in a rain-soaked Los Angeles.', kw: /blade runner(?! 2049)/i },
@@ -934,7 +939,7 @@ function renderTimeline() {
     <ol class="tl-strip">${fr.entries.map((x, i) => { const s = stats[i], pct = s.sets.length ? Math.round(s.own / s.sets.length * 100) : 0; return `
       <li><button class="tl-card ${i === tlPick ? 'on' : ''} ${s.sets.length ? '' : 'none'}" data-tlpick="${i}" aria-pressed="${i === tlPick}">
         <span class="tl-era">${esc(x.era || x.y)}</span><b>${esc(x.t)}</b><span class="tl-kind">${esc(x.k)} · ${esc(x.y)}</span>
-        <span class="tl-count">${s.sets.length ? `${s.own}/${s.sets.length} sets` : 'No sets yet'}</span><span class="tl-bar"><i style="width:${pct}%"></i></span>
+        <span class="tl-count">${s.sets.length ? `${s.own}/${s.sets.length} set${s.sets.length === 1 ? '' : 's'}` : 'No sets yet'}</span><span class="tl-bar"><i style="width:${pct}%"></i></span>
       </button></li>`; }).join('')}</ol>
     <div class="tl-detail">
       <div class="tl-dtext"><span class="tl-kind">${esc(e.k)} · released ${esc(e.y)}${e.era ? ` · set in ${esc(e.era)}` : ''}</span><h3>${esc(e.t)}</h3><p>${esc(e.d)}</p></div>
