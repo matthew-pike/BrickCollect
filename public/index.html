@@ -138,7 +138,16 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .welcome h2{margin:0;font-family:var(--font-display);font-weight:500;font-size:18px;padding-right:40px}
 .welcome p{margin:0;color:var(--muted);max-width:none}
 .welcome-text{padding-right:40px}
-.welcome .cta{color:var(--accent);font-weight:500;font-size:13px}
+.welcome .steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;counter-reset:st}
+.welcome .steps li{counter-increment:st;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 46px;position:relative;display:flex;flex-direction:column;gap:3px;min-width:0}
+.welcome .steps li::before{content:counter(st);position:absolute;left:12px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:13px;display:grid;place-items:center}
+.welcome .steps b{font-weight:500;font-size:14px}
+.welcome .steps span{color:var(--muted);font-size:12.5px;line-height:1.45}
+.welcome-foot{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.welcome-foot .hint{color:var(--faint);font-size:12px;flex:1 1 300px;min-width:0}
+@media (max-width:760px){.welcome .steps{grid-template-columns:1fr}}
+.welcome .narrow-only{display:none}
+@media (max-width:640px){.welcome .wide-only{display:none}.welcome .narrow-only{display:inline}}
 .welcome .x{position:absolute;top:12px;right:12px}
 
 #filtToggle{display:none}
@@ -433,14 +442,18 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     <div class="stat"><span class="k">Collection value<button type="button" class="tip" data-tip="What everything you own is worth: new copies at the new price, used and incomplete copies at the used price, times how many copies you have." aria-label="What is this?">i</button></span><span class="v violet" id="sValU">$0.00</span><span class="s" id="sValUs">By each item’s condition</span></div>
   </section>
 
-  <section class="welcome" id="welcome" hidden>
+  <section class="welcome" id="welcome" hidden aria-labelledby="welcomeTitle">
     <div class="welcome-text">
-      <h2>Welcome to BrickCollect</h2>
-      <p>Built by an enthusiast, for enthusiasts. BrickCollect covers LEGO and a growing list of other brick brands, including LumiBricks, Pantasy, CaDA and Mould King. The goal is simple: everything easy to find in a few clicks, on a clean, fast, easy-to-read site. Tick what you own, note each copy’s condition, star what you want, and see what’s left to complete any theme. The Timeline tab follows Star Wars, Harry Potter, Marvel and more film by film and show by show. It’s free, and you can sign in to keep your collection on every device.</p>
-      <p>It’s also a quick way to value your sets when you’re selling, insuring or trading. Open “Selling or buying a collection?” to see what yours is worth, pick a percentage to see what you’d ask or offer, and mark copies for sale or trade to get a list you can export and share.</p>
-      <span class="cta">To get started, select a brand or theme below, or search above.</span>
+      <h2 id="welcomeTitle">Getting started</h2>
+      <p>A simple checklist for your brick collection: LEGO plus LumiBricks, Pantasy, CaDA and Mould King. It’s free and works without an account; sign in to keep your collection on every device.</p>
     </div>
-    <button class="icon-btn x" id="hideWelcome" aria-label="Hide welcome"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <ol class="steps">
+      <li><b>Pick a brand or theme</b><span><span class="wide-only">Use the filters below</span><span class="narrow-only">Tap Filters below</span>, or search above by name, set number, subtheme or tag.</span></li>
+      <li><b>Tick what you own</b><span>Tick the box beside a set. Tap its condition to set new, used or incomplete and how many copies.</span></li>
+      <li><b>Star what you want</b><span>Starred sets go on your Wanted list with prices and Buy buttons. Export any list as a spreadsheet.</span></li>
+    </ol>
+    <div class="welcome-foot"><span class="hint">Open the Timeline tab to see Star Wars, Harry Potter and Marvel sets in story order. Selling? “Selling or buying a collection?” shows what it’s worth.</span><button class="btn primary" type="button" id="gotIt">Got it</button></div>
+    <button class="icon-btn x" id="hideWelcome" aria-label="Hide getting started"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </section>
 
   <section class="sellbox" id="sellbox" aria-labelledby="sellTitle">
@@ -540,7 +553,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
       <a href="#" id="footHome">Back to top</a>
     </nav>
   </div>
-  <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span>Buy links may earn BrickCollect a small commission</span><span id="ratesNote"></span></p>
+  <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span id="ratesNote"></span></p>
   <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © Rebrickable, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Converted prices are approximate.</p>
   <p class="fine"><b>Affiliate disclosure:</b> some links on BrickCollect are affiliate links, including the buttons to retailers’ websites. If you buy something through them, The Art of Bricks may earn a small commission at no extra cost to you. This helps keep BrickCollect free, and it never affects the prices shown or which sets are listed.</p>
 </footer>
@@ -805,8 +818,6 @@ function setInfo(n, patch, { quiet } = {}) {
 const change = (n, patch) => setInfo(n, patch);
 
 /* ---------- filters ---------- */
-// Brands that were renamed: the old name is shown in the brand filter and still finds their sets in search.
-const BRAND_AKA = { LumiBricks: 'Funwhole' };
 const fi = { brand: $('fiBrand'), theme: $('fiTheme'), sub: $('fiSub'), set: $('fiSet'), film: $('fiFilm'), year: $('fiYear') };
 const saved = prefs.filters || {};
 function fill(sel, first, values, keep) {
@@ -1411,6 +1422,9 @@ let qT; $('q').addEventListener('input', () => { clearTimeout(qT); qT = setTimeo
 $('more').onclick = () => { limit += PAGE; render(); };
 $('fiReset').onclick = () => { focus = null; tlFilter = null; Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; savePrefs(); };
+$('gotIt').onclick = () => { $('welcome').hidden = true; savePrefs(); };
+// First visit (nothing saved yet): show Getting started. After that it stays as the person left it.
+if (!lsGet('bc-prefs')) $('welcome').hidden = false; else if (lsGet('bc-prefs').hideWelcome === false) $('welcome').hidden = false;
 $('showWelcome').onclick = () => { $('welcome').hidden = !$('welcome').hidden; savePrefs(); };
 
 /* ---------- local BrickCollect connector: images + BrickLink prices ---------- */
@@ -1656,7 +1670,7 @@ function applyExtras() {
 function brandOptions() {
   const counts = new Map(); for (const x of CAT.sets) counts.set(x.brand, (counts.get(x.brand) || 0) + 1);
   const keep = fi.brand.value || saved.brand; saved.brand = undefined;
-  fill(fi.brand, 'All brands', [...counts].sort((a, b) => a[0] === 'LEGO' ? -1 : b[0] === 'LEGO' ? 1 : a[0].localeCompare(b[0])).map(([b, c]) => [b, `${BRAND_AKA[b] ? `${b} · formerly ${BRAND_AKA[b]}` : b} (${c.toLocaleString()})`]), keep);
+  fill(fi.brand, 'All brands', [...counts].sort((a, b) => a[0] === 'LEGO' ? -1 : b[0] === 'LEGO' ? 1 : a[0].localeCompare(b[0])).map(([b, c]) => [b, `${b} (${c.toLocaleString()})`]), keep);
   $('brandNames').innerHTML = [...counts.keys()].filter(b => b !== 'LEGO').map(b => `<option value="${esc(b)}">`).join('');
   $('themeNames').innerHTML = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.theme))].map(t => `<option value="${esc(t)}">`).join('');
 }
