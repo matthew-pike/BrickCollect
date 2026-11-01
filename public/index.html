@@ -204,6 +204,9 @@ tbody tr.picked td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .price.manual::after{background:var(--stud)}
 .subbtn{all:unset;cursor:pointer;color:var(--accent);font-weight:500;border-bottom:1px dashed transparent}
 .subbtn:hover{border-bottom-color:var(--accent)}
+.subedit{all:unset;cursor:pointer;color:var(--faint);margin-left:6px;vertical-align:-1px;padding:2px;border-radius:4px}
+.subedit:hover{color:var(--accent);background:var(--panel-2)}
+.subedit:focus-visible{outline:2px solid var(--accent)}
 .subbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
 .subbtn.none{color:var(--faint);font-weight:400}
 .focusbar .spacer{flex:1}
@@ -1099,9 +1102,12 @@ function render() {
     return `<button class="btn ghost price ${v ? 'has' : ''}" style="justify-content:flex-start" data-price="bl" data-n="${esc(x.n)}" aria-label="Set BrickLink number">${v ? esc(v) : 'Add'}</button>`;
   };
   const subCell = x => {
-    if (x.k !== 's' || !canCurate()) return esc(x.sub || x.theme);
-    if (editing === x.n + '|sub') return `<input class="inp" id="edit-price" style="width:180px" list="subNames" data-n="${esc(x.n)}" data-f="sub" value="${esc(x.sub)}" placeholder="Subtheme" aria-label="Subtheme">`;
-    return `<button class="subbtn ${x.sub ? '' : 'none'}" data-price="sub" data-n="${esc(x.n)}" title="Change subtheme">${esc(x.sub || x.theme)}</button>`;
+    if (x.k === 's' && canCurate() && editing === x.n + '|sub') return `<input class="inp" id="edit-price" style="width:180px" list="subNames" data-n="${esc(x.n)}" data-f="sub" value="${esc(x.sub)}" placeholder="Subtheme" aria-label="Subtheme">`;
+    // Clicking the subtheme (or theme) shows every set in it; the pencil changes it (site owner only).
+    const label = x.sub || x.theme;
+    const show = label ? `<button class="subbtn" data-subfilter="${esc(x.sub || '')}" data-subtheme="${esc(x.theme || '')}" title="Show every set in ${esc(label)}">${esc(label)}</button>` : '';
+    const edit = x.k === 's' && canCurate() ? `<button class="subedit" data-price="sub" data-n="${esc(x.n)}" title="Change subtheme" aria-label="Change subtheme of ${esc(x.name)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>` : '';
+    return show + edit;
   };
   const tagCell = x => {
     const list = x.tags || [], admin = x.k === 's' && canCurate();
@@ -1241,6 +1247,11 @@ document.addEventListener('click', e => {
   if (t.dataset.tlback) { tlOpen = true; if (tlFilter) { tlId = tlFilter.fr; tlPick = tlFilter.i; } render(); document.querySelector('.tl-card.on')?.scrollIntoView({ inline: 'center', block: 'nearest' }); return; }
   if (t.dataset.tlclear) { tlFilter = null; limit = PAGE; render(); return; }
   if (t.dataset.kind) { tlOpen = false; kind = t.dataset.kind; limit = PAGE; themeOptions(); savePrefs(); render(); return; }
+  if (t.dataset.subfilter !== undefined && t.dataset.subtheme !== undefined) {
+    focus = null; tlFilter = null; listView = 'all'; fi.brand.value = ''; themeOptions();
+    fi.theme.value = t.dataset.subtheme; subOptions(t.dataset.subfilter); fi.sub.value = t.dataset.subfilter; filmOptions(''); fi.film.value = ''; fi.year.value = ''; fi.set.value = 'all'; $('q').value = '';
+    limit = PAGE; savePrefs(); render(); $('boardHead').scrollIntoView({ behavior: 'smooth' }); return;
+  }
   if (t.dataset.tagsmore) { tagsOpen.add(t.dataset.tagsmore); render(); return; }
   if (t.dataset.untag) { const x = CAT.sets.find(s => s.n === t.dataset.n); if (x) editTags([x], t.dataset.untag, true); return; }
   if (t.dataset.tagfilter) { focus = null; fill(fi.film, 'All', [[t.dataset.tagfilter, t.dataset.tagfilter]], t.dataset.tagfilter); filmOptions(t.dataset.tagfilter); limit = PAGE; savePrefs(); render(); window.scrollTo({ top: $('fiFilm').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth' }); return; }
