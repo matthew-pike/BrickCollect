@@ -368,6 +368,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .buy-mould-king{--bd:#f5c400;--hv:#f5c400;background:#0b3a82;border:2px solid var(--bd);color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
 /* Hover: the chip keeps its brand colours and only the letters change colour */
 .btn.buy,.btn.bl{transition:color .15s ease}
+.btn.buy-wide{gap:5px;padding:5px 10px;font-size:12px;letter-spacing:0}
 .btn.buy:hover{border-color:var(--bd);color:var(--hv)}
 .btn.bl:hover{border-color:var(--accent);color:var(--bl-hv)}
 .btn.buy:focus-visible,.btn.bl:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -533,7 +534,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
       <a href="#" id="footHome">Back to top</a>
     </nav>
   </div>
-  <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span id="ratesNote"></span></p>
+  <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span>Buy links may earn BrickCollect a small commission</span><span id="ratesNote"></span></p>
   <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © Rebrickable, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Converted prices are approximate.</p>
   <p class="fine"><b>Affiliate disclosure:</b> some links on BrickCollect are affiliate links, including the buttons to retailers’ websites. If you buy something through them, The Art of Bricks may earn a small commission at no extra cost to you. This helps keep BrickCollect free, and it never affects the prices shown or which sets are listed.</p>
 </footer>
@@ -906,19 +907,23 @@ function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond
    'product' is used when the set's exact store address is known ({path} = /products/…).
    On the website these come from buyLinks in config.js, so affiliate links can be swapped in without code changes. */
 const BUY = Object.assign({
-  LEGO: { label: 'LE', title: 'Find it on LEGO.com', url: 'https://www.lego.com/en-au/product/{num}' },
-  LumiBricks: { label: 'LU', title: 'Buy at LumiBricks', product: 'https://www.lumibricks.com{path}?ref=opizuyuw', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
-  Pantasy: { label: 'PA', title: 'Buy at Pantasy', product: 'https://pantasy.com{path}?ref=fsolyowf', url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
-  CaDA: { label: 'CA', title: 'Buy at CaDA', product: 'https://decadastore.com{path}', url: 'https://decadastore.com/search?q={num}' },
-  'Mould King': { label: 'MK', title: 'Buy at Mould King', product: 'https://mouldkingcorp.com{path}', url: 'https://mouldkingcorp.com/search?q={num}' },
+  LEGO: { label: 'LE', name: 'LEGO', title: 'Find it on LEGO.com', url: 'https://www.lego.com/{lego}/product/{num}' },
+  LumiBricks: { label: 'LU', name: 'LumiBricks', title: 'Buy at LumiBricks', product: 'https://www.lumibricks.com{path}?ref=opizuyuw', url: 'https://www.lumibricks.com/search?q={num}&ref=opizuyuw' },
+  Pantasy: { label: 'PA', name: 'Pantasy', title: 'Buy at Pantasy', product: 'https://pantasy.com{path}?ref=fsolyowf', url: 'https://pantasy.com/search?q={num}&ref=fsolyowf' },
+  CaDA: { label: 'CA', name: 'CaDA', title: 'Buy at CaDA', product: 'https://decadastore.com{path}', url: 'https://decadastore.com/search?q={num}' },
+  'Mould King': { label: 'MK', name: 'Mould King', title: 'Buy at Mould King', product: 'https://mouldkingcorp.com{path}', url: 'https://mouldkingcorp.com/search?q={num}' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
 // Set number as shown: LEGO's usual "-1" is hidden (75192), later versions keep theirs (75192-2). Exports keep the full number.
 const shownNum = x => x.disp || (x.brand === 'LEGO' && x.k === 's' ? x.n.replace(/-1$/, '') : x.n);
+// On the Wanted list the button says "Buy" (in the store's colours), since that's where people are ready to buy.
 function buyLink(x) {
   const href = buyHref(x), b = BUY[x.brand];
   if (!href) return '';
-  return `<a class="btn mini buy buy-${esc(String(x.brand).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}" href="${esc(href)}" target="_blank" rel="sponsored noopener" title="${esc(b.title || 'Buy')}">${esc(b.label || 'Buy')}</a>`;
+  const wide = listView === 'wanted';
+  return `<a class="btn mini buy buy-${esc(String(x.brand).toLowerCase().replace(/[^a-z0-9]+/g, '-'))}${wide ? ' buy-wide' : ''}" href="${esc(href)}" target="_blank" rel="sponsored noopener" data-buy="${esc(x.brand)}" data-item="${esc(x.n)}" title="${esc(b.title || 'Buy')}" aria-label="${esc(`${b.title || 'Buy'}: ${x.name}`)}">${wide ? `Buy <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>` : esc(b.label || 'Buy')}</a>`;
 }
+// LEGO.com's store for the visitor's price location.
+const LEGO_LOCALE = { AU: 'en-au', US: 'en-us', CA: 'en-ca', UK: 'en-gb', EU: 'en-ie', world: 'en-us' };
 function buyHref(x) {
   if (x.k !== 's') return '';
   const b = BUY[x.brand]; if (!b || !(b.url || b.product)) return '';
@@ -926,7 +931,7 @@ function buyHref(x) {
   // Exact product page when we know it (saved nightly from the brand's store), otherwise the store's search.
   const href = (x.url && b.product && /^\/products\/[A-Za-z0-9._~-]+$/.test(x.url))
     ? b.product.replace('{path}', x.url)
-    : (b.url || '').replace(/\{num\}/g, encodeURIComponent(num)).replace(/\{name\}/g, encodeURIComponent(x.name));
+    : (b.url || '').replace(/\{num\}/g, encodeURIComponent(num)).replace(/\{name\}/g, encodeURIComponent(x.name)).replace(/\{lego\}/g, LEGO_LOCALE[priceRegion()] || 'en-au');
   return href || '';
 }
 
@@ -1714,6 +1719,11 @@ function setRegionMenu(open) { $('regionMenu').hidden = !open; $('regionBtn').se
 $('regionBtn').onclick = e => { e.stopPropagation(); setExportMenu(false); setRegionMenu($('regionMenu').hidden); };
 document.querySelectorAll('[data-loc]').forEach(b => b.addEventListener('click', () => { prefs.region = b.dataset.loc; savePrefs(); savePersonal(); setRegionMenu(false); render(); $('regionBtn').focus(); }));
 document.addEventListener('click', e => { if (!e.target.closest('#regionMenu,#regionBtn')) setRegionMenu(false); });
+// Buy clicks are counted (store and set only) so we can see which stores people buy from.
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[data-buy]'); if (!a || typeof window.gtag !== 'function') return;
+  window.gtag('event', 'buy_click', { store: a.dataset.buy, item_id: a.dataset.item, list: listView, price_location: priceRegion() });
+});
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('regionMenu').hidden) { setRegionMenu(false); $('regionBtn').focus(); } });
 $('curSel').onchange = () => { prefs.currency = $('curSel').value; savePrefs(); paintCurrency(); render(); };
 
