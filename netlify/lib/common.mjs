@@ -104,9 +104,9 @@ export async function blGet(path, query) {
   return body.data;
 }
 const num = v => (v == null || v === '' ? null : Math.round(Number(v) * 100) / 100);
-async function guide(type, no, cond) {
+async function guide(type, no, cond, country) {
   const path = `/items/${type}/${encodeURIComponent(no)}/price`;
-  const q = { guide_type: 'sold', new_or_used: cond, currency_code: 'AUD', vat: 'N' };
+  const q = { guide_type: 'sold', new_or_used: cond, currency_code: 'AUD', vat: 'N', ...(country ? { country_code: country } : {}) };
   let d = await blGet(path, q);
   if (!Number(d.total_quantity)) d = await blGet(path, { ...q, guide_type: 'stock' });
   if (!Number(d.total_quantity)) return null;
@@ -116,9 +116,19 @@ export function bricklinkReady() {
   return ['BRICKLINK_CONSUMER_KEY', 'BRICKLINK_CONSUMER_SECRET', 'BRICKLINK_TOKEN_VALUE', 'BRICKLINK_TOKEN_SECRET'].every(k => env(k));
 }
 // Used and new average prices in AUD for one BrickLink item (null when nothing has sold or is listed).
-export async function priceItem(type, bl) {
-  const [used, neu] = await Promise.all([guide(type, bl, 'U'), guide(type, bl, 'N')]);
+// country (e.g. 'AU') limits it to sellers in that country.
+export async function priceItem(type, bl, country) {
+  const [used, neu] = await Promise.all([guide(type, bl, 'U', country), guide(type, bl, 'N', country)]);
   return { used, new: neu };
+}
+// Countries that get their own price as well as the worldwide one (shown when a visitor picks that country).
+export const PRICE_COUNTRIES = ['AU'];
+// Worldwide price plus each country's, e.g. { used, new, au: { used, new } }.
+export async function priceItemAll(type, bl) {
+  const [world, ...local] = await Promise.all([priceItem(type, bl), ...PRICE_COUNTRIES.map(c => priceItem(type, bl, c))]);
+  const out = { ...world };
+  PRICE_COUNTRIES.forEach((c, k) => { out[c.toLowerCase()] = local[k]; });
+  return out;
 }
 
 /* ---------- run tasks a few at a time, stopping at a deadline ---------- */

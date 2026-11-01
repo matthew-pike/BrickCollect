@@ -3,7 +3,7 @@
 // Signed-in people only. Prices checked in the last 24 hours come straight from the database;
 // anything older is looked up on BrickLink, saved for everyone, and counts against the
 // person's daily allowance (admins have no allowance).
-import { env, json, sb, getUser, isAdmin, bucketOf, readBuckets, savePrices, isFresh, priceItem, bricklinkReady, pool, BrickLinkAuthError } from '../lib/common.mjs';
+import { env, json, sb, getUser, isAdmin, bucketOf, readBuckets, savePrices, isFresh, priceItemAll, bricklinkReady, pool, BrickLinkAuthError } from '../lib/common.mjs';
 
 const DAY = 24 * 3600 * 1000;
 const MAX_PER_CALL = 20;
@@ -35,7 +35,7 @@ export default async (req) => {
     const bl = type === 'SET' ? (entry?.bl || it.n) : (admin && valid(it.bl) ? it.bl : entry?.bl);
     if (!bl) { results.push({ n: it.n, error: 'no BrickLink number' }); continue; }
     // Prices the site owner typed in are kept; otherwise anything checked in the last day comes from the database.
-    if (entry?.manualPrice || isFresh(entry, DAY)) { results.push({ n: it.n, used: entry.used ?? null, new: entry.new ?? null, pricedAt: entry.pricedAt, cached: true }); continue; }
+    if (entry?.manualPrice || (isFresh(entry, DAY) && entry.au)) { results.push({ n: it.n, used: entry.used ?? null, new: entry.new ?? null, au: entry.au, pricedAt: entry.pricedAt, cached: true }); continue; }
     stale.push({ n: it.n, bl });
   }
 
@@ -60,17 +60,17 @@ export default async (req) => {
   let fetched = 0;
   try {
     const out = await pool(toFetch, 8, started + 8000, async s => {
-      try { const p = await priceItem(type, s.bl); fetched++; return p; }
+      try { const p = await priceItemAll(type, s.bl); fetched++; return p; }
       catch (e) { if (e instanceof BrickLinkAuthError) throw e; return { error: e.message }; }
     });
     toFetch.forEach((s, k) => {
       const p = out[k];
       if (p === undefined) { results.push({ n: s.n, skipped: true }); return; }
       if (p.error) { results.push({ n: s.n, error: p.error }); return; }
-      const entry = { used: p.used, new: p.new, pricedAt: now, checkedAt: now, priceSource: 'BrickLink' };
+      const entry = { used: p.used, new: p.new, au: p.au, pricedAt: now, checkedAt: now, priceSource: 'BrickLink' };
       if (type === 'MINIFIG') entry.bl = s.bl;
       updates.set(s.n, entry);
-      results.push({ n: s.n, used: p.used, new: p.new, pricedAt: now });
+      results.push({ n: s.n, used: p.used, new: p.new, au: p.au, pricedAt: now });
     });
   } catch (e) {
     if (e instanceof BrickLinkAuthError) return json(502, { code: 'bricklink_auth', message: `BrickLink refused the request (${e.message}). The site’s BrickLink keys need checking.` });
