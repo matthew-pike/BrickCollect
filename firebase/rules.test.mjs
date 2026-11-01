@@ -63,8 +63,16 @@ test('each person reads and writes only their own collection', async () => {
   await assertFails(getDoc(doc(admin(), 'data/users/alice/collection')));
 });
 
+test('people can look up only their own admin entry', async () => {
+  await assertSucceeds(getDoc(doc(admin(), 'admins/m4ttpike@gmail.com')));
+  await assertSucceeds(getDoc(doc(alice(), 'admins/alice@example.com'))); // reads as "not there"
+  await assertFails(getDoc(doc(alice(), 'admins/m4ttpike@gmail.com')));
+  await assertFails(getDocs(collection(admin(), 'admins')));
+  await assertFails(getDoc(doc(anon(), 'admins/m4ttpike@gmail.com')));
+});
+
 test('admin list and private job data are off limits', async () => {
-  await assertFails(getDoc(doc(admin(), 'admins/m4ttpike@gmail.com')));
+  await assertFails(setDoc(doc(admin(), 'admins/someone@example.com'), {}));
   await assertFails(setDoc(doc(alice(), 'admins/alice@example.com'), {}));
   await assertFails(getDoc(doc(admin(), 'private/sync-log')));
   await assertFails(setDoc(doc(anon(), 'somethingelse/x'), {}));

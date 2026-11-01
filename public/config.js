@@ -5,6 +5,15 @@
 window.BC_CONFIG = {
   supabaseUrl: 'https://gsvoqohfznlhmyhmnnca.supabase.co',
   supabaseKey: 'sb_publishable_gDOxpyIJ3kXLThLdOhWH3Q_XrLpNnE5',
+  // Firebase web settings (public by design; Firestore rules protect the data). Used by backend-firebase.js after the move.
+  firebase: {
+    apiKey: 'AIzaSyChfx0G1V9x4cChemhLl3lP4H_qYI4A3Ow',
+    authDomain: 'brickcollect-app.firebaseapp.com',
+    projectId: 'brickcollect-app',
+    storageBucket: 'brickcollect-app.firebasestorage.app',
+    messagingSenderId: '689224539006',
+    appId: '1:689224539006:web:1c5556e5bf1b77622ab12f',
+  },
   // Social sign-in buttons, in this order. Add a provider here only after it's switched on in
   // Supabase (Authentication → Sign In / Providers). Options: google, discord, facebook, apple, twitter, github, azure.
   socialSignIn: ['google'],

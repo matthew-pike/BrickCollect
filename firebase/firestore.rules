@@ -28,7 +28,13 @@ service cloud.firestore {
       allow read, write: if signedIn() && request.auth.uid == uid;
     }
 
-    // /admins and /private (sync counts, job state) have no rule, so the site can't touch them.
+    // A signed-in person may look up only their own entry, which is how the page knows you're the admin.
+    match /admins/{email} {
+      allow get: if signedIn() && request.auth.token.email_verified == true
+                 && email == request.auth.token.email.lower();
+    }
+
+    // /private (sync counts, job state) has no rule, so the site can't touch it.
     // Anything not matched above is denied.
   }
 }
