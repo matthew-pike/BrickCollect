@@ -313,7 +313,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .tip{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:5px;border-radius:50%;border:1px solid currentColor;background:transparent;color:var(--faint);font:italic 600 9.5px/1 Georgia,serif;cursor:help;padding:0;vertical-align:1px;text-transform:none;letter-spacing:0;opacity:.85}
 .tip:hover,.tip:focus-visible,.tip[aria-expanded="true"]{color:var(--accent);opacity:1;outline:none}
 .tipbox{position:absolute;z-index:40;max-width:min(280px,calc(100vw - 24px));background:var(--fg);color:var(--bg);font-size:12.5px;line-height:1.45;padding:9px 11px;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.3);text-transform:none;letter-spacing:0;font-weight:400}
-.condgroup{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer;font:inherit;color:inherit}
+.condgroup{display:inline-flex;flex-wrap:nowrap;gap:2px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer;font:inherit;color:inherit}
 .condgroup:hover{border-color:var(--line-2)}
 .condgroup:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .cseg{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap;background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--line-2)}
@@ -848,8 +848,9 @@ const condCell = x => {
   if (!owned(x)) return fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : '';
   // Same look as the Minifigures / Sets tabs: one group, a segment per condition with its count, plus copies for sale.
   const q = copiesOf(x), ns = saleCount(x), l = condLabel(x);
-  const segs = CONDS.filter(c => q[c]).map(c => `<span class="cseg">${COND_SHORT[c]} <b class="n-${c}">${q[c]}</b></span>`).join('');
-  return `<button class="condgroup" data-condmenu="${esc(x.n)}" aria-haspopup="dialog" title="${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change condition, copies or sale" aria-label="Condition: ${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change">${segs}${ns ? `<span class="cseg sale">For sale <b>${ns}</b></span>` : ''}</button>`;
+  const ab = { new: 'N', used: 'UC', 'used-inc': 'UI' };
+  const segs = CONDS.filter(c => q[c]).map(c => `<span class="cseg" title="${COND[c]}">${ab[c]} <b class="n-${c}">${q[c]}</b></span>`).join('');
+  return `<button class="condgroup" data-condmenu="${esc(x.n)}" aria-haspopup="dialog" title="${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change condition, copies or sale" aria-label="Condition: ${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change">${segs}${ns ? `<span class="cseg sale" title="For sale or trade">ST <b>${ns}</b></span>` : ''}</button>`;
 };
 const condOf = x => (mine.get(x.n) || {}).cond || 'used';
 const CONDS = ['new', 'used', 'used-inc'];
@@ -1037,7 +1038,7 @@ const tagsOpen = new Set(); // rows where you've asked to see every tag
 /* ---------- render ---------- */
 const COLS = () => [
   { label: '<input type="checkbox" class="chk" id="selAll" aria-label="Mark everything in view as owned">' }, { label: 'Image' },
-  { key: 'name', label: kind === 'sets' ? 'Set name' : 'Minifigure' }, { key: 'cond', label: 'Condition', tip: 'Click a chip to set how many copies you own in each condition: New, Used (complete) or Used (incomplete).' },
+  { key: 'name', label: kind === 'sets' ? 'Set name' : 'Minifigure' }, { key: 'cond', label: 'Condition', tip: 'N new, UC used complete, UI used incomplete, ST for sale or trade, each with how many copies. Click to change copies or mark some for sale or trade.' },
   ...(fi.brand.value ? [] : [{ key: 'brand', label: 'Brand' }]), { key: 'sub', label: 'Subtheme' },
   { key: 'n', label: kind === 'sets' ? 'Set #' : 'Rebrickable #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BrickLink #' }] : []), { key: 'year', label: kind === 'sets' ? 'Year' : 'First year' },
   { key: 'pieces', label: 'Pieces', cls: 'num' },
