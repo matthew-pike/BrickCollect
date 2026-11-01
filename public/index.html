@@ -1441,10 +1441,10 @@ document.addEventListener('change', e => {
 let qT; $('q').addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => { if (kind === 'sets') focus = null; limit = PAGE; render(); }, 150); });
 $('more').onclick = () => { limit += PAGE; render(); };
 $('fiReset').onclick = () => { focus = null; tlFilter = null; Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
-$('hideWelcome').onclick = () => { $('welcome').hidden = true; savePrefs(); };
-$('gotIt').onclick = () => { $('welcome').hidden = true; savePrefs(); };
-// First visit (nothing saved yet): show Getting started. After that it stays as the person left it.
-if (!lsGet('bc-prefs')) $('welcome').hidden = false; else if (lsGet('bc-prefs').hideWelcome === false) $('welcome').hidden = false;
+$('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
+$('gotIt').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
+// Getting started shows until the person closes it (Got it or ×), with its own marker so other saved settings can't hide it.
+if (!lsGet('bc-start')) $('welcome').hidden = false;
 $('showWelcome').onclick = () => { $('welcome').hidden = !$('welcome').hidden; savePrefs(); };
 
 /* ---------- local BrickCollect connector: images + BrickLink prices ---------- */
