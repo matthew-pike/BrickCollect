@@ -50,7 +50,7 @@ jobs:
           rm -f "$RUNNER_TEMP/sa.json"
 
   site:
-    needs: rules
+    needs: [rules, jobs]
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: firebase } }
     steps:
@@ -66,3 +66,31 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Publish site" npx firebase deploy --only hosting --project brickcollect-app --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
           echo "::notice title=Site::Test site published to https://brickcollect-app.web.app"
+
+  jobs:
+    needs: rules
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firebase } }
+    steps:
+      - uses: actions/checkout@v5
+      - id: go
+        name: Publish jobs only once firebase/JOBS exists (after the BrickLink keys are in Secret Manager)
+        run: if [ -f JOBS ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "::notice title=Jobs::Skipped (no firebase/JOBS yet)"; fi
+      - if: steps.go.outputs.go == 'true'
+        uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - if: steps.go.outputs.go == 'true'
+        run: ./report.sh "npm install" npm install --no-audit --no-fund
+      - if: steps.go.outputs.go == 'true'
+        run: ./report.sh "npm install (jobs)" npm install --prefix functions --no-audit --no-fund
+      - if: steps.go.outputs.go == 'true'
+        name: Check the jobs load
+        run: ./report.sh "Load jobs" node -e "import('./functions/index.mjs').then(m => console.log(Object.keys(m).join(', ')))"
+      - if: steps.go.outputs.go == 'true'
+        name: Publish the jobs
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Publish jobs" npx firebase deploy --only functions --project brickcollect-app --non-interactive --force
+          rm -f "$RUNNER_TEMP/sa.json"
+          echo "::notice title=Jobs::Price jobs published to brickcollect-app"

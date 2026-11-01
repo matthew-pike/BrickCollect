@@ -15,4 +15,10 @@ s = s.replace(from[0], ['app', 'auth', 'firestore'].map(m => `<script src="https
      .replace(from[1], '<script src="/backend-firebase.js"></script>');
 writeFileSync(page, s);
 rmSync(new URL('backend.js', out));
+// Until the jobs are on Firebase there's no Sync Prices function to send /api/sync-prices to.
+import { existsSync } from 'node:fs';
+const fj = new URL('./firebase.json', import.meta.url);
+if (!existsSync(new URL('./JOBS', import.meta.url))) {
+  const c = JSON.parse(readFileSync(fj, 'utf8')); delete c.hosting.rewrites; writeFileSync(fj, JSON.stringify(c, null, 2));
+}
 console.log('Built firebase/hosting with Firebase sign-in and database');

@@ -2,3 +2,4 @@ node_modules/
 *.log
 .firebase/
 hosting/
+functions/node_modules/
