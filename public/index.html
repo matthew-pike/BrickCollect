@@ -125,6 +125,7 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .welcome .x{position:absolute;top:12px;right:12px}
 
 #filtToggle{display:none}
+@media (max-width:640px){.pills{flex-wrap:nowrap;overflow-x:auto;max-width:100%}.pill{white-space:nowrap;flex:0 0 auto}}
 @media (max-width:640px){#filtToggle{display:inline-flex;align-self:flex-start;gap:8px}.filters:not(.open){display:none}}
 .filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr)) auto auto auto;gap:12px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
@@ -226,6 +227,7 @@ tr.fromset .nm::after{white-space:nowrap;display:inline-block;content:"IN YOUR S
 .nm{font-weight:500;min-width:240px}
 .nm small{display:block;font-weight:400;color:var(--faint);font-size:11.5px}
 .sub{color:var(--accent);font-weight:500}
+td.sub{min-width:150px}
 .sub small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;max-width:260px}
 .tagchip{display:inline-flex;align-items:center;border:1px solid var(--line-2);background:var(--panel-2);border-radius:999px;font-size:11px;line-height:1;overflow:hidden}
@@ -331,6 +333,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .copyrow button:hover{border-color:var(--accent)}
 .copyrow button:disabled{opacity:.35;cursor:default}
 .copies .hint{font-size:11.5px;color:var(--faint)}
+.copies .code{font-family:var(--font-mono);font-size:10.5px;color:var(--faint);margin-left:2px}
 .copyhead{display:grid;grid-template-columns:1fr 104px 104px;gap:10px;align-items:end}.copyhead h4:first-child{grid-column:2}.copyhead h4{text-align:center;margin:0;font-size:11px;font-weight:500;color:var(--muted)}
 .copyhead h4:last-child{color:var(--violet)}
 .copyrow{display:grid!important;grid-template-columns:1fr 104px 104px;gap:10px}
@@ -357,7 +360,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .totop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .acct{height:34px;padding:0 12px}
 .acct .short{display:none}
-@media (max-width:640px){.acct .full{display:none}.acct .short{display:inline}.acct{padding:0;width:34px;border-radius:50%;font-weight:600}.top .wrap{flex-wrap:wrap}.brand{flex:1 1 auto}}
+@media (max-width:640px){.acct .full{display:none}.acct .short{display:inline}.acct.in{padding:0;width:34px;border-radius:50%;font-weight:600}.top .wrap{flex-wrap:wrap}.brand{flex:1 1 auto}}
 .dlg{border:1px solid var(--line-2);border-radius:12px;background:var(--panel);color:var(--fg);padding:22px;width:min(420px,calc(100vw - 32px))}
 .dlg::backdrop{background:rgba(5,10,20,.55)}
 .dlg h2{margin:0 0 8px;font-size:18px;font-weight:500;padding-right:36px}
@@ -410,8 +413,8 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
   <section class="welcome" id="welcome" hidden>
     <div class="welcome-text">
       <h2>Welcome to BrickCollect</h2>
-      <p>Built by an enthusiast, for enthusiasts. BrickCollect covers LEGO and a growing list of other brick brands, including LumiBricks, Pantasy, CaDA and Mould King. The goal is simple: make everything easy to find in a few clicks, on a clean, fast, easy-to-read site, with the ability to export your collection. Manage your collection, track the sets and minifigures you still need, and see every theme's timeline in one screen. It’s free, and you can sign in to keep your collection on every device.</p>
-      <p>It’s also a quick way to value your sets when you’re selling, insuring or trading. Tick what you own and BrickCollect adds up what it’s worth, used and new. Enter a percentage in the bar below to see what you’d ask, or offer, at that share of market value.</p>
+      <p>Built by an enthusiast, for enthusiasts. BrickCollect covers LEGO and a growing list of other brick brands, including LumiBricks, Pantasy, CaDA and Mould King. The goal is simple: everything easy to find in a few clicks, on a clean, fast, easy-to-read site. Tick what you own, note each copy’s condition, star what you want, and see what’s left to complete any theme. The Timeline tab follows Star Wars, Harry Potter, Marvel and more film by film and show by show. It’s free, and you can sign in to keep your collection on every device.</p>
+      <p>It’s also a quick way to value your sets when you’re selling, insuring or trading. Open “Selling or buying a collection?” to see what yours is worth, pick a percentage to see what you’d ask or offer, and mark copies for sale or trade to get a list you can export and share.</p>
       <span class="cta">To get started, select a brand or theme below, or search above.</span>
     </div>
     <button class="icon-btn x" id="hideWelcome" aria-label="Hide welcome"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -1028,7 +1031,7 @@ function renderTimeline() {
         <span class="tl-count">${s.sets.length ? `${s.own}/${s.sets.length} set${s.sets.length === 1 ? '' : 's'}` : x.soon ? `Coming ${esc(x.soon)}` : 'No sets yet'}</span><span class="tl-bar"><i style="width:${pct}%"></i></span>
       </button></li>`; }).join('')}</ol>
     <div class="tl-detail">
-      <div class="tl-dtext"><span class="tl-kind">${esc(e.k)} · ${e.soon ? `coming ${esc(e.soon)}` : `released ${esc(e.y)}`}${e.era ? ` · set in ${esc(e.era)}` : ''}</span><h3>${esc(e.t)}</h3><p>${esc(e.d)}</p></div>
+      <div class="tl-dtext"><span class="tl-kind">${esc(e.k)} · ${e.soon ? `coming ${esc(e.soon)}` : `released ${esc(e.y)}`}${e.era ? ` · set in ${esc(e.era.replace(/^(About|After)/, m => m.toLowerCase()))}` : ''}</span><h3>${esc(e.t)}</h3><p>${esc(e.d)}</p></div>
       <div class="tl-dstats"><b>${st.sets.length ? `${st.own} of ${st.sets.length}` : '0'}</b><span>${st.sets.length ? `sets owned${brands ? ` · ${esc(brands)}` : ''}` : 'No sets matched yet. Give sets this subtheme or tag to add them.'}</span>
         ${st.sets.length ? `<button class="btn primary" data-tlshow="${tlPick}">Show ${st.sets.length === 1 ? 'this set' : `these ${st.sets.length} sets`}</button>` : ''}</div>
     </div>`;
@@ -1053,6 +1056,7 @@ function render() {
   $('tabSets').setAttribute('aria-selected', !tlOpen && kind === 'sets');
   $('tabFigs').setAttribute('aria-selected', !tlOpen && kind === 'figs');
   $('tabTl').setAttribute('aria-selected', tlOpen);
+  document.querySelector('.pills').hidden = tlOpen; document.querySelector('.pills + .tip')?.toggleAttribute('hidden', tlOpen);
   $('regionLabel').textContent = LOCS[priceRegion()].replace(' (EU)', '').replace('United States', 'US').replace('United Kingdom', 'UK');
   document.querySelectorAll('[data-loc]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.loc === priceRegion())));
   { const n = [fi.brand, fi.theme, fi.sub, fi.film, fi.year].filter(f => f.value).length + (fi.set.value !== 'all' ? 1 : 0); $('filtLabel').textContent = n ? `Filters · ${n}` : 'Filters'; }
@@ -1216,7 +1220,7 @@ function render() {
     empty.hidden = false;
     const pop = ['Star Wars', 'Technic', 'Harry Potter', 'Icons', 'Ideas', 'Ninjago'].filter(t => [...fi.theme.options].some(o => o.value === t));
     const otherBrands = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.brand))].sort();
-    empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brands. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>`;
+    empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>`;
   } else if (!rows.length && listView === 'sale') { empty.hidden = false; empty.innerHTML = '<h3>Nothing marked for sale or trade</h3><p>Click a set’s condition chip and use the Sale or trade column to choose which copies you’re letting go.</p>'; }
   else if (!rows.length && listView === 'wanted') { empty.hidden = false; empty.innerHTML = '<h3>Your wanted list is empty</h3><p>Tap the star next to any set or minifigure to add it here.</p>'; }
   else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Tick the sets and minifigures you own and they’ll show here.</p>'; }
@@ -1285,7 +1289,7 @@ let soldConfirm = false;
 function paintCopies() {
   const x = { n: copiesFor }, q = copiesOf(x), sq = saleOf(x), ns = saleCount(x), colour = { new: 'var(--good)', used: 'var(--accent)', 'used-inc': 'var(--stud)' };
   const step = (kind, c, v, max) => `<span class="stepper"><button data-${kind}="${c}" data-d="-1" aria-label="One fewer ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${v ? '' : 'disabled'}>−</button><span class="n" aria-live="polite">${v}</span><button data-${kind}="${c}" data-d="1" aria-label="One more ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${max != null && v >= max ? 'disabled' : ''}>+</button></span>`;
-  copiesEl.innerHTML = `<div class="copyhead"><h4>Copies you own</h4><h4>Sale or trade</h4></div>${CONDS.map(c => `<div class="copyrow"><span class="lab"><span class="dot" style="--c:${colour[c]}"></span>${COND[c]}</span>${step('copy', c, q[c])}${step('sale', c, sq[c], q[c])}</div>`).join('')}
+  copiesEl.innerHTML = `<div class="copyhead"><h4>Copies you own</h4><h4>Sale or trade <span class="code">ST</span></h4></div>${CONDS.map(c => `<div class="copyrow"><span class="lab"><span class="dot" style="--c:${colour[c]}"></span>${COND[c]} <span class="code">${{ new: 'N', used: 'UC', 'used-inc': 'UI' }[c]}</span></span>${step('copy', c, q[c])}${step('sale', c, sq[c], q[c])}</div>`).join('')}
     ${ns ? `<button class="soldbtn ${soldConfirm ? 'confirm' : ''}" data-sold="1">${soldConfirm ? `Remove ${ns} sold or traded ${ns === 1 ? 'copy' : 'copies'} from your collection?` : `Sold or traded (${ns})…`}</button>` : ''}
     <span class="hint">Set all copies to 0 to remove it from your collection.</span>`;
 }
@@ -1789,6 +1793,7 @@ async function paintAccount() {
   const nm = email ? email.split('@')[0] : '';
   $('acctBtn').innerHTML = email ? `<span class="full">${esc(nm.slice(0, 14))}</span><span class="short" aria-hidden="true">${esc(nm.slice(0, 1).toUpperCase())}</span>` : 'Sign in';
   $('acctBtn').title = email ? `Signed in as ${email}` : 'Sign in to save your collection to a free account';
+  $('acctBtn').classList.toggle('in', !!email);
   $('acctEmail').textContent = email || '';
   $('acctBtn').hidden = !window.BC?.auth?.available;
 }
