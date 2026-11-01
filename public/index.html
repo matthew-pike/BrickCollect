@@ -123,6 +123,8 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .welcome .cta{color:var(--accent);font-weight:500;font-size:13px}
 .welcome .x{position:absolute;top:12px;right:12px}
 
+#filtToggle{display:none}
+@media (max-width:640px){#filtToggle{display:inline-flex;align-self:flex-start;gap:8px}.filters:not(.open){display:none}}
 .filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr)) auto auto auto;gap:12px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
 .field label{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500}
@@ -206,7 +208,6 @@ tbody tr.picked td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .subbtn.none{color:var(--faint);font-weight:400}
 .focusbar .spacer{flex:1}
 tr.fromset .nm::after{white-space:nowrap;display:inline-block;content:"IN YOUR SETS";font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);border-radius:4px;padding:0 5px;margin-left:8px;vertical-align:1px}
-tr.owned .nm::after{white-space:nowrap;display:inline-block;content:"OWNED";font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--good);border:1px solid color-mix(in srgb,var(--good) 50%,transparent);border-radius:4px;padding:0 5px;margin-left:8px;vertical-align:1px}
 .num{text-align:right}
 .mono{font-family:var(--font-mono);font-size:12.5px}
 .muted{color:var(--muted)}
@@ -284,6 +285,9 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .incnote{font-size:12px;color:var(--faint);white-space:nowrap}
 .incnote.on{color:var(--stud)}
 .footleft{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.linkbtn{all:unset;cursor:pointer;color:var(--muted);font-size:12px;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+.linkbtn:hover{color:var(--danger);text-decoration-color:currentColor}
+.linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
 .ownc{display:flex;align-items:center;gap:8px}
 .star{all:unset;cursor:pointer;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;color:var(--faint)}
 .star:hover{color:var(--stud)}
@@ -399,7 +403,8 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     </div>
   </section>
 
-  <section class="filters" aria-label="Filters">
+  <button class="btn filtbtn" id="filtToggle" aria-expanded="false" aria-controls="filters"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span id="filtLabel">Filters</span></button>
+  <section class="filters" id="filters" aria-label="Filters">
     <div class="field"><label for="fiBrand">Brand</label><select id="fiBrand"><option value="">All brands</option><option value="LEGO">LEGO</option></select></div>
     <div class="field"><label for="fiTheme">Theme</label><select id="fiTheme"><option value="">All themes</option></select></div>
     <div class="field"><label for="fiSub">Subtheme</label><select id="fiSub"><option value="">Pick a theme first</option></select></div>
@@ -424,11 +429,10 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
         <button class="pill" data-view="owned" aria-pressed="false">Owned <b id="cOwned">0</b></button>
         <button class="pill" data-view="wanted" aria-pressed="false">Wanted <b id="cWanted">0</b></button>
       </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
-      <button class="btn" id="unselAll" title="Unmark everything in view">Unselect all</button>
       <span class="spacer"></span>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button></div></div>
-      <button class="btn primary" id="syncBtn" title="Fetch BrickLink price guide averages for the sets in view">Sync Prices</button><button type="button" class="tip" data-tip="Fetches the latest BrickLink prices for what&#x27;s in view. Prices are also refreshed every night for the sets people own. Sign in to sync; each person can sync up to 60 items a day." aria-label="What is this?">i</button>
+      <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view. Prices also refresh every night for sets people own. Sign in to sync, up to 60 items a day.">Sync Prices</button>
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
       <b id="bulkLabel">Set for the sets in view</b>
@@ -464,7 +468,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
       </table>
     </div>
     <div class="empty" id="empty"><h3>Loading the catalog…</h3></div>
-    <div class="foot" id="foot" hidden><span class="footleft"><span id="footCount"></span><span class="savemode" id="saveMode" hidden></span></span><button class="btn" id="more">Show 200 more</button><span id="footHint">Click a set to see its minifigures · click a price or subtheme to change it</span></div>
+    <div class="foot" id="foot" hidden><span class="footleft"><span id="footCount"></span><span class="savemode" id="saveMode" hidden></span><button class="linkbtn" id="unselAll" hidden>Unmark all</button></span><button class="btn" id="more">Show 200 more</button><span id="footHint">Click a set to see its minifigures</span></div>
   </section>
 </main>
 <footer class="foot-site">
@@ -988,6 +992,7 @@ function render() {
   $('tabSets').setAttribute('aria-selected', !tlOpen && kind === 'sets');
   $('tabFigs').setAttribute('aria-selected', !tlOpen && kind === 'figs');
   $('tabTl').setAttribute('aria-selected', tlOpen);
+  { const n = [fi.brand, fi.theme, fi.sub, fi.film, fi.year].filter(f => f.value).length + (fi.set.value !== 'all' ? 1 : 0); $('filtLabel').textContent = n ? `Filters · ${n}` : 'Filters'; }
   const list = kind === 'sets' ? CAT.sets : CAT.figs;
   const isScoped = scoped();
   const scope = isScoped ? list.filter(inScope) : list.filter(has);
@@ -1012,13 +1017,14 @@ function render() {
   $('sOwned').innerHTML = `${hasIn.length.toLocaleString()} <small>${isScoped ? `(${pct}%)` : ''}</small>`;
   $('sBar').style.width = (isScoped ? pct : 0) + '%';
   $('sPct').textContent = isScoped ? `of ${scope.length.toLocaleString()} ${noun} in view` : 'Across your whole collection';
-  $('sRemain').textContent = isScoped ? needed.length.toLocaleString() : '—';
-  $('sRemainS').textContent = isScoped ? 'Needed to reach 100%' : 'Pick a theme to see the gap';
+  const allWanted = list.filter(x => wanted(x) && !has(x));
+  $('sRemain').textContent = (isScoped ? needed.length : allWanted.length).toLocaleString();
+  $('sRemainS').textContent = isScoped ? 'Needed to reach 100%' : allWanted.length ? 'On your wanted list · pick a theme for its gap' : 'Pick a theme to see the gap';
   const unU = needed.filter(x => info(x.n).used == null).length, unN = needed.filter(x => info(x.n).new == null).length;
   const nm = prefs.needMode === 'new' ? 'new' : 'used', unP = nm === 'new' ? unN : unU;
   document.querySelectorAll('[data-need]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.need === nm)));
-  $('sNeed').innerHTML = isScoped ? `${money(sum(needed, nm))} <small>${cur()}</small>` : '—';
-  $('sNeedS').textContent = !isScoped ? 'Pick a theme to see the cost' : unP ? `${unP.toLocaleString()} still unpriced` : `At ${nm} prices`;
+  $('sNeed').innerHTML = isScoped || allWanted.length ? `${money(sum(isScoped ? needed : allWanted, nm))} <small>${cur()}</small>` : '—';
+  $('sNeedS').textContent = !isScoped ? (allWanted.length ? `Your wanted list, at ${nm} prices` : 'Pick a theme to see the cost') : unP ? `${unP.toLocaleString()} still unpriced` : `At ${nm} prices`;
   const vc = ownedIn.reduce((t, x) => t + (valueOf(x) || 0), 0), vu = sum(ownedIn, 'used'), vn = sum(ownedIn, 'new');
   $('sValU').innerHTML = `${money(vc)} <small>${cur()}</small>`;
   const byCond = { new: 0, used: 0, 'used-inc': 0 }; ownedIn.forEach(x => { const q = copiesOf(x); for (const c of CONDS) byCond[c] += q[c]; });
@@ -1070,7 +1076,7 @@ function render() {
     sa.title = rows.length ? (sa.checked ? `Unmark all ${rows.length.toLocaleString()} in view` : `Mark all ${rows.length.toLocaleString()} in view as owned`) : '';
   }
   ownRows = rows;
-  { const own = rows.filter(owned).length; const u = $('unselAll'); u.hidden = !own; u.textContent = own ? `Unselect all (${own.toLocaleString()})` : 'Unselect all'; u.title = own ? `Unmark the ${own.toLocaleString()} owned in view` : 'Nothing in view is marked as owned'; }
+  { const own = rows.filter(owned).length; const u = $('unselAll'); u.hidden = !own; u.textContent = own === 1 ? 'Unmark 1 owned' : `Unmark all ${own.toLocaleString()} owned`; u.title = own ? `Unmark the ${own.toLocaleString()} owned in view` : 'Nothing in view is marked as owned'; }
   const showRows = isScoped || hasIn.length || listView !== 'all' || list.some(wanted);
   const page = showRows ? rows.slice(0, limit) : [];
   const blId = x => x.k === 's' ? (info(x.n).bl || x.n) : info(x.n).bl;
@@ -1226,6 +1232,7 @@ document.addEventListener('click', e => {
   if (tr && !e.target.closest('button,a,input,label')) { focus = focus === tr.dataset.row ? null : tr.dataset.row; savePrefs(); render(); return; }
   const t = e.target.closest('button,[data-sort]'); if (!t) return;
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
+  if (t.id === 'filtToggle') { const o = !$('filters').classList.contains('open'); $('filters').classList.toggle('open', o); t.setAttribute('aria-expanded', o); return; }
   if (t.dataset.need) { prefs.needMode = t.dataset.need; savePrefs(); render(); return; }
   if (t.dataset.tl) { tlOpen = true; savePrefs(); render(); return; }
   if (t.dataset.tlfr) { tlId = t.dataset.tlfr; tlPick = null; render(); return; }
