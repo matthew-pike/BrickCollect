@@ -1128,7 +1128,9 @@ function render() {
   const showRows = isScoped || hasIn.length || listView !== 'all' || list.some(wanted);
   const page = showRows ? rows.slice(0, limit) : [];
   const blId = x => x.k === 's' ? (info(x.n).bl || x.n) : info(x.n).bl;
-  const bl = x => blId(x) ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(blId(x))}` : `https://www.bricklink.com/v2/search.page?q=${encodeURIComponent(x.name)}#T=M`;
+  // With Australia picked, BrickLink opens on the For Sale tab filtered to Australian sellers, matching the price shown.
+  const blLoc = priceRegion() === 'AU' ? '#T=S&O={%22loc%22:%22AU%22,%22iconly%22:0}' : '';
+  const bl = x => blId(x) ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(blId(x))}${blLoc}` : `https://www.bricklink.com/v2/search.page?q=${encodeURIComponent(x.name)}#T=M`;
   const rb = x => `https://rebrickable.com/${x.k === 's' ? 'sets' : 'minifigs'}/${encodeURIComponent(x.n)}/`;
   const price = (x, f) => {
     const v = info(x.n)[f];
@@ -1186,7 +1188,7 @@ function render() {
       <td class="num">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
       <td class="num">${price(x, 'used')}</td>
       <td class="num">${price(x, 'new')}</td>
-      <td><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="View on BrickLink" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
+      <td><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? 'View on BrickLink, Australian sellers' : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
 
   const empty = $('empty');
