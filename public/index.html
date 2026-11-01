@@ -389,6 +389,11 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .dlg .or{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--faint);font-size:12px}
 .dlg .or::before,.dlg .or::after{content:"";flex:1;border-top:1px solid var(--line)}
 .dlg .fine{margin:14px 0 0}
+.dlg .acct-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.nudge{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(360px,calc(100vw - 32px));background:var(--panel);color:var(--fg);border:1px solid var(--accent);border-radius:12px;padding:14px 16px;box-shadow:0 10px 30px rgb(0 0 0/.3);display:flex;flex-direction:column;gap:10px}
+.nudge p{margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
+.nudge p b{color:var(--fg)}
+.nudge-b{display:flex;gap:8px;justify-content:flex-end}
 .dlg-x{position:absolute;top:14px;right:14px}
 .savemode{cursor:default}.savemode.local{cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;z-index:20;box-shadow:0 6px 24px rgba(0,0,0,.3)}
@@ -549,8 +554,9 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 <div class="toast" id="toast" hidden></div>
 <dialog class="dlg" id="authDlg" aria-labelledby="authTitle">
   <div id="authIn">
-    <h2 id="authTitle">Sign in to BrickCollect</h2>
-    <p>Save your collection to a free account so it follows you to any device. There’s no password: we email you a sign-in link.</p>
+    <h2 id="authTitle">Sign in or create an account</h2>
+    <p><b>New here?</b> Signing in creates your free account. Your collection is then saved to it, so it’s on every device where you sign in and isn’t lost if you clear your browser.</p>
+    <p class="fine" style="margin:6px 0 16px">There’s no password: use Google, or we email you a one-time sign-in link.</p>
     <form id="authForm" autocomplete="on">
       <label for="authEmail">Email</label>
       <input class="inp" id="authEmail" type="email" required autocomplete="email" placeholder="you@example.com">
@@ -558,16 +564,18 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     </form>
     <div class="or"><span>or</span></div>
     <div class="socials" id="socialBtns"></div>
-    <p class="fine">By signing in you agree to our <a href="/privacy.html">privacy policy</a>. Anything you’ve ticked in this browser moves into your account.</p>
+    <p class="fine">Anything you’ve already ticked in this browser moves into your account. By signing in you agree to our <a href="/privacy">privacy policy</a>.</p>
   </div>
   <div id="authSent" hidden>
     <h2>Check your email</h2>
-    <p>We’ve sent a sign-in link to <b id="authSentTo"></b>. Open it on this device to finish signing in.</p>
+    <p>We’ve sent a sign-in link to <b id="authSentTo"></b>. Open it on this device to finish signing in. If you’re new, that creates your account.</p>
+    <p class="fine">Not there after a minute? Check your spam or promotions folder. It comes from BrickCollect.</p>
   </div>
   <div id="authOut" hidden>
     <h2>Your account</h2>
-    <p>Signed in as <b id="acctEmail"></b>. Your collection is saved to your account.</p>
-    <button class="btn" type="button" id="signOutBtn">Sign out</button>
+    <p>Signed in as <b id="acctEmail"></b>. Your collection is saved to your account and is the same on every device where you sign in.</p>
+    <div class="acct-actions"><button class="btn" type="button" id="acctExport">Export my collection</button><button class="btn" type="button" id="signOutBtn">Sign out</button></div>
+    <p class="fine">To delete your account and collection, email <b>brickcollectapp@gmail.com</b> from this address. More in our <a href="/privacy">privacy policy</a>.</p>
   </div>
   <button class="icon-btn dlg-x" type="button" id="authClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
 </dialog>
@@ -706,7 +714,7 @@ let pFlushT = null, pWriting = false, pAgain = false, pDirty = false;
 function savePersonal() { pDirty = true; clearTimeout(pFlushT); pFlushT = setTimeout(flushPersonal, 500); }
 async function flushPersonal() {
   pDirty = false;
-  if (saveMode !== 'cloud') { lsSet('bc-collection', personalObj()); return; }
+  if (saveMode !== 'cloud') { lsSet('bc-collection', personalObj()); maybeNudge(); return; }
   if (pWriting) { pAgain = true; return; }
   pWriting = true;
   try {
@@ -1825,6 +1833,19 @@ async function paintAccount() {
   $('acctBtn').hidden = !window.BC?.auth?.available;
 }
 $('acctBtn').onclick = openAuth;
+$('acctExport').onclick = () => { dlg.close(); $('exportBtn').click(); };
+// A one-time nudge once someone has ticked a few things without an account (again once if they keep going).
+function maybeNudge() {
+  if (uid || !window.BC?.auth?.available || document.getElementById('saveNudge')) return;
+  const n = Object.keys(personalObj()).length, seen = lsGet('bc-nudge') || {};
+  if (n < 10 || (seen.at && (seen.times >= 2 || n < seen.at + 40))) return;
+  lsSet('bc-nudge', { at: n, times: (seen.times || 0) + 1 });
+  const el = document.createElement('div');
+  el.id = 'saveNudge'; el.className = 'nudge'; el.setAttribute('role', 'status');
+  el.innerHTML = `<p><b>Nice collection!</b> It’s only saved in this browser. Sign in (free) to keep it safe and on all your devices.</p><div class="nudge-b"><button class="btn ghost" type="button" data-n="later">Not now</button><button class="btn primary" type="button" data-n="in">Sign in</button></div>`;
+  el.addEventListener('click', e => { const v = e.target.closest('button')?.dataset.n; if (!v) return; el.remove(); if (v === 'in') openAuth(); });
+  document.body.append(el);
+}
 $('authClose').onclick = () => dlg.close();
 dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 $('saveMode').addEventListener('click', () => { if (saveMode === 'local') openAuth(); });
