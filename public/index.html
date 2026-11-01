@@ -26,11 +26,17 @@
   --font-mono:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   color-scheme:dark;
 }
-@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]):not([data-theme="mid"]){
   --bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1;
   --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab;
   --accent:#0a86b8; --accent-ink:#ffffff;--bl-hv:#04121b; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
   color-scheme:light}}
+:root[data-theme="mid"]{
+  /* Mid: a softer slate between the night navy and the light theme */
+  --bg:#1f2838; --panel:#273244; --panel-2:#2d394d; --line:#38465e; --line-2:#475771;
+  --fg:#edf1f7; --muted:#aab5c8; --faint:#8190a8;
+  --accent:#2bbdeb; --accent-ink:#04121b;--bl-hv:#ffffff; --good:#3dd68a; --violet:#b9a3ff; --stud:#f2c200; --danger:#ff7085;
+  color-scheme:dark}
 :root[data-theme="light"]{
   --bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1;
   --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab;
@@ -394,7 +400,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     <div class="top-actions">
       <button class="btn acct" id="acctBtn" type="button">Sign in</button>
       <select id="curSel" class="cur" aria-label="Currency" title="Currency"></select>
-      <button class="icon-btn" id="themeBtn" title="Switch light or dark" aria-label="Switch to light mode"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
+      <button class="icon-btn" id="themeBtn" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
       <button class="icon-btn" id="showWelcome" title="About BrickCollect" aria-label="About BrickCollect"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
     </div>
   </div>
@@ -1815,20 +1821,23 @@ $('socialBtns').addEventListener('click', async e => { const b = e.target.closes
 $('signOutBtn').onclick = async () => { await BC.auth.signOut(); location.reload(); };
 window.BC?.auth?.onChange?.(() => location.reload());
 
-/* ---------- light / dark ---------- */
+/* ---------- dark / mid / light ---------- */
 const SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
 const MOON = '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>';
-const isDark = () => { const t = document.documentElement.getAttribute('data-theme'); return t ? t === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches; };
+const HALF = '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/>';
+const THEMES = ['dark', 'mid', 'light'], THEME_NAME = { dark: 'Dark', mid: 'Mid', light: 'Light' }, THEME_ICON = { dark: MOON, mid: HALF, light: SUN };
+const curTheme = () => document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+const isDark = () => curTheme() !== 'light';
 function paintThemeBtn() {
-  const d = isDark();
-  $('themeIcon').innerHTML = d ? SUN : MOON;
-  $('themeBtn').setAttribute('aria-label', d ? 'Switch to light mode' : 'Switch to dark mode');
-  $('themeBtn').title = d ? 'Switch to light mode' : 'Switch to dark mode';
+  const t = curTheme(), next = THEMES[(THEMES.indexOf(t) + 1) % THEMES.length];
+  $('themeIcon').innerHTML = THEME_ICON[t];
+  $('themeBtn').setAttribute('aria-label', `Theme: ${THEME_NAME[t]}. Switch to ${THEME_NAME[next]}`);
+  $('themeBtn').title = `${THEME_NAME[t]} mode · click for ${THEME_NAME[next]}`;
 }
-if (prefs.theme) document.documentElement.setAttribute('data-theme', prefs.theme);
+if (THEMES.includes(prefs.theme)) document.documentElement.setAttribute('data-theme', prefs.theme);
 paintThemeBtn();
 matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', paintThemeBtn);
-$('themeBtn').onclick = () => { prefs.theme = isDark() ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', prefs.theme); paintThemeBtn(); savePrefs(); };
+$('themeBtn').onclick = () => { prefs.theme = THEMES[(THEMES.indexOf(curTheme()) + 1) % THEMES.length]; document.documentElement.setAttribute('data-theme', prefs.theme); paintThemeBtn(); savePrefs(); };
 
 /* ---------- boot ---------- */
 if (saved.set) fi.set.value = saved.set;
