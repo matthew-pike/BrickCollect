@@ -313,9 +313,13 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .tip{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:5px;border-radius:50%;border:1px solid currentColor;background:transparent;color:var(--faint);font:italic 600 9.5px/1 Georgia,serif;cursor:help;padding:0;vertical-align:1px;text-transform:none;letter-spacing:0;opacity:.85}
 .tip:hover,.tip:focus-visible,.tip[aria-expanded="true"]{color:var(--accent);opacity:1;outline:none}
 .tipbox{position:absolute;z-index:40;max-width:min(280px,calc(100vw - 24px));background:var(--fg);color:var(--bg);font-size:12.5px;line-height:1.45;padding:9px 11px;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.3);text-transform:none;letter-spacing:0;font-weight:400}
-.condwrap{display:flex;flex-wrap:wrap;gap:5px 6px;align-items:center}
-.salebadge{display:inline-flex;align-items:center;border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 50%,transparent);background:color-mix(in srgb,var(--violet) 10%,transparent);vertical-align:middle}
-.salebadge:hover{background:color-mix(in srgb,var(--violet) 18%,transparent)}
+.condgroup{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--bg);cursor:pointer;font:inherit;color:inherit}
+.condgroup:hover{border-color:var(--line-2)}
+.condgroup:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cseg{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap;background:var(--panel-2);box-shadow:inset 0 0 0 1px var(--line-2)}
+.cseg b{font-family:var(--font-mono);font-weight:500}
+.cseg .n-new{color:var(--good)} .cseg .n-used{color:var(--accent)} .cseg .n-used-inc{color:var(--stud)}
+.cseg.sale{background:transparent;box-shadow:none}.cseg.sale b{color:var(--violet)}
 .condchip.c-mixed{color:var(--fg);border-color:var(--line-2);background:var(--panel-2)}
 .copies{position:absolute;z-index:30;max-width:calc(100vw - 16px);background:var(--panel);border:1px solid var(--line-2);border-radius:10px;box-shadow:0 12px 36px rgba(0,0,0,.28);padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:220px}
 .copies h4{margin:0 0 2px;font-size:12px;font-weight:500;color:var(--muted)}
@@ -840,7 +844,13 @@ function condLabel(x) {
   if (parts.length === 1) return { cls: parts[0], text: `${q[parts[0]]} ${COND_SHORT[parts[0]]}`, long: `${q[parts[0]]} × ${COND[parts[0]]}` };
   return { cls: 'mixed', text: parts.map(c => `${q[c]} ${COND_SHORT[c]}`).join(' · '), long: parts.map(c => `${q[c]} × ${COND[c]}`).join(', ') };
 }
-const condCell = x => { if (!owned(x)) return fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : ''; const l = condLabel(x), ns = saleCount(x); return `<div class="condwrap"><button class="condchip c-${l.cls}" data-condmenu="${esc(x.n)}" aria-haspopup="dialog" title="${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change condition, copies or sale" aria-label="Condition: ${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change">${esc(l.text)}</button>${ns ? `<button class="salebadge" data-condmenu="${esc(x.n)}" tabindex="-1" aria-hidden="true" title="${ns} for sale or trade">${ns} for sale</button>` : ''}</div>`; };
+const condCell = x => {
+  if (!owned(x)) return fromSet(x) ? '<span class="muted" style="font-size:12px">With set</span>' : '';
+  // Same look as the Minifigures / Sets tabs: one group, a segment per condition with its count, plus copies for sale.
+  const q = copiesOf(x), ns = saleCount(x), l = condLabel(x);
+  const segs = CONDS.filter(c => q[c]).map(c => `<span class="cseg">${COND_SHORT[c]} <b class="n-${c}">${q[c]}</b></span>`).join('');
+  return `<button class="condgroup" data-condmenu="${esc(x.n)}" aria-haspopup="dialog" title="${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change condition, copies or sale" aria-label="Condition: ${esc(l.long)}${ns ? `, ${ns} for sale or trade` : ''}. Click to change">${segs}${ns ? `<span class="cseg sale">For sale <b>${ns}</b></span>` : ''}</button>`;
+};
 const condOf = x => (mine.get(x.n) || {}).cond || 'used';
 const CONDS = ['new', 'used', 'used-inc'];
 // Copies you own in each condition: { new, used, 'used-inc' } (0 when not owned).
