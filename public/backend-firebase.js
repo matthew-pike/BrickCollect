@@ -105,6 +105,22 @@
     },
     signInWithGoogle() { return this.signInWith('google'); },
     async signOut() { await fauth.signOut(); },
+    // Deletes the signed-in person's saved collection and their account. Firebase only allows this soon after
+    // signing in, so Google users confirm with Google again; email-link users are asked to sign in again first.
+    async deleteAccount() {
+      const u = fauth.currentUser;
+      if (!u) throw err('signed_out', 'You’re not signed in.');
+      const fresh = Date.now() - Date.parse(u.metadata.lastSignInTime || 0) < 4 * 60 * 1000;
+      if (!fresh) {
+        if (u.providerData.some(p => p.providerId === 'google.com')) {
+          const p = new fb.auth.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account', login_hint: u.email || '' });
+          try { await u.reauthenticateWithPopup(p); }
+          catch (e) { if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') throw err('cancelled', 'Account not deleted.'); throw e; }
+        } else throw err('recent_login', 'For your security, sign out, sign in again with a new email link, then delete your account within a few minutes.');
+      }
+      await fstore.doc(`data/users/${u.uid}/collection`).delete();
+      await u.delete();
+    },
     // Call cb only when a different person signs in or out after the page has loaded
     // (token refreshes and the first state on load are not a change of person).
     onChange(cb) {

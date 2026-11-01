@@ -66,6 +66,22 @@ button,input,select{font:inherit;color:inherit}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand h1{font-family:var(--font-display);font-weight:700;font-size:20px;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
 .beta.preview{background:var(--stud);color:#1a1300}
+.newpill{all:unset;cursor:pointer;font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.06em;padding:2px 7px;border-radius:999px;border:1px solid var(--accent);color:var(--accent)}
+.newpill:hover{background:var(--accent);color:var(--accent-ink)}
+.newpill:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.news{border:1px solid var(--line-2);border-radius:12px;background:var(--panel);color:var(--fg);padding:20px 22px;width:min(520px,calc(100vw - 32px));max-height:min(80vh,720px)}
+.news::backdrop{background:rgb(4 10 20/.55)}
+.news-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.news h2{margin:0;font-family:var(--font-display);font-weight:500;font-size:18px}
+.news .rel{padding:12px 0;border-top:1px solid var(--line)}
+.news .rel:first-child{border-top:0}
+.news .rel h3{margin:0 0 6px;font-size:14px;font-weight:500;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.news .rel h3 .v{font-family:var(--font-mono);font-size:12px;color:var(--accent)}
+.news .rel h3 .d{font-size:12px;color:var(--faint);font-weight:400}
+.news ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.news li{color:var(--muted);font-size:13px;line-height:1.45}
+.news li b{color:var(--fg);font-weight:500}
+.news-foot{margin:12px 0 0;font-size:12px;color:var(--faint)}
 .beta{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.08em;padding:2px 6px;border-radius:4px;background:var(--accent);color:var(--accent-ink)}
 .brand p{margin:0;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 @media (max-width:640px){.brand p{display:none}.top .wrap{gap:10px}}
@@ -400,6 +416,16 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .dlg .or::before,.dlg .or::after{content:"";flex:1;border-top:1px solid var(--line)}
 .dlg .fine{margin:14px 0 0}
 .dlg .acct-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.dlg .linkbtn{all:unset;cursor:pointer;font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
+.dlg .linkbtn.danger{color:var(--danger)}
+.dlg .linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dlg .delbox{margin-top:12px;border:1px solid var(--danger);border-radius:10px;padding:12px 14px}
+.dlg .delbox p{margin:0 0 8px}
+.dlg .keepbox{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin:0 0 4px;cursor:pointer}
+.dlg .keepbox input{width:16px;height:16px;margin:0;flex:none;accent-color:var(--accent)}
+.dlg .keepbox span{flex:1;min-width:0}
+.dlg .acct-actions .btn{width:auto;flex:1 1 140px}
+.btn.danger-fill{background:var(--danger);border-color:var(--danger);color:#fff}
 .nudge{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(360px,calc(100vw - 32px));background:var(--panel);color:var(--fg);border:1px solid var(--accent);border-radius:12px;padding:14px 16px;box-shadow:0 10px 30px rgb(0 0 0/.3);display:flex;flex-direction:column;gap:10px}
 .nudge p{margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
 .nudge p b{color:var(--fg)}
@@ -416,7 +442,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
   <div class="wrap">
     <div class="brand">
       <div>
-        <h1><a href="#" class="home" id="homeLink" title="Back to home">BrickCollect</a> <span class="beta">BETA</span> <span class="beta preview" id="previewBadge" hidden title="You’re on the preview site: changes here aren’t live yet">PREVIEW</span></h1>
+        <h1><a href="#" class="home" id="homeLink" title="Back to home">BrickCollect</a> <span class="beta">BETA</span> <button class="newpill" id="newsPill" type="button" hidden title="See what’s new in BrickCollect">What’s new</button> <span class="beta preview" id="previewBadge" hidden title="You’re on the preview site: changes here aren’t live yet">PREVIEW</span></h1>
         <p>Collect. Track. Value. Export. In one place.</p>
       </div>
     </div>
@@ -549,6 +575,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
         <a class="soc" href="https://www.youtube.com/@TheArtofBricks" target="_blank" rel="noopener" title="The Art of Bricks on YouTube" aria-label="The Art of Bricks on YouTube"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg></a>
         <a class="soc" href="https://store.bricklink.com/TheArtofBricks#/shop" target="_blank" rel="noopener" title="The Art of Bricks store on BrickLink" aria-label="The Art of Bricks store on BrickLink"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg></a>
         <a class="soc" href="https://www.instagram.com/the_artofbricks/" target="_blank" rel="noopener" title="The Art of Bricks on Instagram" aria-label="The Art of Bricks on Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg></a></span>
+      <a href="#" id="newsLink">What’s new · <span id="verLabel"></span></a>
       <a href="/privacy.html">Privacy</a>
       <a href="#" id="footHome">Back to top</a>
     </nav>
@@ -589,9 +616,19 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
     <h2>Your account</h2>
     <p>Signed in as <b id="acctEmail"></b>. Your collection is saved to your account and is the same on every device where you sign in.</p>
     <div class="acct-actions"><button class="btn" type="button" id="acctExport">Export my collection</button><button class="btn" type="button" id="signOutBtn">Sign out</button></div>
-    <p class="fine">To delete your account and collection, email <b>brickcollectapp@gmail.com</b> from this address. More in our <a href="/privacy">privacy policy</a>.</p>
+    <p class="fine"><button class="linkbtn danger" type="button" id="delStart">Delete my account…</button></p>
+    <div class="delbox" id="delBox" hidden>
+      <p><b>Delete your account?</b> This permanently deletes your account and the collection saved to it. It can’t be undone.</p>
+      <label class="keepbox"><input type="checkbox" id="delKeep" checked><span>Keep a copy of my collection in this browser</span></label>
+      <div class="acct-actions"><button class="btn" type="button" id="delCancel">Cancel</button><button class="btn danger-fill" type="button" id="delGo">Delete permanently</button></div>
+    </div>
   </div>
   <button class="icon-btn dlg-x" type="button" id="authClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</dialog>
+<dialog class="news" id="newsDlg" aria-labelledby="newsTitle">
+  <div class="news-head"><h2 id="newsTitle">What’s new</h2><button class="icon-btn" type="button" id="newsClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div id="newsBody"></div>
+  <p class="news-foot">Ideas or problems? Email <b>brickcollectapp@gmail.com</b>.</p>
 </dialog>
 <button class="totop" id="toTop" type="button" aria-label="Back to the top" title="Back to the top" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 <datalist id="subNames"></datalist>
@@ -1849,6 +1886,47 @@ async function saveCsv(name, csv, what) {
   }
 }
 
+/* ---------- versions and What's new (new features only; newest first) ---------- */
+const RELEASES = [
+  { v: '0.9', date: '2 November 2026', title: 'A new home', items: [
+    ['brickcollect.app', 'BrickCollect has its own address, and it’s faster.'],
+    ['Getting started', 'three quick steps for first-time visitors.'],
+    ['Accounts', 'sign in or create an account with Google or an email link, and delete your account yourself.'],
+    ['Mid mode', 'a softer slate theme between Dark and Light.'],
+    ['Ninjago timeline', 'from the pilot to Dragons Rising, plus The Acolyte in Star Wars.'],
+    ['Buy buttons', 'a clear Buy button on your Wanted list, and LEGO links go to your country’s LEGO store.'],
+    ['JMBricklayer', 'joins the other brands.'],
+  ] },
+  { v: '0.8', date: '1 November 2026', title: 'Selling, prices and stories', items: [
+    ['Sale or trade', 'mark copies you’re letting go and export a list to share.'],
+    ['Price location', 'BrickLink prices from sellers in Australia, the US, Canada, the UK or Europe.'],
+    ['Condition and copies', 'new, used and used incomplete, with how many of each.'],
+    ['Tags and subthemes', 'group sets by film, show or type, and search by them.'],
+    ['Timeline', 'Star Wars, Harry Potter and Marvel sets in story order.'],
+    ['CaDA and Mould King', 'added, with store prices and photos.'],
+  ] },
+  { v: '0.7', date: 'October 2026', title: 'First beta', items: [
+    ['Your collection', 'tick the LEGO sets and minifigures you own and see what’s left in any theme.'],
+    ['Wanted list', 'star what you want next.'],
+    ['Prices', 'what your collection is worth, from BrickLink, in your currency.'],
+    ['LumiBricks and Pantasy', 'the first brands beyond LEGO.'],
+    ['Export', 'your collection and lists as a spreadsheet.'],
+  ] },
+];
+const VERSION = RELEASES[0].v;
+$('verLabel').textContent = 'v' + VERSION;
+function openNews() {
+  $('newsBody').innerHTML = RELEASES.map(r => `<section class="rel"><h3><span class="v">v${esc(r.v)}</span> ${esc(r.title)} <span class="d">${esc(r.date)}</span></h3><ul>${r.items.map(([b, t]) => `<li><b>${esc(b)}</b>: ${esc(t)}</li>`).join('')}</ul></section>`).join('');
+  try { $('newsDlg').showModal(); } catch { $('newsDlg').setAttribute('open', ''); }
+  lsSet('bc-seen-version', VERSION); $('newsPill').hidden = true;
+}
+$('newsPill').onclick = openNews;
+$('newsLink').onclick = e => { e.preventDefault(); openNews(); };
+$('newsClose').onclick = () => $('newsDlg').close();
+$('newsDlg').addEventListener('click', e => { if (e.target === $('newsDlg')) $('newsDlg').close(); });
+// The pill shows to returning visitors when there's a release they haven't seen. First-time visitors get Getting started instead.
+{ const seen = lsGet('bc-seen-version'); if (!seen && !lsGet('bc-start')) lsSet('bc-seen-version', VERSION); else if (seen !== VERSION) $('newsPill').hidden = false; }
+
 /* ---------- account ---------- */
 const dlg = $('authDlg');
 function openAuth() {
@@ -1899,6 +1977,24 @@ $('authForm').addEventListener('submit', async e => {
 });
 $('socialBtns').addEventListener('click', async e => { const b = e.target.closest('[data-provider]'); if (!b) return; try { await BC.auth.signInWith(b.dataset.provider); } catch (err) { toast(err.message || 'That sign-in option isn’t available right now.'); } });
 $('signOutBtn').onclick = async () => { await BC.auth.signOut(); location.reload(); };
+// Delete my account: confirm in the dialog, optionally keep a copy here, then delete the saved collection and the account.
+$('delStart').onclick = () => { $('delBox').hidden = !BC.auth.deleteAccount; $('delStart').hidden = !!BC.auth.deleteAccount; if (!BC.auth.deleteAccount) toast('Email brickcollectapp@gmail.com to delete your account.'); };
+$('delCancel').onclick = () => { $('delBox').hidden = true; $('delStart').hidden = false; };
+$('delGo').onclick = async () => {
+  const btn = $('delGo'); btn.disabled = true; btn.textContent = 'Deleting…';
+  const keep = $('delKeep').checked, copy = personalObj();
+  try {
+    if (keep) lsSet('bc-collection', copy); else localStorage.removeItem('bc-collection');
+    await BC.auth.deleteAccount();
+    lsSet('bc-deleted', Date.now());
+    location.reload();
+  } catch (e) {
+    console.warn('delete account', e);
+    toast(e.message || 'Couldn’t delete your account. Try again.');
+    btn.disabled = false; btn.textContent = 'Delete permanently';
+  }
+};
+if (lsGet('bc-deleted')) { localStorage.removeItem('bc-deleted'); setTimeout(() => toast('Your account has been deleted.'), 800); }
 window.BC?.auth?.onChange?.(() => location.reload());
 
 /* ---------- dark / mid / light ---------- */
