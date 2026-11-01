@@ -1,0 +1,34 @@
+rules_version = '2';
+// BrickCollect database rules: the same access as the Supabase setup.
+//  - Shared data (prices, BrickLink numbers, subthemes and tags, other brands, exchange rates):
+//    anyone can read; only admins can change it from the site.
+//  - Each person's collection: only that person can read or change it.
+//  - Admin list and job bookkeeping: never readable or writable from the site.
+// The scheduled jobs use the Admin SDK, which is not limited by these rules.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    // Admins are listed by lower-case email in /admins/{email}; the email must be verified
+    // (Google sign-in and email-link sign-in both verify it).
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
+    }
+
+    match /iteminfo/{id}  { allow read: if true; allow write: if isAdmin(); }
+    match /subthemes/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /catalog/{id}   { allow read: if true; allow write: if isAdmin(); }
+    match /meta/{id}      { allow read: if true; allow write: if isAdmin(); }
+
+    // Same path the page already uses: data/users/<uid>/collection
+    match /data/users/{uid}/{docId} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // /admins and /private (sync counts, job state) have no rule, so the site can't touch them.
+    // Anything not matched above is denied.
+  }
+}
