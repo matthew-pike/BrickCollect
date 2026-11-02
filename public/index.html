@@ -321,6 +321,55 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .pop-own{grid-column:1 / -1;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);cursor:pointer;margin-top:4px}
 @media (max-width:900px){.pop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:420px){.pop-grid{grid-template-columns:1fr}}
+/* ---------- Phones: each row becomes a compact card; slimmer sticky toolbar ---------- */
+.phone-sort{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:640px){
+  .top{position:static}
+  .board-head{top:env(safe-area-inset-top,0px)}
+  .board-head .toolbar{gap:8px;padding-block:8px}
+  .board-head .tab,.board-head .pill{padding-block:5px}
+  .board-head.stuck .menuwrap,.board-head.stuck .toolbar > .tip,.board-head.stuck .phone-sort{display:none}
+  .phone-sort{display:inline-flex}
+  .phone-sort select{font-size:13px;padding:6px 8px;border-radius:7px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg)}
+  .table-scroll{overflow-x:visible}
+  .table-scroll table,.table-scroll tbody{display:block;width:100%;min-width:0}
+  .table-scroll thead{display:none}
+  /* Card: tick and star, then the picture, on the left; details flow on the right in three lines */
+  #rows tr{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;position:relative;min-height:84px;padding:12px 4px 12px 104px;border-bottom:1px solid var(--line)}
+  #rows tr::before,#rows tr::after{content:"";flex-basis:100%;height:0}
+  #rows tr::before{order:5}
+  #rows tr::after{order:9}
+  #rows td{display:block;padding:0;border:0;min-width:0;text-align:left;white-space:normal}
+  #rows .c-own{position:absolute;left:4px;top:12px}
+  #rows .c-own .ownc{flex-direction:column;gap:10px}
+  #rows .c-img{position:absolute;left:40px;top:12px}
+  #rows .c-nm{order:1;flex-basis:100%;font-weight:500}
+  #rows .c-nm .pick{text-align:left}
+  #rows .c-brand{display:none}
+  #rows .c-num{order:2;font-size:12px}
+  #rows .c-bl{order:3;font-size:12px}
+  #rows .c-yr{order:3;font-size:12px}
+  #rows .c-pcs{order:4;font-size:12px;color:var(--muted)}
+  #rows .c-yr:not(:empty)::before,#rows .c-pcs:not(:empty)::before{content:"· ";color:var(--faint)}
+  #rows .c-pcs:not(:empty)::after{content:" pcs"}
+  #rows .c-cond{order:6}
+  #rows .c-cond:empty{display:none}
+  #rows .c-used,#rows .c-new{font-size:12.5px;white-space:nowrap}
+  #rows .c-used{order:7}
+  #rows .c-new{order:8}
+  #rows .c-used::before{content:"Used ";color:var(--faint);font-size:11px}
+  #rows .c-new::before{content:"New ";color:var(--faint);font-size:11px}
+  #rows .c-sub{order:10;font-size:12px}
+  #rows .c-sub:empty{display:none}
+  #rows .c-links{order:11;margin-left:auto}
+  .board-head .tab b,.board-head .pill b{display:inline;margin-left:4px}
+  .board-head .tab{white-space:nowrap;padding:5px 9px;font-size:12.5px}
+  .board-head .tabs{max-width:100%}
+  #rows .price{min-width:0;padding:0 2px;justify-content:flex-start}
+  #rows .c-used{margin-right:6px}
+  .ticktip{top:34px}
+}
 /* First-tick pointer */
 .ticktip{position:absolute;left:2px;top:calc(100% - 6px);z-index:3;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:7px 30px 7px 11px;font-size:12.5px;white-space:nowrap;box-shadow:0 6px 18px rgb(0 0 0/.25);display:flex;gap:6px;align-items:baseline}
 .ticktip::before{content:"";position:absolute;left:12px;top:-6px;border:6px solid transparent;border-top:0;border-bottom-color:var(--accent)}
@@ -550,7 +599,11 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
         <button class="pill" data-view="wanted" aria-pressed="false">Wanted <b id="cWanted">0</b></button>
         <button class="pill" data-view="sale" aria-pressed="false" title="Copies you've marked for sale or trade">Sale/trade <b id="cSale">0</b></button>
       </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
-      <span class="spacer"></span>
+      <label class="phone-sort"><span class="sr">Sort</span><select id="sortSel" aria-label="Sort by">
+        <option value="year:desc">Newest first</option><option value="year:asc">Oldest first</option><option value="name:asc">Name A–Z</option>
+        <option value="n:asc">Set number</option><option value="new:desc">New price, highest</option><option value="used:desc">Used price, highest</option><option value="pieces:desc">Most pieces</option>
+      </select></label>
+      <span class="spacer" id="tbSpacer"></span>
       <div class="menuwrap"><button class="btn" id="regionBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="regionMenu" title="Which BrickLink sellers the prices come from">Prices: <span id="regionLabel">Australia</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="menu" id="regionMenu" role="menu" hidden><button role="menuitemradio" data-loc="AU">Australia<small>BrickLink sellers in Australia</small></button><button role="menuitemradio" data-loc="US">United States<small>Sellers in the US</small></button><button role="menuitemradio" data-loc="CA">Canada<small>Sellers in Canada</small></button><button role="menuitemradio" data-loc="EU">Europe (EU)<small>Sellers in the European Union</small></button><button role="menuitemradio" data-loc="UK">United Kingdom<small>Sellers in the UK</small></button><button role="menuitemradio" data-loc="world">Worldwide (W)<small>All sellers. Shown greyed with a W wherever a local price is missing</small></button></div></div>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
@@ -1215,7 +1268,9 @@ const COLS = () => [
 ];
 const val = (x, k) => k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
 
+function paintSortSel() { const sel = $('sortSel'); if (!sel) return; const v = `${sort.key}:${sort.dir}`; [...sel.options].filter(x => x.dataset.extra).forEach(x => x.remove()); if (![...sel.options].some(o => o.value === v)) { const o = new Option('Column order', v); o.dataset.extra = 1; sel.add(o); } sel.value = v; }
 function render() {
+  paintSortSel();
   if (!CAT) return;
   $('tabSets').setAttribute('aria-selected', !tlOpen && kind === 'sets');
   $('tabFigs').setAttribute('aria-selected', !tlOpen && kind === 'figs');
@@ -1365,18 +1420,18 @@ function render() {
   $('subNames').innerHTML = [...new Set(CAT.sets.filter(s => !fi.theme.value || s.theme === fi.theme.value).map(s => s.sub).filter(Boolean))].sort().map(v => `<option value="${esc(v)}">`).join('');
   $('rows').innerHTML = page.map(x => `
     <tr class="${owned(x) ? 'owned' : fromSet(x) ? 'fromset' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
-      <td><div class="ownc"><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${has(x) ? 'checked' : ''} ${fromSet(x) ? 'disabled title="Comes with a set you own"' : ''} aria-label="I own ${esc(x.name)}">${has(x) ? '' : `<button class="star" data-want="${esc(x.n)}" aria-pressed="${wanted(x)}" title="${wanted(x) ? 'Remove from wanted' : 'Add to wanted'}" aria-label="${wanted(x) ? 'Remove' : 'Add'} ${esc(x.name)} ${wanted(x) ? 'from' : 'to'} wanted"><svg width="16" height="16" viewBox="0 0 24 24" fill="${wanted(x) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg></button>`}</div></td>
-      <td>${thumb(x)}</td>
-      <td class="nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
-      <td>${condCell(x)}</td>
-      ${fi.brand.value ? '' : `<td class="muted">${x.brand}</td>`}
-      <td class="sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}${tagCell(x)}</td>
-      <td class="mono">${esc(shownNum(x))}</td>${x.k === 'm' ? `<td>${blCell(x)}</td>` : ''}
-      <td class="muted">${x.year ?? ''}</td>
-      <td class="num">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
-      <td class="num">${price(x, 'used')}</td>
-      <td class="num">${price(x, 'new')}</td>
-      <td><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
+      <td class="c-own"><div class="ownc"><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${has(x) ? 'checked' : ''} ${fromSet(x) ? 'disabled title="Comes with a set you own"' : ''} aria-label="I own ${esc(x.name)}">${has(x) ? '' : `<button class="star" data-want="${esc(x.n)}" aria-pressed="${wanted(x)}" title="${wanted(x) ? 'Remove from wanted' : 'Add to wanted'}" aria-label="${wanted(x) ? 'Remove' : 'Add'} ${esc(x.name)} ${wanted(x) ? 'from' : 'to'} wanted"><svg width="16" height="16" viewBox="0 0 24 24" fill="${wanted(x) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg></button>`}</div></td>
+      <td class="c-img">${thumb(x)}</td>
+      <td class="nm c-nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
+      <td class="c-cond">${condCell(x)}</td>
+      ${fi.brand.value ? '' : `<td class="muted c-brand">${x.brand}</td>`}
+      <td class="sub c-sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}${tagCell(x)}</td>
+      <td class="mono c-num">${esc(shownNum(x))}</td>${x.k === 'm' ? `<td class="c-bl">${blCell(x)}</td>` : ''}
+      <td class="muted c-yr">${x.year ?? ''}</td>
+      <td class="num c-pcs">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
+      <td class="num c-used">${price(x, 'used')}</td>
+      <td class="num c-new">${price(x, 'new')}</td>
+      <td class="c-links"><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
   tickTip();
 
@@ -1875,6 +1930,7 @@ document.addEventListener('click', e => {
   window.gtag('event', 'buy_click', { store: a.dataset.buy, item_id: a.dataset.item, list: listView, price_location: priceRegion() });
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('regionMenu').hidden) { setRegionMenu(false); $('regionBtn').focus(); } });
+$('sortSel').onchange = () => { const [key, dir] = $('sortSel').value.split(':'); sort = { key, dir }; limit = PAGE; savePrefs(); render(); track('sort', { by: key }); };
 $('curSel').onchange = () => { prefs.currency = $('curSel').value; savePrefs(); paintCurrency(); render(); };
 
 if (prefs.sellPct != null) $('sellPct').value = prefs.sellPct;
