@@ -20,19 +20,23 @@
                   set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
 
   /* ---------- finish an email sign-in link, then wait for the first sign-in state ---------- */
+  // Firebase says when a sign-in created a brand-new account; remember it for this tab so it's counted once as a sign-up.
+  function markNew(r) { try { if (r && r.additionalUserInfo && r.additionalUserInfo.isNewUser) sessionStorage.setItem('bc-new', '1'); } catch { /* ignore */ } }
   async function finishEmailLink() {
     if (!fauth.isSignInWithEmailLink(location.href)) return;
     let email = store.get(EMAIL_KEY);
     // Opened on a different device or browser: ask which email the link was sent to.
     if (!email) email = window.prompt('To finish signing in, enter the email address the link was sent to:');
-    try { if (email) await fauth.signInWithEmailLink(email.trim(), location.href); }
+    try { if (email) markNew(await fauth.signInWithEmailLink(email.trim(), location.href)); }
     catch (e) { console.warn('Email link sign-in failed:', e.code || e.message); }
     store.set(EMAIL_KEY, null);
     // Remove the one-time sign-in code from the address bar.
     history.replaceState(null, '', location.origin + location.pathname + location.hash);
   }
   let current = null;
-  const ready = finishEmailLink().then(() => new Promise(res => {
+  // Coming back from a Google redirect sign-in (phones that block popups).
+  const redirected = fauth.getRedirectResult().then(markNew).catch(() => {});
+  const ready = Promise.all([finishEmailLink(), redirected]).then(() => new Promise(res => {
     const stop = fauth.onAuthStateChanged(u => { current = u; stop(); res(); });
   }));
 
@@ -74,7 +78,7 @@
     id: async () => { await ready; return current ? current.uid : null; },
     email: async () => { await ready; return current ? current.email : null; },
     // True on an account's first sign-in (created within the last couple of minutes).
-    isNew: async () => { await ready; if (!current) return false; const m = current.metadata || {}; return Math.abs(Date.parse(m.lastSignInTime || 0) - Date.parse(m.creationTime || 0)) < 120000; },
+    isNew: async () => { await ready; let n = false; try { n = sessionStorage.getItem('bc-new') === '1'; sessionStorage.removeItem('bc-new'); } catch { /* ignore */ } return n; },
     isOwner: async () => {
       await ready;
       if (!current || !current.email || !current.emailVerified) return false;
@@ -97,7 +101,7 @@
       const make = providers[name];
       if (!make) throw err('unsupported', `Sign-in with ${name} isn't set up.`);
       const p = make(); p.setCustomParameters({ prompt: 'select_account' });
-      try { await fauth.signInWithPopup(p); }
+      try { markNew(await fauth.signInWithPopup(p)); }
       catch (e) {
         // Popups blocked (some phones and in-app browsers): go to Google and come back instead.
         if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') return fauth.signInWithRedirect(p);
