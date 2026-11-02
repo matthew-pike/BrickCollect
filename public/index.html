@@ -713,6 +713,17 @@ function paintCurrency() {
 }
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const toast = msg => { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); };
+// Anonymous usage counts for Google Analytics on the website (no-op elsewhere): what people do, never who they are or what's in their collection.
+const track = (name, params = {}) => { try { if (typeof window.gtag === 'function') window.gtag('event', name, params); } catch { /* ignore */ } };
+let sizeT = null;
+function trackSize() {
+  clearTimeout(sizeT);
+  sizeT = setTimeout(() => {
+    const n = [...mine.values()].filter(v => v && v.owned).length;
+    const band = n === 0 ? '0' : n <= 10 ? '1-10' : n <= 50 ? '11-50' : n <= 200 ? '51-200' : '200+';
+    try { window.gtag?.('set', 'user_properties', { collection_size: band }); } catch { /* ignore */ }
+  }, 2000);
+}
 const setStatus = (msg, warn) => { const s = $('status'); s.hidden = !msg; s.textContent = msg || ''; s.classList.toggle('warn', !!warn); };
 
 /* ---------- catalog ---------- */
@@ -845,6 +856,9 @@ function setInfo(n, patch, { quiet } = {}) {
     if (Object.keys(q).length) me.sale = q; else delete me.sale;
   }
   if ('wanted' in patch) me.wanted = !!patch.wanted && !me.owned;
+  { const was = mine.get(n) || {}, it = n.startsWith('fig-') ? 'minifigure' : 'set';
+    if ('owned' in patch && !!me.owned !== !!was.owned) { track(me.owned ? 'set_ticked' : 'set_unticked', { item_type: it }); trackSize(); }
+    if ('wanted' in patch && me.wanted && !was.wanted) track('add_to_wanted', { item_type: it }); }
   if (!me.wanted) delete me.wanted;
   const sharedPatch = {};
   for (const k of SHARED_KEYS) if (k in patch) {
@@ -1427,7 +1441,7 @@ document.addEventListener('click', e => {
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
   if (t.id === 'filtToggle') { const o = !$('filters').classList.contains('open'); $('filters').classList.toggle('open', o); t.setAttribute('aria-expanded', o); return; }
   if (t.dataset.need) { prefs.needMode = t.dataset.need; savePrefs(); render(); return; }
-  if (t.dataset.tl) { tlOpen = true; savePrefs(); render(); return; }
+  if (t.dataset.tl) { tlOpen = true; savePrefs(); render(); track('open_timeline'); return; }
   if (t.dataset.tlfr) { tlId = t.dataset.tlfr; tlPick = null; render(); return; }
   if (t.dataset.tlpick) { tlPick = Number(t.dataset.tlpick); render(); document.querySelector('.tl-card.on')?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' }); return; }
   if (t.dataset.tlshow) { tlFilter = { fr: tlId, i: Number(t.dataset.tlshow) }; tlOpen = false; kind = 'sets'; focus = null; listView = 'all'; Object.values(fi).forEach(f => { f.value = f === fi.set ? 'all' : ''; }); $('q').value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); $('boardHead').scrollIntoView({ behavior: 'smooth' }); return; }
@@ -1481,10 +1495,14 @@ document.addEventListener('change', e => {
   if (el.dataset?.cond) { setInfo(el.dataset.cond, { cond: el.value }); return; }
   if (el.dataset?.own) { change(el.dataset.own, { owned: el.checked }); return; }
   if (Object.values(fi).includes(el)) { focus = null; if (el === fi.brand) { fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
-    if (el === fi.theme) { subOptions(''); filmOptions(''); } limit = PAGE; savePrefs(); render(); }
+    if (el === fi.theme) { subOptions(''); filmOptions(''); } limit = PAGE; savePrefs(); render();
+    if (el === fi.brand && el.value) track('pick_brand', { brand: el.value });
+    if (el === fi.theme && el.value) track('pick_theme', { theme: el.value }); }
   Object.values(fi).forEach(s => s.classList.toggle('set-on', s.value !== '' && s.value !== 'all'));
 });
-let qT; $('q').addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => { if (kind === 'sets') focus = null; limit = PAGE; render(); }, 150); });
+let qT, qTrackT; $('q').addEventListener('input', () => { clearTimeout(qT); qT = setTimeout(() => { if (kind === 'sets') focus = null; limit = PAGE; render(); }, 150);
+  // Count a search once the person stops typing (what people look for, to improve the catalog).
+  clearTimeout(qTrackT); qTrackT = setTimeout(() => { const q = $('q').value.trim(); if (q.length >= 2) track('search', { search_term: q.slice(0, 60), results: $('rows') ? $('rows').rows.length : undefined }); }, 1500); });
 $('more').onclick = () => { limit += PAGE; render(); };
 $('fiReset').onclick = () => { focus = null; tlFilter = null; Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
@@ -1833,7 +1851,7 @@ $('exportMenuBtn').onclick = e => { e.stopPropagation(); if (typeof setRegionMen
 document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) setExportMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('exportMenu').hidden) { setExportMenu(false); $('exportMenuBtn').focus(); } });
 ['exportBtn', 'exportWantBtn', 'exportSaleBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
-$('exportBtn').onclick = async () => {
+$('exportBtn').onclick = async () => { track('export', { list: 'collection' });
   if (!CAT) return;
   // Everything you own, sets then minifigures, whatever the filters are.
   const rows = [...CAT.sets.filter(owned), ...CAT.figs.filter(owned)];
@@ -1850,7 +1868,7 @@ $('exportBtn').onclick = async () => {
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-my-collection-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your collection: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
 };
-$('exportSaleBtn').onclick = async () => {
+$('exportSaleBtn').onclick = async () => { track('export', { list: 'sale_or_trade' });
   if (!CAT) return;
   const rows = [...CAT.sets, ...CAT.figs].filter(x => saleCount(x) > 0);
   if (!rows.length) { toast('Mark copies for sale or trade first: click a set’s condition chip.'); return; }
@@ -1867,7 +1885,7 @@ $('exportSaleBtn').onclick = async () => {
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-sale-or-trade-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your sale or trade list: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
 };
-$('exportWantBtn').onclick = async () => {
+$('exportWantBtn').onclick = async () => { track('export', { list: 'wanted' });
   if (!CAT) return;
   // Everything on your wanted list that you don't own yet, sets then minifigures.
   const rows = [...CAT.sets, ...CAT.figs].filter(x => wanted(x) && !has(x));
@@ -1950,6 +1968,9 @@ function openAuth() {
 }
 async function paintAccount() {
   const email = uid ? await BC.user.email() : null;
+  // Count a finished sign-in once (sign_up for a brand-new account), with how they signed in.
+  if (uid) { let m = null; try { m = sessionStorage.getItem('bc-login') || localStorage.getItem('bc-login'); sessionStorage.removeItem('bc-login'); localStorage.removeItem('bc-login'); } catch {}
+    if (m) { const isNew = BC.user.isNew ? await BC.user.isNew() : false; track(isNew ? 'sign_up' : 'login', { method: m }); } trackSize(); }
   const nm = email ? email.split('@')[0] : '';
   $('acctBtn').innerHTML = email ? `<span class="full">${esc(nm.slice(0, 14))}</span><span class="short" aria-hidden="true">${esc(nm.slice(0, 1).toUpperCase())}</span>` : 'Sign in';
   $('acctBtn').title = email ? `Signed in as ${email}` : 'Sign in to save your collection to a free account';
@@ -1980,11 +2001,12 @@ $('authForm').addEventListener('submit', async e => {
   $('authSend').disabled = true; $('authSend').textContent = 'Sending…';
   try {
     await BC.auth.signInWithEmail(email);
+    try { localStorage.setItem('bc-login', 'email'); } catch {}
     $('authSentTo').textContent = email; $('authIn').hidden = true; $('authSent').hidden = false;
   } catch (err) { toast(err.message || 'Couldn’t send the link. Check the address and try again.'); }
   finally { $('authSend').disabled = false; $('authSend').textContent = 'Email me a sign-in link'; }
 });
-$('socialBtns').addEventListener('click', async e => { const b = e.target.closest('[data-provider]'); if (!b) return; try { await BC.auth.signInWith(b.dataset.provider); } catch (err) { toast(err.message || 'That sign-in option isn’t available right now.'); } });
+$('socialBtns').addEventListener('click', async e => { const b = e.target.closest('[data-provider]'); if (!b) return; try { sessionStorage.setItem('bc-login', b.dataset.provider); } catch {} try { await BC.auth.signInWith(b.dataset.provider); } catch (err) { toast(err.message || 'That sign-in option isn’t available right now.'); } });
 $('signOutBtn').onclick = async () => { await BC.auth.signOut(); location.reload(); };
 // Delete my account: confirm in the dialog, optionally keep a copy here, then delete the saved collection and the account.
 $('delStart').onclick = () => { $('delBox').hidden = !BC.auth.deleteAccount; $('delStart').hidden = !!BC.auth.deleteAccount; if (!BC.auth.deleteAccount) toast('Email brickcollectapp@gmail.com to delete your account.'); };
@@ -2022,7 +2044,7 @@ function paintThemeBtn() {
 if (THEMES.includes(prefs.theme)) document.documentElement.setAttribute('data-theme', prefs.theme);
 paintThemeBtn();
 matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', paintThemeBtn);
-$('themeBtn').onclick = () => { prefs.theme = THEMES[(THEMES.indexOf(curTheme()) + 1) % THEMES.length]; document.documentElement.setAttribute('data-theme', prefs.theme); paintThemeBtn(); savePrefs(); };
+$('themeBtn').onclick = () => { prefs.theme = THEMES[(THEMES.indexOf(curTheme()) + 1) % THEMES.length]; track('theme_mode', { mode: prefs.theme }); document.documentElement.setAttribute('data-theme', prefs.theme); paintThemeBtn(); savePrefs(); };
 
 /* ---------- boot ---------- */
 if (saved.set) fi.set.value = saved.set;

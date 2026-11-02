@@ -73,6 +73,8 @@
   const user = {
     id: async () => { await ready; return current ? current.uid : null; },
     email: async () => { await ready; return current ? current.email : null; },
+    // True on an account's first sign-in (created within the last couple of minutes).
+    isNew: async () => { await ready; if (!current) return false; const m = current.metadata || {}; return Math.abs(Date.parse(m.lastSignInTime || 0) - Date.parse(m.creationTime || 0)) < 120000; },
     isOwner: async () => {
       await ready;
       if (!current || !current.email || !current.emailVerified) return false;
