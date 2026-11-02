@@ -310,6 +310,24 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .links{display:flex;gap:6px;justify-content:flex-end}
 .mini{padding:5px 9px;font-size:12px}
 .bl{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.popular{width:100%;max-width:1040px;margin-top:22px;text-align:left}
+.popular h4{margin:0 0 10px;font-size:13px;font-weight:500;color:var(--fg);text-align:center}
+.pop-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.pop-card{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:center}
+.pop-card.on{border-color:var(--good)}
+.pop-txt{min-width:0;display:flex;flex-direction:column;gap:2px}
+.pop-txt b{font-weight:500;font-size:13px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pop-txt small{font-size:11.5px;color:var(--faint);font-family:var(--font-mono)}
+.pop-own{grid-column:1 / -1;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);cursor:pointer;margin-top:4px}
+@media (max-width:900px){.pop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.pop-grid{grid-template-columns:1fr}}
+/* First-tick pointer */
+.ticktip{position:absolute;left:2px;top:calc(100% - 6px);z-index:3;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:7px 30px 7px 11px;font-size:12.5px;white-space:nowrap;box-shadow:0 6px 18px rgb(0 0 0/.25);display:flex;gap:6px;align-items:baseline}
+.ticktip::before{content:"";position:absolute;left:12px;top:-6px;border:6px solid transparent;border-top:0;border-bottom-color:var(--accent)}
+.ticktip b{font-weight:600}
+.ticktip span{opacity:.85}
+.ticktip button{all:unset;cursor:pointer;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:15px;line-height:1;opacity:.8}
+@media (max-width:640px){.ticktip span{display:none}}
 .empty{padding:56px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
 .empty h3{margin:0;font-family:var(--font-display);color:var(--fg);font-weight:500;font-size:17px}
 .empty p{margin:0;max-width:56ch}
@@ -857,7 +875,7 @@ function setInfo(n, patch, { quiet } = {}) {
   }
   if ('wanted' in patch) me.wanted = !!patch.wanted && !me.owned;
   { const was = mine.get(n) || {}, it = n.startsWith('fig-') ? 'minifigure' : 'set';
-    if ('owned' in patch && !!me.owned !== !!was.owned) { track(me.owned ? 'set_ticked' : 'set_unticked', { item_type: it }); trackSize(); }
+    if ('owned' in patch && !!me.owned !== !!was.owned) { track(me.owned ? 'set_ticked' : 'set_unticked', { item_type: it }); trackSize(); if (me.owned) { lsSet('bc-tick-tip', 1); document.getElementById('tickTip')?.remove(); } }
     if ('wanted' in patch && me.wanted && !was.wanted) track('add_to_wanted', { item_type: it }); }
   if (!me.wanted) delete me.wanted;
   const sharedPatch = {};
@@ -1023,6 +1041,27 @@ const PAL = ['#e3000b', '#0057a8', '#f2c200', '#00852b', '#ff7e14', '#a83d99', '
 const imgUrl = x => x.img || (x.brand === 'LEGO' ? `https://cdn.rebrickable.com/media/${x.k === 's' ? 'sets' : 'sets'}/${encodeURIComponent(x.n.toLowerCase())}.jpg` : '');
 const brokenImg = new Set();
 document.addEventListener('error', e => { const t = e.target; if (t && t.tagName === 'IMG' && t.dataset.n) { brokenImg.add(t.dataset.n); const z = t.closest('[data-zoom]'); if (z) { z.removeAttribute('data-zoom'); z.removeAttribute('title'); z.style.cursor = 'default'; } t.remove(); if (mcp && hostOk && imgs.get(t.dataset.n) === undefined && t.dataset.lego === '1') { imgWant.add(t.dataset.n); pumpImages(); } } }, true);
+// Popular sets on the start screen, so a first tick takes seconds. Only those in the catalog are shown.
+const POPULAR = ['75192-1', '76419-1', '10294-1', '10316-1', '75313-1', '10497-1', '42143-1', '10305-1'];
+let popCache = null;
+// Points at the first checkbox until the person ticks something (or closes it).
+function tickTip() {
+  document.getElementById('tickTip')?.remove();
+  if (lsGet('bc-tick-tip') || [...mine.values()].some(v => v && v.owned)) return;
+  const box = document.querySelector('#rows .chk:not([disabled])'); if (!box) return;
+  const cell = box.closest('td'); cell.style.position = 'relative';
+  const tip = document.createElement('div'); tip.id = 'tickTip'; tip.className = 'ticktip'; tip.setAttribute('role', 'note');
+  tip.innerHTML = '<b>Tick the sets you own</b><span>· star the ones you want</span><button type="button" aria-label="Hide tip">×</button>';
+  tip.querySelector('button').onclick = () => { lsSet('bc-tick-tip', 1); tip.remove(); };
+  cell.append(tip);
+}
+function popularHtml() {
+  if (!popCache) { const want = new Set(POPULAR); popCache = CAT.sets.filter(x => want.has(x.n)).sort((a, b) => POPULAR.indexOf(a.n) - POPULAR.indexOf(b.n)); }
+  if (!popCache.length) return '';
+  return `<div class="popular"><h4>Popular sets: tick any you own</h4><div class="pop-grid">${popCache.map(x => `
+    <div class="pop-card${has(x) ? ' on' : ''}">${thumb(x)}<div class="pop-txt"><b title="${esc(x.name)}">${esc(x.name)}</b><small>${esc(shownNum(x))} · ${x.year ?? ''}</small></div>
+      <label class="pop-own"><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${has(x) ? 'checked' : ''}> I own it</label></div>`).join('')}</div></div>`;
+}
 function thumb(x) {
   const im = imgs.get(x.n);
   const zoom = `class="thumb" data-zoom="${esc(x.n)}" title="View larger picture" aria-label="View a larger picture of ${esc(x.name)}"`;
@@ -1339,13 +1378,14 @@ function render() {
       <td class="num">${price(x, 'new')}</td>
       <td><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
+  tickTip();
 
   const empty = $('empty');
   if (!showRows) {
     empty.hidden = false;
     const pop = ['Star Wars', 'Technic', 'Harry Potter', 'Icons', 'Ideas', 'Ninjago'].filter(t => [...fi.theme.options].some(o => o.value === t));
     const otherBrands = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.brand))].sort();
-    empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>`;
+    empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>${popularHtml()}`;
   } else if (!rows.length && listView === 'sale') { empty.hidden = false; empty.innerHTML = '<h3>Nothing marked for sale or trade</h3><p>Click a set’s condition chip and use the Sale or trade column to choose which copies you’re letting go.</p>'; }
   else if (!rows.length && listView === 'wanted') { empty.hidden = false; empty.innerHTML = '<h3>Your wanted list is empty</h3><p>Tap the star next to any set or minifigure to add it here.</p>'; }
   else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Tick the sets and minifigures you own and they’ll show here.</p>'; }
@@ -1915,6 +1955,10 @@ async function saveCsv(name, csv, what) {
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.10', date: '3 November 2026', title: 'A quicker start', items: [
+    ['Popular sets', 'tick favourites like the Millennium Falcon, Titanic and Rivendell straight from the start screen.'],
+    ['First-tick tip', 'a pointer shows where to tick the sets you own.'],
+  ] },
   { v: '0.9', date: '2 November 2026', title: 'A new home', items: [
     ['brickcollect.app', 'BrickCollect has its own address, and it’s faster.'],
     ['Getting started', 'three quick steps for first-time visitors.'],
