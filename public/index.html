@@ -1201,6 +1201,25 @@ const TIMELINES = [
     { t: 'Infinity War and Endgame', k: 'Films', y: '2018–2019', era: '2018–2023', match: ['Infinity War and Endgame'], d: 'Thanos, the Infinity Stones and the final battle.' },
     { t: 'Shang-Chi', k: 'Film', y: '2021', era: '2024', match: ['Shang-Chi'], d: 'Shang-Chi faces his father and the Ten Rings.' },
     { t: 'Eternals', k: 'Film', y: '2021', era: '2024', match: ['Eternals'], d: 'Ancient immortals reunite to stop the Emergence.' },
+    { t: 'Deadpool & Wolverine', k: 'Film', y: '2024', era: '2024', match: ['Deadpool & Wolverine'], d: 'Deadpool pulls Wolverine out of a broken universe to save his own.' },
+    { t: 'X-Men', k: 'Films and series', y: '2000–2024', era: 'Their own universe', match: ['X-Men', "X-Men '97"], d: 'Professor X’s mutants, from the comics, the films and X-Men ’97: the X-Mansion, the X-Jet, Wolverine and the Sentinels.' },
+  ] },
+  { id: 'dc', name: 'DC', themes: ['Super Heroes DC'], brandKw: /\bdc\b|batman|superman|wonder woman|justice league|aquaman/i, order: 'In release order', entries: [
+    { t: 'Batman: The Classic TV Series', k: 'Series', y: '1966–1968', era: 'Classic TV', match: ['Batman Classic TV Series', 'Classic TV Series'], kw: /classic tv series/i, d: 'Adam West and Burt Ward’s Batman and Robin, with the original Batmobile and Batcave.' },
+    { t: 'Batman', k: 'Film', y: '1989', era: 'Burton films', match: ['Batman (1989)', '1989'], kw: /\b1989\b/i, d: 'Michael Keaton’s Batman faces Jack Nicholson’s Joker in Tim Burton’s Gotham.' },
+    { t: 'Batman Returns', k: 'Film', y: '1992', era: 'Burton films', match: ['Batman Returns'], kw: /batman returns/i, d: 'The Penguin and Catwoman take on Batman at Christmas.' },
+    { t: 'Batman: The Animated Series', k: 'Series', y: '1992–1995', era: 'Animated', match: ['Batman: The Animated Series', 'The Animated Series'], kw: /animated series/i, d: 'The much-loved cartoon, with Kevin Conroy as Batman and the first Harley Quinn.' },
+    { t: 'Batman Forever', k: 'Film', y: '1995', era: 'Schumacher films', match: ['Batman Forever'], kw: /batman forever/i, d: 'Val Kilmer’s Batman, Robin, the Riddler and Two-Face.' },
+    { t: 'Batman & Robin', k: 'Film', y: '1997', era: 'Schumacher films', match: ['Batman & Robin'], kw: /batman & robin batmobile/i, d: 'George Clooney’s Batman against Mr. Freeze and Poison Ivy.' },
+    { t: 'The Dark Knight trilogy', k: 'Films', y: '2005–2012', era: 'Nolan films', match: ['The Dark Knight', 'The Dark Knight Trilogy', 'Batman Begins', 'The Dark Knight Rises'], kw: /^(?!.*lego movie).*(tumbler|bat-?pod|the bat vs\.? bane)/i, d: 'Christian Bale’s Batman, the Tumbler and Heath Ledger’s Joker.' },
+    { t: 'Man of Steel', k: 'Film', y: '2013', era: 'DC Extended Universe', match: ['Man of Steel'], kw: /black zero|battle of smallville|metropolis showdown/i, d: 'Henry Cavill’s Superman faces General Zod.' },
+    { t: 'Batman v Superman', k: 'Film', y: '2016', era: 'DC Extended Universe', match: ['Batman v Superman', 'Batman v Superman: Dawn of Justice'], kw: /clash of the heroes|kryptonite interception|batman v superman/i, d: 'Ben Affleck’s Batman clashes with Superman, and Wonder Woman arrives.' },
+    { t: 'The LEGO Batman Movie', k: 'Film', y: '2017', era: 'LEGO Movie', match: ['The LEGO Batman Movie'], nk: /^(709([01]\d|2[0-3])|30521|30522|30523|30524|30526|853650)-/, d: 'Batman learns to work with a family, and the Joker brings the Phantom Zone villains to Gotham.' },
+    { t: 'Wonder Woman', k: 'Films', y: '2017–2020', era: 'DC Extended Universe', match: ['Wonder Woman', 'Wonder Woman 1984'], kw: /wonder woman (warrior battle|vs\.? cheetah)/i, d: 'Diana leaves Themyscira in the First World War, then faces Cheetah in 1984.' },
+    { t: 'Justice League', k: 'Film', y: '2017', era: 'DC Extended Universe', match: ['Justice League (film)'], kw: /battle of atlantis|knightcrawler|flying fox/i, d: 'Batman, Wonder Woman, Aquaman, The Flash and Cyborg unite against Steppenwolf.' },
+    { t: 'Aquaman', k: 'Film', y: '2018', era: 'DC Extended Universe', match: ['Aquaman (film)'], kw: /aquaman & storm|black manta strike/i, d: 'Arthur Curry claims the throne of Atlantis and faces Black Manta.' },
+    { t: 'The Batman', k: 'Film', y: '2022', era: 'Standalone', match: ['The Batman (2022)'], kw: /selina kyle|batmobile: the penguin chase|riddler face-off|^the batman batmobile$/i, d: 'Robert Pattinson’s detective Batman hunts the Riddler through a corrupt Gotham.' },
+    { t: 'Superman', k: 'Film', y: '2025', era: 'DC Universe', match: ['Superman (2025)'], d: 'David Corenswet’s Superman and Krypto launch the new DC Universe.' },
   ] },
   { id: 'ninjago', name: 'Ninjago', themes: ['Ninjago'], brandKw: /ninjago/i, entries: [
     { t: 'Pilot episodes', k: 'Series', y: '2011', era: 'Pilot', yrs: [2011, 2011], match: ['Spinjitzu', 'Pilot', 'Way of the Ninja'], d: 'Kai joins Sensei Wu, Cole, Jay and Zane to stop Lord Garmadon’s skeleton army.' },
@@ -1239,6 +1258,7 @@ function tlMatches(fr, e, s) {
   const names = tlLow(e.match), have = [s.sub, s.theme, ...(s.tags || [])].filter(Boolean).map(v => v.toLowerCase());
   if (have.some(v => names.includes(v))) return true;
   if (e.kw && e.kw.test(s.name)) return true;
+  if (e.nk && e.nk.test(s.n)) return true;
   // Waves by year (Ninjago, the Hobbit films): a set from those years that no other entry claims by name.
   if (e.yrs && (!e.inSub || s.sub === e.inSub) && s.year >= e.yrs[0] && s.year <= e.yrs[1]) return !fr.entries.some(o => o !== e && (tlLow(o.match).some(m => have.includes(m)) || (o.kw && o.kw.test(s.name))));
   return false;
@@ -1252,7 +1272,7 @@ function renderTimeline() {
   const brands = [...new Set(st.sets.map(s => s.brand))].map(b => `${b} ${st.sets.filter(s => s.brand === b).length}`).join(' · ');
   el.innerHTML = `
     <div class="tl-head"><div class="tl-frs" role="group" aria-label="Franchise">${TIMELINES.map(f => `<button class="pill" data-tlfr="${f.id}" aria-pressed="${f.id === fr.id}">${esc(f.name)}</button>`).join('')}</div>
-      <span class="tl-note">In story order${fr.unit ? ` · ${fr.unit}` : ''} <button type="button" class="tip" data-tip="Each film or show lists the sets from it across every brand, using subthemes and tags. Sets without a subtheme or tag yet won't appear here." aria-label="What is this?">i</button></span></div>
+      <span class="tl-note">${fr.order || 'In story order'}${fr.unit ? ` · ${fr.unit}` : ''} <button type="button" class="tip" data-tip="Each film or show lists the sets from it across every brand, using subthemes and tags. Sets without a subtheme or tag yet won't appear here." aria-label="What is this?">i</button></span></div>
     <ol class="tl-strip">${fr.entries.map((x, i) => { const s = stats[i], pct = s.sets.length ? Math.round(s.own / s.sets.length * 100) : 0; return `
       <li><button class="tl-card ${i === tlPick ? 'on' : ''} ${s.sets.length ? '' : 'none'} ${x.soon ? 'soon' : ''}" data-tlpick="${i}" aria-pressed="${i === tlPick}">
         <span class="tl-era">${esc(x.era || x.y)}</span><b>${esc(x.t)}</b><span class="tl-kind">${esc(x.k)} · ${esc(x.y)}</span>
@@ -2027,6 +2047,7 @@ const RELEASES = [
     ['Made for phones', 'each set is a tidy card with its prices and buy buttons on screen, plus a slimmer toolbar and a Sort menu.'],
     ['First-tick tip', 'a pointer shows where to tick the sets you own.'],
     ['Lord of the Rings timeline', 'The Rings of Power, The Hobbit and The Lord of the Rings films in story order, with the sets from each.'],
+    ['DC and X-Men timelines', 'Batman, Superman and friends from the 1966 TV series to today, and the X-Men alongside Marvel.'],
   ] },
   { v: '0.9', date: '2 November 2026', title: 'A new home', items: [
     ['brickcollect.app', 'BrickCollect has its own address, and it’s faster.'],
