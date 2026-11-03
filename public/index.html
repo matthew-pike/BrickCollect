@@ -1327,7 +1327,8 @@ function render() {
   const ownSets = CAT.sets.filter(owned).length, ownFigs = CAT.figs.filter(has).length;
   $('cSets').textContent = (scopedFor('sets') ? CAT.sets.filter(inScope).length : CAT.sets.filter(x => has(x) || wanted(x)).length).toLocaleString();
   let focusSet = focus ? CAT.sets.find(x => x.n === focus) : null;
-  if (focus && (!focusSet || (scopedFor('sets') ? !inScope(focusSet) : !has(focusSet)))) { focus = null; savePrefs(); return render(); }
+  // A selected set stays selected whether or not you own it (only filters that hide it clear the selection).
+  if (focus && (!focusSet || (scopedFor('sets') && !inScope(focusSet)))) { focus = null; savePrefs(); return render(); }
   const focusFigs = focusSet ? CAT.figs.filter(f => f.sets.has(focus)).length : 0;
   $('cFigs').textContent = (focusSet ? focusFigs : scopedFor('figs') ? CAT.figs.filter(inScope).length : CAT.figs.filter(x => has(x) || wanted(x)).length).toLocaleString();
   const fb = $('focusbar'); fb.hidden = !focusSet && !(tlFilter && !tlOpen);
@@ -1381,7 +1382,10 @@ function render() {
 
   // rows
   const base = isScoped ? list.filter(inScope) : list;
-  let rows = listView === 'owned' ? base.filter(has) : listView === 'wanted' ? base.filter(wanted) : listView === 'sale' ? (isScoped ? base : list).filter(x => saleCount(x) > 0)
+  // Minifigures of a selected set: show all of them, owned or not (Owned / Wanted / Sale don't apply here).
+  const figFocus = kind === 'figs' && !!focus;
+  let rows = figFocus ? (fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope)
+    : listView === 'owned' ? base.filter(has) : listView === 'wanted' ? base.filter(wanted) : listView === 'sale' ? (isScoped ? base : list).filter(x => saleCount(x) > 0)
     : !isScoped ? list.filter(x => has(x) || wanted(x))
     : fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope;
   $('cOwned').textContent = list.filter(has).length.toLocaleString();
