@@ -1174,6 +1174,17 @@ const TIMELINES = [
     { t: 'Half-Blood Prince', k: 'Film', y: '2009', era: '1996–97', match: ['Half-Blood Prince'], d: 'Year 6. Horcruxes and the Astronomy Tower.' },
     { t: 'Deathly Hallows', k: 'Film', y: '2010–2011', era: '1997–98', match: ['Deathly Hallows', 'Deathly Hallows Part 1', 'Deathly Hallows Part 2'], d: 'The hunt for Horcruxes and the Battle of Hogwarts.' },
   ] },
+  { id: 'lotr', name: 'Lord of the Rings', themes: ['The Hobbit and Lord of the Rings'], brandKw: /lord of the rings|hobbit|middle-earth|frodo|gandalf|gollum|rivendell|mordor/i, unit: 'Ages of Middle-earth', entries: [
+    { t: 'The Rings of Power', k: 'Series', y: '2022–', era: 'Second Age', match: ['The Rings of Power', 'Rings of Power'], kw: /rings of power|n[úu]menor/i, d: 'The rings are forged and Sauron rises again, thousands of years before The Hobbit.' },
+    { t: 'The War of the Rohirrim', k: 'Film', y: '2024', era: 'Third Age 2758', match: ['The War of the Rohirrim', 'War of the Rohirrim'], kw: /rohirrim|helm hammerhand/i, d: 'An animated tale of Helm Hammerhand, King of Rohan, and the siege that gave Helm’s Deep its name.' },
+    { t: 'An Unexpected Journey', k: 'Film', y: '2012', era: 'Third Age 2941', inSub: 'The Hobbit', yrs: [2012, 2012], match: ['An Unexpected Journey'], kw: /unexpected (journey|gathering)|riddles for the ring|wargs|goblin king|mirkwood spiders/i, d: 'The Hobbit, part 1. Bilbo leaves Bag End with Gandalf and Thorin’s company of dwarves.' },
+    { t: 'The Desolation of Smaug', k: 'Film', y: '2013', era: 'Third Age 2941', inSub: 'The Hobbit', yrs: [2013, 2013], match: ['The Desolation of Smaug', 'Desolation of Smaug'], kw: /desolation|lake-town|barrel escape/i, d: 'The Hobbit, part 2. Mirkwood, the barrel escape, Lake-town and the dragon Smaug.' },
+    { t: 'The Battle of the Five Armies', k: 'Film', y: '2014', era: 'Third Age 2941', inSub: 'The Hobbit', yrs: [2014, 2014], match: ['The Battle of the Five Armies', 'Battle of the Five Armies'], kw: /five armies/i, d: 'The Hobbit, part 3. Smaug attacks Lake-town and the armies meet at the Lonely Mountain.' },
+    { t: 'The Hunt for Gollum', k: 'Film', y: '2027', soon: 'December 2027', era: 'Third Age 3009–3017', match: ['The Hunt for Gollum', 'Hunt for Gollum'], kw: /hunt for gollum/i, d: 'Aragorn and Gandalf track Gollum in the years before the Fellowship sets out.' },
+    { t: 'The Fellowship of the Ring', k: 'Film', y: '2001', era: 'Third Age 3001–3019', match: ['The Fellowship of the Ring', 'Fellowship of the Ring'], kw: /fellowship|gandalf arrives|weathertop|moria|council of elrond|\belrond\b|wizard battle|rivendell|the shire|balrog|orc forge|cooking corner|sauron.s helmet/i, d: 'Frodo leaves the Shire with the One Ring, and the Fellowship forms at Rivendell.' },
+    { t: 'The Two Towers', k: 'Film', y: '2002', era: 'Third Age 3019', match: ['The Two Towers', 'Two Towers'], kw: /two towers|helm.s deep|uruk|orthanc|frodo (&|and) gollum/i, d: 'The Fellowship splits: Helm’s Deep, the Ents and Isengard, and Gollum leads Frodo and Sam.' },
+    { t: 'The Return of the King', k: 'Film', y: '2003', era: 'Third Age 3019', match: ['The Return of the King', 'Return of the King'], kw: /return of the king|shelob|black gate|pirate ship ambush|minas tirith|barad|sm[ée]agol|siege tower|mount doom/i, d: 'Minas Tirith, the Black Gate and Mount Doom, as Sauron falls.' },
+  ] },
   { id: 'marvel', name: 'Marvel', themes: ['Super Heroes Marvel', 'Marvel'], brandKw: /marvel|avengers/i, entries: [
     { t: 'Captain America: The First Avenger', k: 'Film', y: '2011', era: '1943–45', match: ['Captain America: The First Avenger'], d: 'Steve Rogers becomes Captain America in World War II.' },
     { t: 'Captain Marvel', k: 'Film', y: '2019', era: '1995', match: ['Captain Marvel'], d: 'Carol Danvers discovers her past during the Kree–Skrull war.' },
@@ -1228,8 +1239,8 @@ function tlMatches(fr, e, s) {
   const names = tlLow(e.match), have = [s.sub, s.theme, ...(s.tags || [])].filter(Boolean).map(v => v.toLowerCase());
   if (have.some(v => names.includes(v))) return true;
   if (e.kw && e.kw.test(s.name)) return true;
-  // Waves by year (Ninjago): a set from those years that no other entry claims by name.
-  if (e.yrs && s.year >= e.yrs[0] && s.year <= e.yrs[1]) return !fr.entries.some(o => o !== e && tlLow(o.match).some(m => have.includes(m)));
+  // Waves by year (Ninjago, the Hobbit films): a set from those years that no other entry claims by name.
+  if (e.yrs && (!e.inSub || s.sub === e.inSub) && s.year >= e.yrs[0] && s.year <= e.yrs[1]) return !fr.entries.some(o => o !== e && (tlLow(o.match).some(m => have.includes(m)) || (o.kw && o.kw.test(s.name))));
   return false;
 }
 function tlSetsFor(fr, e) { return CAT.sets.filter(s => tlMatches(fr, e, s)); }
@@ -2015,6 +2026,7 @@ const RELEASES = [
     ['Popular sets', 'tick favourites like the Millennium Falcon, Titanic and Rivendell straight from the start screen.'],
     ['Made for phones', 'each set is a tidy card with its prices and buy buttons on screen, plus a slimmer toolbar and a Sort menu.'],
     ['First-tick tip', 'a pointer shows where to tick the sets you own.'],
+    ['Lord of the Rings timeline', 'The Rings of Power, The Hobbit and The Lord of the Rings films in story order, with the sets from each.'],
   ] },
   { v: '0.9', date: '2 November 2026', title: 'A new home', items: [
     ['brickcollect.app', 'BrickCollect has its own address, and it’s faster.'],
