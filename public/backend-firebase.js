@@ -14,6 +14,8 @@
   const app = fb.initializeApp(cfg.firebase);
   const fauth = app.auth();
   const fstore = app.firestore();
+  // Keep a copy of your collection on this device, so the installed app opens with it even when offline.
+  try { fstore.enablePersistence({ synchronizeTabs: true }).catch(() => {}); } catch { /* not supported here */ }
   const err = (code, message) => Object.assign(new Error(message || code), { code });
   const EMAIL_KEY = 'bc.signInEmail';
   const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } },
