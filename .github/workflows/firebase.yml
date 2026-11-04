@@ -55,6 +55,7 @@ jobs:
             ./report.sh "Copy" node copy-from-supabase.mjs
             ./report.sh "Go live" node settings.mjs live
           fi
+          node settings.mjs sweep || echo "::warning title=Price sweep::status check failed"
           rm -f "$RUNNER_TEMP/sa.json"
 
   jobs:
