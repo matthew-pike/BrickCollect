@@ -92,7 +92,10 @@ async function oauthHeader(method, url, query) {
   return 'OAuth realm="", ' + Object.keys(oauth).map(k => `${k}="${enc(oauth[k])}"`).join(', ');
 }
 export class BrickLinkAuthError extends Error {}
+// Every BrickLink request this instance has made (the price sweep uses it to stay under its daily cap).
+export const blCalls = { n: 0 };
 export async function blGet(path, query) {
+  blCalls.n++;
   const url = API + path;
   const qs = Object.keys(query).map(k => `${enc(k)}=${enc(query[k])}`).join('&');
   const res = await fetch(`${url}?${qs}`, { headers: { Authorization: await oauthHeader('GET', url, query) } });

@@ -1,5 +1,5 @@
 // BrickCollect jobs on Firebase. Sydney region and Sydney times.
-// Only three scheduled jobs, so they stay inside Cloud Scheduler's free allowance.
+// Only three scheduled jobs, so they stay inside Cloud Scheduler's free allowance (the price sweep shares the hourly one).
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
@@ -9,7 +9,8 @@ import rates from './jobs/rates.mjs';
 import brandPrices from './jobs/brand-prices.mjs';
 import minifigNumbers from './jobs/minifig-numbers.mjs';
 import syncPricesHandler from './jobs/sync-prices.mjs';
-import { readShared } from './lib/common.mjs';
+import priceSweep from './jobs/price-sweep.mjs';
+import { readShared, blCalls } from './lib/common.mjs';
 
 const BL = ['BRICKLINK_CONSUMER_KEY', 'BRICKLINK_CONSUMER_SECRET', 'BRICKLINK_TOKEN_VALUE', 'BRICKLINK_TOKEN_SECRET'].map(defineSecret);
 // Guard rails against runaway costs: one copy of each job at a time, small machines, short time limits.
@@ -29,8 +30,14 @@ const sched = (schedule, fn, timeoutSeconds = 60) => onSchedule({ schedule, time
 export const nightlyPrices = sched('0 3,15 * * *', nightly);
 // Exchange rates, then the brands' own store prices: 4am Sydney.
 export const dailyStores = sched('0 4 * * *', async () => { await rates(); await brandPrices(); }, 300);
-// BrickLink numbers for minifigures: every hour at :20.
-export const minifigNumbersHourly = sched('20 * * * *', minifigNumbers);
+// Every hour at :20: BrickLink numbers for minifigures, then the catalog-wide price sweep with whatever is left of
+// about 170 BrickLink requests for the hour (about 4,000 a day, under BrickLink's 5,000 with room for the 3am/3pm refresh).
+const HOURLY_BL = 170;
+export const minifigNumbersHourly = sched('20 * * * *', async () => {
+  const c0 = blCalls.n;
+  try { await minifigNumbers(); } catch (e) { console.log('minifig-numbers failed:', e.message); }
+  await priceSweep({ room: HOURLY_BL - (blCalls.n - c0) });
+}, 120);
 
 // The Sync Prices button (admin only). The site reaches it at /api/sync-prices.
 export const syncPrices = onRequest({ secrets: BL, timeoutSeconds: 30, invoker: 'public', maxInstances: 2 }, async (req, res) => {
