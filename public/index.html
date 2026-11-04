@@ -512,6 +512,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .dlg .keepbox span{flex:1;min-width:0}
 .dlg .acct-actions .btn{width:auto;flex:1 1 140px}
 .btn.danger-fill{background:var(--danger);border-color:var(--danger);color:#fff}
+.gate{margin:0 0 12px;padding:10px 12px;border-radius:9px;background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
 .nudge{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(360px,calc(100vw - 32px));background:var(--panel);color:var(--fg);border:1px solid var(--accent);border-radius:12px;padding:14px 16px;box-shadow:0 10px 30px rgb(0 0 0/.3);display:flex;flex-direction:column;gap:10px}
 .nudge p{margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
 .nudge p b{color:var(--fg)}
@@ -550,7 +551,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
   <section class="welcome" id="welcome" hidden aria-labelledby="welcomeTitle">
     <div class="welcome-text">
       <h2 id="welcomeTitle">Getting started</h2>
-      <p>A simple checklist for your brick collection: LEGO and a growing list of other brick brands. It’s free and works without an account; sign in to keep your collection on every device.</p>
+      <p>A simple checklist for your brick collection: LEGO and a growing list of other brick brands. It’s free. Try it with up to 10 sets without an account, then sign in to keep building your collection on every device.</p>
     </div>
     <ol class="steps">
       <li><b>Pick a brand or theme</b><span><span class="wide-only">Use the filters below</span><span class="narrow-only">Tap Filters below</span>, or search above by name, set number, subtheme or tag.</span></li>
@@ -687,6 +688,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 <dialog class="dlg" id="authDlg" aria-labelledby="authTitle">
   <div id="authIn">
     <h2 id="authTitle">Sign in or create an account</h2>
+    <p class="gate" id="authGate" hidden><b>You’ve added 10 items.</b> Create a free account to keep building your collection. The ones you’ve added move into it automatically.</p>
     <p><b>New here?</b> Signing in creates your free account. Your collection is then saved to it, so it’s on every device where you sign in and isn’t lost if you clear your browser.</p>
     <p class="fine" style="margin:6px 0 16px">There’s no password: use Google, or we email you a one-time sign-in link.</p>
     <form id="authForm" autocomplete="on">
@@ -914,6 +916,8 @@ async function flushShared() {
    owned is always personal; prices and BrickLink #s are shared when the owner sets them,
    and a personal override for everyone else */
 function setInfo(n, patch, { quiet } = {}) {
+  // Without an account, the first few sets can be added; after that, sign up to keep going (see build: gateBlocks).
+  if (typeof gateBlocks === 'function' && gateBlocks(n, patch)) return;
   const me = { ...(mine.get(n) || {}) };
   if ('owned' in patch) {
     me.owned = !!patch.owned;
@@ -2068,6 +2072,7 @@ const RELEASES = [
     ['Lord of the Rings timeline', 'The Rings of Power, The Hobbit and The Lord of the Rings films in story order, with the sets from each.'],
     ['DC and X-Men timelines', 'Batman, Superman and friends from the 1966 TV series to today, and the X-Men alongside Marvel.'],
     ['Install the app', 'add BrickCollect to your phone, tablet or Chromebook home screen. It opens full screen and works offline with your last saved collection.'],
+    ['Free accounts', 'try BrickCollect with up to 10 sets, then create a free account (no password) to keep building your collection on every device.'],
   ] },
   { v: '0.9', date: '2 November 2026', title: 'A new home', items: [
     ['brickcollect.app', 'BrickCollect has its own address, and it’s faster.'],
@@ -2113,6 +2118,7 @@ const dlg = $('authDlg');
 function openAuth() {
   if (!window.BC?.auth?.available) { toast('Sign-in isn’t set up yet.'); return; }
   $('authIn').hidden = !!uid; $('authOut').hidden = !uid; $('authSent').hidden = true;
+  $('authGate').hidden = true;
   const NAMES = { google: 'Google', discord: 'Discord', facebook: 'Facebook', apple: 'Apple', twitter: 'X', github: 'GitHub', azure: 'Microsoft' };
   const list = (window.BC_CONFIG?.socialSignIn || (window.BC_CONFIG?.googleSignIn ? ['google'] : [])).filter(k => NAMES[k]);
   $('socialBtns').innerHTML = list.map(k => `<button class="btn" type="button" data-provider="${k}">Continue with ${NAMES[k]}</button>`).join('');
@@ -2134,15 +2140,31 @@ async function paintAccount() {
 }
 $('acctBtn').onclick = openAuth;
 $('acctExport').onclick = () => { dlg.close(); $('exportBtn').click(); };
-// A one-time nudge once someone has ticked a few things without an account (again once if they keep going).
+// Without an account: up to FREE_ITEMS sets and minifigures (owned or wanted), then sign up to add more.
+// Everything already added stays visible and exportable, and moves into the account on sign-in.
+const FREE_ITEMS = 10;
+function gateBlocks(n, patch) {
+  if (uid || !window.BC?.auth?.available) return false;
+  const cur = mine.get(n) || {};
+  const adds = (patch.owned && !cur.owned && !cur.wanted) || (patch.wanted && !cur.owned && !cur.wanted);
+  if (!adds) return false;
+  const count = [...mine.values()].filter(v => v && (v.owned || v.wanted)).length;
+  if (count < FREE_ITEMS) return false;
+  document.getElementById('saveNudge')?.remove();
+  openAuth(); $('authGate').hidden = false;
+  track('signup_gate', { items: count });
+  render();
+  return true;
+}
+// A one-time heads-up a few items before the limit.
 function maybeNudge() {
   if (uid || !window.BC?.auth?.available || document.getElementById('saveNudge')) return;
   const n = Object.keys(personalObj()).length, seen = lsGet('bc-nudge') || {};
-  if (n < 10 || (seen.at && (seen.times >= 2 || n < seen.at + 40))) return;
+  if (n < FREE_ITEMS - 3 || n >= FREE_ITEMS || seen.at) return;
   lsSet('bc-nudge', { at: n, times: (seen.times || 0) + 1 });
   const el = document.createElement('div');
   el.id = 'saveNudge'; el.className = 'nudge'; el.setAttribute('role', 'status');
-  el.innerHTML = `<p><b>Nice collection!</b> It’s only saved in this browser. Sign in (free) to keep it safe and on all your devices.</p><div class="nudge-b"><button class="btn ghost" type="button" data-n="later">Not now</button><button class="btn primary" type="button" data-n="in">Sign in</button></div>`;
+  el.innerHTML = `<p><b>Nice start!</b> Without an account you can add up to ${FREE_ITEMS} items, saved only in this browser. Sign in (free, no password) to keep going and have it on all your devices.</p><div class="nudge-b"><button class="btn ghost" type="button" data-n="later">Not now</button><button class="btn primary" type="button" data-n="in">Sign in</button></div>`;
   el.addEventListener('click', e => { const v = e.target.closest('button')?.dataset.n; if (!v) return; el.remove(); if (v === 'in') openAuth(); });
   document.body.append(el);
 }
