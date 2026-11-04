@@ -1306,8 +1306,8 @@ const tagsOpen = new Set(); // rows where you've asked to see every tag
 const COLS = () => [
   { label: '<input type="checkbox" class="chk" id="selAll" aria-label="Mark everything in view as owned">' }, { label: 'Image' },
   { key: 'name', label: kind === 'sets' ? 'Set name' : 'Minifigure' }, { key: 'cond', label: 'Condition', tip: 'N new, UC used complete, UI used incomplete, ST for sale or trade, each with how many copies. Click to change copies or mark some for sale or trade.' },
-  ...(fi.brand.value ? [] : [{ key: 'brand', label: 'Brand' }]), { key: 'sub', label: 'Subtheme' },
-  { key: 'n', label: kind === 'sets' ? 'Set #' : 'Rebrickable #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BrickLink #' }] : []), { key: 'year', label: kind === 'sets' ? 'Year' : 'First year' },
+  ...(fi.brand.value || kind === 'figs' ? [] : [{ key: 'brand', label: 'Brand' }]), { key: 'sub', label: 'Subtheme' },
+  { key: 'n', label: kind === 'sets' ? 'Set #' : 'RB #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BL #' }] : []), { key: 'year', label: 'Year' },
   { key: 'pieces', label: 'Pieces', cls: 'num' },
   { key: 'used', label: `Used ${cur()}`, cls: 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
   { key: 'new', label: `New ${cur()}`, cls: 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or the brand’s own store price for LumiBricks, Pantasy, CaDA and Mould King. In your currency.` },
@@ -1475,7 +1475,7 @@ function render() {
       <td class="c-img">${thumb(x)}</td>
       <td class="nm c-nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
       <td class="c-cond">${condCell(x)}</td>
-      ${fi.brand.value ? '' : `<td class="muted c-brand">${x.brand}</td>`}
+      ${fi.brand.value || x.k === 'm' ? '' : `<td class="muted c-brand">${x.brand}</td>`}
       <td class="sub c-sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}${tagCell(x)}</td>
       <td class="mono c-num">${esc(shownNum(x))}</td>${x.k === 'm' ? `<td class="c-bl">${blCell(x)}</td>` : ''}
       <td class="muted c-yr">${x.year ?? ''}</td>
