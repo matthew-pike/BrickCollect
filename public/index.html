@@ -388,6 +388,10 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px}
 .morebtns{display:flex;gap:8px;flex-wrap:wrap}
+#tfoot td{padding:10px 12px;border-top:1px solid var(--line-2);font-size:12.5px;white-space:nowrap}
+#tfoot .totrow + .totrow td{border-top:1px dashed var(--line)}
+#tfoot td.num{font-weight:600;color:var(--fg)}
+@media (max-width:640px){#tfoot tr{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:8px 12px}#tfoot td{padding:0;border:0;white-space:normal}#tfoot td:first-child{flex-basis:100%}#tfoot td:last-child{display:none}#tfoot td.num::before{content:attr(data-l) ' ';font-weight:400;color:var(--muted)}}
 .home{color:inherit;text-decoration:none}
 .home:hover{color:var(--accent)}
 .foot-site{border-top:1px solid var(--line);padding-block:20px 28px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--muted)}
@@ -652,6 +656,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
       <table>
         <thead><tr id="headRow"></tr></thead>
         <tbody id="rows"></tbody>
+        <tfoot id="tfoot"></tfoot>
       </table>
     </div>
     <div class="empty" id="empty"><h3>Loading the catalog…</h3></div>
@@ -1501,6 +1506,16 @@ function render() {
   document.querySelector('thead').hidden = !page.length;
   $('timeline').hidden = !tlOpen; $('tableScroll').hidden = tlOpen; if (tlOpen) { empty.hidden = true; renderTimeline(); }
   $('footCount').textContent = `${page.length.toLocaleString()} of ${rows.length.toLocaleString()} shown`;
+  // Totals of the Used and New columns for the whole list (not just the rows on screen), and for the ones you own.
+  { const cols = COLS(), iu = cols.findIndex(c => c.key === 'used'), tf = $('tfoot');
+    if (!page.length || tlOpen || iu < 0) tf.innerHTML = '';
+    else {
+      const tot = list => list.reduce((t, x) => { const i = info(x.n); if (i.used != null) t.u += i.used; if (i.new != null) t.n += i.new; if (i.used == null && i.new == null) t.miss++; return t; }, { u: 0, n: 0, miss: 0 });
+      const noun = c => `${c.toLocaleString()} ${kind === 'sets' ? (c === 1 ? 'set' : 'sets') : (c === 1 ? 'minifigure' : 'minifigures')}`;
+      const line = (label, list) => { const t = tot(list); return `<tr class="totrow"><td colspan="${iu}"><b>${label}</b> <span class="muted">${noun(list.length)}${t.miss ? ` · ${t.miss.toLocaleString()} without a price` : ''}</span></td><td class="num" data-l="Used">${money(t.u)}</td><td class="num" data-l="New">${money(t.n)}</td><td colspan="${cols.length - iu - 2}"></td></tr>`; };
+      const mineRows = rows.filter(has);
+      tf.innerHTML = line('Total', rows) + (mineRows.length && mineRows.length < rows.length ? line('Yours', mineRows) : '');
+    } }
   { const left = rows.length - limit;
     $('more').hidden = left <= 0; $('more').textContent = `Show ${Math.min(PAGE, Math.max(left, 0))} more`;
     $('moreAll').hidden = left <= PAGE || rows.length > SHOW_ALL_MAX; $('moreAll').textContent = `Show all (${rows.length.toLocaleString()})`; }
