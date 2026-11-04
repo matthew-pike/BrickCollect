@@ -387,6 +387,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .empty p{margin:0;max-width:56ch}
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px}
+.morebtns{display:flex;gap:8px;flex-wrap:wrap}
 .home{color:inherit;text-decoration:none}
 .home:hover{color:var(--accent)}
 .foot-site{border-top:1px solid var(--line);padding-block:20px 28px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--muted)}
@@ -653,7 +654,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
       </table>
     </div>
     <div class="empty" id="empty"><h3>Loading the catalog…</h3></div>
-    <div class="foot" id="foot" hidden><span class="footleft"><span id="footCount"></span><span class="savemode" id="saveMode" hidden></span><button class="linkbtn" id="unselAll" hidden>Unmark all</button></span><button class="btn" id="more">Show 200 more</button><span id="footHint">Click a set to see its minifigures</span></div>
+    <div class="foot" id="foot" hidden><span class="footleft"><span id="footCount"></span><span class="savemode" id="saveMode" hidden></span><button class="linkbtn" id="unselAll" hidden>Unmark all</button></span><span class="morebtns"><button class="btn" id="more">Show 50 more</button><button class="btn" id="moreAll" hidden>Show all</button></span><span id="footHint">Click a set to see its minifigures</span></div>
   </section>
 </main>
 <footer class="foot-site">
@@ -734,7 +735,8 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 const $ = id => document.getElementById(id);
 // Show a PREVIEW badge on the preview site (Netlify's preview--… address) so it's never mistaken for the live one.
 if (/^preview--/.test(location.hostname)) { $('previewBadge').hidden = false; document.title = 'Preview · ' + document.title; }
-const PAGE = 200;
+const PAGE = 50;
+const SHOW_ALL_MAX = 1000; // "Show all" only when the list is small enough to draw quickly
 let CAT = null;                       // { themes: Map, sets: [], figs: [] }
 const mine = new Map();               // number -> { owned, used, new }
 let db = null, mcp = null, hostOk = true, syncing = false;
@@ -1495,7 +1497,9 @@ function render() {
   document.querySelector('thead').hidden = !page.length;
   $('timeline').hidden = !tlOpen; $('tableScroll').hidden = tlOpen; if (tlOpen) { empty.hidden = true; renderTimeline(); }
   $('footCount').textContent = `${page.length.toLocaleString()} of ${rows.length.toLocaleString()} shown`;
-  $('more').hidden = rows.length <= limit;
+  { const left = rows.length - limit;
+    $('more').hidden = left <= 0; $('more').textContent = `Show ${Math.min(PAGE, Math.max(left, 0))} more`;
+    $('moreAll').hidden = left <= PAGE || rows.length > SHOW_ALL_MAX; $('moreAll').textContent = `Show all (${rows.length.toLocaleString()})`; }
   const ed = $('edit-price'); if (ed) { ed.focus(); ed.select(); }
   $('syncBtn').hidden = !db || !canCurate() || (kind === 'sets' && !page.some(x => x.brand === 'LEGO'));
   $('syncBtn').disabled = syncing || !page.length;
@@ -1644,6 +1648,7 @@ let qT, qTrackT; $('q').addEventListener('input', () => { clearTimeout(qT); qT =
   // Count a search once the person stops typing (what people look for, to improve the catalog).
   clearTimeout(qTrackT); qTrackT = setTimeout(() => { const q = $('q').value.trim(); if (q.length >= 2) track('search', { search_term: q.slice(0, 60), results: $('rows') ? $('rows').rows.length : undefined }); }, 1500); });
 $('more').onclick = () => { limit += PAGE; render(); };
+$('moreAll').onclick = () => { limit = SHOW_ALL_MAX; render(); };
 $('fiReset').onclick = () => { focus = null; tlFilter = null; Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 $('gotIt').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
