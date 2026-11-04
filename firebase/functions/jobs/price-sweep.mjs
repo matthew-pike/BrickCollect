@@ -2,13 +2,16 @@
 // so every set has a value in every price location, not just the ones people own or want.
 //   Round 1: worldwide + Australia for each set, newest first.
 //   Round 2: US, UK, EU and Canada.
-// Then it starts over, refreshing anything older than 30 days.
+// After that it switches to small top-ups: a much lower daily cap, re-pricing only sets not checked for 6 months
+// (sets people own or want are already refreshed every few days by the 3am/3pm job).
 // Stays under a daily cap of BrickLink requests (BrickLink allows about 5,000 a day, shared with the
 // twice-daily refresh, the minifigure job and Sync Prices). Never touches prices the site owner typed in.
 // Off switch: set priceSweep: false in private/settings. Progress is kept in private/sweep.
 import { fs, readShared, readBuckets, savePrices, isFresh, locFresh, priceItem, priceItemAll, bricklinkReady, pool, blCalls, BrickLinkAuthError } from '../lib/common.mjs';
 
-const DAILY_CAP = 3500;          // BrickLink requests per Sydney day for the sweep
+const DAILY_CAP = 3500;          // BrickLink requests per Sydney day for the first full pass
+const TOPUP_CAP = 600;           // and per day once every set has prices
+const TOPUP_FRESH = 180 * 24 * 3600 * 1000;
 const PER_RUN = 200;             // and per hourly run, so it spreads across the day
 const FRESH = 30 * 24 * 3600 * 1000;
 const MIN_PIECES = 25;           // skips keyrings, magnets, books and other extras
@@ -39,8 +42,9 @@ export default async ({ room = PER_RUN } = {}) => {
   const st = { round: 1, cursor: 0, day: '', used: 0, loops: 0, ...((await ref.get()).data() || {}) };
   const today = sydneyDay();
   if (st.day !== today) { st.day = today; st.used = 0; }
-  const budget = Math.min(PER_RUN, room, DAILY_CAP - st.used);
-  if (budget <= 0) { console.log(`sweep: no room this hour (today ${st.used}/${DAILY_CAP})`); return; }
+  const topUp = (st.loops || 0) >= 1, cap = topUp ? TOPUP_CAP : DAILY_CAP, fresh = topUp ? TOPUP_FRESH : FRESH;
+  const budget = Math.min(PER_RUN, room, cap - st.used);
+  if (budget <= 0) { console.log(`sweep: no room this hour (today ${st.used}/${cap})`); return; }
 
   const queue = await loadQueue();
   const shared = new Map();
@@ -50,9 +54,9 @@ export default async ({ room = PER_RUN } = {}) => {
   const needs = n => {
     const e = shared.get(n);
     if (e?.manualPrice) return false;
-    if (e?.sweepMissAt && Date.now() - Date.parse(e.sweepMissAt) < FRESH) return false;
-    if (st.round === 1) return !(isFresh(e, FRESH) && locFresh(e, 'AU', FRESH));
-    return !locs.every(l => locFresh(e, l, FRESH));
+    if (e?.sweepMissAt && Date.now() - Date.parse(e.sweepMissAt) < fresh) return false;
+    if (st.round === 1) return !(isFresh(e, fresh) && locFresh(e, 'AU', fresh));
+    return !locs.every(l => locFresh(e, l, fresh));
   };
 
   const calls0 = blCalls.n, updates = new Map(), now = new Date().toISOString();
@@ -94,6 +98,6 @@ export default async ({ room = PER_RUN } = {}) => {
     }
     st.updatedAt = now;
     await ref.set(st);
-    console.log(`sweep: round ${st.round} at ${st.cursor}/${queue.length}, priced ${priced}, not on BrickLink ${missed}, requests ${blCalls.n - calls0} (today ${st.used}/${DAILY_CAP})`);
+    console.log(`sweep: round ${st.round} at ${st.cursor}/${queue.length}, priced ${priced}, not on BrickLink ${missed}, requests ${blCalls.n - calls0} (today ${st.used}/${cap}${topUp ? ', top-up mode' : ''})`);
   }
 };
