@@ -988,7 +988,7 @@ function themeOptions() {
 }
 function filmOptions(keep) {
   const counts = new Map(); let none = 0;
-  for (const x of CAT.sets) { if (fi.theme.value && x.theme !== fi.theme.value) continue; if (fi.brand.value && x.brand !== fi.brand.value) continue; if (x.tags.length) x.tags.forEach(t => counts.set(t, (counts.get(t) || 0) + 1)); else none++; }
+  for (const x of (kind === 'figs' ? CAT.figs : CAT.sets)) { if (fi.theme.value && !(x.k === 'm' ? x.themes.includes(fi.theme.value) : x.theme === fi.theme.value)) continue; if (fi.brand.value && x.brand !== fi.brand.value) continue; if (x.tags.length) x.tags.forEach(t => counts.set(t, (counts.get(t) || 0) + 1)); else none++; }
   const opts = [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([f, c]) => [f, `${f} (${c.toLocaleString()})`]);
   if (fi.theme.value && none) opts.push(['__none', `No tag (${none.toLocaleString()})`]);
   fill(fi.film, 'All', opts, keep ?? fi.film.value);
@@ -1021,6 +1021,9 @@ function inScope(x) {
   if (fi.brand.value && x.brand !== fi.brand.value) return false;
   if (x.k === 's') return setPasses(x, q);
   if (focus) return x.sets.has(focus);
+  // A minifigure's own collection tag matches the Tag filter and search directly.
+  if (fi.film.value && fi.film.value !== '__none' && (x.ctags || []).includes(fi.film.value)) return !q || x.key.includes(q) || x.ctags.some(t => t.toLowerCase().includes(q));
+  if (q && !fi.film.value && (x.ctags || []).some(t => t.toLowerCase().includes(q)) && !(tlFilter || fi.theme.value || fi.sub.value || fi.year.value)) return true;
   const setFilters = tlFilter || fi.theme.value || fi.sub.value || fi.film.value || fi.year.value;
   if (!setFilters && !q) return true;
   if (x.so.some(s => setPasses(s, q))) return true;
@@ -1457,9 +1460,9 @@ function render() {
     return show + edit;
   };
   const tagCell = x => {
-    const list = x.tags || [], admin = x.k === 's' && canCurate();
+    const list = x.tags || [], admin = canCurate(), own = t => x.k === 's' || (x.ctags || []).includes(t);
     const open = tagsOpen.has(x.n), shown = open ? list : list.slice(0, 2);
-    const chips = shown.map(t => `<span class="tagchip"><button class="tagbtn" data-tagfilter="${esc(t)}" title="${esc(t)}: show everything with this tag">${esc(t)}</button>${admin ? `<button class="tagx" data-untag="${esc(t)}" data-n="${esc(x.n)}" aria-label="Remove tag ${esc(t)}" title="Remove tag">×</button>` : ''}</span>`).join('');
+    const chips = shown.map(t => `<span class="tagchip"><button class="tagbtn" data-tagfilter="${esc(t)}" title="${esc(t)}: show everything with this tag">${esc(t)}</button>${admin && own(t) ? `<button class="tagx" data-untag="${esc(t)}" data-n="${esc(x.n)}" aria-label="Remove tag ${esc(t)}" title="Remove tag">×</button>` : ''}</span>`).join('');
     const more = list.length > 2 && !open ? `<button class="tagmore" data-tagsmore="${esc(x.n)}" title="${esc(list.slice(2).join(', '))}">+${list.length - 2}</button>` : '';
     const addBtn = !admin ? '' : editing === x.n + '|tag'
       ? `<input class="inp tagin" id="edit-price" list="filmNames" data-n="${esc(x.n)}" data-f="tag" placeholder="New tag" aria-label="New tag">`
@@ -1472,7 +1475,7 @@ function render() {
     if (editing === x.n + '|film') return `<input class="inp" id="edit-price" style="width:180px" list="filmNames" data-n="${esc(x.n)}" data-f="film" value="${esc(x.film)}" placeholder="Film or series" aria-label="Film or series">`;
     return `<button class="subbtn ${x.film ? '' : 'none'}" data-price="film" data-n="${esc(x.n)}" title="Change film or series">${x.film ? esc(x.film) : 'Add'}</button>`;
   };
-  $('filmNames').innerHTML = [...new Set(CAT.sets.flatMap(s => s.tags))].sort().map(v => `<option value="${esc(v)}">`).join('');
+  $('filmNames').innerHTML = [...new Set((kind === 'figs' ? CAT.figs : CAT.sets).flatMap(s => s.tags))].sort().map(v => `<option value="${esc(v)}">`).join('');
   $('subNames').innerHTML = [...new Set(CAT.sets.filter(s => !fi.theme.value || s.theme === fi.theme.value).map(s => s.sub).filter(Boolean))].sort().map(v => `<option value="${esc(v)}">`).join('');
   $('rows').innerHTML = page.map(x => `
     <tr class="${owned(x) ? 'owned' : fromSet(x) ? 'fromset' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
@@ -1524,10 +1527,11 @@ function render() {
   $('syncBtn').disabled = syncing || !page.length;
   $('bulkBtn').hidden = !canCurate();
   $('addBtn').hidden = !canCurate();
-  $('bulkBtn').disabled = kind !== 'sets' || !isScoped || !rows.length;
-  $('bulkBtn').title = kind !== 'sets' ? 'Switch to Sets to change subthemes' : !isScoped ? 'Filter or search first, then set the subtheme or a tag for every set in view' : `Set the subtheme or a tag for the ${rows.length.toLocaleString()} sets in view`;
-  bulkRows = kind === 'sets' && isScoped ? rows : [];
-  if (!$('bulkbar').hidden) { if (!bulkRows.length) $('bulkbar').hidden = true; else $('bulkLabel').textContent = `Set for the ${bulkRows.length.toLocaleString()} set${bulkRows.length > 1 ? 's' : ''} in view`; }
+  $('bulkBtn').disabled = !isScoped || !rows.length;
+  $('bulkBtn').title = kind !== 'sets' ? (!isScoped ? 'Search or filter first, then tag every minifigure in view (e.g. a collection like Knights of Ren)' : `Add or remove a tag for the ${rows.length.toLocaleString()} minifigures in view`) : !isScoped ? 'Filter or search first, then set the subtheme or a tag for every set in view' : `Set the subtheme or a tag for the ${rows.length.toLocaleString()} sets in view`;
+  bulkRows = isScoped ? rows : [];
+  { const f = $('bulkField'), sub = f.querySelector('[value=sub]'); sub.hidden = sub.disabled = kind !== 'sets'; if (kind !== 'sets' && f.value === 'sub') { f.value = 'tag'; f.onchange(); } }
+  if (!$('bulkbar').hidden) { if (!bulkRows.length) $('bulkbar').hidden = true; else $('bulkLabel').textContent = kind === 'sets' ? `Set for the ${bulkRows.length.toLocaleString()} set${bulkRows.length > 1 ? 's' : ''} in view` : `Tag the ${bulkRows.length.toLocaleString()} minifigure${bulkRows.length > 1 ? 's' : ''} in view`; }
   $('syncBtn').title = kind === 'figs' ? 'Fetch BrickLink prices for minifigures in view that have a BrickLink #' : 'Fetch BrickLink price guide averages for the sets in view';
   pumpImages();
 }
@@ -1610,14 +1614,14 @@ document.addEventListener('click', e => {
   if (t.dataset.tlshow) { tlFilter = { fr: tlId, i: Number(t.dataset.tlshow) }; tlOpen = false; kind = 'sets'; focus = null; listView = 'all'; Object.values(fi).forEach(f => { f.value = f === fi.set ? 'all' : ''; }); $('q').value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); $('boardHead').scrollIntoView({ behavior: 'smooth' }); return; }
   if (t.dataset.tlback) { tlOpen = true; if (tlFilter) { tlId = tlFilter.fr; tlPick = tlFilter.i; } render(); document.querySelector('.tl-card.on')?.scrollIntoView({ inline: 'center', block: 'nearest' }); return; }
   if (t.dataset.tlclear) { tlFilter = null; limit = PAGE; render(); return; }
-  if (t.dataset.kind) { tlOpen = false; kind = t.dataset.kind; limit = PAGE; themeOptions(); savePrefs(); render(); return; }
+  if (t.dataset.kind) { tlOpen = false; kind = t.dataset.kind; limit = PAGE; themeOptions(); filmOptions(); savePrefs(); render(); return; }
   if (t.dataset.subfilter !== undefined && t.dataset.subtheme !== undefined) {
     focus = null; tlFilter = null; listView = 'all'; fi.brand.value = ''; themeOptions();
     fi.theme.value = t.dataset.subtheme; subOptions(t.dataset.subfilter); fi.sub.value = t.dataset.subfilter; filmOptions(''); fi.film.value = ''; fi.year.value = ''; fi.set.value = 'all'; $('q').value = '';
     limit = PAGE; savePrefs(); render(); $('boardHead').scrollIntoView({ behavior: 'smooth' }); return;
   }
   if (t.dataset.tagsmore) { tagsOpen.add(t.dataset.tagsmore); render(); return; }
-  if (t.dataset.untag) { const x = CAT.sets.find(s => s.n === t.dataset.n); if (x) editTags([x], t.dataset.untag, true); return; }
+  if (t.dataset.untag) { const x = findItem(t.dataset.n); if (x) editTags([x], t.dataset.untag, true); return; }
   if (t.dataset.tagfilter) { focus = null; fill(fi.film, 'All', [[t.dataset.tagfilter, t.dataset.tagfilter]], t.dataset.tagfilter); filmOptions(t.dataset.tagfilter); limit = PAGE; savePrefs(); render(); window.scrollTo({ top: $('fiFilm').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth' }); return; }
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
   if (t.dataset.condmenu) { copiesFor === t.dataset.condmenu ? closeCopies() : openCopies(t.dataset.condmenu); return; }
@@ -1646,7 +1650,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('focusout', e => {
   const el = e.target; if (el.id !== 'edit-price' || !editing) return;
   editing = null;
-  if (el.dataset.f === 'tag') { const x = CAT.sets.find(s => s.n === el.dataset.n); if (x && el.value.trim()) editTags([x], el.value); else render(); return; }
+  if (el.dataset.f === 'tag') { const x = findItem(el.dataset.n); if (x && el.value.trim()) editTags([x], el.value); else render(); return; }
   if (el.dataset.f === 'sub' || el.dataset.f === 'film') { setManualSub(el.dataset.n, el.value.trim(), el.dataset.f); return; }
   const v = el.dataset.f === 'bl' ? (el.value.trim() || null) : el.value === '' ? null : toAud(Math.max(0, Number(el.value)));
   const cur = info(el.dataset.n)[el.dataset.f] ?? null;
@@ -1753,6 +1757,9 @@ $('syncBtn').onclick = async () => {
 /* ---------- subthemes: your own edits, saved per theme ---------- */
 const subDocs = new Map(); // slug -> { theme, brickset:{}, manual:{} }
 let bulkRows = [];
+// Minifigure tags (collections like "Knights of Ren") live in their own subthemes document.
+const FIG_TAGS = 'Minifigure collections';
+const findItem = n => CAT.sets.find(s => s.n === n) || CAT.figs.find(f => f.n === n);
 const slug = t => (t || 'Other').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 120) || 'Other';
 function applyOverrides() {
   if (!CAT) return;
@@ -1762,7 +1769,8 @@ function applyOverrides() {
   const tags = new Map(), add = (k, v) => { if (!v) return; if (!tags.has(k)) tags.set(k, []); if (!tags.get(k).includes(v)) tags.get(k).push(v); };
   for (const d of subDocs.values()) { for (const [k, v] of Object.entries(d.films || {})) add(k, v); for (const [k, v] of Object.entries(d.tags || {})) (Array.isArray(v) ? v : []).forEach(t => add(k, t)); }
   for (const x of CAT.sets) { x.sub = ov.has(x.n) ? ov.get(x.n) : x.rbSub; x.tags = tags.get(x.n) || []; x.film = x.tags[0] || ''; }
-  for (const f of CAT.figs) { f.subs = [...new Set(f.so.map(x => x.sub).filter(Boolean))]; f.sub = f.subs[0] || ''; f.tags = [...new Set(f.so.flatMap(x => x.tags))]; f.films = f.tags; }
+  // Minifigures: their own collection tags first, then the tags of the sets they come in.
+  for (const f of CAT.figs) { f.subs = [...new Set(f.so.map(x => x.sub).filter(Boolean))]; f.sub = f.subs[0] || ''; f.ctags = tags.get(f.n) || []; f.tags = [...new Set([...f.ctags, ...f.so.flatMap(x => x.tags)])]; f.films = f.tags; }
   subOptions(fi.sub.value); filmOptions(fi.film.value);
 }
 let subQueue = Promise.resolve();
@@ -1802,15 +1810,17 @@ function editTags(sets, tag, remove) {
   tag = String(tag || '').trim().slice(0, 80); if (!tag) return 0;
   const touched = new Set(); let n = 0;
   for (const x of sets) {
-    const id = slug(x.theme), d = subDocs.get(id) || { theme: x.theme, brickset: {}, manual: {}, films: {}, tags: {} };
+    const th = x.k === 'm' ? FIG_TAGS : x.theme;
+    const id = slug(th), d = subDocs.get(id) || { theme: th, brickset: {}, manual: {}, films: {}, tags: {} };
     const films = { ...(d.films || {}) }, all = { ...(d.tags || {}) };
     let list = [...new Set([...(films[x.n] ? [films[x.n]] : []), ...(all[x.n] || [])])];
+    if (x.k === 'm' && remove && !list.includes(tag)) continue; // a tag that comes from its sets: remove it from the set instead
     delete films[x.n];
     const had = list.includes(tag);
     list = remove ? list.filter(t => t !== tag) : had ? list : [...list, tag];
     if (list.length) all[x.n] = list; else delete all[x.n];
     if (had === !!remove) n++;
-    subDocs.set(id, { ...d, theme: x.theme, films, tags: all }); touched.add(x.theme);
+    subDocs.set(id, { ...d, theme: th, films, tags: all }); touched.add(th);
   }
   applyOverrides(); render(); touched.forEach(t => saveSubDoc(t));
   return n;
@@ -1822,7 +1832,7 @@ function bulkSet(value) {
   if (field === 'tag' || field === 'untag') {
     if (!value) return;
     const n = editTags(rows, value, field === 'untag');
-    toast(field === 'untag' ? `Removed “${value}” from ${n.toLocaleString()} sets` : `Tagged ${n.toLocaleString()} sets “${value}”`);
+    { const w = rows[0]?.k === 'm' ? 'minifigures' : 'sets'; toast(field === 'untag' ? `Removed “${value}” from ${n.toLocaleString()} ${w}` : `Tagged ${n.toLocaleString()} ${w} “${value}”`); }
     return;
   }
   const touched = new Set();
