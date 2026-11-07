@@ -1,0 +1,85 @@
+# Weekly LEGO catalog refresh from Rebrickable's free downloads (https://rebrickable.com/downloads/).
+#   Every Monday 3:23am Sydney -> rebuilds public/catalog.json (and bl-numbers.json if Rebrickable offers
+#   set_mappings), commits to main only if something changed, then runs the Firebase release so it goes live.
+#   Run it by hand: Actions -> Catalog -> Run workflow.
+#   Test on the preview branch: bump tools/CATALOG_RUN on preview (commits to preview, publishes the preview).
+# Only catalog.json changes. Collections, prices, subthemes, tags and other brands live in Firestore,
+# keyed by set number, so they carry over untouched.
+name: Catalog
+on:
+  schedule:
+    - cron: '23 16 * * 0'
+  workflow_dispatch:
+  push:
+    branches: [preview]
+    paths: [tools/CATALOG_RUN]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency: catalog
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0 }
+      - name: Download Rebrickable's files
+        run: |
+          mkdir -p "$RUNNER_TEMP/rb" && cd "$RUNNER_TEMP/rb"
+          for f in themes sets minifigs inventories inventory_minifigs; do
+            curl -fsSL --retry 3 -o "$f.csv.gz" "https://cdn.rebrickable.com/media/downloads/$f.csv.gz"
+          done
+          curl -fsSL --retry 3 -o set_mappings.csv.gz "https://cdn.rebrickable.com/media/downloads/set_mappings.csv.gz" \
+            || { rm -f set_mappings.csv.gz; echo "set_mappings not offered; bl-numbers.json left as it is"; }
+          ls -la
+      - name: Build the catalog (to a scratch folder first)
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          cp public/catalog.json "$RUNNER_TEMP/out/catalog.json"
+          python3 tools/build_catalog.py "$RUNNER_TEMP/rb" "$RUNNER_TEMP/out/catalog.json" | tee "$RUNNER_TEMP/build.txt"
+      - name: Sanity check (stop if Rebrickable's files look broken)
+        run: |
+          python3 - "$RUNNER_TEMP/out/catalog.json" public/catalog.json <<'EOF'
+          import json, sys
+          new, old = (json.load(open(p, encoding='utf-8')) for p in sys.argv[1:3])
+          for k in ('themes', 'sets', 'figs'):
+              n, o = len(new[k]), len(old[k])
+              print(f'{k}: {o} -> {n}')
+              if n < o * 0.98: sys.exit(f'::error title=Catalog::{k} dropped from {o} to {n}; nothing changed')
+          EOF
+      - name: Commit if anything changed
+        id: commit
+        env: { BRANCH: '${{ github.ref_name }}' }
+        run: |
+          cp "$RUNNER_TEMP/out/catalog.json" public/catalog.json
+          [ -f "$RUNNER_TEMP/out/bl-numbers.json" ] && cp "$RUNNER_TEMP/out/bl-numbers.json" public/bl-numbers.json
+          if git diff --quiet -- public/catalog.json public/bl-numbers.json; then
+            echo "::notice title=Catalog::Already up to date; nothing released"
+            echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          new=$(grep -o '^[0-9]* new sets' "$RUNNER_TEMP/build.txt" | grep -o '^[0-9]*' || echo 0)
+          git config user.name "BrickCollect catalog"
+          git config user.email "brickcollectapp@gmail.com"
+          git add public/catalog.json public/bl-numbers.json
+          git commit -q -m "Catalog: Rebrickable $(TZ=Australia/Sydney date '+%-d %b %Y') (${new:-0} new sets)"
+          git push origin "HEAD:$BRANCH"
+          {
+            echo "### Catalog refreshed ($BRANCH)"
+            echo '```'; cat "$RUNNER_TEMP/build.txt"; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Catalog::$(tail -1 "$RUNNER_TEMP/build.txt" | cut -c1-900)"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Keep preview up to date with main
+        if: steps.commit.outputs.changed == 'true' && github.ref_name == 'main'
+        run: |
+          git fetch -q origin preview
+          git checkout -q -B preview origin/preview
+          if git merge -q --no-edit main; then git push -q origin preview; echo "Preview now includes the new catalog"
+          else git merge --abort; echo "::warning title=Catalog::Couldn't merge into preview; merge main into preview by hand"; fi
+      - name: Release (pushes made by this job don't start the Firebase workflow on their own)
+        if: steps.commit.outputs.changed == 'true'
+        env: { GH_TOKEN: '${{ github.token }}', BRANCH: '${{ github.ref_name }}' }
+        run: gh workflow run firebase.yml --ref "$BRANCH"
