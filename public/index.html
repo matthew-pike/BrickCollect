@@ -598,7 +598,10 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .totop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .acct{height:34px;padding:0 12px}
 .acct .short{display:none}
-@media (max-width:640px){.acct .full{display:none}.acct .short{display:inline}.acct.in{padding:0;width:34px;border-radius:50%;font-weight:600}.top .wrap{flex-wrap:wrap}.brand{flex:1 1 auto}}
+@media (max-width:640px){.acct .full{display:none}.acct .short{display:inline}.acct.in{padding:0;width:34px;border-radius:50%;font-weight:600}.top .wrap{flex-wrap:wrap;column-gap:8px}.brand{flex:0 1 auto;gap:8px}.brand h1{font-size:18px;gap:6px;white-space:nowrap}.brand .beta{font-size:9px;padding:3px 5px 2px}.brandmark{width:32px;height:32px;border-radius:8px}.top-actions{gap:6px;flex:none}.top-actions .icon-btn,.acct.in{width:32px;height:32px}.acct{height:32px;padding:0 10px}.top-actions .cur{height:32px;padding:5px 4px 5px 6px;font-size:12px}}
+@media (max-width:420px){.brand .beta{display:none}}
+@media (max-width:380px){.top .wrap{column-gap:6px}.brand{gap:6px}.top-actions{gap:5px}.acct{padding:0 8px}.top-actions .cur{appearance:none;-webkit-appearance:none;padding:5px 6px;text-align:center}}
+@media (max-width:340px){.brand h1{font-size:16px}.brandmark{width:28px;height:28px;border-radius:7px}}
 .dlg{border:1px solid var(--line-2);border-radius:12px;background:var(--panel);color:var(--fg);padding:22px;width:min(420px,calc(100vw - 32px))}
 .dlg::backdrop{background:rgba(5,10,20,.55)}
 .dlg h2{margin:0 0 8px;font-size:18px;font-weight:500;padding-right:36px}
