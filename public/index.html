@@ -1171,6 +1171,8 @@ function inScope(x) {
   if (x.so.some(s => setPasses(s, q))) return true;
   return !!q && x.key.includes(q) && (!setFilters || x.so.some(s => setPasses(s, '')));
 }
+// Picking a brand, theme or subtheme, or resetting filters, leaves the Sale or trade list (back to All).
+function leaveSale() { if (listView === 'sale') listView = 'all'; }
 const owned = x => !!(mine.get(x.n) || {}).owned;
 const wanted = x => !!(mine.get(x.n) || {}).wanted;
 // Minifigures that come with a set you own count as in your collection (but aren't valued twice).
@@ -1299,7 +1301,7 @@ function paintThemeStrip() {
   const keep = el.scrollLeft;
   el.innerHTML = lead + t.join('') + (b.length ? '<span class="tsep" aria-hidden="true"></span>' : '') + b.join('');
   el.scrollLeft = keep;
-  $('themeAll')?.addEventListener('click', () => { focus = null; fi.brand.value = ''; themeOptions(); fi.theme.value = ''; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); });
+  $('themeAll')?.addEventListener('click', () => { focus = null; leaveSale(); fi.brand.value = ''; themeOptions(); fi.theme.value = ''; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); });
   $('themeWrap').hidden = !el.children.length;
   themeArrows();
 }
@@ -1869,8 +1871,8 @@ document.addEventListener('click', e => {
   if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
   if (t.dataset.focus) { focus = focus === t.dataset.focus ? null : t.dataset.focus; savePrefs(); render(); return; }
   if (t.dataset.clearfocus) { focus = null; limit = PAGE; savePrefs(); render(); return; }
-  if (t.dataset.brand) { focus = null; fi.brand.value = fi.brand.value === t.dataset.brand && t.closest('#themeStrip') ? '' : t.dataset.brand; fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
-  if (t.dataset.theme) { focus = null; if (t.closest('#themeStrip') && fi.brand.value && fi.brand.value !== 'LEGO') { fi.brand.value = ''; themeOptions(); }
+  if (t.dataset.brand) { focus = null; leaveSale(); fi.brand.value = fi.brand.value === t.dataset.brand && t.closest('#themeStrip') ? '' : t.dataset.brand; fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
+  if (t.dataset.theme) { focus = null; leaveSale(); if (t.closest('#themeStrip') && fi.brand.value && fi.brand.value !== 'LEGO') { fi.brand.value = ''; themeOptions(); }
     fi.theme.value = t.closest('#themeStrip') && fi.theme.value === t.dataset.theme ? '' : t.dataset.theme; tlFollowTheme(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
 });
 document.addEventListener('keydown', e => {
@@ -1892,7 +1894,7 @@ document.addEventListener('change', e => {
   if (el.id === 'selAll') { bulkOwn(el.checked); return; }
   if (el.dataset?.cond) { setInfo(el.dataset.cond, { cond: el.value }); return; }
   if (el.dataset?.own) { change(el.dataset.own, { owned: el.checked }); return; }
-  if (Object.values(fi).includes(el)) { focus = null; if (el === fi.brand) { fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
+  if (Object.values(fi).includes(el)) { focus = null; if (el === fi.brand || el === fi.theme || el === fi.sub) leaveSale(); if (el === fi.brand) { fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
     if (el === fi.theme) { subOptions(''); filmOptions(''); tlFollowTheme(); } limit = PAGE; savePrefs(); render();
     if (el === fi.brand && el.value) track('pick_brand', { brand: el.value });
     if (el === fi.theme && el.value) track('pick_theme', { theme: el.value }); }
@@ -1903,7 +1905,7 @@ let qT, qTrackT; $('q').addEventListener('input', () => { clearTimeout(qT); qT =
   clearTimeout(qTrackT); qTrackT = setTimeout(() => { const q = $('q').value.trim(); if (q.length >= 2) track('search', { search_term: q.slice(0, 60), results: $('rows') ? $('rows').rows.length : undefined }); }, 1500); });
 $('more').onclick = () => { limit += PAGE; render(); };
 $('moreAll').onclick = () => { limit = SHOW_ALL_MAX; render(); };
-$('fiReset').onclick = () => { focus = null; tlFilter = null; Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
+$('fiReset').onclick = () => { focus = null; tlFilter = null; leaveSale(); Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 $('gotIt').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 // Getting started shows until the person closes it (Got it or ×), with its own marker so other saved settings can't hide it.
@@ -2392,7 +2394,7 @@ $('insToggle').onclick = () => { prefs.insOpen = !prefs.insOpen; savePrefs(); pa
 paintIns();
 $('insbox').addEventListener('click', e => {
   if (e.target.closest('#insBack')) {
-    focus = null; limit = PAGE;
+    focus = null; limit = PAGE; leaveSale();
     if (fi.sub.value) { fi.sub.value = ''; }
     else if (fi.theme.value) { fi.theme.value = ''; tlFollowTheme(); subOptions(''); filmOptions(''); }
     else if (fi.brand.value) { fi.brand.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
@@ -2402,7 +2404,7 @@ $('insbox').addEventListener('click', e => {
   const g = e.target.closest('[data-insgo]'); if (!g) return;
   const sl = insSlices[Number(g.dataset.sl)]; if (!sl) return;
   const key = sl.key || sl.label;
-  focus = null;
+  focus = null; leaveSale();
   if (fi.theme.value) {
     // Already in a theme: pick the subtheme.
     if (key === 'No subtheme') return;
