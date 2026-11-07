@@ -388,7 +388,14 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px}
 .morebtns{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:400px){.pills{gap:2px}.pills .pill{padding-inline:8px;font-size:13px}.pills .pill b,.pills .pill .mono{margin-left:2px}}
 .themewrap{position:relative;margin:0 0 2px}
+.arrowwrap{position:relative}
+.tlwrap::before,.tlwrap::after{content:"";position:absolute;top:0;bottom:0;width:36px;z-index:1;pointer-events:none;opacity:0;transition:opacity .15s}
+.tlwrap.more-l::before,.tlwrap.more-r::after{opacity:1}
+.tlwrap::before{left:-6px;background:linear-gradient(to right,var(--panel),transparent)}
+.tlwrap::after{right:-6px;background:linear-gradient(to left,var(--panel),transparent)}
+.tl-strip{scrollbar-width:none}.tl-strip::-webkit-scrollbar{display:none}
 .themestrip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 8px 2px 10px;scroll-padding-inline:10px;scrollbar-width:none}
 .themestrip::-webkit-scrollbar{display:none}
 .tarrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -575,10 +582,10 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 
 <div class="wrap">
 <main>
-  <div class="themewrap" id="themeWrap" hidden>
-    <button type="button" class="tarrow prev" id="themePrev" aria-label="Scroll themes left" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <nav class="themestrip" id="themeStrip" aria-label="Jump to a theme"></nav>
-    <button type="button" class="tarrow next" id="themeNext" aria-label="Scroll themes right" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  <div class="themewrap arrowwrap" id="themeWrap" hidden>
+    <button type="button" class="tarrow prev" id="themePrev" data-dir="-1" aria-label="Scroll left" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <nav class="themestrip hstrip" id="themeStrip" aria-label="Jump to a theme"></nav>
+    <button type="button" class="tarrow next" id="themeNext" data-dir="1" aria-label="Scroll right" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
   <section class="welcome" id="welcome" hidden aria-labelledby="welcomeTitle">
     <div class="welcome-text">
@@ -1189,21 +1196,21 @@ function paintThemeStrip() {
   $('themeWrap').hidden = !el.children.length;
   themeArrows();
 }
-// Left and right arrows: show only when there is more to see that way.
-function themeArrows() {
-  const el = $('themeStrip'); if (!el) return;
-  const max = el.scrollWidth - el.clientWidth - 2;
-  const w = $('themeWrap');
+// Rows that scroll sideways (theme row, timeline): left and right arrows that show only when there is more that way.
+function updArrows(w) {
+  const el = w.querySelector('.hstrip'); if (!el) return;
+  const max = el.scrollWidth - el.clientWidth;
   // Only after a real scroll (a tap can nudge the row a few pixels), so the arrow never covers the first box.
   w.classList.toggle('more-l', el.scrollLeft > 60); w.classList.toggle('more-r', el.scrollLeft < max - 20);
-  $('themePrev').hidden = !w.classList.contains('more-l');
-  $('themeNext').hidden = !w.classList.contains('more-r');
+  w.querySelector('.tarrow.prev').hidden = !w.classList.contains('more-l');
+  w.querySelector('.tarrow.next').hidden = !w.classList.contains('more-r');
 }
+const allArrows = () => document.querySelectorAll('.arrowwrap').forEach(updArrows);
+function themeArrows() { allArrows(); }
+document.addEventListener('scroll', e => { const w = e.target.closest?.('.arrowwrap'); if (w) requestAnimationFrame(() => updArrows(w)); }, true);
+addEventListener('resize', allArrows);
+document.addEventListener('click', e => { const a = e.target.closest('.arrowwrap .tarrow'); if (!a) return; const el = a.closest('.arrowwrap').querySelector('.hstrip'); el.scrollBy({ left: Number(a.dataset.dir) * el.clientWidth * 0.8, behavior: 'smooth' }); });
 $('themeStrip').addEventListener('mousedown', e => { if (e.target.closest('.ttile')) e.preventDefault(); }); // no focus-scroll on click
-$('themeStrip').addEventListener('scroll', () => requestAnimationFrame(themeArrows), { passive: true });
-addEventListener('resize', themeArrows);
-$('themePrev').onclick = () => $('themeStrip').scrollBy({ left: -$('themeStrip').clientWidth * 0.8, behavior: 'smooth' });
-$('themeNext').onclick = () => $('themeStrip').scrollBy({ left: $('themeStrip').clientWidth * 0.8, behavior: 'smooth' });
 function popularHtml() {
   if (!popCache) { const want = new Set(POPULAR); popCache = CAT.sets.filter(x => want.has(x.n)).sort((a, b) => POPULAR.indexOf(a.n) - POPULAR.indexOf(b.n)); }
   if (!popCache.length) return '';
@@ -1375,6 +1382,8 @@ const TIMELINES = [
   ] },
 ];
 let tlOpen = false, tlId = 'star-wars', tlPick = null, tlFilter = null; // tlFilter: { fr, i } when showing one entry's sets
+// When a theme is picked, the Timeline follows it (Star Wars theme → Star Wars timeline), if there is one.
+function tlFollowTheme() { const fr = fi.theme.value && TIMELINES.find(f => f.themes.includes(fi.theme.value)); if (fr && fr.id !== tlId) { tlId = fr.id; tlPick = null; } }
 const tlLow = a => (a || []).map(s => String(s).toLowerCase());
 function inFranchise(fr, s) {
   if (fr.themes.includes(s.theme)) return true;
@@ -1400,11 +1409,11 @@ function renderTimeline() {
   el.innerHTML = `
     <div class="tl-head"><div class="tl-frs" role="group" aria-label="Franchise">${TIMELINES.map(f => `<button class="pill" data-tlfr="${f.id}" aria-pressed="${f.id === fr.id}">${esc(f.name)}</button>`).join('')}</div>
       <span class="tl-note">${fr.order || 'In story order'}${fr.unit ? ` · ${fr.unit}` : ''} <button type="button" class="tip" data-tip="Each film or show lists the sets from it across every brand, using subthemes and tags. Sets without a subtheme or tag yet won't appear here." aria-label="What is this?">i</button></span></div>
-    <ol class="tl-strip">${fr.entries.map((x, i) => { const s = stats[i], pct = s.sets.length ? Math.round(s.own / s.sets.length * 100) : 0; return `
+    <div class="arrowwrap tlwrap"><button type="button" class="tarrow prev" data-dir="-1" aria-label="Scroll left" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><ol class="tl-strip hstrip">${fr.entries.map((x, i) => { const s = stats[i], pct = s.sets.length ? Math.round(s.own / s.sets.length * 100) : 0; return `
       <li><button class="tl-card ${i === tlPick ? 'on' : ''} ${s.sets.length ? '' : 'none'} ${x.soon ? 'soon' : ''}" data-tlpick="${i}" aria-pressed="${i === tlPick}">
         <span class="tl-era">${esc(x.era || x.y)}</span><b>${esc(x.t)}</b><span class="tl-kind">${esc(x.k)} · ${esc(x.y)}</span>
         <span class="tl-count">${s.sets.length ? `${s.own}/${s.sets.length} set${s.sets.length === 1 ? '' : 's'}` : x.soon ? `Coming ${esc(x.soon)}` : 'No sets yet'}</span><span class="tl-bar"><i style="width:${pct}%"></i></span>
-      </button></li>`; }).join('')}</ol>
+      </button></li>`; }).join('')}</ol><button type="button" class="tarrow next" data-dir="1" aria-label="Scroll right" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
     <div class="tl-detail">
       <div class="tl-dtext"><span class="tl-kind">${esc(e.k)} · ${e.soon ? `coming ${esc(e.soon)}` : `released ${esc(e.y)}`}${e.era ? ` · set in ${esc(e.era.replace(/^(About|After)/, m => m.toLowerCase()))}` : ''}</span><h3>${esc(e.t)}</h3><p>${esc(e.d)}</p></div>
       <div class="tl-dstats"><b>${st.sets.length ? `${st.own} of ${st.sets.length}` : '0'}</b><span>${st.sets.length ? `sets owned${brands ? ` · ${esc(brands)}` : ''}` : 'No sets matched yet. Give sets this subtheme or tag to add them.'}</span>
@@ -1638,6 +1647,7 @@ function render() {
   $('syncBtn').title = kind === 'figs' ? 'Fetch BrickLink prices for minifigures in view that have a BrickLink #' : 'Fetch BrickLink price guide averages for the sets in view';
   pumpImages();
   paintThemeStrip();
+  allArrows();
 }
 
 /* ---------- events ---------- */
@@ -1712,7 +1722,7 @@ document.addEventListener('click', e => {
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
   if (t.id === 'filtToggle') { const o = !$('filters').classList.contains('open'); $('filters').classList.toggle('open', o); t.setAttribute('aria-expanded', o); return; }
   if (t.dataset.need) { prefs.needMode = t.dataset.need; savePrefs(); render(); return; }
-  if (t.dataset.tl) { tlOpen = true; savePrefs(); render(); track('open_timeline'); return; }
+  if (t.dataset.tl) { tlOpen = true; tlFollowTheme(); savePrefs(); render(); track('open_timeline'); return; }
   if (t.dataset.tlfr) { tlId = t.dataset.tlfr; tlPick = null; render(); return; }
   if (t.dataset.tlpick) { tlPick = Number(t.dataset.tlpick); render(); document.querySelector('.tl-card.on')?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' }); return; }
   if (t.dataset.tlshow) { tlFilter = { fr: tlId, i: Number(t.dataset.tlshow) }; tlOpen = false; kind = 'sets'; focus = null; listView = 'all'; Object.values(fi).forEach(f => { f.value = f === fi.set ? 'all' : ''; }); $('q').value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); $('boardHead').scrollIntoView({ behavior: 'smooth' }); return; }
@@ -1745,7 +1755,7 @@ document.addEventListener('click', e => {
   if (t.dataset.clearfocus) { focus = null; limit = PAGE; savePrefs(); render(); return; }
   if (t.dataset.brand) { focus = null; fi.brand.value = fi.brand.value === t.dataset.brand && t.closest('#themeStrip') ? '' : t.dataset.brand; fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
   if (t.dataset.theme) { focus = null; if (t.closest('#themeStrip') && fi.brand.value && fi.brand.value !== 'LEGO') { fi.brand.value = ''; themeOptions(); }
-    fi.theme.value = t.closest('#themeStrip') && fi.theme.value === t.dataset.theme ? '' : t.dataset.theme; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
+    fi.theme.value = t.closest('#themeStrip') && fi.theme.value === t.dataset.theme ? '' : t.dataset.theme; tlFollowTheme(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
 });
 document.addEventListener('keydown', e => {
   const el = e.target;
@@ -1767,7 +1777,7 @@ document.addEventListener('change', e => {
   if (el.dataset?.cond) { setInfo(el.dataset.cond, { cond: el.value }); return; }
   if (el.dataset?.own) { change(el.dataset.own, { owned: el.checked }); return; }
   if (Object.values(fi).includes(el)) { focus = null; if (el === fi.brand) { fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
-    if (el === fi.theme) { subOptions(''); filmOptions(''); } limit = PAGE; savePrefs(); render();
+    if (el === fi.theme) { subOptions(''); filmOptions(''); tlFollowTheme(); } limit = PAGE; savePrefs(); render();
     if (el === fi.brand && el.value) track('pick_brand', { brand: el.value });
     if (el === fi.theme && el.value) track('pick_theme', { theme: el.value }); }
   Object.values(fi).forEach(s => s.classList.toggle('set-on', s.value !== '' && s.value !== 'all'));
@@ -2200,6 +2210,7 @@ const RELEASES = [
     ['Jurassic timeline', 'Jurassic Park to Rebirth, plus Camp Cretaceous and Chaos Theory, in story order.'],
     ['Indiana Jones timeline', 'did you know Temple of Doom comes before Raiders? All five films in story order.'],
     ['Bionicle timeline', 'every wave in story order, starting with the Metru Nui prequel.'],
+    ['Timeline follows your theme', 'pick Harry Potter and the Timeline jumps to the Harry Potter story, with arrows to scroll along.'],
   ] },
   { v: '0.11', date: '4 November 2026', title: 'Save and collect', items: [
     ['Save your collection', 'sign up for free (no password) to save your collection and keep it on every device.'],
@@ -2253,7 +2264,7 @@ $('newsLink').onclick = e => { e.preventDefault(); openNews(); };
 $('newsClose').onclick = () => $('newsDlg').close();
 $('newsDlg').addEventListener('click', e => { if (e.target === $('newsDlg')) $('newsDlg').close(); });
 // The pill shows to returning visitors when there's a release they haven't seen. First-time visitors get Getting started instead.
-{ const seen = lsGet('bc-seen-version'); if (!seen && !lsGet('bc-start')) lsSet('bc-seen-version', VERSION); else if (seen !== VERSION) $('newsPill').hidden = false; }
+{ const seen = lsGet('bc-seen-version'); if (!seen && !lsGet('bc-start')) lsSet('bc-seen-version', VERSION); /* header pill switched off for now: What's new stays in the footer */ }
 
 /* ---------- account ---------- */
 const dlg = $('authDlg');
