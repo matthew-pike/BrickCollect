@@ -285,6 +285,8 @@ tr.fromset .nm::after{white-space:nowrap;display:inline-block;content:"IN YOUR S
 .muted{color:var(--muted)}
 .nm{font-weight:500;min-width:240px}
 .nm small{display:block;font-weight:400;color:var(--faint);font-size:11.5px}
+.retb{display:inline-block;vertical-align:1px;margin-left:6px;font-family:var(--font-mono);font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;line-height:1;padding:3px 5px 2px;border-radius:4px;border:1px solid var(--faint);color:var(--muted);white-space:nowrap;cursor:help}
+.retb.soon{border-color:var(--coral);color:var(--coral)}
 .sub{color:var(--accent);font-weight:500}
 td.sub{min-width:150px}
 .sub small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
@@ -677,7 +679,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
       <b id="bulkLabel">Set for the sets in view</b>
-      <select id="bulkField" aria-label="Field to set" style="width:auto"><option value="sub">Set subtheme</option><option value="tag">Add tag</option><option value="untag">Remove tag</option></select>
+      <select id="bulkField" aria-label="Field to set" style="width:auto"><option value="sub">Set subtheme</option><option value="tag">Add tag</option><option value="untag">Remove tag</option><option value="ret:R">Mark retired</option><option value="ret:A">Mark not retired</option><option value="ret:auto">Retired: automatic</option></select>
       <input class="inp" id="bulkSub" list="subNames" placeholder="e.g. Microfighters" aria-label="Value" style="width:240px;max-width:100%">
       <button class="btn mini primary" type="submit" id="bulkApply">Apply</button>
       <button class="btn mini" type="button" id="bulkClear" title="Remove this value from these sets">Clear</button>
@@ -727,7 +729,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
       <a href="#" id="footHome">Back to top</a>
     </nav>
   </div>
-  <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span id="ratesNote"></span></p>
+  <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span>Retirement dates from <a href="https://brickset.com/" target="_blank" rel="noopener">Brickset</a></span><span id="ratesNote"></span></p>
   <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © Rebrickable, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Converted prices are approximate.</p>
   <p class="fine"><b>Affiliate disclosure:</b> some links on BrickCollect are affiliate links, including the buttons to retailers’ websites. If you buy something through them, The Art of Bricks may earn a small commission at no extra cost to you. This helps keep BrickCollect free, and it never affects the prices shown or which sets are listed.</p>
 </footer>
@@ -898,7 +900,8 @@ function buildCatalog(raw) {
    Shared (curated by the site owner): prices, BrickLink #s, subthemes, films, other brands, rates. */
 let uid = null, isOwner = false, saveMode = 'loading'; // 'cloud' | 'local' | 'loading'
 const shared = new Map(); // n -> { used, new, bl, pricedAt, priceSource }
-const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice', 'loc'];
+const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice', 'loc', 'ret', 'exit', 'manualRet'];
+const OWNER_ONLY = new Set(['bl', 'manualPrice', 'ret', 'exit', 'manualRet']);
 // Where BrickLink prices come from: sellers in one location, or 'world'. Defaults to the location that matches your currency.
 const LOCS = { AU: 'Australia', US: 'United States', CA: 'Canada', EU: 'Europe (EU)', UK: 'United Kingdom', world: 'Worldwide' };
 const LOC_FOR_CUR = { AUD: 'AU', USD: 'US', CAD: 'CA', EUR: 'EU', GBP: 'UK' };
@@ -916,6 +919,25 @@ function info(n) {
   for (const k of ['used', 'new']) if (me[k] !== undefined && me[k] !== null) out[k] = me[k];
   out.owned = !!me.owned;
   return out;
+}
+/* Retired: from Brickset (weekly job: ret R / S / A, exit date), set by hand by the site owner (manualRet),
+   or, with neither, LEGO sets released 5 or more years ago count as retired. */
+const RET_AGE = 5;
+function retState(x) {
+  if (!x || x.k !== 's') return null;
+  const sh = shared.get(x.n) || {};
+  if (sh.ret === 'A') return null;
+  if (sh.ret === 'S') return sh.exit && Date.parse(sh.exit) <= Date.now() ? 'R' : 'S';
+  if (sh.ret === 'R') return 'R';
+  return x.brand === 'LEGO' && x.year && x.year <= new Date().getFullYear() - RET_AGE ? 'R' : null;
+}
+const monthYear = d => { const t = Date.parse(d || ''); return Number.isFinite(t) ? new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : ''; };
+function retBadge(x) {
+  const st = retState(x); if (!st) return '';
+  const sh = shared.get(x.n) || {}, when = monthYear(sh.exit);
+  const src = sh.manualRet ? '' : sh.ret ? ' (from Brickset)' : '';
+  const title = st === 'S' ? `LEGO plans to retire this set${when ? ` by ${when}` : ' soon'}${src}` : `No longer made by ${esc(x.brand)}${when ? ` (retired ${when})` : ''}${src}`;
+  return ` <span class="retb${st === 'S' ? ' soon' : ''}" title="${esc(title)}">${st === 'S' ? 'Retiring soon' : 'Retired'}</span>`;
 }
 const hasMineData = v => v && (v.owned || v.wanted || SHARED_KEYS.some(k => v[k] != null));
 const personalObj = () => { const o = {}; for (const [k, v] of mine) if (hasMineData(v)) o[k] = v; return o; };
@@ -1009,7 +1031,7 @@ function setInfo(n, patch, { quiet } = {}) {
       // A price you type stays put: the twice-daily refresh skips it until you clear it.
       if ((k === 'used' || k === 'new') && !('manualPrice' in patch)) sharedPatch.manualPrice = patch[k] != null ? true : null;
     }
-    else if (k === 'bl' || k === 'manualPrice') continue; // only the site owner sets BrickLink numbers
+    else if (OWNER_ONLY.has(k)) continue; // only the site owner sets BrickLink numbers and retired status
     else if (patch[k] == null) delete me[k]; else me[k] = patch[k];
   }
   mine.set(n, me);
@@ -1608,7 +1630,7 @@ function render() {
     <tr class="${owned(x) ? 'owned' : fromSet(x) ? 'fromset' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
       <td class="c-own"><div class="ownc"><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${has(x) ? 'checked' : ''} ${fromSet(x) ? 'disabled title="Comes with a set you own"' : ''} aria-label="I own ${esc(x.name)}">${has(x) ? '' : `<button class="star" data-want="${esc(x.n)}" aria-pressed="${wanted(x)}" title="${wanted(x) ? 'Remove from wanted' : 'Add to wanted'}" aria-label="${wanted(x) ? 'Remove' : 'Add'} ${esc(x.name)} ${wanted(x) ? 'from' : 'to'} wanted"><svg width="16" height="16" viewBox="0 0 24 24" fill="${wanted(x) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg></button>`}</div></td>
       <td class="c-img">${thumb(x)}</td>
-      <td class="nm c-nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
+      <td class="nm c-nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>${retBadge(x)}` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
       <td class="c-cond">${condCell(x)}</td>
       ${fi.brand.value || x.k === 'm' ? '' : `<td class="muted c-brand">${x.brand}</td>`}
       <td class="sub c-sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}${tagCell(x)}</td>
@@ -1662,7 +1684,7 @@ function render() {
   $('bulkBtn').disabled = !isScoped || !rows.length;
   $('bulkBtn').title = kind !== 'sets' ? (!isScoped ? 'Search or filter first, then tag every minifigure in view (e.g. a collection like Knights of Ren)' : `Add or remove a tag for the ${rows.length.toLocaleString()} minifigures in view`) : !isScoped ? 'Filter or search first, then set the subtheme or a tag for every set in view' : `Set the subtheme or a tag for the ${rows.length.toLocaleString()} sets in view`;
   bulkRows = isScoped ? rows : [];
-  { const f = $('bulkField'), sub = f.querySelector('[value=sub]'); sub.hidden = sub.disabled = kind !== 'sets'; if (kind !== 'sets' && f.value === 'sub') { f.value = 'tag'; f.onchange(); } }
+  { const f = $('bulkField'), sub = f.querySelector('[value=sub]'); sub.hidden = sub.disabled = kind !== 'sets'; for (const o of f.querySelectorAll('[value^="ret:"]')) o.hidden = o.disabled = kind !== 'sets'; if (kind !== 'sets' && (f.value === 'sub' || f.value.startsWith('ret:'))) { f.value = 'tag'; f.onchange(); } }
   if (!$('bulkbar').hidden) { if (!bulkRows.length) $('bulkbar').hidden = true; else $('bulkLabel').textContent = kind === 'sets' ? `Set for the ${bulkRows.length.toLocaleString()} set${bulkRows.length > 1 ? 's' : ''} in view` : `Tag the ${bulkRows.length.toLocaleString()} minifigure${bulkRows.length > 1 ? 's' : ''} in view`; }
   $('syncBtn').title = kind === 'figs' ? 'Fetch BrickLink prices for minifigures in view that have a BrickLink #' : 'Fetch BrickLink price guide averages for the sets in view';
   pumpImages();
@@ -1960,6 +1982,20 @@ function editTags(sets, tag, remove) {
   applyOverrides(); render(); touched.forEach(t => saveSubDoc(t));
   return n;
 }
+// Owner: mark the sets in view retired (R), not retired (A), or back to automatic (Brickset / age rule).
+function bulkRetired(mode) {
+  if (!canCurate()) return;
+  const rows = bulkRows.filter(x => x.k === 's'); if (!rows.length) return;
+  for (const x of rows) {
+    const sh = { ...(shared.get(x.n) || {}) };
+    if (mode === 'auto') { if (sh.manualRet) { delete sh.ret; delete sh.exit; } delete sh.manualRet; }
+    else { sh.ret = mode; sh.manualRet = true; delete sh.exit; }
+    shared.set(x.n, sh); saveShared(x.n);
+  }
+  render();
+  const w = `${rows.length.toLocaleString()} set${rows.length > 1 ? 's' : ''}`;
+  toast(mode === 'R' ? `Marked ${w} retired` : mode === 'A' ? `Marked ${w} not retired` : `${w} back to automatic (Brickset or age)`);
+}
 function bulkSet(value) {
   if (!canCurate()) { toast('Only the site owner can change subthemes.'); return; }
   const field = $('bulkField').value;
@@ -1989,10 +2025,10 @@ function bulkSet(value) {
   const what = field === 'film' ? 'film or series' : 'subtheme';
   toast(value ? `Set ${rows.length.toLocaleString()} sets to ${value}` : `Cleared the ${what} on ${rows.length.toLocaleString()} sets`);
 }
-$('bulkField').onchange = () => { const f = $('bulkField').value, t = f !== 'sub'; $('bulkSub').setAttribute('list', t ? 'filmNames' : 'subNames'); $('bulkSub').placeholder = t ? 'e.g. Helmet Collection' : 'e.g. Microfighters'; $('bulkClear').hidden = t; $('bulkSub').focus(); };
+$('bulkField').onchange = () => { const f = $('bulkField').value, t = f !== 'sub', r = f.startsWith('ret:'); $('bulkSub').hidden = r; if (r) { $('bulkClear').hidden = true; $('bulkApply').focus(); return; } $('bulkSub').setAttribute('list', t ? 'filmNames' : 'subNames'); $('bulkSub').placeholder = t ? 'e.g. Helmet Collection' : 'e.g. Microfighters'; $('bulkClear').hidden = t; $('bulkSub').focus(); };
 $('bulkBtn').onclick = () => { $('bulkbar').hidden = false; render(); $('bulkSub').focus(); };
 $('bulkCancel').onclick = () => { $('bulkbar').hidden = true; };
-$('bulkbar').addEventListener('submit', e => { e.preventDefault(); const v = $('bulkSub').value.trim(); if (!v) { $('bulkSub').focus(); return; } bulkSet(v); });
+$('bulkbar').addEventListener('submit', e => { e.preventDefault(); if ($('bulkField').value.startsWith('ret:')) { bulkRetired($('bulkField').value.slice(4)); return; } const v = $('bulkSub').value.trim(); if (!v) { $('bulkSub').focus(); return; } bulkSet(v); });
 $('bulkClear').onclick = () => bulkSet('');
 
 /* ---------- select all ---------- */
@@ -2226,6 +2262,9 @@ async function saveCsv(name, csv, what) {
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.13', date: '8 November 2026', title: 'Retired', items: [
+    ['Retired badge', 'sets LEGO no longer makes are marked Retired, and sets about to go are marked Retiring soon, so you know what to grab while you still can. Retirement dates come from Brickset.'],
+  ] },
   { v: '0.12', date: '7 November 2026', title: 'Jump in', items: [
     ['Theme row', 'tap a theme at the top of the page, like Star Wars, Technic or Jurassic World, to jump straight to it.'],
     ['Jurassic timeline', 'Jurassic Park to Rebirth, plus Camp Cretaceous and Chaos Theory, in story order.'],
