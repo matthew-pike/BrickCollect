@@ -36,7 +36,7 @@
 :root{
   --bg:#0a1120; --panel:#0f192d; --panel-2:#131f37; --line:#1e2b47; --line-2:#2a3a5c;
   --fg:#e5ebf6; --muted:#8693ae; --faint:#5b6886;
-  --accent:#1fb3e5; --accent-ink:#04121b;--coral:#ff6b57;--coral-ink:#2a0d07;--bl-hv:#0a86b8;--bl-bg:#ffffff;--bl-ink:#1e3f80;--bl-ring:#1e3f80; --good:#2fcf7c; --violet:#a98bff; --stud:#f2c200; --danger:#f0566a;
+  --accent:#1fb3e5; --accent-ink:#04121b;--coral:#ff6b57;--coral-ink:#2a0d07;--admin:#6b7888;--admin-ink:#ffffff;--admin-fg:#b3bdca;--bl-hv:#0a86b8;--bl-bg:#ffffff;--bl-ink:#1e3f80;--bl-ring:#1e3f80; --good:#2fcf7c; --violet:#a98bff; --stud:#f2c200; --danger:#f0566a;
   --font-display:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
   --font-body:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
   --font-mono:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -45,18 +45,18 @@
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]):not([data-theme="mid"]){
   --bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1;
   --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab;
-  --accent:#0a86b8; --accent-ink:#ffffff;--coral:#e8513d;--coral-ink:#ffffff;--bl-hv:#0a86b8;--bl-bg:#ffffff;--bl-ink:#1e3f80;--bl-ring:#1e3f80; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
+  --accent:#0a86b8; --accent-ink:#ffffff;--coral:#e8513d;--coral-ink:#ffffff;--admin:#6b7888;--admin-ink:#ffffff;--admin-fg:#4f5b69;--bl-hv:#0a86b8;--bl-bg:#ffffff;--bl-ink:#1e3f80;--bl-ring:#1e3f80; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
   color-scheme:light}}
 :root[data-theme="mid"]{
   /* Mid: a softer slate between the night navy and the light theme */
   --bg:#1f2838; --panel:#273244; --panel-2:#2d394d; --line:#38465e; --line-2:#475771;
   --fg:#edf1f7; --muted:#aab5c8; --faint:#8190a8;
-  --accent:#2bbdeb; --accent-ink:#04121b;--coral:#ff6b57;--coral-ink:#2a0d07;--bl-hv:#0a86b8;--bl-bg:#ffffff;--bl-ink:#1e3f80;--bl-ring:#1e3f80; --good:#3dd68a; --violet:#b9a3ff; --stud:#f2c200; --danger:#ff7085;
+  --accent:#2bbdeb; --accent-ink:#04121b;--coral:#ff6b57;--coral-ink:#2a0d07;--admin:#6b7888;--admin-ink:#ffffff;--admin-fg:#b3bdca;--bl-hv:#0a86b8;--bl-bg:#ffffff;--bl-ink:#1e3f80;--bl-ring:#1e3f80; --good:#3dd68a; --violet:#b9a3ff; --stud:#f2c200; --danger:#ff7085;
   color-scheme:dark}
 :root[data-theme="light"]{
   --bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1;
   --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab;
-  --accent:#0a86b8; --accent-ink:#ffffff;--coral:#e8513d;--coral-ink:#ffffff;--bl-hv:#0a86b8;--bl-bg:#ffffff;--bl-ink:#1e3f80;--bl-ring:#1e3f80; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
+  --accent:#0a86b8; --accent-ink:#ffffff;--coral:#e8513d;--coral-ink:#ffffff;--admin:#6b7888;--admin-ink:#ffffff;--admin-fg:#4f5b69;--bl-hv:#0a86b8;--bl-bg:#ffffff;--bl-ink:#1e3f80;--bl-ring:#1e3f80; --good:#14915a; --violet:#6d4fd8; --stud:#d9a900; --danger:#c8283f;
   color-scheme:light}
 
 *{box-sizing:border-box}
@@ -391,12 +391,12 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px}
 .morebtns{display:flex;gap:8px;flex-wrap:wrap}
-/* Owner-only tools in coral, so they stand apart from the aqua buttons everyone uses. */
-#syncBtn{background:var(--coral);border-color:var(--coral);color:var(--coral-ink)}
-#syncBtn:hover:not(:disabled){filter:brightness(1.08)}
-#bulkBtn:not(:disabled),#addBtn,[data-editset]{border-color:var(--coral);color:var(--coral)}
-#bulkBtn:not(:disabled):hover,#addBtn:hover,[data-editset]:hover{background:color-mix(in srgb,var(--coral) 12%,transparent)}
-.subedit,.tagadd{color:var(--coral)!important}
+/* Owner-only tools in moonstone (the brand colour), quiet and separate from the aqua buttons everyone uses. */
+#syncBtn{background:var(--admin);border-color:var(--admin);color:var(--admin-ink)}
+#syncBtn:hover:not(:disabled){filter:brightness(1.1)}
+#bulkBtn:not(:disabled),#addBtn,[data-editset]{border-color:var(--admin);color:var(--admin-fg)}
+#bulkBtn:not(:disabled):hover,#addBtn:hover,[data-editset]:hover{background:color-mix(in srgb,var(--admin) 18%,transparent)}
+.subedit,.tagadd{color:var(--admin-fg)!important}
 @media (max-width:400px){.pills{gap:2px}.pills .pill{padding-inline:8px;font-size:13px}.pills .pill b,.pills .pill .mono{margin-left:2px}}
 .themewrap{position:relative;margin:0 0 2px}
 .arrowwrap{position:relative}
