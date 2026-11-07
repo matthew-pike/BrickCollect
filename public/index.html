@@ -402,10 +402,10 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .ttile{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:6px;width:96px;padding:8px 6px 9px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;font:inherit}
 .ttile:hover{border-color:var(--accent)}
 .ttile.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--panel))}
-.ttile .tpic{width:76px;height:56px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ttile .tpic{width:76px;height:56px;box-sizing:border-box;padding:6px 7px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .ttile .tpic img{max-width:100%;max-height:100%;object-fit:contain}
 .ttile .tname{font-size:12px;font-weight:600;line-height:1.2;text-align:center}
-@media (max-width:640px){.ttile{width:84px}.ttile .tpic{width:66px;height:48px}}
+@media (max-width:640px){.ttile{width:84px}.ttile .tpic{width:66px;height:48px;padding:5px 6px}}
 #tfoot td{padding:10px 12px;border-top:1px solid var(--line-2);font-size:12.5px;white-space:nowrap}
 #tfoot .totrow + .totrow td{border-top:1px dashed var(--line)}
 #tfoot td.num{font-weight:600;color:var(--fg)}
