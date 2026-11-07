@@ -505,7 +505,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .soldbtn.confirm{background:var(--violet);color:#fff}
 .soldbtn:focus-visible{outline:2px solid var(--accent)}
 .buy{--bd:var(--stud);--hv:#000;background:var(--stud);border-color:var(--bd);color:#1a1300;font-weight:600}
-.buy-lego{--bd:#a3000c;--hv:#ffed00;background:#ff3d44;border:1px solid var(--bd);color:#fff;font-weight:500}
+.buy-lego{--bd:#e3000b;--hv:#8a0008;background:#fff;border:1px solid var(--bd);color:#e3000b;font-weight:600}
 .buy-pantasy{--bd:#f2bedb;--hv:#fff;background:#14259a;border:2px solid var(--bd);color:#f2bedb;font-weight:700;letter-spacing:.02em;padding:4px 8px}
 .buy-lumibricks{--bd:#fbf8f1;--hv:#3a1500;background:#ff6a00;border:2px solid var(--bd);color:#fbf8f1;font-weight:700;letter-spacing:.02em;padding:4px 8px}
 .buy-cada{--bd:#e60012;--hv:#ff4d5a;background:#111214;border:2px solid var(--bd);color:#fff;font-weight:700;letter-spacing:.02em;padding:4px 8px}
@@ -517,7 +517,8 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 /* No borders on the store and BrickLink buttons: just the colour (padding makes up the old border so sizes stay the same) */
 .btn.mini.buy,.btn.mini.bl{border:0;padding:6px 10px}
 .btn.mini.bl{box-shadow:inset 0 0 0 1px var(--bl-ring,transparent)}
-.btn.mini.buy-lego{box-shadow:inset 0 0 0 1.5px var(--bd)}
+.btn.mini.buy-lego{box-shadow:inset 0 0 0 1.5px var(--bd);transition:color .15s ease,box-shadow .15s ease}
+.btn.mini.buy-lego:hover,.btn.mini.buy-lego:focus-visible{color:var(--hv);box-shadow:inset 0 0 0 1.5px var(--hv)}
 .btn.buy-wide{gap:5px;padding:6px 11px;font-size:12px;letter-spacing:0}
 .btn.buy:hover{border-color:var(--bd);color:var(--hv)}
 .btn.bl:hover{border-color:var(--bl-bg,var(--accent));color:var(--bl-hv)}
