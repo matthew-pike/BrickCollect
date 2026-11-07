@@ -411,12 +411,13 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .themewrap::after{right:0;background:linear-gradient(to left,var(--bg),transparent)}
 .ttile{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:6px;width:96px;padding:8px 6px 9px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;font:inherit}
 .ttile:hover{border-color:var(--accent)}
+.tsep{flex:none;width:1px;align-self:stretch;margin:10px 4px;background:var(--line-2)}
 .ttile.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--panel))}
 .ttile .tpic{width:76px;height:56px;box-sizing:border-box;padding:6px 7px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .ttile .tpic img{max-width:100%;max-height:100%;object-fit:contain}
 .ttile .tname{font-size:12px;font-weight:600;line-height:1.2;text-align:center}
 .ttile.tlead{justify-content:center;gap:4px;border-style:dashed;border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 10%,var(--panel));cursor:default}
-.ttile.tlead .tname{font-size:15px;font-weight:700;color:var(--accent)}
+.ttile.tlead .tname{font-size:14px;font-weight:700;color:var(--accent);line-height:1.15}
 .ttile.tlead small{font-size:11px;color:var(--muted);text-align:center}
 button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 @media (max-width:640px){.ttile{width:84px}.ttile .tpic{width:66px;height:48px;padding:5px 6px}}
@@ -592,7 +593,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 <main>
   <div class="themewrap arrowwrap" id="themeWrap" hidden>
     <button type="button" class="tarrow prev" id="themePrev" data-dir="-1" aria-label="Scroll left" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <nav class="themestrip hstrip" id="themeStrip" aria-label="Jump to a theme"></nav>
+    <nav class="themestrip hstrip" id="themeStrip" aria-label="Jump to a theme or brand"></nav>
     <button type="button" class="tarrow next" id="themeNext" data-dir="1" aria-label="Scroll right" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
   <section class="welcome" id="welcome" hidden aria-labelledby="welcomeTitle">
@@ -1195,10 +1196,10 @@ function paintThemeStrip() {
   // First box: "Pick a theme" as a label, or "Show all" once a theme or brand is picked.
   const picked = fi.theme.value || (fi.brand.value && fi.brand.value !== 'LEGO');
   const lead = picked
-    ? `<button type="button" class="ttile tlead" id="themeAll" title="Show all themes and brands"><span class="tname">Show all</span><small>themes</small></button>`
-    : `<div class="ttile tlead" aria-hidden="true"><span class="tname">Pick a theme</span><small>or scroll for more</small></div>`;
+    ? `<button type="button" class="ttile tlead" id="themeAll" title="Show all themes and brands"><span class="tname">Show all</span><small>themes and brands</small></button>`
+    : `<div class="ttile tlead" aria-hidden="true"><span class="tname">Pick a theme or brand</span><small>scroll for more</small></div>`;
   const keep = el.scrollLeft;
-  el.innerHTML = lead + t.join('') + b.join('');
+  el.innerHTML = lead + t.join('') + (b.length ? '<span class="tsep" aria-hidden="true"></span>' : '') + b.join('');
   el.scrollLeft = keep;
   $('themeAll')?.addEventListener('click', () => { focus = null; fi.brand.value = ''; themeOptions(); fi.theme.value = ''; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); });
   $('themeWrap').hidden = !el.children.length;
