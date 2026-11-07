@@ -213,7 +213,7 @@ button.hitile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .hitile .hv small.soon{font-size:12px;font-weight:500;color:var(--coral)}
 .hitile .hret{grid-row:1/4;width:48px;height:48px;border-radius:7px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:var(--muted)}
 .insempty{margin:0;font-size:13px;color:var(--muted)}
-@media (max-width:1100px){.insgrid{grid-template-columns:220px minmax(0,1fr)}.inshi{grid-column:1/-1;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;order:0}}
+@media (max-width:1100px){.insgrid{grid-template-columns:220px minmax(0,1fr)}.inshi{grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;order:0}}
 @media (max-width:900px){.inshi{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.insgrid{grid-template-columns:1fr}.insdonut{margin:0 auto}.insbox .sellq .muted{display:none}}
 @media (max-width:480px){.inshi{gap:8px}.hitile{grid-template-columns:1fr;padding:9px 10px}.hitile .hpic,.hitile .hret{display:none}.hitile .hv{font-size:15px}}
@@ -2378,14 +2378,12 @@ function renderInsights() {
   const big = best(own, x => Number(x.pieces) || null);
   const one = x => { const i = info(x.n), q = copiesOf(x); let m = null; for (const c of CONDS) if (q[c]) { const p = valueOne(i, c); if (p != null && (m == null || p > m)) m = p; } return m; };
   const val = best(own, one);
-  const old = best(own, x => x.year ? -x.year : null);
   const nm = x => `${x.name} · ${shownNum(x)}`;
   const rR = own.filter(x => retState(x) === 'R').length, rS = own.filter(x => retState(x) === 'S').length;
   $('insHi').innerHTML = [
     big && tile('Biggest set', big.x, `${big.v.toLocaleString()} pcs`, nm(big.x)),
     val && tile('Most valuable', val.x, money(val.v), nm(val.x)),
-    old && tile('Oldest set', old.x, String(-old.v), nm(old.x)),
-    rR ? (() => { const used = new Set([big?.x, val?.x, old?.x].filter(Boolean).map(x => x.n)), rets = own.filter(x => retState(x) === 'R'), fresh = rets.filter(x => !used.has(x.n)); const r = best(fresh.length ? fresh : rets, x => one(x) ?? (x.pieces ? x.pieces / 1e6 : 0)).x; return `<button type="button" class="hitile" data-zoom="${esc(r.n)}" title="${esc(r.name)}: view a larger picture. Retirement dates from Brickset; LEGO sets 5+ years old count as retired.">${pic(r)}<span class="hk">Retired</span><span class="hv">${rR.toLocaleString()} set${rR === 1 ? '' : 's'}${rS ? ` <small class="soon">· ${rS} retiring soon</small>` : ''}</span><span class="hn">${esc(nm(r))}</span></button>`; })()
+    rR ? (() => { const used = new Set([big?.x, val?.x].filter(Boolean).map(x => x.n)), rets = own.filter(x => retState(x) === 'R'), fresh = rets.filter(x => !used.has(x.n)); const r = best(fresh.length ? fresh : rets, x => one(x) ?? (x.pieces ? x.pieces / 1e6 : 0)).x; return `<button type="button" class="hitile" data-zoom="${esc(r.n)}" title="${esc(r.name)}: view a larger picture. Retirement dates from Brickset; LEGO sets 5+ years old count as retired.">${pic(r)}<span class="hk">Retired</span><span class="hv">${rR.toLocaleString()} set${rR === 1 ? '' : 's'}${rS ? ` <small class="soon">· ${rS} retiring soon</small>` : ''}</span><span class="hn">${esc(nm(r))}</span></button>`; })()
       : `<div class="hitile" title="Retirement dates from Brickset"><span class="hret">R</span><span class="hk">Retired</span><span class="hv">None yet</span><span class="hn${rS ? ' soon' : ''}">${rS ? `${rS} retiring soon` : `of ${own.length.toLocaleString()} you own`}</span></div>`,
   ].filter(Boolean).join('');
 }
@@ -2497,7 +2495,7 @@ async function saveCsv(name, csv, what) {
 const RELEASES = [
   { v: '0.13', date: '7 November 2026', title: 'Your collection at a glance', items: [
     ['Collection insights', 'a chart of your sets by brand and theme (or subtheme), by number of sets, value or pieces. Tap a theme to jump to it.'],
-    ['Highlights', 'your biggest set, most valuable set, oldest set and how many have retired.'],
+    ['Highlights', 'your biggest set, your most valuable set and how many have retired.'],
     ['Sell or trade', 'the selling box is now called Sell or trade, with the switch to your sale or trade list inside it.'],
   ] },
   { v: '0.12', date: '7 November 2026', title: 'Jump in', items: [
