@@ -1182,7 +1182,9 @@ function paintThemeStrip() {
   const lead = picked
     ? `<button type="button" class="ttile tlead" id="themeAll" title="Show all themes and brands"><span class="tname">Show all</span><small>themes</small></button>`
     : `<div class="ttile tlead" aria-hidden="true"><span class="tname">Pick a theme</span><small>or scroll for more</small></div>`;
+  const keep = el.scrollLeft;
   el.innerHTML = lead + t.join('') + b.join('');
+  el.scrollLeft = keep;
   $('themeAll')?.addEventListener('click', () => { focus = null; fi.brand.value = ''; themeOptions(); fi.theme.value = ''; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); });
   $('themeWrap').hidden = !el.children.length;
   themeArrows();
@@ -1192,10 +1194,12 @@ function themeArrows() {
   const el = $('themeStrip'); if (!el) return;
   const max = el.scrollWidth - el.clientWidth - 2;
   const w = $('themeWrap');
-  w.classList.toggle('more-l', el.scrollLeft > 2); w.classList.toggle('more-r', el.scrollLeft < max);
+  // Only after a real scroll (a tap can nudge the row a few pixels), so the arrow never covers the first box.
+  w.classList.toggle('more-l', el.scrollLeft > 60); w.classList.toggle('more-r', el.scrollLeft < max - 20);
   $('themePrev').hidden = !w.classList.contains('more-l');
   $('themeNext').hidden = !w.classList.contains('more-r');
 }
+$('themeStrip').addEventListener('mousedown', e => { if (e.target.closest('.ttile')) e.preventDefault(); }); // no focus-scroll on click
 $('themeStrip').addEventListener('scroll', () => requestAnimationFrame(themeArrows), { passive: true });
 addEventListener('resize', themeArrows);
 $('themePrev').onclick = () => $('themeStrip').scrollBy({ left: -$('themeStrip').clientWidth * 0.8, behavior: 'smooth' });
