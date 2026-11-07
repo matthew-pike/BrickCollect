@@ -1439,7 +1439,7 @@ const COLS = () => [
   { key: 'pieces', label: 'Pieces', cls: 'num' },
   { key: 'used', label: `Used ${cur()}`, cls: 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
   { key: 'new', label: `New ${cur()}`, cls: 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or the brand’s own store price for LumiBricks, Pantasy, CaDA and Mould King. In your currency.` },
-  { label: 'Links', cls: 'num', tip: 'The coloured button opens the set at the brand’s own store (some are affiliate links that support BrickCollect). BL opens it on BrickLink.' },
+  { label: 'Links ↗', cls: 'num', tip: 'Each button opens a new tab. The coloured button opens the set at the brand’s own store (some are affiliate links that support BrickCollect). BL opens it on BrickLink.' },
 ];
 const val = (x, k) => k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
 
