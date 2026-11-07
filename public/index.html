@@ -391,6 +391,12 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px}
 .morebtns{display:flex;gap:8px;flex-wrap:wrap}
+/* Owner-only tools in coral, so they stand apart from the aqua buttons everyone uses. */
+#syncBtn{background:var(--coral);border-color:var(--coral);color:var(--coral-ink)}
+#syncBtn:hover:not(:disabled){filter:brightness(1.08)}
+#bulkBtn:not(:disabled),#addBtn,[data-editset]{border-color:var(--coral);color:var(--coral)}
+#bulkBtn:not(:disabled):hover,#addBtn:hover,[data-editset]:hover{background:color-mix(in srgb,var(--coral) 12%,transparent)}
+.subedit,.tagadd{color:var(--coral)!important}
 @media (max-width:400px){.pills{gap:2px}.pills .pill{padding-inline:8px;font-size:13px}.pills .pill b,.pills .pill .mono{margin-left:2px}}
 .themewrap{position:relative;margin:0 0 2px}
 .arrowwrap{position:relative}
