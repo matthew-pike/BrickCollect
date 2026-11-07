@@ -1642,9 +1642,14 @@ function render() {
     else {
       const tot = list => list.reduce((t, x) => { const i = info(x.n); if (i.used != null) t.u += i.used; if (i.new != null) t.n += i.new; if (i.used == null && i.new == null) t.miss++; return t; }, { u: 0, n: 0, miss: 0 });
       const noun = c => `${c.toLocaleString()} ${kind === 'sets' ? (c === 1 ? 'set' : 'sets') : (c === 1 ? 'minifigure' : 'minifigures')}`;
-      const line = (label, list) => { const t = tot(list); return `<tr class="totrow"><td colspan="${iu}"><b>${label}</b> <span class="muted">${noun(list.length)}${t.miss ? ` · ${t.miss.toLocaleString()} without a price` : ''}</span></td><td class="num" data-l="Used">${money(t.u)}</td><td class="num" data-l="New">${money(t.n)}</td><td colspan="${cols.length - iu - 2}"></td></tr>`; };
-      const mineRows = rows.filter(has);
-      tf.innerHTML = line('Total', rows) + (mineRows.length && mineRows.length < rows.length ? line('Yours', mineRows) : '');
+      // Same terms as the cards above: Yours (and its value by condition and copies, like Collection value),
+      // Still to get (like To complete), then everything listed.
+      const line = (label, list, note = '') => { const t = tot(list); return `<tr class="totrow"><td colspan="${iu}"><b>${label}</b> <span class="muted">${noun(list.length)}${note}${t.miss ? ` · ${t.miss.toLocaleString()} without a price` : ''}</span></td><td class="num" data-l="Used">${money(t.u)}</td><td class="num" data-l="New">${money(t.n)}</td><td colspan="${cols.length - iu - 2}"></td></tr>`; };
+      const mineRows = rows.filter(has), getRows = rows.filter(x => !has(x));
+      const val = mineRows.reduce((t, x) => t + (valueOf(x) || 0), 0);
+      tf.innerHTML = (mineRows.length ? line('Yours', mineRows, ` · worth ${money(val)} ${cur()} by condition`) : '')
+        + (mineRows.length && getRows.length ? line('Still to get', getRows) : '')
+        + line(mineRows.length && getRows.length ? 'All' : 'Total', rows);
     } }
   { const left = rows.length - limit;
     $('more').hidden = left <= 0; $('more').textContent = `Show ${Math.min(PAGE, Math.max(left, 0))} more`;
