@@ -388,6 +388,15 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px}
 .morebtns{display:flex;gap:8px;flex-wrap:wrap}
+.themestrip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 10px;margin:0 0 14px;scrollbar-width:thin}
+.themestrip:empty{display:none}
+.ttile{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:6px;width:96px;padding:8px 6px 9px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;font:inherit}
+.ttile:hover{border-color:var(--accent)}
+.ttile.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--panel))}
+.ttile .tpic{width:76px;height:56px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ttile .tpic img{max-width:100%;max-height:100%;object-fit:contain}
+.ttile .tname{font-size:12px;font-weight:600;line-height:1.2;text-align:center}
+@media (max-width:640px){.ttile{width:84px}.ttile .tpic{width:66px;height:48px}}
 #tfoot td{padding:10px 12px;border-top:1px solid var(--line-2);font-size:12.5px;white-space:nowrap}
 #tfoot .totrow + .totrow td{border-top:1px dashed var(--line)}
 #tfoot td.num{font-weight:600;color:var(--fg)}
@@ -553,13 +562,14 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 
 <div class="wrap">
 <main>
+  <nav class="themestrip" id="themeStrip" aria-label="Jump to a theme"></nav>
   <section class="welcome" id="welcome" hidden aria-labelledby="welcomeTitle">
     <div class="welcome-text">
       <h2 id="welcomeTitle">Getting started</h2>
       <p>A simple checklist for your brick collection: LEGO and a growing list of other brick brands. It’s free. Try it out, then sign up to save your collection and have it on every device.</p>
     </div>
     <ol class="steps">
-      <li><b>Pick a brand or theme</b><span><span class="wide-only">Use the filters below</span><span class="narrow-only">Tap Filters below</span>, or search above by name, set number, subtheme or tag.</span></li>
+      <li><b>Pick a brand or theme</b><span>Tap a theme at the top, use the filters below, or search by name, set number, subtheme or tag.</span></li>
       <li><b>Tick what you own</b><span>Tick the box beside a set. Tap its condition to set new, used or incomplete and how many copies.</span></li>
       <li><b>Star what you want</b><span>Starred sets go on your Wanted list with prices and Buy buttons. Export any list as a spreadsheet.</span></li>
     </ol>
@@ -1133,6 +1143,25 @@ function tickTip() {
   tip.querySelector('button').onclick = () => { lsSet('bc-tick-tip', 1); tip.remove(); };
   cell.append(tip);
 }
+// Theme row at the top of the page (like the LEGO site): one tap jumps to a theme or another brand.
+const THEME_TILES = [
+  ['Star Wars', 'Star Wars', '75192-1'], ['Harry Potter', 'Harry Potter', '71043-1'], ['Marvel', 'Super Heroes Marvel', '76269-1'],
+  ['DC', 'Super Heroes DC', '76139-1'], ['Lord of the Rings', 'The Hobbit and Lord of the Rings', '10316-1'], ['Jurassic World', 'Jurassic World', '76961-1'],
+  ['Icons', 'Icons', '10497-1'], ['Technic', 'Technic', '42143-1'], ['Ninjago', 'Ninjago', '71799-1'], ['City', 'City', '60380-1'],
+  ['Ideas', 'LEGO Ideas and CUUSOO', '21330-1'], ['Disney', 'Disney', '43222-1'], ['Speed Champions', 'Speed Champions', '76916-1'],
+  ['Friends', 'Friends', '41704-1'], ['Minecraft', 'Minecraft', '21189-1'], ['Bionicle', 'Bionicle', '8733-1'],
+];
+const BRAND_TILES = ['LumiBricks', 'Pantasy', 'JMBricklayer'];
+function paintThemeStrip() {
+  const el = $('themeStrip'); if (!el || !CAT) return;
+  const themes = new Set([...fi.theme.options].map(o => o.value).filter(Boolean));
+  const byN = n => CAT.sets.find(x => x.n === n);
+  const pic = x => { const src = x && (imgs.get(x.n) || imgUrl(x)); return src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''; };
+  const tile = (attr, val, label, x, on) => `<button type="button" class="ttile${on ? ' on' : ''}" ${attr}="${esc(val)}" aria-pressed="${on}" title="${on ? 'Show all themes' : `Show ${esc(label)}`}"><span class="tpic">${pic(x)}</span><span class="tname">${esc(label)}</span></button>`;
+  const t = THEME_TILES.filter(([, th]) => themes.has(th) || (fi.brand.value && fi.brand.value !== 'LEGO')).map(([label, th, n]) => tile('data-theme', th, label, byN(n), fi.theme.value === th));
+  const b = BRAND_TILES.filter(br => CAT.sets.some(x => x.brand === br)).map(br => tile('data-brand', br, br, CAT.sets.find(x => x.brand === br && x.img), fi.brand.value === br));
+  el.innerHTML = t.join('') + b.join('');
+}
 function popularHtml() {
   if (!popCache) { const want = new Set(POPULAR); popCache = CAT.sets.filter(x => want.has(x.n)).sort((a, b) => POPULAR.indexOf(a.n) - POPULAR.indexOf(b.n)); }
   if (!popCache.length) return '';
@@ -1246,6 +1275,25 @@ const TIMELINES = [
     { t: 'The Batman', k: 'Film', y: '2022', era: 'Standalone', match: ['The Batman (2022)'], kw: /selina kyle|batmobile: the penguin chase|riddler face-off|^the batman batmobile$/i, d: 'Robert Pattinson’s detective Batman hunts the Riddler through a corrupt Gotham.' },
     { t: 'Superman', k: 'Film', y: '2025', era: 'DC Universe', match: ['Superman (2025)'], d: 'David Corenswet’s Superman and Krypto launch the new DC Universe.' },
   ] },
+  { id: 'jurassic', name: 'Jurassic', themes: ['Jurassic World'], brandKw: /jurassic/i, unit: 'Story order', entries: [
+    { t: 'Jurassic Park', k: 'Film', y: '1993', era: '1993', yrs: [2023, 2023], match: ['Jurassic Park'], kw: /jurassic park(?!\s*iii)/i, d: 'Isla Nublar’s park opens early for a few visitors, and the dinosaurs get out.' },
+    { t: 'The Lost World: Jurassic Park', k: 'Film', y: '1997', era: '1997', match: ['The Lost World'], kw: /lost world/i, d: 'A second island, Isla Sorna, and a T. rex loose in San Diego.' },
+    { t: 'Jurassic Park III', k: 'Film', y: '2001', era: '2001', match: ['Jurassic Park III'], kw: /jurassic park iii|raptor rumble|spinosaurus attack studio/i, d: 'A rescue mission on Isla Sorna meets the Spinosaurus.' },
+    { t: 'Jurassic World', k: 'Film', y: '2015', era: '2015', yrs: [2015, 2015], match: ['Jurassic World (film)'], d: 'The park is open at last, until the Indominus rex breaks out.' },
+    { t: 'Camp Cretaceous', k: 'Series', y: '2020–2022', era: '2015–2018', yrs: [2020, 2021], match: ['Camp Cretaceous'], kw: /camp cretaceous/i, d: 'Six teens at an adventure camp on Isla Nublar are stranded when the park falls.' },
+    { t: 'Legend of Isla Nublar', k: 'Series', y: '2019', era: '2015–2018', yrs: [2019, 2019], match: ['Legend of Isla Nublar'], kw: /isla nublar/i, d: 'Owen and Claire on the island between Jurassic World and Fallen Kingdom.' },
+    { t: 'Fallen Kingdom', k: 'Film', y: '2018', era: '2018', yrs: [2018, 2018], match: ['Jurassic World: Fallen Kingdom', 'Fallen Kingdom'], d: 'A volcano threatens the island, and the dinosaurs are sold off at Lockwood Estate.' },
+    { t: 'Chaos Theory', k: 'Series', y: '2024–', era: '2021', yrs: [2024, 2024], match: ['Chaos Theory'], kw: /chaos theory/i, d: 'The Camp Cretaceous six reunite to solve a mystery as dinosaurs roam the world.' },
+    { t: 'Dominion', k: 'Film', y: '2022', era: '2022', yrs: [2022, 2022], match: ['Jurassic World: Dominion', 'Dominion'], d: 'Dinosaurs live alongside people, and both casts come together.' },
+    { t: 'Rebirth', k: 'Film', y: '2025', era: '2027', yrs: [2025, 2025], match: ['Jurassic World Rebirth', 'Rebirth'], kw: /rebirth|titanosaurus|mosasaurus/i, d: 'A team heads to a forbidden island for DNA from the three biggest dinosaurs.' },
+  ] },
+  { id: 'indiana', name: 'Indiana Jones', themes: ['Indiana Jones'], brandKw: /indiana jones/i, unit: 'Story order', entries: [
+    { t: 'Temple of Doom', k: 'Film', y: '1984', era: '1935', match: ['Temple of Doom'], nk: /^(7199|7682)-/, kw: /temple of doom/i, d: 'A prequel: Shanghai, then Pankot Palace and the Sankara stones, a year before Raiders.' },
+    { t: 'Raiders of the Lost Ark', k: 'Film', y: '1981', era: '1936', match: ['Raiders of the Lost Ark'], nk: /^(7621|7622|7623|7683|7195|77013|77015)-/, kw: /raiders/i, d: 'The golden idol, the Well of Souls and the race for the Ark of the Covenant.' },
+    { t: 'The Last Crusade', k: 'Film', y: '1989', era: '1938', match: ['The Last Crusade', 'Last Crusade'], nk: /^(7620|7197|7198|77012)-/, kw: /last crusade/i, d: 'Indy and his father search for the Holy Grail, from Venice to the canyon.' },
+    { t: 'Kingdom of the Crystal Skull', k: 'Film', y: '2008', era: '1957', match: ['Kingdom of the Crystal Skull'], nk: /^(7624|7625|7626|7627|7628|7196|20004)-/, kw: /crystal skull/i, d: 'Cold War Peru, a jungle chase and the crystal skull of Akator.' },
+    { t: 'Dial of Destiny', k: 'Film', y: '2023', era: '1969', match: ['Dial of Destiny'], kw: /dial of destiny/i, d: 'Indy’s last adventure, chasing Archimedes’ dial across time.' },
+  ] },
   { id: 'ninjago', name: 'Ninjago', themes: ['Ninjago'], brandKw: /ninjago/i, entries: [
     { t: 'Pilot episodes', k: 'Series', y: '2011', era: 'Pilot', yrs: [2011, 2011], match: ['Spinjitzu', 'Pilot', 'Way of the Ninja'], d: 'Kai joins Sensei Wu, Cole, Jay and Zane to stop Lord Garmadon’s skeleton army.' },
     { t: 'Rise of the Snakes', k: 'Series', y: '2012', era: 'Season 1', yrs: [2012, 2012], match: ['Rise of the Snakes'], d: 'The Serpentine are freed, and the hunt begins for the Green Ninja.' },
@@ -1261,6 +1309,18 @@ const TIMELINES = [
     { t: 'Master of the Mountain, The Island and Seabound', k: 'Series', y: '2021', era: 'Seasons 13–14', yrs: [2021, 2021], match: ['Master of the Mountain', 'The Island', 'Seabound'], d: 'The Skull Sorcerer’s Shintaro, a lost island, and Nya’s battle under the sea.' },
     { t: 'Crystalized', k: 'Series', y: '2022', era: 'Season 15', yrs: [2022, 2022], match: ['Crystalized'], d: 'The Crystal King and the final season of the original show.' },
     { t: 'Dragons Rising', k: 'Series', y: '2023–', era: 'New era', yrs: [2023, 2027], match: ['Dragons Rising', 'Core'], d: 'The realms merge, dragons return, and the ninja face the Wolf Clan in a new series.' },
+  ] },
+  { id: 'bionicle', name: 'Bionicle', themes: ['Bionicle'], brandKw: /bionicle/i, unit: 'Story order', entries: [
+    { t: 'Legends of Metru Nui', k: 'Wave', y: '2004', era: 'Long ago', yrs: [2004, 2004], match: ['Metru Nui'], d: 'The prequel: the Toa Metru defend the city of Metru Nui, long before the island story.' },
+    { t: 'Web of Shadows', k: 'Wave', y: '2005', era: 'Long ago', yrs: [2005, 2005], match: ['Web of Shadows'], d: 'The Toa Hordika and the Visorak, as the Matoran are carried to Mata Nui.' },
+    { t: 'Mata Nui: the Toa arrive', k: 'Wave', y: '2001', era: 'The island', yrs: [2001, 2001], match: ['Mata Nui'], d: 'The original six Toa, the Matoran and Makuta’s Rahi.' },
+    { t: 'The Bohrok', k: 'Wave', y: '2002', era: 'The island', yrs: [2002, 2002], match: ['Bohrok'], d: 'The Bohrok swarms awaken, and the Toa become Toa Nuva.' },
+    { t: 'Mask of Light', k: 'Wave', y: '2003', era: 'The island', yrs: [2003, 2003], match: ['Mask of Light'], d: 'The Rahkshi and the search for the Seventh Toa.' },
+    { t: 'Voya Nui', k: 'Wave', y: '2006', era: 'The Mask of Life', yrs: [2006, 2006], match: ['Voya Nui', 'Inika'], d: 'The Toa Inika and the Piraka hunt for the Mask of Life.' },
+    { t: 'Mahri Nui', k: 'Wave', y: '2007', era: 'The Mask of Life', yrs: [2007, 2007], match: ['Mahri Nui'], d: 'Under the sea, the Toa Mahri and the Barraki.' },
+    { t: 'Karda Nui', k: 'Wave', y: '2008', era: 'The awakening', yrs: [2008, 2008], match: ['Karda Nui', 'Phantoka', 'Mistika'], d: 'Toa Nuva against the Makuta in the core of the universe.' },
+    { t: 'Bara Magna', k: 'Wave', y: '2009', era: 'Bara Magna', yrs: [2009, 2010], match: ['Bara Magna', 'Glatorian'], d: 'The Glatorian, the Agori and the desert world, plus the 2010 Stars.' },
+    { t: 'Okoto', k: 'Wave', y: '2015–2016', era: 'A new story', yrs: [2015, 2016], match: ['Okoto'], d: 'The 2015 reboot: the Toa of Okoto and the Lord of Skull Spiders, then the Journey to One.' },
   ] },
   { id: 'blade-runner', name: 'Blade Runner', themes: [], brandKw: /blade runner|replicant|spinner/i, entries: [
     { t: 'Blade Runner', k: 'Film', y: '1982', era: '2019', match: ['Blade Runner'], d: 'Rick Deckard hunts replicants in a rain-soaked Los Angeles.', kw: /blade runner(?! 2049)/i },
@@ -1535,6 +1595,7 @@ function render() {
   if (!$('bulkbar').hidden) { if (!bulkRows.length) $('bulkbar').hidden = true; else $('bulkLabel').textContent = kind === 'sets' ? `Set for the ${bulkRows.length.toLocaleString()} set${bulkRows.length > 1 ? 's' : ''} in view` : `Tag the ${bulkRows.length.toLocaleString()} minifigure${bulkRows.length > 1 ? 's' : ''} in view`; }
   $('syncBtn').title = kind === 'figs' ? 'Fetch BrickLink prices for minifigures in view that have a BrickLink #' : 'Fetch BrickLink price guide averages for the sets in view';
   pumpImages();
+  paintThemeStrip();
 }
 
 /* ---------- events ---------- */
@@ -1640,8 +1701,9 @@ document.addEventListener('click', e => {
   if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
   if (t.dataset.focus) { focus = focus === t.dataset.focus ? null : t.dataset.focus; savePrefs(); render(); return; }
   if (t.dataset.clearfocus) { focus = null; limit = PAGE; savePrefs(); render(); return; }
-  if (t.dataset.brand) { focus = null; fi.brand.value = t.dataset.brand; fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
-  if (t.dataset.theme) { focus = null; fi.theme.value = t.dataset.theme; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
+  if (t.dataset.brand) { focus = null; fi.brand.value = fi.brand.value === t.dataset.brand && t.closest('#themeStrip') ? '' : t.dataset.brand; fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
+  if (t.dataset.theme) { focus = null; if (t.closest('#themeStrip') && fi.brand.value && fi.brand.value !== 'LEGO') { fi.brand.value = ''; themeOptions(); }
+    fi.theme.value = t.closest('#themeStrip') && fi.theme.value === t.dataset.theme ? '' : t.dataset.theme; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
 });
 document.addEventListener('keydown', e => {
   const el = e.target;
@@ -2091,6 +2153,12 @@ async function saveCsv(name, csv, what) {
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.12', date: '7 November 2026', title: 'Jump in', items: [
+    ['Theme row', 'tap a theme at the top of the page, like Star Wars, Technic or Jurassic World, to jump straight to it.'],
+    ['Jurassic timeline', 'Jurassic Park to Rebirth, plus Camp Cretaceous and Chaos Theory, in story order.'],
+    ['Indiana Jones timeline', 'did you know Temple of Doom comes before Raiders? All five films in story order.'],
+    ['Bionicle timeline', 'every wave in story order, starting with the Metru Nui prequel.'],
+  ] },
   { v: '0.11', date: '4 November 2026', title: 'Save and collect', items: [
     ['Save your collection', 'sign up for free (no password) to save your collection and keep it on every device.'],
     ['Minifigure collections', 'minifigures now carry tags, including collections like the Knights of Ren, so you can see how many you have.'],
