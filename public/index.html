@@ -128,6 +128,7 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .sellopen:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .sellq{flex:1;min-width:0;font-size:14px}.sellq b{font-weight:500}.sellq .muted{font-size:13px}
 .sellpeek{font-size:13px;color:var(--violet);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+.selltl{white-space:nowrap}
 .sellopen .chev{color:var(--muted);transition:transform .15s;vertical-align:-3px;margin:0 6px 0 3px}
 .sellopen:hover .chev{color:var(--accent)}
 .sellopen[aria-expanded="true"] .chev{transform:rotate(180deg)}
@@ -170,6 +171,9 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .insbody{display:flex;flex-direction:column;gap:14px;padding:0 16px 16px}
 .inshead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .inshead p{margin:0;font-size:12.5px;color:var(--muted)}
+.insnav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.insback{white-space:nowrap}
+.insm{flex:0 0 auto}
 .insgrid{display:grid;grid-template-columns:220px minmax(0,520px);gap:18px 26px;align-items:center}
 .insdonut{position:relative;width:220px;height:220px}
 .insdonut svg{display:block;width:100%;height:100%;overflow:visible}
@@ -678,7 +682,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 
 
   <section class="sellbox" id="sellbox" aria-labelledby="sellTitle">
-    <button class="sellopen" id="sellToggle" aria-expanded="false" aria-controls="sellBody"><span class="sellq"><b>Sell or trade</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg> <span class="muted" id="sellSub">See what your collection is worth</span></span><span class="sellpeek" id="sellPeek"></span></button>
+    <button class="sellopen" id="sellToggle" aria-expanded="false" aria-controls="sellBody"><span class="sellq"><span class="selltl"><b>Sell or trade</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span> <span class="muted" id="sellSub">See what your collection is worth</span></span><span class="sellpeek" id="sellPeek"></span></button>
     <div class="sellbody" id="sellBody" hidden>
     <div class="sellmode" role="group" aria-label="Value"><button type="button" data-salemode="own" aria-pressed="true">Everything you own</button><button type="button" data-salemode="sale" aria-pressed="false" title="Copies you've marked for sale or trade. Also shows just those in the list below.">Sale or trade list <b id="cSale">0</b></button></div>
     <div class="sellhead"><h3 id="sellTitle" class="vh">Sell or trade</h3><p class="sellintro"><button type="button" class="tip" data-tip="Based on what you&#x27;ve ticked as owned and the copies you&#x27;ve set in the Condition column. Sellers and buyers often agree on a share of market value, like 70%, to allow for fees, shipping and time." aria-label="What is this?">i</button> Market value of what you own, by condition. Pick a percentage to see what you’d ask or offer.</p></div>
@@ -693,9 +697,9 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
   </section>
 
   <section class="sellbox insbox" id="insbox" hidden aria-labelledby="insTitle">
-    <button class="sellopen" id="insToggle" aria-expanded="false" aria-controls="insBody"><span class="sellq"><b id="insTitle">Collection insights</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg> <span class="muted">Your sets by theme and brand</span></span><span class="sellpeek" id="insPeek"></span></button>
+    <button class="sellopen" id="insToggle" aria-expanded="false" aria-controls="insBody"><span class="sellq"><span class="selltl"><b id="insTitle">Collection insights</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span> <span class="muted">Your sets by theme and brand</span></span><span class="sellpeek" id="insPeek"></span></button>
     <div class="insbody" id="insBody" hidden>
-      <div class="inshead"><p id="insIntro">Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.</p><span class="seg" role="group" aria-label="Measure by"><button data-insm="sets" aria-pressed="true">Sets</button><button data-insm="value" aria-pressed="false">Value</button><button data-insm="pieces" aria-pressed="false">Pieces</button></span></div>
+      <div class="inshead"><div class="insnav"><button type="button" class="btn mini insback" id="insBack" hidden></button><p id="insIntro">Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.</p></div><div class="sellmode insm" role="group" aria-label="Measure by"><button type="button" data-insm="sets" aria-pressed="true">Sets</button><button type="button" data-insm="value" aria-pressed="false">Value</button><button type="button" data-insm="pieces" aria-pressed="false">Pieces</button></div></div>
       <div class="insgrid" id="insGrid"><div class="insdonut" id="insDonut"></div><ul class="insleg" id="insLeg"></ul></div>
       <div class="inshi" id="insHi"></div>
     </div>
@@ -2321,7 +2325,10 @@ function renderInsights() {
   // Peek: the biggest theme by sets.
   const t0 = pairs[0];
   $('insPeek').textContent = t0 && own.length ? `${t0.k} ${Math.round(t0.n / own.length * 100)}%` : '';
-  $('insIntro').textContent = bySub ? `${fi.theme.value} by subtheme. Tap one to show its sets.` : `Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.`;
+  { const bk = $('insBack'), nb = fi.brand.value && fi.brand.value !== 'LEGO';
+    const lab = fi.sub.value ? `← Back to ${fi.theme.value}` : fi.theme.value ? (nb ? `← All ${fi.brand.value}` : '← All themes') : nb ? '← All brands' : '';
+    bk.hidden = !lab; bk.textContent = lab; }
+  $('insIntro').textContent = fi.sub.value ? `${fi.sub.value}, in ${fi.theme.value}.` : bySub ? `${fi.theme.value} by subtheme. Tap one to show its sets.` : `Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.`;
   if (!own.length || !insTotal) {
     $('insGrid').hidden = true; $('insHi').innerHTML = `<p class="insempty">${!own.length ? 'You don’t own any of the sets in view yet.' : 'None of these sets have a price yet.'}</p>`;
     return;
@@ -2382,6 +2389,13 @@ function paintIns() { const open = !!prefs.insOpen; $('insBody').hidden = !open;
 $('insToggle').onclick = () => { prefs.insOpen = !prefs.insOpen; savePrefs(); paintIns(); if (prefs.insOpen) track('open_insights'); };
 paintIns();
 $('insbox').addEventListener('click', e => {
+  if (e.target.closest('#insBack')) {
+    focus = null; limit = PAGE;
+    if (fi.sub.value) { fi.sub.value = ''; }
+    else if (fi.theme.value) { fi.theme.value = ''; tlFollowTheme(); subOptions(''); filmOptions(''); }
+    else if (fi.brand.value) { fi.brand.value = ''; themeOptions(); subOptions(''); filmOptions(''); }
+    savePrefs(); render(); return;
+  }
   const m = e.target.closest('[data-insm]'); if (m) { prefs.insMetric = m.dataset.insm; savePrefs(); renderInsights(); return; }
   const g = e.target.closest('[data-insgo]'); if (!g) return;
   const sl = insSlices[Number(g.dataset.sl)]; if (!sl) return;
