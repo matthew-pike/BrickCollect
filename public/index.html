@@ -684,6 +684,15 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
   </section>
 
 
+  <section class="sellbox insbox" id="insbox" hidden aria-labelledby="insTitle">
+    <button class="sellopen" id="insToggle" aria-expanded="false" aria-controls="insBody"><span class="sellq"><span class="selltl"><b id="insTitle">Collection insights</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span> <span class="muted">Your sets by theme and brand</span></span><span class="sellpeek" id="insPeek"></span></button>
+    <div class="insbody" id="insBody" hidden>
+      <div class="inshead"><div class="insnav"><button type="button" class="btn mini insback" id="insBack" hidden></button><p id="insIntro">Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.</p></div><div class="sellmode insm" role="group" aria-label="Measure by"><button type="button" data-insm="sets" aria-pressed="true">Sets</button><button type="button" data-insm="value" aria-pressed="false">Value</button><button type="button" data-insm="pieces" aria-pressed="false">Pieces</button></div></div>
+      <div class="insgrid" id="insGrid"><div class="insdonut" id="insDonut"></div><ul class="insleg" id="insLeg"></ul><div class="inshi" id="insHi"></div></div>
+      <p class="insempty" id="insEmpty" hidden></p>
+    </div>
+  </section>
+
   <section class="sellbox" id="sellbox" aria-labelledby="sellTitle">
     <button class="sellopen" id="sellToggle" aria-expanded="false" aria-controls="sellBody"><span class="sellq"><span class="selltl"><b>Sell or trade</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span> <span class="muted" id="sellSub">See what your collection is worth</span></span><span class="sellpeek" id="sellPeek"></span></button>
     <div class="sellbody" id="sellBody" hidden>
@@ -696,15 +705,6 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
       <div class="selltile t-inc"><dt>Used incomplete</dt><dd id="sellInc">—</dd><small id="sellIncN"></small></div>
       <div class="selltotalbox"><dt id="sellTotalK">Total</dt><dd id="sellTotal">—</dd><span class="full" id="sellPctRow" hidden>At 100%: <b id="sellFull">—</b></span></div>
     </dl>
-    </div>
-  </section>
-
-  <section class="sellbox insbox" id="insbox" hidden aria-labelledby="insTitle">
-    <button class="sellopen" id="insToggle" aria-expanded="false" aria-controls="insBody"><span class="sellq"><span class="selltl"><b id="insTitle">Collection insights</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span> <span class="muted">Your sets by theme and brand</span></span><span class="sellpeek" id="insPeek"></span></button>
-    <div class="insbody" id="insBody" hidden>
-      <div class="inshead"><div class="insnav"><button type="button" class="btn mini insback" id="insBack" hidden></button><p id="insIntro">Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.</p></div><div class="sellmode insm" role="group" aria-label="Measure by"><button type="button" data-insm="sets" aria-pressed="true">Sets</button><button type="button" data-insm="value" aria-pressed="false">Value</button><button type="button" data-insm="pieces" aria-pressed="false">Pieces</button></div></div>
-      <div class="insgrid" id="insGrid"><div class="insdonut" id="insDonut"></div><ul class="insleg" id="insLeg"></ul><div class="inshi" id="insHi"></div></div>
-      <p class="insempty" id="insEmpty" hidden></p>
     </div>
   </section>
 
