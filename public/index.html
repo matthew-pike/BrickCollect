@@ -405,6 +405,10 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .ttile .tpic{width:76px;height:56px;box-sizing:border-box;padding:6px 7px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .ttile .tpic img{max-width:100%;max-height:100%;object-fit:contain}
 .ttile .tname{font-size:12px;font-weight:600;line-height:1.2;text-align:center}
+.ttile.tlead{justify-content:center;gap:4px;border-style:dashed;border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 10%,var(--panel));cursor:default}
+.ttile.tlead .tname{font-size:15px;font-weight:700;color:var(--accent)}
+.ttile.tlead small{font-size:11px;color:var(--muted);text-align:center}
+button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 @media (max-width:640px){.ttile{width:84px}.ttile .tpic{width:66px;height:48px;padding:5px 6px}}
 #tfoot td{padding:10px 12px;border-top:1px solid var(--line-2);font-size:12.5px;white-space:nowrap}
 #tfoot .totrow + .totrow td{border-top:1px dashed var(--line)}
@@ -1173,7 +1177,13 @@ function paintThemeStrip() {
   const tile = (attr, val, label, x, on) => `<button type="button" class="ttile${on ? ' on' : ''}" ${attr}="${esc(val)}" aria-pressed="${on}" title="${on ? 'Show all themes' : `Show ${esc(label)}`}"><span class="tpic">${pic(x)}</span><span class="tname">${esc(label)}</span></button>`;
   const t = THEME_TILES.filter(([, th]) => themes.has(th) || (fi.brand.value && fi.brand.value !== 'LEGO')).map(([label, th, n]) => tile('data-theme', th, label, byN(n), fi.theme.value === th));
   const b = BRAND_TILES.filter(br => CAT.sets.some(x => x.brand === br)).map(br => tile('data-brand', br, br, CAT.sets.find(x => x.brand === br && x.img), fi.brand.value === br));
-  el.innerHTML = t.join('') + b.join('');
+  // First box: "Pick a theme" as a label, or "Show all" once a theme or brand is picked.
+  const picked = fi.theme.value || (fi.brand.value && fi.brand.value !== 'LEGO');
+  const lead = picked
+    ? `<button type="button" class="ttile tlead" id="themeAll" title="Show all themes and brands"><span class="tname">Show all</span><small>themes</small></button>`
+    : `<div class="ttile tlead" aria-hidden="true"><span class="tname">Pick a theme</span><small>or scroll for more</small></div>`;
+  el.innerHTML = lead + t.join('') + b.join('');
+  $('themeAll')?.addEventListener('click', () => { focus = null; fi.brand.value = ''; themeOptions(); fi.theme.value = ''; subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); });
   $('themeWrap').hidden = !el.children.length;
   themeArrows();
 }
