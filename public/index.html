@@ -174,7 +174,7 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .insnav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
 .insback{white-space:nowrap}
 .insm{flex:0 0 auto}
-.insgrid{display:grid;grid-template-columns:220px minmax(0,520px);gap:18px 26px;align-items:center}
+.insgrid{display:grid;grid-template-columns:220px minmax(0,1fr) minmax(250px,330px);gap:18px 26px;align-items:center}
 .insdonut{position:relative;width:220px;height:220px}
 .insdonut svg{display:block;width:100%;height:100%;overflow:visible}
 .insdonut path{stroke:var(--panel);stroke-width:2;stroke-linejoin:round;cursor:pointer;transition:opacity .12s}
@@ -197,7 +197,8 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .insrow .ct{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .insrow .pc{text-align:right;font-variant-numeric:tabular-nums;color:var(--fg);font-weight:500}
 .insnote{font-size:12px;color:var(--faint);padding:6px 8px 0}
-.inshi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0}
+.inshi{display:grid;grid-template-columns:1fr;gap:8px;margin:0;align-self:center}
+.inshi .hitile{padding:8px 12px}
 .hitile{all:unset;box-sizing:border-box;display:grid;grid-template-columns:48px minmax(0,1fr);grid-template-rows:auto auto auto;column-gap:10px;row-gap:1px;align-items:center;border:1px solid var(--line);background:var(--panel-2);border-radius:9px;padding:10px 12px;min-width:0}
 button.hitile{cursor:pointer}
 button.hitile:hover{border-color:var(--accent)}
@@ -211,6 +212,7 @@ button.hitile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .hitile .hn.soon{color:var(--coral)}
 .hitile .hret{grid-row:1/4;width:48px;height:48px;border-radius:7px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:var(--muted)}
 .insempty{margin:0;font-size:13px;color:var(--muted)}
+@media (max-width:1100px){.insgrid{grid-template-columns:220px minmax(0,1fr)}.inshi{grid-column:1/-1;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}}
 @media (max-width:900px){.inshi{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.insgrid{grid-template-columns:1fr}.insdonut{margin:0 auto}.insbox .sellq .muted{display:none}}
 @media (max-width:480px){.inshi{gap:8px}.hitile{grid-template-columns:1fr;padding:9px 10px}.hitile .hpic,.hitile .hret{display:none}.hitile .hv{font-size:15px}}
@@ -700,8 +702,8 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <button class="sellopen" id="insToggle" aria-expanded="false" aria-controls="insBody"><span class="sellq"><span class="selltl"><b id="insTitle">Collection insights</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span> <span class="muted">Your sets by theme and brand</span></span><span class="sellpeek" id="insPeek"></span></button>
     <div class="insbody" id="insBody" hidden>
       <div class="inshead"><div class="insnav"><button type="button" class="btn mini insback" id="insBack" hidden></button><p id="insIntro">Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.</p></div><div class="sellmode insm" role="group" aria-label="Measure by"><button type="button" data-insm="sets" aria-pressed="true">Sets</button><button type="button" data-insm="value" aria-pressed="false">Value</button><button type="button" data-insm="pieces" aria-pressed="false">Pieces</button></div></div>
-      <div class="insgrid" id="insGrid"><div class="insdonut" id="insDonut"></div><ul class="insleg" id="insLeg"></ul></div>
-      <div class="inshi" id="insHi"></div>
+      <div class="insgrid" id="insGrid"><div class="insdonut" id="insDonut"></div><ul class="insleg" id="insLeg"></ul><div class="inshi" id="insHi"></div></div>
+      <p class="insempty" id="insEmpty" hidden></p>
     </div>
   </section>
 
@@ -2330,10 +2332,10 @@ function renderInsights() {
     bk.hidden = !lab; bk.textContent = lab; }
   $('insIntro').textContent = fi.sub.value ? `${fi.sub.value}, in ${fi.theme.value}.` : bySub ? `${fi.theme.value} by subtheme. Tap one to show its sets.` : `Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.`;
   if (!own.length || !insTotal) {
-    $('insGrid').hidden = true; $('insHi').innerHTML = `<p class="insempty">${!own.length ? 'You don’t own any of the sets in view yet.' : 'None of these sets have a price yet.'}</p>`;
+    $('insGrid').hidden = true; $('insEmpty').hidden = false; $('insEmpty').textContent = !own.length ? 'You don’t own any of the sets in view yet.' : 'None of these sets have a price yet.';
     return;
   }
-  $('insGrid').hidden = false;
+  $('insGrid').hidden = false; $('insEmpty').hidden = true;
   // Donut
   const C = 110, A0 = -Math.PI / 2;
   let a = A0, svg = '';
