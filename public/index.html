@@ -128,7 +128,8 @@ main{padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 .sellopen:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .sellq{flex:1;min-width:0;font-size:14px}.sellq b{font-weight:500}.sellq .muted{font-size:13px}
 .sellpeek{font-size:13px;color:var(--violet);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
-.sellopen .chev{color:var(--muted);transition:transform .15s}
+.sellopen .chev{color:var(--muted);transition:transform .15s;vertical-align:-3px;margin:0 6px 0 3px}
+.sellopen:hover .chev{color:var(--accent)}
 .sellopen[aria-expanded="true"] .chev{transform:rotate(180deg)}
 .sellopen[aria-expanded="true"] .sellpeek{visibility:hidden}
 .sellbody{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 20px;align-items:center;padding:0 16px 16px}
@@ -677,7 +678,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 
 
   <section class="sellbox" id="sellbox" aria-labelledby="sellTitle">
-    <button class="sellopen" id="sellToggle" aria-expanded="false" aria-controls="sellBody"><span class="sellq"><b>Sell or trade</b> <span class="muted" id="sellSub">See what your collection is worth</span></span><span class="sellpeek" id="sellPeek"></span><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="sellopen" id="sellToggle" aria-expanded="false" aria-controls="sellBody"><span class="sellq"><b>Sell or trade</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg> <span class="muted" id="sellSub">See what your collection is worth</span></span><span class="sellpeek" id="sellPeek"></span></button>
     <div class="sellbody" id="sellBody" hidden>
     <div class="sellmode" role="group" aria-label="Value"><button type="button" data-salemode="own" aria-pressed="true">Everything you own</button><button type="button" data-salemode="sale" aria-pressed="false" title="Copies you've marked for sale or trade. Also shows just those in the list below.">Sale or trade list <b id="cSale">0</b></button></div>
     <div class="sellhead"><h3 id="sellTitle" class="vh">Sell or trade</h3><p class="sellintro"><button type="button" class="tip" data-tip="Based on what you&#x27;ve ticked as owned and the copies you&#x27;ve set in the Condition column. Sellers and buyers often agree on a share of market value, like 70%, to allow for fees, shipping and time." aria-label="What is this?">i</button> Market value of what you own, by condition. Pick a percentage to see what you’d ask or offer.</p></div>
@@ -692,7 +693,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
   </section>
 
   <section class="sellbox insbox" id="insbox" hidden aria-labelledby="insTitle">
-    <button class="sellopen" id="insToggle" aria-expanded="false" aria-controls="insBody"><span class="sellq"><b id="insTitle">Collection insights</b> <span class="muted">Your sets by theme and brand</span></span><span class="sellpeek" id="insPeek"></span><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="sellopen" id="insToggle" aria-expanded="false" aria-controls="insBody"><span class="sellq"><b id="insTitle">Collection insights</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg> <span class="muted">Your sets by theme and brand</span></span><span class="sellpeek" id="insPeek"></span></button>
     <div class="insbody" id="insBody" hidden>
       <div class="inshead"><p id="insIntro">Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.</p><span class="seg" role="group" aria-label="Measure by"><button data-insm="sets" aria-pressed="true">Sets</button><button data-insm="value" aria-pressed="false">Value</button><button data-insm="pieces" aria-pressed="false">Pieces</button></span></div>
       <div class="insgrid" id="insGrid"><div class="insdonut" id="insDonut"></div><ul class="insleg" id="insLeg"></ul></div>
