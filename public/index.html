@@ -388,8 +388,17 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px}
 .morebtns{display:flex;gap:8px;flex-wrap:wrap}
-.themestrip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 10px;margin:0 0 14px;scrollbar-width:thin}
-.themestrip:empty{display:none}
+.themewrap{position:relative;margin:0 0 16px}
+.themestrip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px;scrollbar-width:none}
+.themestrip::-webkit-scrollbar{display:none}
+.tarrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:var(--panel);color:var(--fg);border:1px solid var(--line-2);box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.tarrow:hover{border-color:var(--accent);color:var(--accent)}
+.tarrow.prev{left:-6px}.tarrow.next{right:-6px}
+.themewrap::before,.themewrap::after{content:"";position:absolute;top:0;bottom:0;width:36px;z-index:1;pointer-events:none;opacity:0;transition:opacity .15s}
+.themewrap.more-l::before,.themewrap.more-r::after{opacity:1}
+.themewrap::before{left:0;background:linear-gradient(to right,var(--bg),transparent)}
+.themewrap::after{right:0;background:linear-gradient(to left,var(--bg),transparent)}
 .ttile{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:6px;width:96px;padding:8px 6px 9px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;font:inherit}
 .ttile:hover{border-color:var(--accent)}
 .ttile.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--panel))}
@@ -562,7 +571,11 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 
 <div class="wrap">
 <main>
-  <nav class="themestrip" id="themeStrip" aria-label="Jump to a theme"></nav>
+  <div class="themewrap" id="themeWrap" hidden>
+    <button type="button" class="tarrow prev" id="themePrev" aria-label="Scroll themes left" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <nav class="themestrip" id="themeStrip" aria-label="Jump to a theme"></nav>
+    <button type="button" class="tarrow next" id="themeNext" aria-label="Scroll themes right" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
   <section class="welcome" id="welcome" hidden aria-labelledby="welcomeTitle">
     <div class="welcome-text">
       <h2 id="welcomeTitle">Getting started</h2>
@@ -1161,7 +1174,22 @@ function paintThemeStrip() {
   const t = THEME_TILES.filter(([, th]) => themes.has(th) || (fi.brand.value && fi.brand.value !== 'LEGO')).map(([label, th, n]) => tile('data-theme', th, label, byN(n), fi.theme.value === th));
   const b = BRAND_TILES.filter(br => CAT.sets.some(x => x.brand === br)).map(br => tile('data-brand', br, br, CAT.sets.find(x => x.brand === br && x.img), fi.brand.value === br));
   el.innerHTML = t.join('') + b.join('');
+  $('themeWrap').hidden = !el.children.length;
+  themeArrows();
 }
+// Left and right arrows: show only when there is more to see that way.
+function themeArrows() {
+  const el = $('themeStrip'); if (!el) return;
+  const max = el.scrollWidth - el.clientWidth - 2;
+  const w = $('themeWrap');
+  w.classList.toggle('more-l', el.scrollLeft > 2); w.classList.toggle('more-r', el.scrollLeft < max);
+  $('themePrev').hidden = !w.classList.contains('more-l');
+  $('themeNext').hidden = !w.classList.contains('more-r');
+}
+$('themeStrip').addEventListener('scroll', () => requestAnimationFrame(themeArrows), { passive: true });
+addEventListener('resize', themeArrows);
+$('themePrev').onclick = () => $('themeStrip').scrollBy({ left: -$('themeStrip').clientWidth * 0.8, behavior: 'smooth' });
+$('themeNext').onclick = () => $('themeStrip').scrollBy({ left: $('themeStrip').clientWidth * 0.8, behavior: 'smooth' });
 function popularHtml() {
   if (!popCache) { const want = new Set(POPULAR); popCache = CAT.sets.filter(x => want.has(x.n)).sort((a, b) => POPULAR.indexOf(a.n) - POPULAR.indexOf(b.n)); }
   if (!popCache.length) return '';
