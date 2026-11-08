@@ -372,7 +372,12 @@ td.sub{min-width:150px}
 .tagadd:hover{color:var(--accent);border-color:var(--accent)}
 .tagmore{all:unset;cursor:pointer;font-size:11px;color:var(--faint);align-self:center;padding:2px 4px}.tagmore:hover{color:var(--accent)}
 .tagin{width:150px;padding:3px 8px;font-size:12px;height:auto}
-.tagbtn:focus-visible,.tagx:focus-visible,.tagadd:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.tagbtn:focus-visible,.tagx:focus-visible,.tagadd:focus-visible,.mytagadd:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* Your own tags (private to you): aqua chips, shown before the shared ones */
+.tagchip.mine{border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.tagchip.mine .tagbtn{color:var(--accent)}
+.mytagadd{all:unset;cursor:pointer;font-size:11px;color:var(--faint);padding:3px 7px;border:1px dashed var(--line-2);border-radius:999px;white-space:nowrap}
+.mytagadd:hover{color:var(--accent);border-color:var(--accent)}
 .thumb{width:48px;height:40px;border-radius:7px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line);overflow:hidden;position:relative}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
 button.thumb{padding:0;font:inherit;color:inherit;cursor:zoom-in}
@@ -776,6 +781,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <div class="field"><label for="fiYear">Year</label><select id="fiYear"><option value="">All</option></select></div>
     <div class="field"><label for="fiRet">Retired</label><select id="fiRet"><option value="">All</option><option value="S">Retiring soon</option><option value="R">Retired</option><option value="A">Still in shops</option></select></div>
     <button class="btn" id="addBtn" hidden title="Add a set from another brand">Add set</button>
+    <button class="btn" id="mytagBtn" hidden title="Add one of your own tags to everything you own or want in view">Add my tag</button>
     <button class="btn" id="bulkBtn" title="Set the subtheme, or add or remove a tag, for every set in view">Bulk edit</button>
     <button class="btn clearf" id="fiReset" type="button" title="Clear all filters and search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Clear filters</button>
   </section>
@@ -814,6 +820,15 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
       <button class="btn mini" type="button" id="bulkClear" title="Remove this value from these sets">Clear</button>
       <span class="spacer"></span>
       <button class="btn mini ghost" type="button" id="bulkCancel">Close</button>
+    </form>
+    <form class="focusbar" id="mytagbar" hidden autocomplete="off">
+      <b id="mytagLabel">Your tag for what you have in view</b>
+      <input class="inp" id="mytagIn" list="myTagNames" maxlength="30" placeholder="e.g. On display" aria-label="Your tag" style="width:220px;max-width:100%">
+      <button class="btn mini primary" type="submit">Add tag</button>
+      <button class="btn mini" type="button" id="mytagRemove">Remove tag</button>
+      <span class="muted" style="font-size:12px">Only you see your tags.</span>
+      <span class="spacer"></span>
+      <button class="btn mini ghost" type="button" id="mytagCancel">Close</button>
     </form>
     <form class="addpanel" id="addPanel" hidden autocomplete="off">
       <div class="addhead"><b id="addTitle">Add a set</b><span class="muted">Shows for everyone. Use this for brands Rebrickable doesn’t cover.</span></div>
@@ -939,6 +954,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 <button class="totop" id="toTop" type="button" aria-label="Back to the top" title="Back to the top" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
 <datalist id="subNames"></datalist>
 <datalist id="filmNames"></datalist>
+<datalist id="myTagNames"></datalist>
 <datalist id="brandNames"></datalist>
 <datalist id="themeNames"></datalist>
 
@@ -1118,9 +1134,30 @@ function retBadge(x) {
   const title = st === 'S' ? `Retiring soon${when ? `: LEGO plans to retire it by ${when}` : ''}${src}` : `Retired${when ? ` in ${when}` : ''}${src}`;
   return ` <span class="retb${st === 'S' ? ' soon' : ''}" title="${esc(title)}" aria-label="${esc(title)}" role="button" tabindex="0">${st === 'S' ? 'RS' : 'R'}</span>`;
 }
-const hasMineData = v => v && (v.owned || v.wanted || SHARED_KEYS.some(k => v[k] != null));
+const hasMineData = v => v && (v.owned || v.wanted || (v.mytags && v.mytags.length) || SHARED_KEYS.some(k => v[k] != null));
 const personalObj = () => { const o = {}; for (const [k, v] of mine) if (hasMineData(v)) o[k] = v; return o; };
-function loadPersonal(items) { mine.clear(); for (const [k, v] of Object.entries(items || {})) if (v && typeof v === 'object') mine.set(k, v); }
+function loadPersonal(items) { mine.clear(); for (const [k, v] of Object.entries(items || {})) if (v && typeof v === 'object') mine.set(k, v); if (CAT && typeof filmOptions === 'function') filmOptions(); }
+/* ---------- your own tags (private: saved with your collection, never shared) ---------- */
+const MY_TAG_MAX = 20, MY_TAG_LEN = 30;
+const MY_TAG_SUGGEST = ['On display', 'In storage', 'Built', 'Still boxed', 'Childhood', 'Gift', 'To sell'];
+const myTags = x => (mine.get(x.n) || {}).mytags || [];
+const cleanTag = t => String(t ?? '').replace(/\s+/g, ' ').trim().slice(0, MY_TAG_LEN);
+function allMyTags() { const c = new Map(); for (const v of mine.values()) for (const t of (v && v.mytags) || []) c.set(t, (c.get(t) || 0) + 1); return c; }
+// Add (or remove) one of your tags on several items. Matches an existing tag of yours whatever its capitals.
+function editMyTags(rows, tag, remove) {
+  tag = cleanTag(tag); if (!tag) return 0;
+  const low = tag.toLowerCase(), same = [...allMyTags().keys(), ...MY_TAG_SUGGEST].find(t => t.toLowerCase() === low); if (same) tag = same;
+  let n = 0, full = 0;
+  for (const x of rows) {
+    const cur = myTags(x), there = cur.some(t => t.toLowerCase() === low);
+    if (remove ? !there : there) continue;
+    if (!remove && cur.length >= MY_TAG_MAX) { full++; continue; }
+    setInfo(x.n, { mytags: remove ? cur.filter(t => t.toLowerCase() !== low) : [...cur, tag] }, { quiet: true }); n++;
+  }
+  if (n) track('my_tag', { action: remove ? 'remove' : 'add', items: n, tags: allMyTags().size });
+  if (full) toast(`${full.toLocaleString()} already had ${MY_TAG_MAX} tags, so they were left as they were.`);
+  filmOptions(); render(); return n;
+}
 
 let pFlushT = null, pWriting = false, pAgain = false, pDirty = false;
 function savePersonal() { pDirty = true; clearTimeout(pFlushT); pFlushT = setTimeout(flushPersonal, 500); }
@@ -1199,6 +1236,7 @@ function setInfo(n, patch, { quiet } = {}) {
     if (Object.keys(q).length) me.sale = q; else delete me.sale;
   }
   if ('wanted' in patch) me.wanted = !!patch.wanted && !me.owned;
+  if ('mytags' in patch) { const t = [...new Set((patch.mytags || []).map(cleanTag).filter(Boolean))].slice(0, MY_TAG_MAX); if (t.length) me.mytags = t; else delete me.mytags; }
   { const was = mine.get(n) || {}, it = n.startsWith('fig-') ? 'minifigure' : 'set';
     if ('owned' in patch && !!me.owned !== !!was.owned) { track(me.owned ? 'set_ticked' : 'set_unticked', { item_type: it }); trackSize(); if (me.owned) { lsSet('bc-tick-tip', 1); document.getElementById('tickTip')?.remove(); if (!quiet) setTimeout(() => tallyToast(n), 0); } }
     if ('wanted' in patch && me.wanted && !was.wanted) track('add_to_wanted', { item_type: it }); }
@@ -1263,7 +1301,19 @@ function filmOptions(keep) {
   for (const x of (kind === 'figs' ? CAT.figs : CAT.sets)) { if (fi.theme.value && !(x.k === 'm' ? x.themes.includes(fi.theme.value) : x.theme === fi.theme.value)) continue; if (fi.brand.value && x.brand !== fi.brand.value) continue; if (x.tags.length) x.tags.forEach(t => counts.set(t, (counts.get(t) || 0) + 1)); else none++; }
   const opts = [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([f, c]) => [f, `${f} (${c.toLocaleString()})`]);
   if (fi.theme.value && none) opts.push(['__none', `No tag (${none.toLocaleString()})`]);
-  fill(fi.film, 'All', opts, keep ?? fi.film.value);
+  // Your own tags come first, in their own group. Minifigures count when they or one of their sets carry the tag.
+  const myC = new Map();
+  for (const x of (kind === 'figs' ? CAT.figs : CAT.sets)) {
+    if (fi.theme.value && !(x.k === 'm' ? x.themes.includes(fi.theme.value) : x.theme === fi.theme.value)) continue; if (fi.brand.value && x.brand !== fi.brand.value) continue;
+    const ts = x.k === 'm' ? new Set([...myTags(x), ...x.so.flatMap(myTags)]) : myTags(x);
+    ts.forEach(t => myC.set(t, (myC.get(t) || 0) + 1));
+  }
+  const k = keep ?? fi.film.value;
+  if (!myC.size) { fill(fi.film, 'All', opts, k); return; }
+  const mineOpts = [...myC].sort((a, b) => a[0].localeCompare(b[0])).map(([t, c]) => ['me:' + t, `${t} (${c.toLocaleString()})`]);
+  const o = ([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`;
+  fi.film.innerHTML = `<option value="">All</option><optgroup label="My tags">${mineOpts.map(o).join('')}</optgroup>${opts.length ? `<optgroup label="Tags">${opts.map(o).join('')}</optgroup>` : ''}`;
+  fi.film.value = [...mineOpts, ...opts].some(([v]) => v === k) ? k : '';
 }
 function subOptions(keep) {
   if (!fi.theme.value) { fill(fi.sub, 'Pick a theme first', [], ''); return; }
@@ -1285,13 +1335,14 @@ function setPasses(s, q) {
   if (tlFilter) { const fr = TIMELINES.find(f => f.id === tlFilter.fr); if (fr && !tlMatches(fr, fr.entries[tlFilter.i], s)) return false; }
   if (fi.theme.value && s.theme !== fi.theme.value) return false;
   if (fi.sub.value && s.sub !== fi.sub.value) return false;
-  if (fi.film.value && (fi.film.value === '__none' ? s.tags.length > 0 : !s.tags.includes(fi.film.value))) return false;
+  if (fi.film.value.startsWith('me:')) { if (!myTags(s).includes(fi.film.value.slice(3))) return false; }
+  else if (fi.film.value && (fi.film.value === '__none' ? s.tags.length > 0 : !s.tags.includes(fi.film.value))) return false;
   if (fi.year.value && String(s.year) !== fi.year.value) return false;
   if (fi.ret.value && (retState(s) || 'A') !== fi.ret.value) return false;
   // Several set numbers pasted into search (e.g. from a retiring list) match any of them.
   const nums = qNums(q); if (nums) return nums.has(s.n.toLowerCase()) || nums.has(s.n.toLowerCase().replace(/-1$/, ''));
   // Search matches the set number and name, and also its subtheme and tags (e.g. "battle packs").
-  if (q && !s.key.includes(q) && !(s.sub || '').toLowerCase().includes(q) && !(s.tags || []).some(t => t.toLowerCase().includes(q))) return false;
+  if (q && !s.key.includes(q) && !(s.sub || '').toLowerCase().includes(q) && !(s.tags || []).some(t => t.toLowerCase().includes(q)) && !myTags(s).some(t => t.toLowerCase().includes(q))) return false;
   return true;
 }
 // Sets match the filters directly. Minifigures follow the sets they come in:
@@ -1301,7 +1352,9 @@ function inScope(x) {
   if (fi.brand.value && x.brand !== fi.brand.value) return false;
   if (x.k === 's') return setPasses(x, q);
   if (focus) return x.sets.has(focus);
-  // A minifigure's own collection tag matches the Tag filter and search directly.
+  // A minifigure's own collection tag (or one of your own tags) matches the Tag filter and search directly.
+  if (fi.film.value.startsWith('me:') && myTags(x).includes(fi.film.value.slice(3))) return !q || x.key.includes(q);
+  if (q && !fi.film.value && myTags(x).some(t => t.toLowerCase().includes(q))) return true;
   if (fi.film.value && fi.film.value !== '__none' && (x.ctags || []).includes(fi.film.value)) return !q || x.key.includes(q) || x.ctags.some(t => t.toLowerCase().includes(q));
   if (q && !fi.film.value && (x.ctags || []).some(t => t.toLowerCase().includes(q)) && !(tlFilter || fi.theme.value || fi.sub.value || fi.year.value || fi.ret.value)) return true;
   const setFilters = tlFilter || fi.theme.value || fi.sub.value || fi.film.value || fi.year.value || fi.ret.value;
@@ -1833,7 +1886,13 @@ function render() {
     const addBtn = !admin ? '' : editing === x.n + '|tag'
       ? `<input class="inp tagin" id="edit-price" list="filmNames" data-n="${esc(x.n)}" data-f="tag" placeholder="New tag" aria-label="New tag">`
       : `<button class="tagadd" data-price="tag" data-n="${esc(x.n)}" title="Add a tag">+ Tag</button>`;
-    return chips || more || addBtn ? `<div class="tags">${chips}${more}${addBtn}</div>` : '';
+    // Your own tags: on things you own or want. Only you see them.
+    const mt = myTags(x), canMy = owned(x) || wanted(x) || mt.length;
+    const myChips = mt.map(t => `<span class="tagchip mine"><button class="tagbtn" data-tagfilter="me:${esc(t)}" title="Your tag ${esc(t)}: show everything you’ve tagged with it">${esc(t)}</button><button class="tagx" data-unmytag="${esc(t)}" data-n="${esc(x.n)}" aria-label="Remove your tag ${esc(t)}" title="Remove your tag">×</button></span>`).join('');
+    const myAdd = !canMy ? '' : editing === x.n + '|mytag'
+      ? `<input class="inp tagin" id="edit-price" list="myTagNames" maxlength="${MY_TAG_LEN}" data-n="${esc(x.n)}" data-f="mytag" placeholder="e.g. On display" aria-label="Add your own tag to ${esc(x.name)}">`
+      : `<button class="mytagadd" data-price="mytag" data-n="${esc(x.n)}" title="Add your own tag, like On display or In storage. Only you see it." aria-label="Add your own tag to ${esc(x.name)}">+ My tag</button>`;
+    return myChips || chips || more || addBtn || myAdd ? `<div class="tags">${myChips}${chips}${more}${addBtn}${myAdd}</div>` : '';
   };
   const filmCell = x => {
     if (x.k === 's' && !canCurate()) return x.film ? esc(x.film) : '';
@@ -1842,6 +1901,8 @@ function render() {
     return `<button class="subbtn ${x.film ? '' : 'none'}" data-price="film" data-n="${esc(x.n)}" title="Change film or series">${x.film ? esc(x.film) : 'Add'}</button>`;
   };
   $('filmNames').innerHTML = [...new Set((kind === 'figs' ? CAT.figs : CAT.sets).flatMap(s => s.tags))].sort().map(v => `<option value="${esc(v)}">`).join('');
+  { const have = [...allMyTags().keys()].sort((a, b) => a.localeCompare(b)), low = new Set(have.map(t => t.toLowerCase()));
+    $('myTagNames').innerHTML = [...have, ...MY_TAG_SUGGEST.filter(t => !low.has(t.toLowerCase()))].map(v => `<option value="${esc(v)}">`).join(''); }
   $('subNames').innerHTML = [...new Set(CAT.sets.filter(s => !fi.theme.value || s.theme === fi.theme.value).map(s => s.sub).filter(Boolean))].sort().map(v => `<option value="${esc(v)}">`).join('');
   $('rows').innerHTML = page.map(x => `
     <tr class="${owned(x) ? 'owned' : fromSet(x) ? 'fromset' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
@@ -1905,6 +1966,11 @@ function render() {
   $('bulkBtn').disabled = !isScoped || !rows.length;
   $('bulkBtn').title = kind !== 'sets' ? (!isScoped ? 'Search or filter first, then tag every minifigure in view (e.g. a collection like Knights of Ren)' : `Add or remove a tag for the ${rows.length.toLocaleString()} minifigures in view`) : !isScoped ? 'Filter or search first, then set the subtheme or a tag for every set in view' : `Set the subtheme or a tag for the ${rows.length.toLocaleString()} sets in view`;
   bulkRows = isScoped ? rows : [];
+  // Add my tag: everything you own or want among the rows in view (once you've filtered or searched).
+  myRows = isScoped ? rows.filter(x => owned(x) || wanted(x)) : [];
+  { const w = myRows.length === 1 ? (kind === 'sets' ? 'set' : 'minifigure') : (kind === 'sets' ? 'sets' : 'minifigures');
+    $('mytagBtn').hidden = !myRows.length; $('mytagBtn').title = `Add one of your own tags to the ${myRows.length.toLocaleString()} ${w} you own or want in view`;
+    if (!$('mytagbar').hidden) { if (!myRows.length) $('mytagbar').hidden = true; else $('mytagLabel').textContent = `Your tag for the ${myRows.length.toLocaleString()} ${w} you own or want in view`; } }
   { const f = $('bulkField'), sub = f.querySelector('[value=sub]'); sub.hidden = sub.disabled = kind !== 'sets'; for (const o of f.querySelectorAll('[value^="ret:"]')) o.hidden = o.disabled = kind !== 'sets'; if (kind !== 'sets' && (f.value === 'sub' || f.value.startsWith('ret:'))) { f.value = 'tag'; f.onchange(); } }
   if (!$('bulkbar').hidden) { if (!bulkRows.length) $('bulkbar').hidden = true; else $('bulkLabel').textContent = kind === 'sets' ? `Set for the ${bulkRows.length.toLocaleString()} set${bulkRows.length > 1 ? 's' : ''} in view` : `Tag the ${bulkRows.length.toLocaleString()} minifigure${bulkRows.length > 1 ? 's' : ''} in view`; }
   $('syncBtn').title = kind === 'figs' ? 'Fetch BrickLink prices for minifigures in view that have a BrickLink #' : 'Fetch BrickLink price guide averages for the sets in view';
@@ -2000,6 +2066,7 @@ document.addEventListener('click', e => {
   }
   if (t.dataset.tagsmore) { tagsOpen.add(t.dataset.tagsmore); render(); return; }
   if (t.dataset.untag) { const x = findItem(t.dataset.n); if (x) editTags([x], t.dataset.untag, true); return; }
+  if (t.dataset.unmytag) { const x = findItem(t.dataset.n); if (x) editMyTags([x], t.dataset.unmytag, true); return; }
   if (t.dataset.tagfilter) { focus = null; fill(fi.film, 'All', [[t.dataset.tagfilter, t.dataset.tagfilter]], t.dataset.tagfilter); filmOptions(t.dataset.tagfilter); limit = PAGE; savePrefs(); render(); window.scrollTo({ top: $('fiFilm').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth' }); return; }
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
   if (t.dataset.condmenu) { copiesFor === t.dataset.condmenu ? closeCopies() : openCopies(t.dataset.condmenu); return; }
@@ -2031,6 +2098,7 @@ document.addEventListener('focusout', e => {
   const el = e.target; if (el.id !== 'edit-price' || !editing) return;
   editing = null;
   if (el.dataset.f === 'tag') { const x = findItem(el.dataset.n); if (x && el.value.trim()) editTags([x], el.value); else render(); return; }
+  if (el.dataset.f === 'mytag') { const x = findItem(el.dataset.n); if (x && el.value.trim()) editMyTags([x], el.value); else render(); return; }
   if (el.dataset.f === 'sub' || el.dataset.f === 'film') { setManualSub(el.dataset.n, el.value.trim(), el.dataset.f); return; }
   const v = el.dataset.f === 'bl' ? (el.value.trim() || null) : el.value === '' ? null : toAud(Math.max(0, Number(el.value)));
   const cur = info(el.dataset.n)[el.dataset.f] ?? null;
@@ -2136,7 +2204,7 @@ $('syncBtn').onclick = async () => {
 
 /* ---------- subthemes: your own edits, saved per theme ---------- */
 const subDocs = new Map(); // slug -> { theme, brickset:{}, manual:{} }
-let bulkRows = [];
+let bulkRows = [], myRows = [];
 // Minifigure tags (collections like "Knights of Ren") live in their own subthemes document.
 const FIG_TAGS = 'Minifigure collections';
 const findItem = n => CAT.sets.find(s => s.n === n) || CAT.figs.find(f => f.n === n);
@@ -2254,6 +2322,17 @@ function bulkSet(value) {
 $('bulkField').onchange = () => { const f = $('bulkField').value, t = f !== 'sub', r = f.startsWith('ret:'); $('bulkSub').hidden = r; $('bulkMonth').hidden = f !== 'ret:Sm'; if (f === 'ret:Sm') { $('bulkClear').hidden = true; $('bulkMonth').focus(); return; } if (r) { $('bulkClear').hidden = true; $('bulkApply').focus(); return; } $('bulkSub').setAttribute('list', t ? 'filmNames' : 'subNames'); $('bulkSub').placeholder = t ? 'e.g. Helmet Collection' : 'e.g. Microfighters'; $('bulkClear').hidden = t; $('bulkSub').focus(); };
 $('bulkBtn').onclick = () => { $('bulkbar').hidden = false; render(); $('bulkSub').focus(); };
 $('bulkCancel').onclick = () => { $('bulkbar').hidden = true; };
+$('mytagBtn').onclick = () => { $('mytagbar').hidden = false; render(); $('mytagIn').focus(); track('my_tag_open'); };
+$('mytagCancel').onclick = () => { $('mytagbar').hidden = true; };
+function myBulk(remove) {
+  let v = cleanTag($('mytagIn').value); if (!v) { $('mytagIn').focus(); return; }
+  const rows = myRows.slice(); if (!rows.length) return;
+  const n = editMyTags(rows, v, remove), w = rows[0]?.k === 'm' ? 'minifigure' : 'set', ws = n === 1 ? w : w + 's';
+  { const same = [...allMyTags().keys(), ...MY_TAG_SUGGEST].find(t => t.toLowerCase() === v.toLowerCase()); if (same) v = same; }
+  toast(n ? (remove ? `Removed “${v}” from ${n.toLocaleString()} ${ws}` : `Tagged ${n.toLocaleString()} ${ws} “${v}”`) : (remove ? `Nothing in view has “${v}”` : `Everything in view already has “${v}”`));
+}
+$('mytagbar').onsubmit = e => { e.preventDefault(); myBulk(false); };
+$('mytagRemove').onclick = () => myBulk(true);
 $('bulkbar').addEventListener('submit', e => { e.preventDefault(); if ($('bulkField').value.startsWith('ret:')) { const m = $('bulkField').value.slice(4);
     if (m === 'S6' || m === 'S12') { bulkRetired('S', nextEnd(m === 'S6' ? 6 : 12)); return; }
     if (m === 'Sm') { const v = $('bulkMonth').value; if (!/^\d{4}-\d{2}$/.test(v)) { $('bulkMonth').focus(); toast('Pick the month LEGO retires these sets'); return; } bulkRetired('S', endOfMonth(Number(v.slice(0, 4)), Number(v.slice(5)))); return; }
@@ -2590,14 +2669,14 @@ $('exportBtn').onclick = async () => { track('export', { list: 'collection' });
   const rows = [...CAT.sets.filter(owned), ...CAT.figs.filter(owned)];
   if (!rows.length) { toast('Tick the sets and minifigures you own first, then export.'); return; }
   const pct = Number(prefs.sellPct), withPct = prefs.sellPct != null && prefs.sellPct !== '' && pct > 0;
-  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', 'Condition', 'Copies', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : [])];
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', 'Condition', 'Copies', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : []), 'My tags'];
   const at = v => v == null ? '' : Math.round(v * pct) / 100;
   const body = rows.map(x => {
     const s = info(x.n), u = toLocal(s.used), nw = toLocal(s.new), v = toLocal(valueOf(x));
-    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, condLabel(x).long, copyCount(x), u, nw, v, ...(withPct ? [at(v)] : [])];
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, condLabel(x).long, copyCount(x), u, nw, v, ...(withPct ? [at(v)] : []), myTags(x).join('; ')];
   });
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
-  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), '', '', sumCol(13), ...(withPct ? [sumCol(14)] : [])];
+  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), '', '', sumCol(13), ...(withPct ? [sumCol(14)] : []), ''];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-my-collection-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your collection: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
 };
@@ -2624,13 +2703,13 @@ $('exportWantBtn').onclick = async () => { track('export', { list: 'wanted' });
   const rows = [...CAT.sets, ...CAT.figs].filter(x => wanted(x) && !has(x));
   if (!rows.length) { toast('Star the sets and minifigures you want first, then export.'); return; }
   const blUrl = x => { const id = x.k === 's' ? (info(x.n).bl || x.n) : info(x.n).bl; return x.extra ? '' : id ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(id)}` : ''; };
-  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', `Used ${cur()}`, `New ${cur()}`, 'Buy', 'BrickLink'];
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', `Used ${cur()}`, `New ${cur()}`, 'Buy', 'BrickLink', 'My tags'];
   const body = rows.map(x => {
     const s = info(x.n);
-    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, toLocal(s.used), toLocal(s.new), buyHref(x), blUrl(x)];
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, toLocal(s.used), toLocal(s.new), buyHref(x), blUrl(x), myTags(x).join('; ')];
   });
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
-  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', sumCol(9), sumCol(10), '', ''];
+  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', sumCol(9), sumCol(10), '', '', ''];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-wanted-list-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your wanted list: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
 };
@@ -2990,6 +3069,10 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.16', date: '9 November 2026', title: 'Your own tags', items: [
+    ['My tags', 'add your own tags to the sets and minifigures you own or want, like On display, In storage or Childhood. Only you see them.'],
+    ['Find and tag in bulk', 'pick one of your tags in the Tag filter to see just those, or filter first and use Add my tag to tag everything in view. Your tags are in your exports too.'],
+  ] },
   { v: '0.16', date: '9 November 2026', title: 'Before it’s gone', items: [
     ['Retiring soon', 'sets LEGO is about to retire now show a coral RS beside the year. Click it (or tap, then Show all) to see every set retiring soon, soonest first.'],
     ['Retired filter', 'click a grey R, or use the new Retired filter, to see retired sets, sets retiring soon or sets still in shops. It works with your theme and Wanted list too.'],
