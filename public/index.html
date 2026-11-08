@@ -881,7 +881,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
       <a href="#" id="footHome">Back to top</a>
     </nav>
   </div>
-  <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span>Retirement dates from <a href="https://brickset.com/" target="_blank" rel="noopener">Brickset</a></span><span id="ratesNote"></span></p>
+  <p class="foot-src"><span>LEGO catalog from <a href="https://rebrickable.com/downloads/" target="_blank" rel="noopener">Rebrickable</a></span><span>Prices from <a href="https://www.bricklink.com/" target="_blank" rel="noopener">BrickLink</a></span><span id="ratesNote"></span></p>
   <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © Rebrickable, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Converted prices are approximate.</p>
   <p class="fine"><b>Affiliate disclosure:</b> some links on BrickCollect are affiliate links, including the buttons to retailers’ websites. If you buy something through them, The Art of Bricks may earn a small commission at no extra cost to you. This helps keep BrickCollect free, and it never affects the prices shown or which sets are listed.</p>
 </footer>
@@ -1112,8 +1112,8 @@ function info(n) {
   out.owned = !!me.owned;
   return out;
 }
-/* Retired: from Brickset (weekly job: ret R / S / A, exit date), set by hand by the site owner (manualRet),
-   or, with neither, LEGO sets released 5 or more years ago count as retired. */
+/* Retired: set by hand by the site owner (ret R / S / A, exit date, manualRet),
+   or, without that, LEGO sets released 5 or more years ago count as retired. */
 const RET_AGE = 5;
 function retState(x) {
   if (!x || x.k !== 's') return null;
@@ -1140,7 +1140,7 @@ document.addEventListener('click', e => {
 function retBadge(x) {
   const st = retState(x); if (!st) return '';
   const sh = shared.get(x.n) || {}, when = monthYear(sh.exit);
-  const src = sh.manualRet ? '' : sh.ret ? ' (from Brickset)' : '';
+  const src = sh.ret ? '' : ` (released ${RET_AGE}+ years ago)`;
   const title = st === 'S' ? `Retiring soon${when ? `: LEGO plans to retire it by ${when}` : ''}${src}` : `Retired${when ? ` in ${when}` : ''}${src}`;
   return ` <span class="retb${st === 'S' ? ' soon' : ''}" title="${esc(title)}" aria-label="${esc(title)}" role="button" tabindex="0">${st === 'S' ? 'RS' : 'R'}</span>`;
 }
@@ -2324,7 +2324,7 @@ function editTags(sets, tag, remove) {
 // Last day of a month as YYYY-MM-DD. The next end of June / December from today; a picked month as is.
 const endOfMonth = (y, m) => { const d = new Date(Date.UTC(y, m, 0)); return d.toISOString().slice(0, 10); };
 function nextEnd(month) { const now = new Date(), y = now.getFullYear(); return now.getMonth() + 1 <= month ? endOfMonth(y, month) : endOfMonth(y + 1, month); }
-// Owner: mark the sets in view retired (R), retiring soon (S, with LEGO's exit month if known), not retired (A), or back to automatic (Brickset / age rule).
+// Owner: mark the sets in view retired (R), retiring soon (S, with LEGO's exit month if known), not retired (A), or back to automatic (age rule).
 function bulkRetired(mode, exit) {
   if (!canCurate()) return;
   const rows = bulkRows.filter(x => x.k === 's'); if (!rows.length) return;
@@ -2336,7 +2336,7 @@ function bulkRetired(mode, exit) {
   }
   render();
   const w = `${rows.length.toLocaleString()} set${rows.length > 1 ? 's' : ''}`;
-  toast(mode === 'R' ? `Marked ${w} retired` : mode === 'A' ? `Marked ${w} not retired` : mode === 'S' ? `Marked ${w} retiring soon${exit ? ` (by ${monthYear(exit)})` : ''}` : `${w} back to automatic (Brickset or age)`);
+  toast(mode === 'R' ? `Marked ${w} retired` : mode === 'A' ? `Marked ${w} not retired` : mode === 'S' ? `Marked ${w} retiring soon${exit ? ` (by ${monthYear(exit)})` : ''}` : `${w} back to automatic (age rule)`);
 }
 function bulkSet(value) {
   if (!canCurate()) { toast('Only the site owner can change subthemes.'); return; }
@@ -2665,8 +2665,8 @@ function renderInsights() {
   $('insHi').innerHTML = [
     big && tile('Biggest set', big.x, `${big.v.toLocaleString()} pcs`, nm(big.x)),
     val && tile('Most valuable', val.x, money(val.v), nm(val.x)),
-    rR ? (() => { const used = new Set([big?.x, val?.x].filter(Boolean).map(x => x.n)), rets = own.filter(x => retState(x) === 'R'), fresh = rets.filter(x => !used.has(x.n)); const r = best(fresh.length ? fresh : rets, x => one(x) ?? (x.pieces ? x.pieces / 1e6 : 0)).x; return `<button type="button" class="hitile" data-zoom="${esc(r.n)}" title="${esc(r.name)}: view a larger picture. Retirement dates from Brickset; LEGO sets 5+ years old count as retired.">${pic(r)}<span class="hk">Retired</span><span class="hv">${rR.toLocaleString()} set${rR === 1 ? '' : 's'}${rS ? ` <small class="soon">· ${rS} retiring soon</small>` : ''}</span><span class="hn">${esc(nm(r))}</span></button>`; })()
-      : `<div class="hitile" title="Retirement dates from Brickset"><span class="hret">R</span><span class="hk">Retired</span><span class="hv">None yet</span><span class="hn${rS ? ' soon' : ''}">${rS ? `${rS} retiring soon` : `of ${own.length.toLocaleString()} you own`}</span></div>`,
+    rR ? (() => { const used = new Set([big?.x, val?.x].filter(Boolean).map(x => x.n)), rets = own.filter(x => retState(x) === 'R'), fresh = rets.filter(x => !used.has(x.n)); const r = best(fresh.length ? fresh : rets, x => one(x) ?? (x.pieces ? x.pieces / 1e6 : 0)).x; return `<button type="button" class="hitile" data-zoom="${esc(r.n)}" title="${esc(r.name)}: view a larger picture. LEGO sets 5+ years old count as retired unless marked otherwise.">${pic(r)}<span class="hk">Retired</span><span class="hv">${rR.toLocaleString()} set${rR === 1 ? '' : 's'}${rS ? ` <small class="soon">· ${rS} retiring soon</small>` : ''}</span><span class="hn">${esc(nm(r))}</span></button>`; })()
+      : `<div class="hitile"><span class="hret">R</span><span class="hk">Retired</span><span class="hv">None yet</span><span class="hn${rS ? ' soon' : ''}">${rS ? `${rS} retiring soon` : `of ${own.length.toLocaleString()} you own`}</span></div>`,
   ].filter(Boolean).join('');
 }
 function paintIns() { const open = !!prefs.insOpen; $('insBody').hidden = !open; $('insToggle').setAttribute('aria-expanded', open); }
@@ -3142,7 +3142,7 @@ const RELEASES = [
     ['Indiana Jones timeline', 'did you know Temple of Doom comes before Raiders? All five films in story order.'],
     ['Bionicle timeline', 'every wave in story order, starting with the Metru Nui prequel.'],
     ['Timeline follows your theme', 'pick Harry Potter and the Timeline jumps to the Harry Potter story, with arrows to scroll along.'],
-    ['Retired badge', 'a small R beside a set means LEGO no longer makes it; a coral R means it’s retiring soon, so grab it while you can. Hover over the R for details. Retirement dates come from Brickset.'],
+    ['Retired badge', 'a small R beside a set means LEGO no longer makes it; a coral R means it’s retiring soon, so grab it while you can. Hover over the R for details.'],
   ] },
   { v: '0.11', date: '4 November 2026', title: 'Save and collect', items: [
     ['Save your collection', 'sign up for free (no password) to save your collection and keep it on every device.'],
