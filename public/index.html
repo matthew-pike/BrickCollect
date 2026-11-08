@@ -353,7 +353,10 @@ tr.fromset .nm::after{white-space:nowrap;display:inline-block;content:"IN YOUR S
 .muted{color:var(--muted)}
 .nm{font-weight:500;min-width:220px}
 .nm small{display:block;font-weight:400;color:var(--faint);font-size:11.5px}
-.retb{display:inline-grid;place-items:center;vertical-align:1px;margin-left:5px;width:16px;height:16px;box-sizing:border-box;font-family:var(--font-mono);font-size:10px;font-weight:700;line-height:1;padding-top:1px;border-radius:4px;border:1px solid var(--faint);color:var(--muted);white-space:nowrap;cursor:help}
+.retb{display:inline-grid;place-items:center;vertical-align:1px;margin-left:5px;min-width:16px;height:16px;padding:0 2px;box-sizing:border-box;font-family:var(--font-mono);font-size:10px;font-weight:700;line-height:1;padding-top:1px;border-radius:4px;border:1px solid var(--faint);color:var(--muted);white-space:nowrap;cursor:pointer}
+.retb:hover{border-color:var(--accent);color:var(--accent)}
+.retb.soon:hover{background:color-mix(in srgb,var(--coral) 14%,transparent)}
+.toast .tbtn{margin-left:10px;border:0;background:none;color:inherit;font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;padding:0}
 #rows .c-yr,#rows .c-num{white-space:nowrap}
 .retb.soon{border-color:var(--coral);color:var(--coral)}
 .sub{color:var(--accent);font-weight:500}
@@ -771,6 +774,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <div class="field"><label for="fiSet">Set</label><select id="fiSet"><option value="all">All sets</option><option value="owned">Owned</option><option value="missing">Still needed</option></select></div>
     <div class="field"><label for="fiFilm">Tag</label><select id="fiFilm"><option value="">All</option></select></div>
     <div class="field"><label for="fiYear">Year</label><select id="fiYear"><option value="">All</option></select></div>
+    <div class="field"><label for="fiRet">Retired</label><select id="fiRet"><option value="">All</option><option value="S">Retiring soon</option><option value="R">Retired</option><option value="A">Still in shops</option></select></div>
     <button class="btn" id="addBtn" hidden title="Add a set from another brand">Add set</button>
     <button class="btn" id="bulkBtn" title="Set the subtheme, or add or remove a tag, for every set in view">Bulk edit</button>
     <button class="btn clearf" id="fiReset" type="button" title="Clear all filters and search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Clear filters</button>
@@ -803,7 +807,8 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
       <b id="bulkLabel">Set for the sets in view</b>
-      <select id="bulkField" aria-label="Field to set" style="width:auto"><option value="sub">Set subtheme</option><option value="tag">Add tag</option><option value="untag">Remove tag</option><option value="ret:R">Mark retired</option><option value="ret:A">Mark not retired</option><option value="ret:auto">Retired: automatic</option></select>
+      <select id="bulkField" aria-label="Field to set" style="width:auto"><option value="sub">Set subtheme</option><option value="tag">Add tag</option><option value="untag">Remove tag</option><option value="ret:R">Mark retired</option><option value="ret:S6">Mark retiring soon: end of June</option><option value="ret:S12">Mark retiring soon: end of December</option><option value="ret:Sm">Mark retiring soon: pick a month</option><option value="ret:S">Mark retiring soon: no date</option><option value="ret:A">Mark not retired</option><option value="ret:auto">Retired: automatic</option></select>
+      <input class="inp" id="bulkMonth" type="month" aria-label="Retiring by (month)" hidden style="width:auto">
       <input class="inp" id="bulkSub" list="subNames" placeholder="e.g. Microfighters" aria-label="Value" style="width:240px;max-width:100%">
       <button class="btn mini primary" type="submit" id="bulkApply">Apply</button>
       <button class="btn mini" type="button" id="bulkClear" title="Remove this value from these sets">Clear</button>
@@ -1091,13 +1096,24 @@ function retState(x) {
 }
 const monthYear = d => { const t = Date.parse(d || ''); return Number.isFinite(t) ? new Date(t).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : ''; };
 // Phones can't hover, so tapping the R shows the same words.
-document.addEventListener('click', e => { const r = e.target.closest?.('.retb'); if (r) { e.stopPropagation(); e.preventDefault(); toast(r.title); } }, true);
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList?.contains('retb')) { e.preventDefault(); e.target.click(); } });
+// Desktop: clicking R / RS shows all retired / retiring-soon sets (within the other filters). Phones: a tap explains it, with a Show all button.
+function retFilter(st) { focus = null; leaveSale(); fi.ret.value = fi.ret.value === st ? '' : st; fi.ret.classList.toggle('set-on', !!fi.ret.value); limit = PAGE; savePrefs(); render(); if (fi.ret.value) { track('ret_filter', { ret: st }); $('boardHead')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }
+document.addEventListener('click', e => {
+  const b = e.target.closest?.('[data-retshow]'); if (b) { e.stopPropagation(); e.preventDefault(); $('toast').hidden = true; if (fi.ret.value !== b.dataset.retshow) retFilter(b.dataset.retshow); return; }
+  const r = e.target.closest?.('.retb'); if (!r) return; e.stopPropagation(); e.preventDefault();
+  const st = r.classList.contains('soon') ? 'S' : 'R';
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches) { retFilter(st); if (fi.ret.value) toast(st === 'S' ? 'Showing sets retiring soon, soonest first' : 'Showing retired sets'); return; }
+  const t = $('toast'); t.classList.remove('tally'); t.textContent = r.title;
+  if (fi.ret.value !== st) { const btn = document.createElement('button'); btn.className = 'tbtn'; btn.dataset.retshow = st; btn.textContent = st === 'S' ? 'Show all retiring soon' : 'Show all retired'; t.append(btn); }
+  t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 5000);
+}, true);
 function retBadge(x) {
   const st = retState(x); if (!st) return '';
   const sh = shared.get(x.n) || {}, when = monthYear(sh.exit);
   const src = sh.manualRet ? '' : sh.ret ? ' (from Brickset)' : '';
   const title = st === 'S' ? `Retiring soon${when ? `: LEGO plans to retire it by ${when}` : ''}${src}` : `Retired${when ? ` in ${when}` : ''}${src}`;
-  return ` <span class="retb${st === 'S' ? ' soon' : ''}" title="${esc(title)}" aria-label="${esc(title)}" role="img">R</span>`;
+  return ` <span class="retb${st === 'S' ? ' soon' : ''}" title="${esc(title)}" aria-label="${esc(title)}" role="button" tabindex="0">${st === 'S' ? 'RS' : 'R'}</span>`;
 }
 const hasMineData = v => v && (v.owned || v.wanted || SHARED_KEYS.some(k => v[k] != null));
 const personalObj = () => { const o = {}; for (const [k, v] of mine) if (hasMineData(v)) o[k] = v; return o; };
@@ -1222,8 +1238,9 @@ function tallyToast(n) {
 }
 
 /* ---------- filters ---------- */
-const fi = { brand: $('fiBrand'), theme: $('fiTheme'), sub: $('fiSub'), set: $('fiSet'), film: $('fiFilm'), year: $('fiYear') };
+const fi = { brand: $('fiBrand'), theme: $('fiTheme'), sub: $('fiSub'), set: $('fiSet'), film: $('fiFilm'), year: $('fiYear'), ret: $('fiRet') };
 const saved = prefs.filters || {};
+if (['S', 'R', 'A'].includes(saved.ret)) fi.ret.value = saved.ret;
 function fill(sel, first, values, keep) {
   sel.innerHTML = `<option value="">${first}</option>` + values.map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('');
   sel.value = values.some(([v]) => v === keep) ? keep : '';
@@ -1254,14 +1271,22 @@ function subOptions(keep) {
   }
   fill(fi.sub, counts.size ? 'All subthemes' : 'No subthemes', [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([s, c]) => [s, `${s} (${c.toLocaleString()})`]), keep ?? fi.sub.value);
 }
-const scopedFor = k => !!((k === 'figs' && focus) || tlFilter || fi.brand.value || fi.theme.value || fi.film.value || fi.year.value || fi.set.value !== 'all' || $('q').value.trim());
+const scopedFor = k => !!((k === 'figs' && focus) || tlFilter || fi.brand.value || fi.theme.value || fi.film.value || fi.year.value || fi.ret.value || fi.set.value !== 'all' || $('q').value.trim());
 const scoped = () => scopedFor(kind);
+// "75192 10294, 21350-1" → a set of numbers; null for ordinary searches.
+function qNums(q) {
+  const t = (q || '').split(/[\s,;]+/).filter(Boolean);
+  return t.length > 1 && t.every(x => /^[a-z]{0,3}\d{3,7}(-\d+)?$/.test(x)) ? new Set(t.map(x => x.replace(/-1$/, ''))) : null;
+}
 function setPasses(s, q) {
   if (tlFilter) { const fr = TIMELINES.find(f => f.id === tlFilter.fr); if (fr && !tlMatches(fr, fr.entries[tlFilter.i], s)) return false; }
   if (fi.theme.value && s.theme !== fi.theme.value) return false;
   if (fi.sub.value && s.sub !== fi.sub.value) return false;
   if (fi.film.value && (fi.film.value === '__none' ? s.tags.length > 0 : !s.tags.includes(fi.film.value))) return false;
   if (fi.year.value && String(s.year) !== fi.year.value) return false;
+  if (fi.ret.value && (retState(s) || 'A') !== fi.ret.value) return false;
+  // Several set numbers pasted into search (e.g. from a retiring list) match any of them.
+  const nums = qNums(q); if (nums) return nums.has(s.n.toLowerCase()) || nums.has(s.n.toLowerCase().replace(/-1$/, ''));
   // Search matches the set number and name, and also its subtheme and tags (e.g. "battle packs").
   if (q && !s.key.includes(q) && !(s.sub || '').toLowerCase().includes(q) && !(s.tags || []).some(t => t.toLowerCase().includes(q))) return false;
   return true;
@@ -1275,8 +1300,8 @@ function inScope(x) {
   if (focus) return x.sets.has(focus);
   // A minifigure's own collection tag matches the Tag filter and search directly.
   if (fi.film.value && fi.film.value !== '__none' && (x.ctags || []).includes(fi.film.value)) return !q || x.key.includes(q) || x.ctags.some(t => t.toLowerCase().includes(q));
-  if (q && !fi.film.value && (x.ctags || []).some(t => t.toLowerCase().includes(q)) && !(tlFilter || fi.theme.value || fi.sub.value || fi.year.value)) return true;
-  const setFilters = tlFilter || fi.theme.value || fi.sub.value || fi.film.value || fi.year.value;
+  if (q && !fi.film.value && (x.ctags || []).some(t => t.toLowerCase().includes(q)) && !(tlFilter || fi.theme.value || fi.sub.value || fi.year.value || fi.ret.value)) return true;
+  const setFilters = tlFilter || fi.theme.value || fi.sub.value || fi.film.value || fi.year.value || fi.ret.value;
   if (!setFilters && !q) return true;
   if (x.so.some(s => setPasses(s, q))) return true;
   return !!q && x.key.includes(q) && (!setFilters || x.so.some(s => setPasses(s, '')));
@@ -1331,7 +1356,7 @@ function valueOne(i, c) {
   return i.used; // used and used incomplete both count at the used price
 }
 const canCurate = () => isOwner && !!db;
-function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond: prefs.lastCond, incPct: prefs.incPct, currency: prefs.currency, sellPct: prefs.sellPct, sellOpen: prefs.sellOpen, insOpen: prefs.insOpen, insMetric: prefs.insMetric, needMode: prefs.needMode, region: prefs.region, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value } }); }
+function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond: prefs.lastCond, incPct: prefs.incPct, currency: prefs.currency, sellPct: prefs.sellPct, sellOpen: prefs.sellOpen, insOpen: prefs.insOpen, insMetric: prefs.insMetric, needMode: prefs.needMode, region: prefs.region, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value, ret: fi.ret.value } }); }
 
 /* ---------- buy links (affiliate links when set up) ----------
    Each brand has a link template; {num} is the set number (75192 for LEGO 75192-1) and {name} the set name.
@@ -1664,7 +1689,7 @@ function render() {
   document.querySelector('.pills').hidden = tlOpen; document.querySelector('.pills + .tip')?.toggleAttribute('hidden', tlOpen);
   $('regionLabel').textContent = LOCS[priceRegion()].replace(' (EU)', '').replace('United States', 'US').replace('United Kingdom', 'UK');
   document.querySelectorAll('[data-loc]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.loc === priceRegion())));
-  { const n = [fi.brand, fi.theme, fi.sub, fi.film, fi.year].filter(f => f.value).length + (fi.set.value !== 'all' ? 1 : 0); $('filtLabel').textContent = n ? `Filters · ${n}` : 'Filters';
+  { const n = [fi.brand, fi.theme, fi.sub, fi.film, fi.year, fi.ret].filter(f => f.value).length + (fi.set.value !== 'all' ? 1 : 0); $('filtLabel').textContent = n ? `Filters · ${n}` : 'Filters';
     const any = n > 0 || !!$('q').value.trim() || !!focus || !!tlFilter; const r = $('fiReset'); r.disabled = !any; r.classList.toggle('on', any); $('fiClearM').hidden = !any; }
   const list = kind === 'sets' ? CAT.sets : CAT.figs;
   const isScoped = scoped();
@@ -1677,7 +1702,9 @@ function render() {
   if (focus && (!focusSet || (scopedFor('sets') && !inScope(focusSet)))) { focus = null; savePrefs(); return render(); }
   const focusFigs = focusSet ? CAT.figs.filter(f => f.sets.has(focus)).length : 0;
   $('cFigs').textContent = (focusSet ? focusFigs : scopedFor('figs') ? CAT.figs.filter(inScope).length : CAT.figs.filter(x => has(x) || wanted(x)).length).toLocaleString();
-  const fb = $('focusbar'); fb.hidden = !focusSet && !(tlFilter && !tlOpen);
+  const retBar = !focusSet && !(tlFilter && !tlOpen) && !!fi.ret.value && !tlOpen;
+  const fb = $('focusbar'); fb.hidden = !focusSet && !(tlFilter && !tlOpen) && !retBar;
+  if (retBar) { const w = { S: 'Sets retiring soon', R: 'Retired sets', A: 'Sets still in shops' }[fi.ret.value]; fb.innerHTML = `<span><b>${w}</b>${fi.ret.value === 'S' ? ', soonest first' : ''}${kind === 'figs' ? ' (minifigures from them)' : ''}. Other filters still apply.</span><span class="spacer"></span><button class="btn mini" data-retclear="1">Clear</button>`; }
   if (!focusSet && tlFilter && !tlOpen) { const fr = TIMELINES.find(f => f.id === tlFilter.fr), e = fr?.entries[tlFilter.i]; fb.innerHTML = `<span>${kind === 'sets' ? 'Sets' : 'Minifigures'} from <b>${esc(e?.t || '')}</b> (${esc(fr?.name || '')}), across every brand</span><span class="spacer"></span><button class="btn mini" data-tlback="1">Back to timeline</button><button class="btn mini" data-tlclear="1">Clear</button>`; }
   if (focusSet) fb.innerHTML = kind === 'sets'
     ? `<span>Selected <b>${esc(focusSet.name)}</b> <span class="mono muted">${esc(focusSet.n)}</span> · ${focusFigs ? `${focusFigs} minifigure${focusFigs > 1 ? 's' : ''}` : 'no minifigures'}</span><span class="spacer"></span>${focusFigs ? '<button class="btn mini primary" data-kind="figs">Show minifigures</button>' : ''}<button class="btn mini" data-clearfocus="1">Clear</button>`
@@ -1747,6 +1774,7 @@ function render() {
     const r = typeof A === 'number' && typeof B === 'number' ? A - B : String(A).localeCompare(String(B), undefined, { numeric: true });
     return sort.dir === 'asc' ? r : -r;
   });
+  if (fi.ret.value === 'S' && kind === 'sets') { const ex = x => Date.parse((shared.get(x.n) || {}).exit || '') || Infinity; rows.sort((a, b) => ex(a) - ex(b)); }
 
   const tipOf = c => c.tip ? `<button type="button" class="tip" data-tip="${esc(c.tip)}" aria-label="What is this?">i</button>` : '';
   $('headRow').innerHTML = COLS().map(c => !c.key ? `<th class="${c.cls || ''}">${c.label}${tipOf(c)}</th>`
@@ -1960,6 +1988,7 @@ document.addEventListener('click', e => {
   if (t.dataset.tlshow) { tlFilter = { fr: tlId, i: Number(t.dataset.tlshow) }; tlOpen = false; kind = 'sets'; focus = null; listView = 'all'; Object.values(fi).forEach(f => { f.value = f === fi.set ? 'all' : ''; }); $('q').value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); $('boardHead').scrollIntoView({ behavior: 'smooth' }); return; }
   if (t.dataset.tlback) { tlOpen = true; if (tlFilter) { tlId = tlFilter.fr; tlPick = tlFilter.i; } render(); document.querySelector('.tl-card.on')?.scrollIntoView({ inline: 'center', block: 'nearest' }); return; }
   if (t.dataset.tlclear) { tlFilter = null; limit = PAGE; render(); return; }
+  if (t.dataset.retclear) { fi.ret.value = ''; fi.ret.classList.remove('set-on'); limit = PAGE; savePrefs(); render(); return; }
   if (t.dataset.kind) { tlOpen = false; kind = t.dataset.kind; limit = PAGE; themeOptions(); filmOptions(); savePrefs(); render(); return; }
   if (t.dataset.subfilter !== undefined && t.dataset.subtheme !== undefined) {
     focus = null; tlFilter = null; listView = 'all'; fi.brand.value = ''; themeOptions();
@@ -2173,19 +2202,22 @@ function editTags(sets, tag, remove) {
   applyOverrides(); render(); touched.forEach(t => saveSubDoc(t));
   return n;
 }
-// Owner: mark the sets in view retired (R), not retired (A), or back to automatic (Brickset / age rule).
-function bulkRetired(mode) {
+// Last day of a month as YYYY-MM-DD. The next end of June / December from today; a picked month as is.
+const endOfMonth = (y, m) => { const d = new Date(Date.UTC(y, m, 0)); return d.toISOString().slice(0, 10); };
+function nextEnd(month) { const now = new Date(), y = now.getFullYear(); return now.getMonth() + 1 <= month ? endOfMonth(y, month) : endOfMonth(y + 1, month); }
+// Owner: mark the sets in view retired (R), retiring soon (S, with LEGO's exit month if known), not retired (A), or back to automatic (Brickset / age rule).
+function bulkRetired(mode, exit) {
   if (!canCurate()) return;
   const rows = bulkRows.filter(x => x.k === 's'); if (!rows.length) return;
   for (const x of rows) {
     const sh = { ...(shared.get(x.n) || {}) };
     if (mode === 'auto') { if (sh.manualRet) { delete sh.ret; delete sh.exit; } delete sh.manualRet; }
-    else { sh.ret = mode; sh.manualRet = true; delete sh.exit; }
+    else { sh.ret = mode; sh.manualRet = true; if (exit) sh.exit = exit; else delete sh.exit; }
     shared.set(x.n, sh); saveShared(x.n);
   }
   render();
   const w = `${rows.length.toLocaleString()} set${rows.length > 1 ? 's' : ''}`;
-  toast(mode === 'R' ? `Marked ${w} retired` : mode === 'A' ? `Marked ${w} not retired` : `${w} back to automatic (Brickset or age)`);
+  toast(mode === 'R' ? `Marked ${w} retired` : mode === 'A' ? `Marked ${w} not retired` : mode === 'S' ? `Marked ${w} retiring soon${exit ? ` (by ${monthYear(exit)})` : ''}` : `${w} back to automatic (Brickset or age)`);
 }
 function bulkSet(value) {
   if (!canCurate()) { toast('Only the site owner can change subthemes.'); return; }
@@ -2216,10 +2248,13 @@ function bulkSet(value) {
   const what = field === 'film' ? 'film or series' : 'subtheme';
   toast(value ? `Set ${rows.length.toLocaleString()} sets to ${value}` : `Cleared the ${what} on ${rows.length.toLocaleString()} sets`);
 }
-$('bulkField').onchange = () => { const f = $('bulkField').value, t = f !== 'sub', r = f.startsWith('ret:'); $('bulkSub').hidden = r; if (r) { $('bulkClear').hidden = true; $('bulkApply').focus(); return; } $('bulkSub').setAttribute('list', t ? 'filmNames' : 'subNames'); $('bulkSub').placeholder = t ? 'e.g. Helmet Collection' : 'e.g. Microfighters'; $('bulkClear').hidden = t; $('bulkSub').focus(); };
+$('bulkField').onchange = () => { const f = $('bulkField').value, t = f !== 'sub', r = f.startsWith('ret:'); $('bulkSub').hidden = r; $('bulkMonth').hidden = f !== 'ret:Sm'; if (f === 'ret:Sm') { $('bulkClear').hidden = true; $('bulkMonth').focus(); return; } if (r) { $('bulkClear').hidden = true; $('bulkApply').focus(); return; } $('bulkSub').setAttribute('list', t ? 'filmNames' : 'subNames'); $('bulkSub').placeholder = t ? 'e.g. Helmet Collection' : 'e.g. Microfighters'; $('bulkClear').hidden = t; $('bulkSub').focus(); };
 $('bulkBtn').onclick = () => { $('bulkbar').hidden = false; render(); $('bulkSub').focus(); };
 $('bulkCancel').onclick = () => { $('bulkbar').hidden = true; };
-$('bulkbar').addEventListener('submit', e => { e.preventDefault(); if ($('bulkField').value.startsWith('ret:')) { bulkRetired($('bulkField').value.slice(4)); return; } const v = $('bulkSub').value.trim(); if (!v) { $('bulkSub').focus(); return; } bulkSet(v); });
+$('bulkbar').addEventListener('submit', e => { e.preventDefault(); if ($('bulkField').value.startsWith('ret:')) { const m = $('bulkField').value.slice(4);
+    if (m === 'S6' || m === 'S12') { bulkRetired('S', nextEnd(m === 'S6' ? 6 : 12)); return; }
+    if (m === 'Sm') { const v = $('bulkMonth').value; if (!/^\d{4}-\d{2}$/.test(v)) { $('bulkMonth').focus(); toast('Pick the month LEGO retires these sets'); return; } bulkRetired('S', endOfMonth(Number(v.slice(0, 4)), Number(v.slice(5)))); return; }
+    bulkRetired(m); return; } const v = $('bulkSub').value.trim(); if (!v) { $('bulkSub').focus(); return; } bulkSet(v); });
 $('bulkClear').onclick = () => bulkSet('');
 
 /* ---------- select all ---------- */
@@ -2952,6 +2987,10 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.16', date: '9 November 2026', title: 'Before it’s gone', items: [
+    ['Retiring soon', 'sets LEGO is about to retire now show a coral RS beside the year. Click it (or tap, then Show all) to see every set retiring soon, soonest first.'],
+    ['Retired filter', 'click a grey R, or use the new Retired filter, to see retired sets, sets retiring soon or sets still in shops. It works with your theme and Wanted list too.'],
+  ] },
   { v: '0.15', date: '9 November 2026', title: 'A quicker first tick', items: [
     ['Running tally', 'each tick shows how many sets, pieces and minifigures you have, and how far through that theme or subtheme you are.'],
     ['Save sooner', 'a friendly reminder to save after a few sets. Opened from Instagram or Facebook? It explains how to keep your ticks.'],
