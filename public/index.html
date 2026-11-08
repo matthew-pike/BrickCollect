@@ -606,6 +606,43 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .soldbtn:hover{background:color-mix(in srgb,var(--violet) 10%,transparent)}
 .soldbtn.confirm{background:var(--violet);color:#fff}
 .soldbtn:focus-visible{outline:2px solid var(--accent)}
+.lstbtn{all:unset;cursor:pointer;margin-top:4px;text-align:center;font-size:12.5px;font-weight:500;padding:7px 10px;border-radius:8px;border:1px solid var(--line-2);color:var(--accent)}
+.lstbtn:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.lstbtn:focus-visible{outline:2px solid var(--accent)}
+.lstbtn small{color:var(--faint);font-weight:400;margin-left:4px}
+.lst{width:min(560px,calc(100vw - 24px))}
+.lst .lst-sub{margin:0 0 12px;font-size:13px}
+.lst .lst-list{display:flex;flex-direction:column;gap:12px;max-height:min(62vh,640px);overflow:auto;margin:0 -4px;padding:0 4px}
+.lst .lstcard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.lst .lstcard h3{margin:0;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lst .lstcard h3 .code{font-family:var(--font-mono);font-size:10.5px;color:var(--faint);font-weight:400}
+.lst .lstcard h3 .linkbtn{margin-left:auto;font-weight:400;color:var(--accent);font-size:12px}
+.lst .lstchecks{display:flex;gap:8px;flex-wrap:wrap}
+.lst .lstchk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--fg);border:1px solid var(--line-2);border-radius:999px;padding:5px 12px;cursor:pointer;user-select:none}
+.lst .lstchk input{width:15px;height:15px;margin:0;accent-color:var(--accent)}
+.lst .lstchk:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.lst .lstrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lst .lstf{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.lst .lstf.wide{grid-column:1/-1}
+.lst .lstf .inp{font-size:13.5px;color:var(--fg)}
+.lst .lstprev{font-size:12px;color:var(--faint);margin:0;line-height:1.45}
+.lst .lstprev b{color:var(--muted);font-weight:500}
+.lst .sellmode{margin:0}
+.lst .acct-actions{margin-top:14px}
+@media (max-width:480px){.lst .lstrow{grid-template-columns:1fr}}
+.blx{width:min(500px,calc(100vw - 24px))}
+.blx .imp-sum{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.55;color:var(--muted)}
+.blx .imp-sum b{color:var(--fg);font-weight:600}
+.blx .imp-sum .bad b{color:var(--coral)}
+.blx .imp-sum .badlist{display:block;margin-top:4px;font:12px/1.5 var(--font-mono,ui-monospace,monospace);color:var(--faint);overflow-wrap:anywhere;max-height:90px;overflow:auto}
+.blx ol{margin:0 0 12px;padding-left:20px;font-size:13px;line-height:1.6;color:var(--muted)}
+.blx ol a{color:var(--accent)}
+.blx .blfiles{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.blx .blfile{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.blx .blfile span{flex:1 1 120px;font-size:13px;color:var(--muted)}
+.blx .blfile .btn{width:auto;flex:0 0 auto}
+.blrow{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0;font-size:13px;color:var(--muted)}
+.blrow span{flex:1 1 260px}
 .buy{--bd:var(--stud);--hv:#000;background:var(--stud);border-color:var(--bd);color:#1a1300;font-weight:600}
 .buy-lego{--t:#e3000b;--bd:#e3000b;--hv:#8a0008;--hb:#8a0008}
 .buy-pantasy{--t:#14259a;--bd:#f2a6cf;--hv:#0b1560;--hb:#14259a}
@@ -770,6 +807,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <button class="sellopen" id="sellToggle" aria-expanded="false" aria-controls="sellBody"><span class="sellq"><span class="selltl"><b>Sell or trade</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span> <span class="muted" id="sellSub">See what your collection is worth</span></span><span class="sellpeek" id="sellPeek"></span></button>
     <div class="sellbody" id="sellBody" hidden>
     <div class="sellmode" role="group" aria-label="Value"><button type="button" data-salemode="own" aria-pressed="true">Everything you own</button><button type="button" data-salemode="sale" aria-pressed="false" title="Copies you've marked for sale or trade. Also shows just those in the list below.">Sale or trade list <b id="cSale">0</b></button></div>
+    <p class="blrow" id="blRow" hidden><span>Selling on BrickLink? Add details and your price to each copy (click its condition chip, then Listing details), then make your upload file.</span><button class="btn" type="button" id="blOpen2">BrickLink upload</button></p>
     <div class="sellhead"><h3 id="sellTitle" class="vh">Sell or trade</h3><p class="sellintro"><button type="button" class="tip" data-tip="Based on what you&#x27;ve ticked as owned and the copies you&#x27;ve set in the Condition column. Sellers and buyers often agree on a share of market value, like 70%, to allow for fees, shipping and time." aria-label="What is this?">i</button> Market value of what you own, by condition. Pick a percentage to see what you’d ask or offer.</p></div>
     <div class="pct"><div class="pctchips" role="group" aria-label="Quick percentages"><button class="pctchip" data-pct="60">60%</button><button class="pctchip" data-pct="70">70%</button><button class="pctchip" data-pct="80">80%</button><button class="pctchip" data-pct="100">100%</button></div><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="100" aria-label="Percentage of market value"><span>%</span></div>
     <dl class="sellgrid">
@@ -818,7 +856,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
         <div class="menu" id="regionMenu" role="menu" hidden><button role="menuitemradio" data-loc="AU">Australia<small>BrickLink sellers in Australia</small></button><button role="menuitemradio" data-loc="US">United States<small>Sellers in the US</small></button><button role="menuitemradio" data-loc="CA">Canada<small>Sellers in Canada</small></button><button role="menuitemradio" data-loc="EU">Europe (EU)<small>Sellers in the European Union</small></button><button role="menuitemradio" data-loc="UK">United Kingdom<small>Sellers in the UK</small></button><button role="menuitemradio" data-loc="world">Worldwide (W)<small>All sellers. Shown greyed with a W wherever a local price is missing</small></button></div></div>
       <button class="btn" id="importBtn" title="Add sets from Rebrickable, Brickset, BrickLink, a spreadsheet or a BrickCollect export">Import</button>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button></div></div>
+        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button><button role="menuitem" id="exportBlBtn">BrickLink store upload<small>Your sale or trade list, ready to upload to your BrickLink store</small></button></div></div>
       <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view (site owner only; everyone else's prices refresh twice a day).">Sync Prices</button>
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
@@ -955,6 +993,27 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <div class="acct-actions"><button class="btn" type="button" id="impBack">Back</button><button class="btn primary" type="button" id="impGo">Add</button></div>
   </div>
   <button class="icon-btn dlg-x" type="button" id="impClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</dialog>
+<dialog class="dlg lst" id="lstDlg" aria-labelledby="lstH">
+  <h2 id="lstH">Listing details</h2>
+  <p class="lst-sub" id="lstSub"></p>
+  <div class="lst-list" id="lstList"></div>
+  <div class="acct-actions"><button class="btn primary" type="button" id="lstDone">Done</button></div>
+  <button class="icon-btn dlg-x" type="button" id="lstClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</dialog>
+<dialog class="dlg blx" id="blDlg" aria-labelledby="blH">
+  <h2 id="blH">BrickLink store upload</h2>
+  <p>Turns your sale or trade list into a BrickLink upload file, one lot for each copy (identical copies are put together).</p>
+  <ul class="imp-sum" id="blSum"></ul>
+  <label class="keepbox"><input type="checkbox" id="blStock" checked><span>Put them in my stockroom, so I can check them on BrickLink before they go on sale</span></label>
+  <ol>
+    <li>Download the file below (or copy it).</li>
+    <li>On BrickLink, open <a href="https://www.bricklink.com/invXML.asp" target="_blank" rel="noopener">Upload inventory ↗</a> and choose the file, or paste it into the upload box.</li>
+    <li>Check the lots on BrickLink’s verify page, then submit.</li>
+  </ol>
+  <div class="blfiles" id="blFiles"></div>
+  <p class="fine" id="blFine"></p>
+  <button class="icon-btn dlg-x" type="button" id="blClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
 </dialog>
 <dialog class="news" id="newsDlg" aria-labelledby="newsTitle">
   <div class="news-head"><h2 id="newsTitle">What’s new</h2><button class="icon-btn" type="button" id="newsClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
@@ -1227,14 +1286,14 @@ function setInfo(n, patch, { quiet } = {}) {
   if ('owned' in patch) {
     me.owned = !!patch.owned;
     if (me.owned) { me.wanted = false; if (!me.cond) me.cond = prefs.lastCond || 'used'; }
-    else { delete me.cond; delete me.qty; delete me.sale; }
+    else { delete me.cond; delete me.qty; delete me.sale; delete me.saleInfo; }
   }
   if ('cond' in patch && me.owned) { me.cond = patch.cond; delete me.qty; prefs.lastCond = patch.cond; savePrefs(); }
   // qty: how many copies you own in each condition, e.g. { new: 1, used: 2 }. One copy is stored as just cond.
   if ('qty' in patch) {
     const q = {}; for (const c of CONDS) { const v = Math.max(0, Math.min(999, Math.floor(Number(patch.qty[c]) || 0))); if (v) q[c] = v; }
     const total = Object.values(q).reduce((a, b) => a + b, 0);
-    if (!total) { me.owned = false; delete me.cond; delete me.qty; delete me.sale; }
+    if (!total) { me.owned = false; delete me.cond; delete me.qty; delete me.sale; delete me.saleInfo; }
     else {
       me.owned = true; me.wanted = false; me.cond = CONDS.find(c => q[c]);
       if (total === 1) delete me.qty; else me.qty = q;
@@ -1246,6 +1305,13 @@ function setInfo(n, patch, { quiet } = {}) {
     const own = copiesOf({ n }, me), q = {};
     for (const c of CONDS) { const v = Math.max(0, Math.min(own[c], Math.floor(Number(me.sale[c]) || 0))); if (v) q[c] = v; }
     if (Object.keys(q).length) me.sale = q; else delete me.sale;
+  }
+  // saleInfo: listing details for each copy for sale or trade, per condition, e.g. { new: [{ sealed: true, price: { p: 300, c: 'AUD' } }] }.
+  if ('saleInfo' in patch) me.saleInfo = patch.saleInfo || {};
+  if (me.saleInfo) {
+    const sq = me.sale || {}, o = {};
+    for (const c of CONDS) { const a = (Array.isArray(me.saleInfo[c]) ? me.saleInfo[c] : []).slice(0, sq[c] || 0).map(cleanListing); if (a.some(Boolean)) o[c] = a.map(v => v || {}); }
+    if (Object.keys(o).length) me.saleInfo = o; else delete me.saleInfo;
   }
   if ('wanted' in patch) me.wanted = !!patch.wanted && !me.owned;
   if ('mytags' in patch) { const t = [...new Set((patch.mytags || []).map(cleanTag).filter(Boolean))].slice(0, MY_TAG_MAX); if (t.length) me.mytags = t; else delete me.mytags; }
@@ -1483,6 +1549,7 @@ function tickTip() {
    one per visit, only to people who were already using BrickCollect before the feature came out, and for 30 days.
    Add an entry here with each new feature (newest first). sel = the first visible match on screen gets the note. */
 const NEW_TIPS = [
+  { id: 'blupload', at: '2026-11-09T12:00:00+11:00', sel: '#exportMenuBtn', title: 'Sell on BrickLink', text: 'Mark copies for sale or trade, add details and your price to each, then Export → BrickLink store upload to list them all in one go.' },
   { id: 'mytags', at: '2026-11-09T09:20:00+11:00', sel: '#rows .mytagadd', title: 'My tags', text: 'Add your own tags, like On display or In storage, to the sets you own or want. Only you see them, and the Tag filter finds them.' },
   { id: 'retsoon', at: '2026-11-09T09:20:00+11:00', sel: '#rows .retb', title: 'Retired and retiring soon', text: 'R means LEGO has retired a set; RS means it’s retiring soon. Click either to see them all.', phone: 'R means LEGO has retired a set; RS means it’s retiring soon. Tap either to see them all.' },
 ];
@@ -1846,6 +1913,7 @@ function render() {
     const byVal = { new: 0, used: 0, 'used-inc': 0 }, byN = { new: 0, used: 0, 'used-inc': 0 }; src.forEach(x => { const q = qOf(x), i = info(x.n); for (const c of CONDS) if (q[c]) { byVal[c] += (valueOne(i, c) || 0) * q[c]; byN[c] += q[c]; } });
     const tot = byVal.new + byVal.used + byVal['used-inc'];
     $('sellSub').textContent = saleMode ? 'Your sale or trade list' : 'See what your collection is worth';
+    $('blRow').hidden = !saleMode || !src.length;
     document.querySelectorAll('[data-salemode]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.salemode === 'sale') === saleMode)));
     $('sellNew').textContent = money(byVal.new); $('sellUsed').textContent = money(byVal.used); $('sellInc').textContent = money(byVal['used-inc']);
     const cnt = (n, c) => n ? `${n.toLocaleString()} item${n > 1 ? 's' : ''}` : 'None';
@@ -2075,6 +2143,7 @@ function paintCopies() {
   const x = { n: copiesFor }, q = copiesOf(x), sq = saleOf(x), ns = saleCount(x), colour = { new: 'var(--good)', used: 'var(--accent)', 'used-inc': 'var(--stud)' };
   const step = (kind, c, v, max) => `<span class="stepper"><button data-${kind}="${c}" data-d="-1" aria-label="One fewer ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${v ? '' : 'disabled'}>−</button><span class="n" aria-live="polite">${v}</span><button data-${kind}="${c}" data-d="1" aria-label="One more ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${max != null && v >= max ? 'disabled' : ''}>+</button></span>`;
   copiesEl.innerHTML = `<div class="copyhead"><h4>Copies you own</h4><h4>Sale or trade <span class="code">ST</span></h4></div>${CONDS.map(c => `<div class="copyrow"><span class="lab"><span class="dot" style="--c:${colour[c]}"></span>${COND[c]} <span class="code">${{ new: 'N', used: 'UC', 'used-inc': 'UI' }[c]}</span></span>${step('copy', c, q[c])}${step('sale', c, sq[c], q[c])}</div>`).join('')}
+    ${ns ? `<button class="lstbtn" data-listing="1">Listing details…<small>for BrickLink</small></button>` : ''}
     ${ns ? `<button class="soldbtn ${soldConfirm ? 'confirm' : ''}" data-sold="1">${soldConfirm ? `Remove ${ns} sold or traded ${ns === 1 ? 'copy' : 'copies'} from your collection?` : `Sold or traded (${ns})…`}</button>` : ''}
     <span class="hint">Set all copies to 0 to remove it from your collection.</span>`;
 }
@@ -2121,6 +2190,7 @@ document.addEventListener('click', e => {
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
   if (t.dataset.condmenu) { copiesFor === t.dataset.condmenu ? closeCopies() : openCopies(t.dataset.condmenu); return; }
   if (t.dataset.sale) { soldConfirm = false; const n = copiesFor, q = saleOf({ n }); q[t.dataset.sale] += Number(t.dataset.d); setInfo(n, { sale: q }); placeCopies(); return; }
+  if (t.dataset.listing) { const n = copiesFor; closeCopies(); openListing(n); return; }
   if (t.dataset.sold) {
     const n = copiesFor;
     if (!soldConfirm) { soldConfirm = true; paintCopies(); return; }
@@ -2712,7 +2782,7 @@ function setExportMenu(open) { $('exportMenu').hidden = !open; $('exportMenuBtn'
 $('exportMenuBtn').onclick = e => { e.stopPropagation(); if (typeof setRegionMenu === 'function') setRegionMenu(false); setExportMenu($('exportMenu').hidden); };
 document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) setExportMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('exportMenu').hidden) { setExportMenu(false); $('exportMenuBtn').focus(); } });
-['exportBtn', 'exportWantBtn', 'exportSaleBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
+['exportBtn', 'exportWantBtn', 'exportSaleBtn', 'exportBlBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
 $('exportBtn').onclick = async () => { track('export', { list: 'collection' });
   if (!CAT) return;
   // Everything you own, sets then minifigures, whatever the filters are.
@@ -2774,6 +2844,218 @@ async function saveCsv(name, csv, what) {
     catch { toast('Export didn’t work in this browser.'); }
   }
 }
+
+/* ---------- selling on BrickLink: listing details for each copy, and the store upload file ----------
+   Each copy marked for sale or trade can have its own details (saved as saleInfo with the collection):
+   sealed (new sets), box and instructions (used sets), what's missing (incomplete), a note for buyers,
+   your price ({ p, c }: amount and currency) and a private note (BrickLink's Remarks, e.g. where it's kept).
+   Export → BrickLink store upload writes BrickLink's Mass Upload XML: one lot per copy, identical copies together. */
+const LST_MAX = { miss: 200, note: 500, rem: 100 };
+function cleanListing(v) {
+  if (!v || typeof v !== 'object') return null;
+  const o = {};
+  for (const k of ['sealed', 'box', 'inst']) if (typeof v[k] === 'boolean') o[k] = v[k];
+  for (const k of ['miss', 'note', 'rem']) { const t = String(v[k] ?? '').replace(/\s+/g, ' ').trim().slice(0, LST_MAX[k]); if (t) o[k] = t; }
+  if (v.price && Number(v.price.p) > 0 && /^[A-Z]{3}$/.test(v.price.c || '')) o.price = { p: Math.round(Number(v.price.p) * 100) / 100, c: v.price.c };
+  return Object.keys(o).length ? o : null;
+}
+// Details for every copy for sale or trade: [{ c, i, d }], in condition order.
+function listingsOf(x) {
+  const sq = saleOf(x), si = (mine.get(x.n) || {}).saleInfo || {}, out = [];
+  for (const c of CONDS) for (let i = 0; i < sq[c]; i++) out.push({ c, i, d: (si[c] || [])[i] || {} });
+  return out;
+}
+// Your price in the currency you're viewing (converted if you typed it in another), or null.
+function lstPrice(d) {
+  if (!d.price) return null;
+  if (d.price.c === cur()) return d.price.p;
+  const r = rates.rates[d.price.c]; if (!r) return null;
+  return Math.round(d.price.p / r * rate() * 100) / 100;
+}
+// Suggested price: BrickLink price for the condition at your Sell or trade percentage (100% if none).
+function lstSuggest(x, c) {
+  const p = valueOne(info(x.n), c); if (p == null) return null;
+  const pct = Number(prefs.sellPct) > 0 ? Number(prefs.sellPct) : 100;
+  return Math.round(toLocal(p) * pct) / 100;
+}
+const lstPct = () => Number(prefs.sellPct) > 0 ? Number(prefs.sellPct) : 100;
+// What buyers read on BrickLink (the lot's Description).
+function lstDesc(x, c, d) {
+  const b = [];
+  if (x.k === 's') {
+    if (c === 'new') { if (d.sealed === false) b.push('Opened, complete'); }
+    else {
+      const { box, inst } = d;
+      if (box === true && inst === true) b.push('With box and instructions');
+      else if (box === false && inst === false) b.push('No box or instructions');
+      else { if (box != null) b.push(box ? 'with box' : 'no box'); if (inst != null) b.push(inst ? 'with instructions' : 'no instructions'); }
+    }
+  } else if (c === 'used-inc') b.push('Incomplete');
+  let s = b.length ? b.join(', ').replace(/^./, m => m.toUpperCase()) + '.' : '';
+  if (c === 'used-inc' && d.miss) s += ` Missing: ${d.miss.replace(/[.\s]+$/, '')}.`;
+  if (d.note) s += ' ' + d.note;
+  return s.trim();
+}
+
+let lstFor = null, lstT = null;
+const lstDlg = $('lstDlg');
+function lstData() {
+  const si = JSON.parse(JSON.stringify((mine.get(lstFor) || {}).saleInfo || {})), sq = saleOf({ n: lstFor });
+  for (const c of CONDS) { si[c] = (si[c] || []).slice(0, sq[c]); while (si[c].length < sq[c]) si[c].push({}); }
+  return si;
+}
+function openListing(n) {
+  const x = findItem(n); if (!x) return;
+  if (!saleCount(x)) { toast('Mark copies for sale or trade first.'); return; }
+  lstFor = n; paintListing();
+  if (!lstDlg.open) lstDlg.showModal();
+  track('listing_open', { item_type: x.k === 's' ? 'set' : 'minifigure', copies: saleCount(x) });
+}
+function paintListing() {
+  const x = findItem(lstFor), si = lstData(), ab = { new: 'N', used: 'UC', 'used-inc': 'UI' }, money2 = v => v == null ? '' : v.toFixed(2);
+  const L = listingsOf(x), sameCond = c => L.filter(l => l.c === c).length;
+  $('lstSub').innerHTML = `<b>${esc(x.disp || x.n)}</b> ${esc(x.name)}${x.extra ? ' · <span style="color:var(--coral)">not on BrickLink, so it won’t be in the upload file</span>' : ''}`;
+  let k = 0;
+  $('lstList').innerHTML = L.map(({ c, i }) => {
+    const d = si[c][i] || {}, id = `${c}-${i}`, sug = lstSuggest(x, c), set = x.k === 's';
+    const chk = (f, label) => `<label class="lstchk"><input type="checkbox" data-lf="${f}" ${d[f] ? 'checked' : ''}>${label}</label>`;
+    k++;
+    return `<section class="lstcard" data-lc="${c}" data-li="${i}">
+      <h3>Copy ${k} · ${COND[c]} <span class="code">${ab[c]}</span>${sameCond(c) > 1 ? `<button class="linkbtn" type="button" data-lcopy="${id}">Same for all ${COND_SHORT[c].toLowerCase()} copies</button>` : ''}</h3>
+      ${set && c === 'new' ? `<div class="sellmode" role="group" aria-label="New: sealed or opened"><button type="button" data-lseal="1" aria-pressed="${d.sealed !== false}">Sealed</button><button type="button" data-lseal="0" aria-pressed="${d.sealed === false}">Opened, complete</button></div>` : ''}
+      ${set && c !== 'new' ? `<div class="lstchecks">${chk('box', 'Box')}${chk('inst', 'Instructions')}</div>` : ''}
+      <div class="lstrow">
+        ${c === 'used-inc' ? `<label class="lstf wide">What’s missing<input class="inp" data-lf="miss" maxlength="${LST_MAX.miss}" value="${esc(d.miss || '')}" placeholder="e.g. 3 tiles and the Rey minifigure"></label>` : ''}
+        <label class="lstf wide">Note for buyers<input class="inp" data-lf="note" maxlength="${LST_MAX.note}" value="${esc(d.note || '')}" placeholder="${set ? (c === 'new' ? 'e.g. Box has a small dent on one corner' : 'e.g. Built once, kept on display, smoke-free home') : 'e.g. Includes original accessory'}"></label>
+        <label class="lstf">Your price (${cur()})<input class="inp" data-lf="price" type="number" min="0" step="0.01" inputmode="decimal" value="${money2(lstPrice(d))}" placeholder="${sug == null ? 'No BrickLink price yet' : `${sug.toFixed(2)} (${lstPct()}%)`}"></label>
+        <label class="lstf">Private note<input class="inp" data-lf="rem" maxlength="${LST_MAX.rem}" value="${esc(d.rem || '')}" placeholder="Only you see it, e.g. Shelf B"></label>
+      </div>
+      <p class="lstprev" data-lprev><b>Buyers see:</b> ${esc(lstDesc(x, c, d)) || '<i>no description</i>'}</p>
+    </section>`;
+  }).join('');
+}
+function lstSave(si) {
+  setInfo(lstFor, { saleInfo: si }, { quiet: true });
+}
+function lstRead(card, si = lstData()) {
+  const c = card.dataset.lc, i = Number(card.dataset.li), d = { ...(si[c][i] || {}) };
+  card.querySelectorAll('[data-lf]').forEach(el => {
+    const f = el.dataset.lf;
+    if (el.type === 'checkbox') d[f] = el.checked;
+    else if (f === 'price') { const v = parseFloat(el.value); if (v > 0) d.price = { p: v, c: cur() }; else delete d.price; }
+    else d[f] = el.value;
+  });
+  si[c][i] = d; return { si, c, i, d };
+}
+lstDlg.addEventListener('input', e => {
+  const card = e.target.closest('.lstcard'); if (!card) return;
+  const { c, d } = lstRead(card), x = findItem(lstFor);
+  card.querySelector('[data-lprev]').innerHTML = `<b>Buyers see:</b> ${esc(lstDesc(x, c, cleanListing(d) || {})) || '<i>no description</i>'}`;
+  clearTimeout(lstT); lstT = setTimeout(lstFlush, 400);
+});
+lstDlg.addEventListener('click', e => {
+  if (e.target === lstDlg) { lstDlg.close(); return; }
+  const b = e.target.closest('button'); if (!b) return;
+  const card = b.closest('.lstcard');
+  if (b.dataset.lseal != null && card) {
+    lstFlush(); const { si, c, i } = lstRead(card); si[c][i].sealed = b.dataset.lseal === '1'; lstSave(si); paintListing(); return;
+  }
+  if (b.dataset.lcopy && card) {
+    lstFlush(); const { si, c, i } = lstRead(card), src = si[c][i];
+    si[c] = si[c].map(() => JSON.parse(JSON.stringify(src))); lstSave(si); paintListing();
+    toast(`Copied to all ${si[c].length} ${COND_SHORT[c].toLowerCase()} copies`); return;
+  }
+});
+// Save whatever is typed but not saved yet (each card read from the page).
+function lstFlush() {
+  if (!lstT || !lstFor) return; clearTimeout(lstT); lstT = null;
+  const si = lstData(); for (const card of lstDlg.querySelectorAll('.lstcard')) lstRead(card, si); lstSave(si);
+}
+$('lstDone').onclick = () => lstDlg.close();
+$('lstClose').onclick = () => lstDlg.close();
+lstDlg.addEventListener('close', () => { lstFlush(); lstFor = null; render(); });
+
+/* the upload file */
+let blNums = null;
+async function blNumbers() {
+  if (blNums) return blNums;
+  try { const j = await (await fetch('/bl-numbers.json')).json(); blNums = { sets: j.sets || {}, figs: j.figs || {} }; }
+  catch (e) { console.warn('bl-numbers', e); blNums = { sets: {}, figs: {} }; }
+  return blNums;
+}
+const blId = (x, nums) => { const b = (shared.get(x.n) || {}).bl; if (b) return String(b); return x.k === 's' ? (nums.sets[x.n] || x.n) : (nums.figs[x.n] || ''); };
+const xmlEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
+async function blBuild() {
+  const nums = await blNumbers(), lots = new Map(), skip = { brand: [], noid: [], noprice: [] };
+  let copies = 0, mine0 = 0, sug = 0;
+  for (const x of [...CAT.sets, ...CAT.figs].filter(y => saleCount(y) > 0)) {
+    const label = `${x.disp || x.n} ${x.name}`;
+    if (x.extra) { skip.brand.push(label); continue; }
+    const id = blId(x, nums); if (!id) { skip.noid.push(label); continue; }
+    for (const { c, d } of listingsOf(x)) {
+      let price = lstPrice(d), own = price != null;
+      if (!own) price = lstSuggest(x, c);
+      if (price == null || !(price > 0)) { skip.noprice.push(`${label} (${COND_SHORT[c].toLowerCase()})`); continue; }
+      copies++; if (own) mine0++; else sug++;
+      const it = {
+        ITEMTYPE: x.k === 's' ? 'S' : 'M', ITEMID: id, COLOR: 0, PRICE: price.toFixed(2), CONDITION: c === 'new' ? 'N' : 'U',
+        ...(x.k === 's' ? { SUBCONDITION: c === 'new' ? (d.sealed === false ? 'C' : 'S') : c === 'used-inc' ? 'I' : 'C' } : {}),
+        DESCRIPTION: lstDesc(x, c, d), REMARKS: d.rem || ''
+      };
+      const key = JSON.stringify(it);
+      if (lots.has(key)) lots.get(key).QTY++; else lots.set(key, { ...it, QTY: 1 });
+    }
+  }
+  return { lots: [...lots.values()], copies, mine: mine0, sug, skip };
+}
+function blXml(lots, stock) {
+  const one = l => '<ITEM>' + ['ITEMTYPE', 'ITEMID', 'COLOR', 'PRICE', 'QTY', 'CONDITION', 'SUBCONDITION', 'DESCRIPTION', 'REMARKS']
+    .filter(k => l[k] !== undefined && l[k] !== '').map(k => `<${k}>${xmlEsc(l[k])}</${k}>`).join('') + (stock ? '<STOCKROOM>Y</STOCKROOM>' : '') + '</ITEM>';
+  // BrickLink takes files up to 204,800 bytes, so big lists are split.
+  const enc = new TextEncoder(), files = []; let cur0 = [], size = 0;
+  for (const l of lots) { const s = one(l), b = enc.encode(s).length + 1; if (cur0.length && size + b > 190000) { files.push(cur0); cur0 = []; size = 0; } cur0.push(s); size += b; }
+  if (cur0.length) files.push(cur0);
+  return files.map(f => `<INVENTORY>\n${f.join('\n')}\n</INVENTORY>\n`);
+}
+let blLast = null;
+async function blOpen() {
+  setExportMenu(false);
+  if (!CAT) return;
+  if (![...CAT.sets, ...CAT.figs].some(x => saleCount(x) > 0)) { toast('Mark copies for sale or trade first: click a set’s condition chip.'); return; }
+  const dlg = $('blDlg');
+  $('blSum').innerHTML = '<li>Getting your list ready…</li>'; $('blFiles').innerHTML = ''; $('blFine').textContent = '';
+  if (!dlg.open) dlg.showModal();
+  blLast = await blBuild(); blPaint();
+}
+function blPaint() {
+  const r = blLast, stock = $('blStock').checked, files = r.lots.length ? blXml(r.lots, stock) : [];
+  const listOf = a => `<span class="badlist">${a.slice(0, 40).map(esc).join(' · ')}${a.length > 40 ? ` · and ${a.length - 40} more` : ''}</span>`;
+  const plural = (n, w) => `${n.toLocaleString()} ${n === 1 ? w : w === 'copy' ? 'copies' : w + 's'}`;
+  $('blSum').innerHTML = [
+    r.lots.length ? `<li><b>${plural(r.copies, 'copy')}</b> in <b>${plural(r.lots.length, 'lot')}</b>, priced in <b>${cur()}</b></li>` : '<li><b>Nothing to upload yet</b></li>',
+    r.sug ? `<li>${plural(r.sug, 'copy')} without your own price use <b>${lstPct()}%</b> of the BrickLink price. Set prices in Listing details, or change the percentage in Sell or trade.</li>` : '',
+    r.skip.noprice.length ? `<li class="bad"><b>${plural(r.skip.noprice.length, 'copy')} left out</b>: no price yet. Add your price in Listing details.${listOf(r.skip.noprice)}</li>` : '',
+    r.skip.brand.length ? `<li class="bad"><b>${plural(r.skip.brand.length, 'item')} left out</b>: brand not sold on BrickLink.${listOf(r.skip.brand)}</li>` : '',
+    r.skip.noid.length ? `<li class="bad"><b>${plural(r.skip.noid.length, 'minifigure')} left out</b>: no BrickLink number yet.${listOf(r.skip.noid)}</li>` : ''
+  ].join('');
+  const day = new Date().toISOString().slice(0, 10);
+  $('blFiles').innerHTML = files.map((f, i) => `<div class="blfile"><span>${files.length > 1 ? `File ${i + 1} of ${files.length}` : 'Upload file'} · ${(new TextEncoder().encode(f).length / 1024).toFixed(0)} KB</span><button class="btn primary" type="button" data-blget="${i}">Download</button><button class="btn" type="button" data-blcopy="${i}">Copy</button></div>`).join('');
+  $('blFine').textContent = files.length ? `Your BrickLink store’s currency must be ${cur()}: change BrickCollect’s currency at the top if it isn’t.${files.length > 1 ? ' BrickLink takes one file at a time (up to 200 KB), so upload them one after another.' : ''}` : '';
+  $('blFiles').onclick = async e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const i = Number(b.dataset.blget ?? b.dataset.blcopy), text = files[i], name = `brickcollect-bricklink-upload-${day}${files.length > 1 ? `-${i + 1}` : ''}.xml`;
+    if (b.dataset.blget != null) {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/xml;charset=utf-8' })); a.download = name; document.body.append(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); toast(`Downloaded ${name}`);
+    } else { try { await navigator.clipboard.writeText(text); toast('Copied. Paste it into BrickLink’s upload box.'); } catch { toast('Couldn’t copy in this browser. Use Download instead.'); } }
+    track('export', { list: 'bricklink', how: b.dataset.blget != null ? 'download' : 'copy', lots: r.lots.length, copies: r.copies, files: files.length, own_price: r.mine, stockroom: stock });
+  };
+}
+$('blStock').addEventListener('change', () => { if (blLast) blPaint(); });
+$('exportBlBtn').onclick = blOpen;
+$('blOpen2').onclick = blOpen;
+$('blClose').onclick = () => $('blDlg').close();
+$('blDlg').addEventListener('click', e => { if (e.target === $('blDlg')) $('blDlg').close(); });
 
 /* ---------- import (file or pasted list; read in the browser, nothing uploaded) ----------
    Reads a BrickCollect export, Rebrickable / Brickset / any spreadsheet CSV with a set-number column,
@@ -3119,6 +3401,10 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.18', date: '9 November 2026', title: 'Sell on BrickLink', items: [
+    ['Listing details', 'for each copy on your sale or trade list, say whether it’s sealed, has its box and instructions, or what’s missing, add a note for buyers and set your price. Click a set’s condition chip, then Listing details.'],
+    ['BrickLink store upload', 'Export → BrickLink store upload turns your sale or trade list into a file you can upload to your BrickLink store in one go, straight into your stockroom so you can check it first.'],
+  ] },
   { v: '0.17', date: '9 November 2026', title: 'Your own tags', items: [
     ['My tags', 'add your own tags to the sets and minifigures you own or want, like On display, In storage or Childhood. Only you see them.'],
     ['Find and tag in bulk', 'pick one of your tags in the Tag filter to see just those, or filter first and use Add my tag to tag everything in view. Your tags are in your exports too.'],
