@@ -469,6 +469,14 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
 .ticktip b{font-weight:600}
 .ticktip span{opacity:.85}
 .ticktip button{all:unset;cursor:pointer;position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:15px;line-height:1;opacity:.8}
+/* NEW feature call-out: shown once per browser, next to the first visible place the feature lives */
+.newtip{position:absolute;z-index:15;max-width:min(300px,calc(100vw - 24px));background:var(--panel);color:var(--fg);border:1px solid var(--coral);border-radius:10px;padding:10px 34px 10px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 8px 24px rgb(0 0 0/.28)}
+.newtip::before{content:"";position:absolute;left:var(--arrow,16px);top:-7px;width:12px;height:12px;background:var(--panel);border-left:1px solid var(--coral);border-top:1px solid var(--coral);transform:rotate(45deg)}
+.newtip .newpill{display:inline-block;margin-right:6px;padding:1px 6px;border-radius:5px;font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--beta-ink,var(--coral));background:color-mix(in srgb,var(--beta-fill,var(--coral)) var(--beta-tint,15%),transparent);vertical-align:1px}
+.newtip b{font-weight:600}
+.newtip .x{all:unset;cursor:pointer;position:absolute;right:9px;top:8px;font-size:16px;line-height:1;color:var(--muted)}
+.newtip .x:hover{color:var(--accent)}
+.newtip .ok{all:unset;cursor:pointer;display:inline-block;margin-top:6px;color:var(--accent);font-weight:600}
 @media (max-width:640px){.ticktip span{display:none}}
 .empty{padding:56px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
 .empty h3{margin:0;font-family:var(--font-display);color:var(--fg);font-weight:500;font-size:17px}
@@ -978,6 +986,8 @@ let kind = 'sets', sort = { key: 'year', dir: 'desc' }, limit = PAGE, editing = 
 
 const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+// When this browser first used BrickCollect (0 = before we kept track). NEW call-outs only go to people who were here before a feature.
+const firstSeen = (() => { let f = lsGet('bc-first'); if (typeof f !== 'number') { let had = false; try { had = !!localStorage.getItem('bc-prefs') || !!localStorage.getItem('bc-collection'); } catch {} f = had ? 0 : Date.now(); lsSet('bc-first', f); } return f; })();
 const prefs = lsGet('bc-prefs') || {};
 if (prefs.kind) kind = prefs.kind;
 if (prefs.sort) sort = prefs.sort;
@@ -1467,6 +1477,44 @@ function tickTip() {
   tip.querySelector('button').onclick = () => { lsSet('bc-tick-tip', 1); tip.remove(); };
   cell.append(tip);
 }
+/* NEW feature call-outs. For each new feature: a short note pointing at where it lives, shown once per browser,
+   one per visit, only to people who were already using BrickCollect before the feature came out, and for 30 days.
+   Add an entry here with each new feature (newest first). sel = the first visible match on screen gets the note. */
+const NEW_TIPS = [
+  { id: 'mytags', at: '2026-11-09T09:20:00+11:00', sel: '#rows .mytagadd', title: 'My tags', text: 'Add your own tags, like On display or In storage, to the sets you own or want. Only you see them, and the Tag filter finds them.' },
+  { id: 'retsoon', at: '2026-11-09T09:20:00+11:00', sel: '#rows .retb', title: 'Retired and retiring soon', text: 'R means LEGO has retired a set; RS means it’s retiring soon. Click either to see them all.', phone: 'R means LEGO has retired a set; RS means it’s retiring soon. Tap either to see them all.' },
+];
+let newTipShown = null; // one per visit
+function newTipSeen(id, how) { const seen = lsGet('bc-new-seen') || {}; if (seen[id]) return; seen[id] = Date.now(); lsSet('bc-new-seen', seen); track('new_tip', { feature: id, outcome: how }); }
+function placeNewTip(tip, el) {
+  const r = el.getBoundingClientRect(), w = tip.offsetWidth, vw = document.documentElement.clientWidth;
+  const left = Math.max(12, Math.min(r.left + r.width / 2 - 22, vw - w - 12));
+  tip.style.left = `${left + scrollX}px`; tip.style.top = `${r.bottom + scrollY + 10}px`;
+  tip.style.setProperty('--arrow', `${Math.max(10, Math.min(r.left + r.width / 2 - left - 6, w - 22))}px`);
+}
+function newTips() {
+  const old = document.getElementById('newTip');
+  if (newTipShown) { const t = NEW_TIPS.find(x => x.id === newTipShown); const el = t && old && [...document.querySelectorAll(t.sel)].find(e => e.offsetParent); if (old && el) placeNewTip(old, el); else old?.remove(); return; }
+  if (document.body.classList.contains('fresh') || document.getElementById('tickTip') || tlOpen) return;
+  const seen = lsGet('bc-new-seen') || {}, now = Date.now(), vh = innerHeight;
+  for (const t of NEW_TIPS) {
+    const at = Date.parse(t.at);
+    if (seen[t.id] || firstSeen > at || now - at > 30 * 864e5) continue;
+    const el = [...document.querySelectorAll(t.sel)].find(e => { if (!e.offsetParent) return false; const r = e.getBoundingClientRect(); return r.top > 60 && r.bottom < vh - 120; });
+    if (!el) continue;
+    newTipShown = t.id;
+    const phone = !matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const tip = document.createElement('div'); tip.id = 'newTip'; tip.className = 'newtip'; tip.setAttribute('role', 'note');
+    tip.innerHTML = `<span class="newpill">NEW</span><b>${esc(t.title)}</b><br>${esc(phone && t.phone ? t.phone : t.text)}<br><button type="button" class="ok">Got it</button><button type="button" class="x" aria-label="Hide">×</button>`;
+    tip.querySelectorAll('button').forEach(b => b.onclick = e => { e.stopPropagation(); newTipSeen(t.id, 'got_it'); tip.remove(); });
+    document.body.append(tip); placeNewTip(tip, el);
+    // Using the feature counts as seeing it.
+    document.addEventListener('click', function used(e) { if (e.target.closest?.(t.sel)) { newTipSeen(t.id, 'used'); document.getElementById('newTip')?.remove(); document.removeEventListener('click', used, true); } }, true);
+    track('new_tip', { feature: t.id, outcome: 'shown' });
+    return;
+  }
+}
+{ let nt; const again = () => { clearTimeout(nt); nt = setTimeout(newTips, 250); }; addEventListener('scroll', again, { passive: true }); addEventListener('resize', again); }
 // Theme row at the top of the page (like the LEGO site): one tap jumps to a theme or another brand.
 const THEME_TILES = [
   ['Star Wars', 'Star Wars', '75192-1'], ['Harry Potter', 'Harry Potter', '71043-1'], ['Marvel', 'Super Heroes Marvel', '76269-1'],
@@ -1919,7 +1967,7 @@ function render() {
       <td class="num c-new">${price(x, 'new')}</td>
       <td class="c-links"><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
-  tickTip();
+  tickTip(); setTimeout(newTips, 0);
 
   const empty = $('empty');
   // A first-time visitor with nothing ticked: hide the empty stat cards and selling box, and shorten
