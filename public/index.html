@@ -476,7 +476,9 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
 .newtip b{font-weight:600}
 .newtip .x{all:unset;cursor:pointer;position:absolute;right:9px;top:8px;font-size:16px;line-height:1;color:var(--muted)}
 .newtip .x:hover{color:var(--accent)}
-.newtip .ok{all:unset;cursor:pointer;display:inline-block;margin-top:6px;color:var(--accent);font-weight:600}
+.newtip .nthead{margin-bottom:8px}
+.newtip .ntfoot{text-align:right;margin-top:6px}
+.newtip .ok{all:unset;cursor:pointer;display:inline-block;color:var(--accent);font-weight:600}
 @media (max-width:640px){.ticktip span{display:none}}
 .empty{padding:56px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
 .empty h3{margin:0;font-family:var(--font-display);color:var(--fg);font-weight:500;font-size:17px}
@@ -1505,7 +1507,7 @@ function newTips() {
     newTipShown = t.id;
     const phone = !matchMedia('(hover: hover) and (pointer: fine)').matches;
     const tip = document.createElement('div'); tip.id = 'newTip'; tip.className = 'newtip'; tip.setAttribute('role', 'note');
-    tip.innerHTML = `<span class="ntpill">NEW</span><b>${esc(t.title)}</b><br>${esc(phone && t.phone ? t.phone : t.text)}<br><button type="button" class="ok">Got it</button><button type="button" class="x" aria-label="Hide">×</button>`;
+    tip.innerHTML = `<div class="nthead"><span class="ntpill">NEW</span><b>${esc(t.title)}</b></div><div>${esc(phone && t.phone ? t.phone : t.text)}</div><div class="ntfoot"><button type="button" class="ok">Got it</button></div><button type="button" class="x" aria-label="Hide">×</button>`;
     tip.querySelectorAll('button').forEach(b => b.onclick = e => { e.stopPropagation(); newTipSeen(t.id, 'got_it'); tip.remove(); });
     document.body.append(tip); placeNewTip(tip, el);
     // Using the feature counts as seeing it.
