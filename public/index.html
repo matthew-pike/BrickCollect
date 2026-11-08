@@ -940,8 +940,14 @@ function trackSize() {
 const setStatus = (msg, warn) => { const s = $('status'); s.hidden = !msg; s.textContent = msg || ''; s.classList.toggle('warn', !!warn); };
 
 /* ---------- catalog ---------- */
+// Simpler names for some Rebrickable themes. Renamed here (not in catalog.json) so the weekly catalog refresh can't bring the old name back.
+const THEME_NAMES = { 'LEGO Ideas and CUUSOO': 'Ideas' };
+// Subthemes saved in Firestore keep the document they had under the old name.
+const THEME_DOC = { 'Ideas': 'LEGO Ideas and CUUSOO' };
+// The six sets released under LEGO CUUSOO (2011–2014), before it became LEGO Ideas. Shown as the CUUSOO subtheme so they stay findable.
+const CUUSOO_SETS = new Set(['21100-1', '21101-1', '21102-1', '21103-1', '21104-1', '21108-1']);
 function buildCatalog(raw) {
-  const themes = new Map(raw.themes.map(([id, name, parent]) => [id, { name, parent }]));
+  const themes = new Map(raw.themes.map(([id, name, parent]) => [id, { name: THEME_NAMES[name] || name, parent }]));
   const place = new Map();   // theme id -> {theme, sub}
   for (const id of themes.keys()) {
     const chain = []; let t = id, g = 0;
@@ -949,7 +955,8 @@ function buildCatalog(raw) {
     place.set(id, { theme: chain[0], sub: chain[1] || '' });
   }
   const sets = raw.sets.map(([n, name, year, tid, pieces]) => {
-    const p = place.get(tid) || { theme: 'Other', sub: '' };
+    let p = place.get(tid) || { theme: 'Other', sub: '' };
+    if (CUUSOO_SETS.has(n) && !p.sub) p = { theme: p.theme, sub: 'CUUSOO' };
     return { n, name, year, pieces, theme: p.theme, sub: p.sub, rbSub: p.sub, brand: 'LEGO', k: 's', key: (n + ' ' + name).toLowerCase() };
   });
   const figs = raw.figs.map(([n, name, pieces, si]) => {
@@ -1284,7 +1291,7 @@ const THEME_TILES = [
   ['Star Wars', 'Star Wars', '75192-1'], ['Harry Potter', 'Harry Potter', '71043-1'], ['Marvel', 'Super Heroes Marvel', '76269-1'],
   ['DC', 'Super Heroes DC', '76139-1'], ['Lord of the Rings', 'The Hobbit and Lord of the Rings', '10316-1'], ['Jurassic World', 'Jurassic World', '76961-1'],
   ['Icons', 'Icons', '10497-1'], ['Technic', 'Technic', '42143-1'], ['Ninjago', 'Ninjago', '71799-1'], ['City', 'City', '60380-1'],
-  ['Ideas', 'LEGO Ideas and CUUSOO', '21330-1'], ['Disney', 'Disney', '43222-1'], ['Speed Champions', 'Speed Champions', '76916-1'],
+  ['Ideas', 'Ideas', '21330-1'], ['Disney', 'Disney', '43222-1'], ['Speed Champions', 'Speed Champions', '76916-1'],
   ['Friends', 'Friends', '41704-1'], ['Minecraft', 'Minecraft', '21189-1'], ['Bionicle', 'Bionicle', '8733-1'],
 ];
 const BRAND_TILES = ['LumiBricks', 'Pantasy', 'JMBricklayer'];
@@ -1996,7 +2003,7 @@ let bulkRows = [];
 // Minifigure tags (collections like "Knights of Ren") live in their own subthemes document.
 const FIG_TAGS = 'Minifigure collections';
 const findItem = n => CAT.sets.find(s => s.n === n) || CAT.figs.find(f => f.n === n);
-const slug = t => (t || 'Other').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 120) || 'Other';
+const slug = t => (THEME_DOC[t] || t || 'Other').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 120) || 'Other';
 function applyOverrides() {
   if (!CAT) return;
   const ov = new Map();
