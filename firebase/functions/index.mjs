@@ -10,7 +10,6 @@ import brandPrices from './jobs/brand-prices.mjs';
 import minifigNumbers from './jobs/minifig-numbers.mjs';
 import syncPricesHandler from './jobs/sync-prices.mjs';
 import priceSweep from './jobs/price-sweep.mjs';
-import retired from './jobs/retired.mjs';
 import { readShared, blCalls } from './lib/common.mjs';
 
 const BL = ['BRICKLINK_CONSUMER_KEY', 'BRICKLINK_CONSUMER_SECRET', 'BRICKLINK_TOKEN_VALUE', 'BRICKLINK_TOKEN_SECRET'].map(defineSecret);
@@ -29,10 +28,9 @@ const sched = (schedule, fn, timeoutSeconds = 60) => onSchedule({ schedule, time
 
 // BrickLink prices for owned and wanted sets: 3am and 3pm Sydney.
 export const nightlyPrices = sched('0 3,15 * * *', nightly);
-// Exchange rates, then the brands' own store prices, then (weekly) retired LEGO sets from Brickset: 4am Sydney.
+// Exchange rates, then the brands' own store prices: 4am Sydney.
 export const dailyStores = sched('0 4 * * *', async () => {
   await rates(); await brandPrices();
-  try { await retired(); } catch (e) { console.log('retired failed:', e.message); }
 }, 420);
 // Every hour at :20: BrickLink numbers for minifigures, then the catalog-wide price sweep with whatever is left of
 // about 170 BrickLink requests for the hour (about 4,000 a day, under BrickLink's 5,000 with room for the 3am/3pm refresh).
