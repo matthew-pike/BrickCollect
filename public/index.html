@@ -981,7 +981,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <p class="imp-msg" id="impMsg" role="status"></p>
     <button class="btn primary" type="button" id="impCheck">Check list</button>
     <p class="fine">Works with BrickCollect exports, Rebrickable and Brickset CSV files, BrickLink XML (wanted lists or inventory) and any spreadsheet with a column of set numbers. Your file stays on your device: only the sets found are saved.</p>
-    <p class="fine"><b>Selling?</b> <button class="linkbtn" type="button" id="impTpl">Excel template</button>, compatible with BrickLink: fill in your sets, condition, details and prices, import it here, then Export → BrickLink store upload. Save it as CSV when Excel asks.</p>
+    <p class="fine"><b>Starting from scratch?</b> Use the <button class="linkbtn" type="button" id="impTpl">Excel template</button>, compatible with BrickLink. List your sets and minifigures with their condition and copies (or mark them Wanted), import it here, and you’re done. Selling? Add details and prices for the ones you’re letting go, then Export → BrickLink store upload. Save it as CSV when Excel asks.</p>
   </div>
   <div id="impReview" hidden>
     <h2 id="impTitle">Found</h2>
@@ -3192,7 +3192,7 @@ async function impTable(rows, onProg = () => {}) {
     const t = get(c.type).toLowerCase(), kind = /minifig|^m$/.test(t) ? 'm' : /^(set|s)$/.test(t) ? 's' : (c.num === col('fignum', 'minifignumber', 'minifignum', 'minifigure', 'minifig', 'fig') ? 'm' : '');
     let qn = c.qty >= 0 ? impNum(get(c.qty)) : null;
     let want = bcWanted || (c.wanted >= 0 && impTruthy(get(c.wanted))) || (c.qtyWanted >= 0 && impNum(get(c.qtyWanted)) > 0);
-    const own = bcWanted ? false : c.owned >= 0 ? impTruthy(get(c.owned)) : c.qty >= 0 && c.owned < 0 && (c.wanted >= 0 || c.qtyWanted >= 0) ? qn > 0 : !want || bc;
+    const own = bcWanted ? false : c.sale >= 0 && c.owned < 0 ? !want : c.owned >= 0 ? impTruthy(get(c.owned)) : c.qty >= 0 && c.owned < 0 && (c.wanted >= 0 || c.qtyWanted >= 0) ? qn > 0 : !want || bc;
     if (!own && !want) { out.skipped++; continue; }
     if (own) want = false;
     const x = impFind(num, kind, get(c.brand));
@@ -3443,15 +3443,19 @@ function impFinishPending() {
   track('import', { source: pend.src, added: entries.length, after_signup: 1 });
 }
 $('importBtn').onclick = impOpen;
-// Selling spreadsheet: one row per copy (or identical copies with a Quantity). Import marks them for sale or trade with these details.
+// Excel template, for anyone: one row per set or minifigure (Quantity for several copies). Rows are added to your collection,
+// or your Wanted list with Wanted = Yes; rows with For sale = Yes are also marked for sale or trade with their listing details.
 // The example rows start with "e.g." so they're never imported by mistake (they show as not recognised).
 $('impTpl').onclick = () => {
+  // Only Set number is needed; everything else is optional. Rows are your collection unless Wanted = Yes.
   const rows = [
-    ['Set number', 'Condition', 'Quantity', 'For sale', 'Sealed', 'Box', 'Instructions', 'What’s missing', 'Note for buyers', `Your price (${cur()})`, 'Private note', 'Stockroom'],
-    ['e.g. 75192', 'New', '1', 'Yes', 'Yes', '', '', '', 'Box has a small dent on one corner', '1200', 'Shelf A', 'Yes'],
-    ['e.g. 10294', 'Used', '1', 'Yes', '', 'Yes', 'Yes', '', 'Built once, kept on display', '', 'Bin 3', 'Yes'],
-    ['e.g. 21318', 'Incomplete', '1', 'Yes', '', 'No', 'Yes', '2 tiles and one minifigure', '', '150', '', 'No'],
-    ['e.g. sw0001a', 'Used', '2', 'Yes', '', '', '', '', '', '8.50', '', 'Yes'],
+    ['Set number', 'Condition', 'Quantity', 'Wanted', 'For sale', 'Sealed', 'Box', 'Instructions', 'What’s missing', 'Note for buyers', `Your price (${cur()})`, 'Private note', 'Stockroom'],
+    ['e.g. 10305', 'Used', '1', '', '', '', '', '', '', '', '', '', ''],
+    ['e.g. 75313', '', '', 'Yes', '', '', '', '', '', '', '', '', ''],
+    ['e.g. 75192', 'New', '1', '', 'Yes', 'Yes', '', '', '', 'Box has a small dent on one corner', '1200', 'Shelf A', 'Yes'],
+    ['e.g. 10294', 'Used', '1', '', 'Yes', '', 'Yes', 'Yes', '', 'Built once, kept on display', '', 'Bin 3', 'Yes'],
+    ['e.g. 21318', 'Incomplete', '1', '', 'Yes', '', 'No', 'Yes', '2 tiles and one minifigure', '', '150', '', 'No'],
+    ['e.g. sw0001a', 'Used', '2', '', 'Yes', '', '', '', '', '', '8.50', '', 'Yes'],
   ];
   saveCsv('brickcollect-excel-template.csv', rows.map(r => r.map(cell).join(',')).join('\n'), 'the Excel template');
   track('import_template');
@@ -3482,7 +3486,7 @@ const RELEASES = [
   { v: '0.18', date: '9 November 2026', title: 'Sell on BrickLink', items: [
     ['Listing details', 'for each copy on your sale or trade list, say whether it’s sealed, has its box and instructions, or what’s missing, add a note for buyers and set your price. Click a set’s condition chip, then Listing details.'],
     ['BrickLink store upload', 'Export → BrickLink store upload turns your sale or trade list into a file you can upload to your BrickLink store in one go, into your stockroom to check first, or straight on sale: you choose for each copy.'],
-    ['Excel template', 'lots to list? Import → Excel template gives you a sheet to fill in (set number, condition, box, instructions, what’s missing, note, price). Import it and the copies are marked for sale or trade with all their details.'],
+    ['Excel template', 'Import → Excel template gives you a sheet to fill in with your sets, condition and copies, or the ones you want. For sets you’re selling, add box, instructions, what’s missing, a note and your price: import it and they’re marked for sale or trade with all their details, ready for BrickLink.'],
   ] },
   { v: '0.17', date: '9 November 2026', title: 'Your own tags', items: [
     ['My tags', 'add your own tags to the sets and minifigures you own or want, like On display, In storage or Childhood. Only you see them.'],
