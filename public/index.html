@@ -391,6 +391,12 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .bl{background:var(--bl-bg,var(--accent));border-color:var(--bl-bg,var(--accent));color:var(--bl-ink,var(--accent-ink))}
 .popular{width:100%;max-width:1040px;margin-top:22px;text-align:left}
 .popular h4{margin:0 0 10px;font-size:13px;font-weight:500;color:var(--fg);text-align:center}
+.empty h3.start-h{font-size:22px}
+body.fresh .stats,body.fresh #sellbox,body.fresh .phone-sort,body.fresh .menuwrap:has(#regionBtn),body.fresh .menuwrap:has(#exportMenuBtn),body.fresh .pills,body.fresh .pills + .tip{display:none}
+@media (max-width:640px){body.fresh .welcome .steps,body.fresh .welcome-foot .hint{display:none}body.fresh .empty{padding-top:24px}}
+.empty .start-sub{margin:22px 0 0;font-size:13px;font-weight:500;color:var(--fg)}
+.empty .popular{margin-top:8px}
+body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))}
 .pop-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .pop-card{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;align-items:center}
 .pop-card.on{border-color:var(--good)}
@@ -675,6 +681,9 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .dlg-x{position:absolute;top:14px;right:14px}
 .savemode{cursor:default}.savemode.local{cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;z-index:20;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+.toast.tally{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;max-width:calc(100vw - 32px);padding:10px 18px}
+.toast.tally b{font-weight:600}
+.toast.tally span{opacity:.75;font-size:12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -996,7 +1005,7 @@ function paintCurrency() {
   const note = $('ratesNote'); if (note) note.textContent = c === 'AUD' ? '' : `Prices converted from AUD at ${rates.date} rates`;
 }
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const toast = msg => { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); };
+const toast = msg => { const t = $('toast'); t.classList.remove('tally'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); };
 // Anonymous usage counts for Google Analytics on the website (no-op elsewhere): what people do, never who they are or what's in their collection.
 const track = (name, params = {}) => { try { if (typeof window.gtag === 'function') window.gtag('event', name, params); } catch { /* ignore */ } };
 let sizeT = null;
@@ -1172,7 +1181,7 @@ function setInfo(n, patch, { quiet } = {}) {
   }
   if ('wanted' in patch) me.wanted = !!patch.wanted && !me.owned;
   { const was = mine.get(n) || {}, it = n.startsWith('fig-') ? 'minifigure' : 'set';
-    if ('owned' in patch && !!me.owned !== !!was.owned) { track(me.owned ? 'set_ticked' : 'set_unticked', { item_type: it }); trackSize(); if (me.owned) { lsSet('bc-tick-tip', 1); document.getElementById('tickTip')?.remove(); } }
+    if ('owned' in patch && !!me.owned !== !!was.owned) { track(me.owned ? 'set_ticked' : 'set_unticked', { item_type: it }); trackSize(); if (me.owned) { lsSet('bc-tick-tip', 1); document.getElementById('tickTip')?.remove(); if (!quiet) setTimeout(() => tallyToast(n), 0); } }
     if ('wanted' in patch && me.wanted && !was.wanted) track('add_to_wanted', { item_type: it }); }
   if (!me.wanted) delete me.wanted;
   const sharedPatch = {};
@@ -1191,6 +1200,26 @@ function setInfo(n, patch, { quiet } = {}) {
   if (!quiet) render();
 }
 const change = (n, patch) => setInfo(n, patch);
+// After each tick: a short running tally (sets · pieces · minifigures) and how far through the set's
+// subtheme or theme you are. About collecting, not money: value stays in the stat cards.
+function tallyToast(n) {
+  const x = [...CAT.sets, ...CAT.figs].find(y => y.n === n); if (!x) return;
+  const sets = CAT.sets.filter(owned), figs = CAT.figs.filter(has).length;
+  const pcs = sets.reduce((a, s) => a + (s.pieces || 0) * Math.max(1, copyCount(s)), 0);
+  const plural = (c, w) => `${c.toLocaleString()} ${w}${c === 1 ? '' : 's'}`;
+  const bits = [plural(sets.length, 'set')]; if (pcs) bits.push(plural(pcs, 'piece')); if (figs) bits.push(plural(figs, 'minifigure'));
+  let prog = '';
+  if (x.k === 's') {
+    const inSub = x.sub ? CAT.sets.filter(s => s.theme === x.theme && s.sub === x.sub) : [];
+    const grp = inSub.length >= 3 ? inSub : CAT.sets.filter(s => s.theme === x.theme && s.brand === x.brand);
+    const label = inSub.length >= 3 ? x.sub : x.theme;
+    if (grp.length > 1) prog = `${grp.filter(owned).length.toLocaleString()} of ${grp.length.toLocaleString()} ${label} sets`;
+  }
+  const t = $('toast');
+  t.innerHTML = `<b>✓ ${bits.join(' · ')}</b>${prog ? `<span>${esc(prog)}</span>` : ''}`;
+  t.classList.add('tally'); t.hidden = false; clearTimeout(toast.t);
+  toast.t = setTimeout(() => { t.hidden = true; t.classList.remove('tally'); }, 3600);
+}
 
 /* ---------- filters ---------- */
 const fi = { brand: $('fiBrand'), theme: $('fiTheme'), sub: $('fiSub'), set: $('fiSet'), film: $('fiFilm'), year: $('fiYear') };
@@ -1404,7 +1433,7 @@ $('themeStrip').addEventListener('mousedown', e => { if (e.target.closest('.ttil
 function popularHtml() {
   if (!popCache) { const want = new Set(POPULAR); popCache = CAT.sets.filter(x => want.has(x.n)).sort((a, b) => POPULAR.indexOf(a.n) - POPULAR.indexOf(b.n)); }
   if (!popCache.length) return '';
-  return `<div class="popular"><h4>Popular sets: tick any you own</h4><div class="pop-grid">${popCache.map(x => `
+  return `<div class="popular"><h4>Popular sets</h4><div class="pop-grid">${popCache.map(x => `
     <div class="pop-card${has(x) ? ' on' : ''}">${thumb(x)}<div class="pop-txt"><b title="${esc(x.name)}">${esc(x.name)}</b><small>${esc(shownNum(x))} · ${x.year ?? ''}</small></div>
       <label class="pop-own"><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${has(x) ? 'checked' : ''}> I own it</label></div>`).join('')}</div></div>`;
 }
@@ -1801,11 +1830,15 @@ function render() {
   tickTip();
 
   const empty = $('empty');
+  // A first-time visitor with nothing ticked: hide the empty stat cards and selling box, and shorten
+  // Getting started on phones, so "Tick the sets you own" and the popular sets are near the top.
+  document.body.classList.toggle('fresh', !showRows && ![...mine.values()].some(v => v && (v.owned || v.wanted)));
   if (!showRows) {
     empty.hidden = false;
     const pop = ['Star Wars', 'Technic', 'Harry Potter', 'Icons', 'Ideas', 'Ninjago'].filter(t => [...fi.theme.options].some(o => o.value === t));
     const otherBrands = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.brand))].sort();
-    empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>${mine.size < 20 ? '<p class="imp-hint">Already tracking your sets on Rebrickable, Brickset, BrickLink or a spreadsheet? <button class="linkbtn" type="button" data-import>Import them</button></p>' : ''}${popularHtml()}`;
+    // Start screen: one clear first step (tick a popular set), then themes, brands and import.
+    empty.innerHTML = `<h3 class="start-h">Tick the sets you own</h3><p>Start with a popular set below, or pick a theme or search above. BrickCollect keeps count of your sets, pieces and minifigures across ${CAT.sets.length.toLocaleString()} sets from ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}.</p>${popularHtml()}<h4 class="start-sub">Or jump to a theme</h4><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>${mine.size < 20 ? '<p class="imp-hint">Already tracking your sets on Rebrickable, Brickset, BrickLink or a spreadsheet? <button class="linkbtn" type="button" data-import>Import them</button></p>' : ''}`;
   } else if (!rows.length && listView === 'sale') { empty.hidden = false; empty.innerHTML = '<h3>Nothing marked for sale or trade</h3><p>Click a set’s condition chip and use the Sale or trade column to choose which copies you’re letting go.</p>'; }
   else if (!rows.length && listView === 'wanted') { empty.hidden = false; empty.innerHTML = '<h3>Your wanted list is empty</h3><p>Tap the star next to any set or minifigure to add it here.</p>'; }
   else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Tick the sets and minifigures you own and they’ll show here.</p>'; }
@@ -2996,7 +3029,7 @@ function openAuth() {
   $('authIn').hidden = !!uid; $('authOut').hidden = !uid; $('authSent').hidden = true;
   $('authGate').hidden = true; $('authTitle').textContent = 'Sign in or create an account';
   const NAMES = { google: 'Google', discord: 'Discord', facebook: 'Facebook', apple: 'Apple', twitter: 'X', github: 'GitHub', azure: 'Microsoft' };
-  const list = (window.BC_CONFIG?.socialSignIn || (window.BC_CONFIG?.googleSignIn ? ['google'] : [])).filter(k => NAMES[k]);
+  const list = (window.BC_CONFIG?.socialSignIn || (window.BC_CONFIG?.googleSignIn ? ['google'] : [])).filter(k => NAMES[k] && !(IN_APP && k === 'google')); // Google blocks sign-in inside app browsers
   $('socialBtns').innerHTML = list.map(k => `<button class="btn" type="button" data-provider="${k}">Continue with ${NAMES[k]}</button>`).join('');
   dlg.querySelector('.or').hidden = !list.length;
   try { dlg.showModal(); } catch { dlg.setAttribute('open', ''); }
@@ -3032,16 +3065,33 @@ function gateBlocks(n, patch) {
   render();
   return true;
 }
-// A one-time heads-up a few items before the limit.
+// In-app browsers (Instagram, Facebook, TikTok…) can lose what's saved in them when the app closes,
+// and Google blocks its sign-in inside them, so those visitors are asked to save sooner.
+const IN_APP = (() => { const ua = navigator.userAgent || '';
+  if (/Instagram/i.test(ua)) return 'Instagram'; if (/FBAN|FBAV|FB_IAB|FBIOS/i.test(ua)) return 'Facebook';
+  if (/musical_ly|TikTok|BytedanceWebview/i.test(ua)) return 'TikTok'; if (/Snapchat/i.test(ua)) return 'Snapchat';
+  if (/LinkedInApp/i.test(ua)) return 'LinkedIn'; return ''; })();
+const IS_ANDROID = /Android/i.test(navigator.userAgent || '');
+// A one-time, gentle ask to save: after 3 items (after the first tick in an in-app browser), well before the 10-item limit.
+const NUDGE_AT = 3;
 function maybeNudge() {
   if (uid || !window.BC?.auth?.available || document.getElementById('saveNudge')) return;
-  const n = Object.keys(personalObj()).length, seen = lsGet('bc-nudge') || {};
-  if (n < FREE_ITEMS - 3 || n >= FREE_ITEMS || seen.at) return;
-  lsSet('bc-nudge', { at: n, times: (seen.times || 0) + 1 });
+  const n = Object.keys(personalObj()).length, seen = lsGet('bc-nudge2') || {};
+  if (n < (IN_APP ? 1 : NUDGE_AT) || n >= FREE_ITEMS || seen.at) return;
+  lsSet('bc-nudge2', { at: n });
   const el = document.createElement('div');
   el.id = 'saveNudge'; el.className = 'nudge'; el.setAttribute('role', 'status');
-  el.innerHTML = `<p><b>Enjoying BrickCollect?</b> Sign up to save your collection. It’s free with no password, and keeps your sets safe on all your devices.</p><div class="nudge-b"><button class="btn ghost" type="button" data-n="later">Not now</button><button class="btn primary" type="button" data-n="in">Sign up</button></div>`;
-  el.addEventListener('click', e => { const v = e.target.closest('button')?.dataset.n; if (!v) return; el.remove(); if (v === 'in') openAuth(); });
+  const ns = CAT.sets.filter(owned).length, items = ns ? `${ns} ${ns === 1 ? 'set' : 'sets'}` : 'collection';
+  el.innerHTML = IN_APP
+    ? `<p><b>Keep your ${items}</b> You’re in ${IN_APP}’s browser, which can forget them when it closes. Sign up free to save them${IS_ANDROID ? ', or open BrickCollect in Chrome' : `, or tap <b>•••</b> and choose <b>Open in browser</b>`}.</p><div class="nudge-b"><button class="btn ghost" type="button" data-n="later">Not now</button>${IS_ANDROID ? '<button class="btn ghost" type="button" data-n="open">Open in Chrome</button>' : ''}<button class="btn primary" type="button" data-n="in">Sign up free</button></div>`
+    : `<p><b>Save your ${items}</b> Sign up free to keep your collection safe and see it on your phone and computer. No password needed.</p><div class="nudge-b"><button class="btn ghost" type="button" data-n="later">Not now</button><button class="btn primary" type="button" data-n="in">Sign up free</button></div>`;
+  track('save_nudge', { outcome: 'shown', items: n, in_app: IN_APP || 'no' });
+  el.addEventListener('click', e => {
+    const v = e.target.closest('button')?.dataset.n; if (!v) return;
+    track('save_nudge', { outcome: v, items: n, in_app: IN_APP || 'no' });
+    if (v === 'open') { location.href = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`; return; }
+    el.remove(); if (v === 'in') openAuth();
+  });
   document.body.append(el);
 }
 $('authClose').onclick = () => dlg.close();
@@ -3052,7 +3102,7 @@ $('authForm').addEventListener('submit', async e => {
   const email = $('authEmail').value.trim(); if (!email) return;
   $('authSend').disabled = true; $('authSend').textContent = 'Sending…';
   try {
-    await BC.auth.signInWithEmail(email);
+    const local = personalObj(); await BC.auth.signInWithEmail(email, Object.keys(local).length ? JSON.stringify(local) : '');
     try { localStorage.setItem('bc-login', 'email'); } catch {}
     $('authSentTo').textContent = email; $('authIn').hidden = true; $('authSent').hidden = false;
   } catch (err) { toast(err.message || 'Couldn’t send the link. Check the address and try again.'); }

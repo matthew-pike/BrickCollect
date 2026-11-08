@@ -29,7 +29,15 @@
     let email = store.get(EMAIL_KEY);
     // Opened on a different device or browser: ask which email the link was sent to.
     if (!email) email = window.prompt('To finish signing in, enter the email address the link was sent to:');
-    try { if (email) markNew(await fauth.signInWithEmailLink(email.trim(), location.href)); }
+    try {
+      if (email) {
+        markNew(await fauth.signInWithEmailLink(email.trim(), location.href));
+        // The link can carry the few sets ticked before signing up (e.g. ticked in Instagram's browser, link opened in Safari).
+        // They go where this browser's own ticks would be, so they move into the account the usual way (only if it's empty).
+        const carry = new URLSearchParams(location.search).get('carry');
+        if (carry && !store.get('bc-collection')) { const o = JSON.parse(carry); if (o && typeof o === 'object' && !Array.isArray(o)) store.set('bc-collection', JSON.stringify(o)); }
+      }
+    }
     catch (e) { console.warn('Email link sign-in failed:', e.code || e.message); }
     store.set(EMAIL_KEY, null);
     // Remove the one-time sign-in code from the address bar.
@@ -95,8 +103,9 @@
   const providers = { google: () => new fb.auth.GoogleAuthProvider() };
   const auth = {
     available: true,
-    async signInWithEmail(email) {
-      await fauth.sendSignInLinkToEmail(email, { url: location.origin + location.pathname, handleCodeInApp: true });
+    async signInWithEmail(email, carry) {
+      const q = carry && carry.length < 3000 ? `?carry=${encodeURIComponent(carry)}` : '';
+      await fauth.sendSignInLinkToEmail(email, { url: location.origin + location.pathname + q, handleCodeInApp: true });
       store.set(EMAIL_KEY, email);
     },
     async signInWith(name) {
