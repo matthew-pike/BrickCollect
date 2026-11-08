@@ -245,8 +245,15 @@ button.hitile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .welcome .x{position:absolute;top:12px;right:12px}
 
 #filtToggle{display:none}
+.filtrow{display:contents}
+#fiClearM{display:none}
 @media (max-width:640px){.pills{flex-wrap:nowrap;overflow-x:auto;max-width:100%}.pill{white-space:nowrap;flex:0 0 auto}}
-@media (max-width:640px){#filtToggle{display:inline-flex;align-self:flex-start;gap:8px}.filters:not(.open){display:none}}
+@media (max-width:640px){.filtrow{display:flex;gap:8px;align-items:center;align-self:flex-start}#filtToggle{display:inline-flex;gap:8px}#fiClearM:not([hidden]){display:inline-flex}.filters:not(.open){display:none}}
+.btn.clearf{color:var(--muted)}
+.btn.clearf:disabled{opacity:.45;cursor:default}
+.btn.clearf:disabled:hover{border-color:var(--line-2)}
+.btn.clearf.on{color:var(--accent);border-color:var(--accent);background:transparent}
+.btn.clearf.on:hover{background:var(--accent);color:var(--accent-ink)}
 .filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr)) auto auto auto;gap:12px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
 .field label{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500}
@@ -747,7 +754,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     </div>
   </section>
 
-  <button class="btn filtbtn" id="filtToggle" aria-expanded="false" aria-controls="filters"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span id="filtLabel">Filters</span></button>
+  <div class="filtrow"><button class="btn filtbtn" id="filtToggle" aria-expanded="false" aria-controls="filters"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span id="filtLabel">Filters</span></button><button class="btn clearf on" id="fiClearM" type="button" hidden title="Clear all filters and search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Clear</button></div>
   <section class="filters" id="filters" aria-label="Filters">
     <div class="field"><label for="fiBrand">Brand</label><select id="fiBrand"><option value="">All brands</option><option value="LEGO">LEGO</option></select></div>
     <div class="field"><label for="fiTheme">Theme</label><select id="fiTheme"><option value="">All themes</option></select></div>
@@ -757,7 +764,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <div class="field"><label for="fiYear">Year</label><select id="fiYear"><option value="">All</option></select></div>
     <button class="btn" id="addBtn" hidden title="Add a set from another brand">Add set</button>
     <button class="btn" id="bulkBtn" title="Set the subtheme, or add or remove a tag, for every set in view">Bulk edit</button>
-    <button class="btn" id="fiReset" title="Reset filters" aria-label="Reset filters"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+    <button class="btn clearf" id="fiReset" type="button" title="Clear all filters and search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Clear filters</button>
   </section>
 
   <section class="board">
@@ -1628,7 +1635,8 @@ function render() {
   document.querySelector('.pills').hidden = tlOpen; document.querySelector('.pills + .tip')?.toggleAttribute('hidden', tlOpen);
   $('regionLabel').textContent = LOCS[priceRegion()].replace(' (EU)', '').replace('United States', 'US').replace('United Kingdom', 'UK');
   document.querySelectorAll('[data-loc]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.loc === priceRegion())));
-  { const n = [fi.brand, fi.theme, fi.sub, fi.film, fi.year].filter(f => f.value).length + (fi.set.value !== 'all' ? 1 : 0); $('filtLabel').textContent = n ? `Filters · ${n}` : 'Filters'; }
+  { const n = [fi.brand, fi.theme, fi.sub, fi.film, fi.year].filter(f => f.value).length + (fi.set.value !== 'all' ? 1 : 0); $('filtLabel').textContent = n ? `Filters · ${n}` : 'Filters';
+    const any = n > 0 || !!$('q').value.trim() || !!focus || !!tlFilter; const r = $('fiReset'); r.disabled = !any; r.classList.toggle('on', any); $('fiClearM').hidden = !any; }
   const list = kind === 'sets' ? CAT.sets : CAT.figs;
   const isScoped = scoped();
   const scope = isScoped ? list.filter(inScope) : list.filter(has);
@@ -1979,7 +1987,7 @@ let qT, qTrackT; $('q').addEventListener('input', () => { clearTimeout(qT); qT =
   clearTimeout(qTrackT); qTrackT = setTimeout(() => { const q = $('q').value.trim(); if (q.length >= 2) track('search', { search_term: q.slice(0, 60), results: $('rows') ? $('rows').rows.length : undefined }); }, 1500); });
 $('more').onclick = () => { limit += PAGE; render(); };
 $('moreAll').onclick = () => { limit = SHOW_ALL_MAX; render(); };
-$('fiReset').onclick = () => { focus = null; tlFilter = null; leaveSale(); Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
+$('fiReset').onclick = $('fiClearM').onclick = () => { focus = null; tlFilter = null; leaveSale(); Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 $('gotIt').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 // Getting started shows until the person closes it (Got it or ×), with its own marker so other saved settings can't hide it.
