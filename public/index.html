@@ -640,7 +640,10 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .imp textarea{display:block;resize:vertical;min-height:96px;font:13px/1.45 var(--font-mono,ui-monospace,monospace);color:var(--fg)}
 .imp .imp-msg{min-height:0;margin:8px 0;font-size:13px;color:var(--coral)}
 .imp .imp-msg.busy{color:var(--muted);font-variant-numeric:tabular-nums}
-.imp .imp-msg:empty{margin:4px 0}
+.imp .imp-msg:empty{margin:0}
+.imp #impCheck{margin-top:16px}
+.imp .imp-msg + #impCheck{margin-top:8px}
+.imp .imp-msg:empty + #impCheck{margin-top:16px}
 .imp .imp-mode{margin:0 0 12px}
 .imp .imp-sum{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.55;color:var(--muted)}
 .imp .imp-sum b{color:var(--fg);font-weight:600}
