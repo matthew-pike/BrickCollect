@@ -981,6 +981,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <p class="imp-msg" id="impMsg" role="status"></p>
     <button class="btn primary" type="button" id="impCheck">Check list</button>
     <p class="fine">Works with BrickCollect exports, Rebrickable and Brickset CSV files, BrickLink XML (wanted lists or inventory) and any spreadsheet with a column of set numbers. Your file stays on your device: only the sets found are saved.</p>
+    <p class="fine">Selling? Fill in the <button class="linkbtn" type="button" id="impTpl">selling spreadsheet</button> (opens in Excel; keep it as CSV), import it, then Export → BrickLink store upload.</p>
   </div>
   <div id="impReview" hidden>
     <h2 id="impTitle">Found</h2>
@@ -3165,12 +3166,19 @@ async function impTable(rows, onProg = () => {}) {
     variant: col('variant', 'numbervariant'), qty: col('quantity', 'qty', 'qtyowned', 'copies', 'minqty', 'numowned'),
     owned: col('owned', 'own'), wanted: col('wanted', 'want', 'wishlist'), qtyWanted: col('qtywanted'),
     type: col('type', 'itemtype'), cond: col('condition', 'cond'), brand: col('brand'),
+    // Selling template (one row per copy or group of identical copies): marks them for sale or trade with listing details.
+    sale: col('forsale', 'forsaleortrade', 'saleortrade', 'sell', 'selling', 'forsaletrade'),
+    sealed: col('sealed'), box: col('box', 'hasbox', 'withbox'), inst: col('instructions', 'hasinstructions', 'withinstructions', 'manual'),
+    miss: col('whatsmissing', 'missing', 'missingpieces', 'missingparts'), note: col('noteforbuyers', 'buyernote', 'descriptionbuyerssee', 'description'),
+    price: col('yourprice', 'price', 'askingprice', 'saleprice', 'priceeach'), rem: col('privatenote', 'privatenoteremarks', 'remarks'), stock: col('stockroom'),
   };
+  for (const k of ['price']) if (c[k] < 0) { const i = head.findIndex(h => h.startsWith('priceeach') || h.startsWith('yourprice')); if (i >= 0) c[k] = i; }
   if (c.num < 0) return null;
   const bc = c.type >= 0 && c.brand >= 0 && head.includes('number');
   const bcWanted = bc && c.cond < 0 && head.includes('buy');
-  const hasState = bcWanted || bc || c.owned >= 0 || c.wanted >= 0 || c.qtyWanted >= 0;
+  const hasState = bcWanted || bc || c.owned >= 0 || c.wanted >= 0 || c.qtyWanted >= 0 || c.sale >= 0;
   const out = { rows: [], bad: [], skipped: 0, hasState, src: bcWanted ? 'BrickCollect wanted list' : bc ? 'BrickCollect export' : 'spreadsheet' };
+  if (c.sale >= 0 && !bc) out.src = 'selling spreadsheet';
   if (!bc && head.includes('setid') && c.variant >= 0) out.src = 'Brickset';
   else if (!bc && (head.includes('includesspares') || head.includes('inventoryver') || head.includes('setnum') || head.includes('fignum'))) out.src = 'Rebrickable';
   const body = rows.slice(1);
@@ -3196,7 +3204,14 @@ async function impTable(rows, onProg = () => {}) {
       else if (c.cond >= 0 && impCondOf(get(c.cond))) q = { [impCondOf(get(c.cond))]: n };
       if (!q && n > 1) q = { '?': n };
     }
-    out.rows.push({ x, q, want, own, either: !hasState });
+    let sell = null;
+    if (own && c.sale >= 0 && impTruthy(get(c.sale))) {
+      const yn = i => { const v = get(i).toLowerCase(); return i < 0 || !v ? undefined : /^(y|yes|true|1|x|✓|✔)$/.test(v) ? true : /^(n|no|false|0|-)$/.test(v) ? false : undefined; };
+      const pr = parseFloat(get(c.price).replace(/[^0-9.]/g, ''));
+      sell = cleanListing({ sealed: yn(c.sealed), box: yn(c.box), inst: yn(c.inst), stock: yn(c.stock), miss: get(c.miss), note: get(c.note), rem: get(c.rem), price: pr > 0 ? { p: pr, c: cur() } : null }) || {};
+      out.selling = true;
+    }
+    out.rows.push({ x, q, want, own, either: !hasState, sell });
   }
   return out;
 }
@@ -3254,10 +3269,17 @@ function impPlan(found, { cond, mode, update }) {
     const asWant = r.either ? mode === 'want' : r.want;
     const e = by.get(r.x.n) || { x: r.x, q: { new: 0, used: 0, 'used-inc': 0 }, own: false, want: false };
     if (asWant) e.want = true;
-    else { e.own = true; const q = r.q || { [cond]: 1 }; for (const [c, n] of Object.entries(q)) e.q[c === '?' ? cond : c] += n; }
+    else {
+      e.own = true; const q = r.q || { [cond]: 1 };
+      for (const [c0, n] of Object.entries(q)) {
+        const c = c0 === '?' ? cond : c0; e.q[c] += n;
+        // Copies for sale from a selling spreadsheet: each gets the row's listing details.
+        if (r.sell) { e.sale = e.sale || {}; e.si = e.si || {}; e.sale[c] = (e.sale[c] || 0) + n; for (let k = 0; k < n; k++) (e.si[c] = e.si[c] || []).push({ ...r.sell }); }
+      }
+    }
     by.set(r.x.n, e);
   }
-  const p = { add: [], upd: [], same: [], want: [], wantHave: [], ownHave: [] };
+  const p = { add: [], upd: [], same: [], want: [], wantHave: [], ownHave: [], sell: [] };
   for (const e of by.values()) {
     const cur = mine.get(e.x.n) || {};
     if (e.own) {
@@ -3268,21 +3290,37 @@ function impPlan(found, { cond, mode, update }) {
     else if (cur.wanted) p.wantHave.push(e);
     else p.want.push(e);
   }
-  p.apply = [...p.add, ...(update ? p.upd : []), ...p.want];
+  // Already in your collection and kept as is: still mark the copies for sale with their details.
+  for (const e of [...p.same, ...(update ? [] : p.upd)]) if (e.sale) p.sell.push({ ...e, saleOnly: true });
+  p.apply = [...p.add, ...(update ? p.upd : []), ...p.want, ...p.sell];
+  p.selling = [...p.add, ...(update ? p.upd : []), ...p.sell].filter(e => e.sale);
   return p;
 }
 function impWrite(entries) {
   for (const e of entries) {
     const me = { ...(mine.get(e.x.n) || {}) };
-    if (e.own) {
+    if (e.own && !e.saleOnly) {
       const q = {}; for (const c of CONDS) if (e.q[c]) q[c] = e.q[c];
       const total = Object.values(q).reduce((a, b) => a + b, 0); if (!total) continue;
       me.owned = true; delete me.wanted; me.cond = CONDS.find(c => q[c]);
       if (total === 1) delete me.qty; else me.qty = q;
       if (me.sale) { const s = {}; for (const c of CONDS) { const v = Math.min(q[c] || 0, Number(me.sale[c]) || 0); if (v) s[c] = v; } if (Object.keys(s).length) me.sale = s; else delete me.sale; }
-    } else if (!me.owned) me.wanted = true;
+      if (me.saleInfo) { for (const c of CONDS) if (me.saleInfo[c]) { me.saleInfo[c] = me.saleInfo[c].slice(0, (me.sale || {})[c] || 0); if (!me.saleInfo[c].length) delete me.saleInfo[c]; } if (!Object.keys(me.saleInfo).length) delete me.saleInfo; }
+    }
+    if (e.own) { if (e.sale && me.owned) impSale(me, e); }
+    else if (!me.owned) me.wanted = true;
     mine.set(e.x.n, me);
   }
+}
+// Mark the file's copies for sale or trade (per condition, never more than you own), replacing earlier details for that condition.
+function impSale(me, e) {
+  const own = copiesOf({ n: e.x.n }, me), sale = { ...(me.sale || {}) }, si = { ...(me.saleInfo || {}) };
+  for (const c of CONDS) if (e.sale[c]) {
+    const n = Math.min(own[c], e.sale[c]); if (!n) continue;
+    sale[c] = n; si[c] = (e.si[c] || []).slice(0, n).map(d => cleanListing(d) || {});
+  }
+  if (Object.keys(sale).length) me.sale = sale;
+  if (Object.keys(si).length) me.saleInfo = si;
 }
 const impState = { cond: 'used', mode: 'own', update: false };
 const impFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
@@ -3360,6 +3398,7 @@ function impPaint() {
   if (p.add.length) li.push(`<li><b>${kinds(p.add)}</b> to add to your collection</li>`);
   if (p.want.length) li.push(`<li><b>${kinds(p.want)}</b> to add to your Wanted list</li>`);
   if (p.same.length || p.upd.length) li.push(`<li>${kinds([...p.same, ...p.upd])} already in your collection${p.upd.length ? `, ${p.upd.length.toLocaleString()} with different copies or condition` : ''}${p.upd.length && !impState.update ? ' (kept as they are)' : ''}</li>`);
+  if (p.selling.length) { const n = p.selling.reduce((t, e) => { const own = e.saleOnly ? copiesOf(e.x) : e.q; return t + CONDS.reduce((a, c) => a + Math.min(e.sale[c] || 0, own[c] || 0), 0); }, 0); li.push(`<li><b>${plural(n, 'copy').replace(/copys$/, 'copies')}</b> marked for sale or trade, with their listing details</li>`); }
   if (p.wantHave.length) li.push(`<li>${kinds(p.wantHave)} already on your Wanted list</li>`);
   if (p.ownHave.length) li.push(`<li>${kinds(p.ownHave)} you already own, so not added to Wanted</li>`);
   if (f.bad.length) li.push(`<li class="bad"><b>${plural(f.bad.length, 'number')} not recognised</b> <button class="linkbtn" type="button" id="impBadBtn">Show</button><span class="badlist" id="impBadList" hidden>${esc([...new Set(f.bad)].slice(0, 300).join(', '))}${f.bad.length > 300 ? '…' : ''}</span></li>`);
@@ -3372,12 +3411,12 @@ function impPaint() {
   $('impGate').hidden = !(gated && p.apply.length);
   const go = $('impGo');
   go.disabled = !p.apply.length;
-  go.textContent = !p.apply.length ? 'Nothing new to add' : gated ? 'Sign up to import' : p.add.length + p.want.length ? `Add ${kinds([...p.add, ...p.want])}${p.upd.length && impState.update ? ` and update ${p.upd.length.toLocaleString()}` : ''}` : `Update ${kinds(p.upd)}`;
+  go.textContent = !p.apply.length ? 'Nothing new to add' : gated ? 'Sign up to import' : p.add.length + p.want.length ? `Add ${kinds([...p.add, ...p.want])}${p.upd.length && impState.update ? ` and update ${p.upd.length.toLocaleString()}` : ''}` : p.upd.length && impState.update ? `Update ${kinds(p.upd)}` : `Mark ${kinds(p.sell)} for sale`;
   impFound.plan = p;
 }
 async function impDo() {
   const p = impFound?.plan; if (!p || !p.apply.length || impDo.busy) return;
-  const pack = p.apply.map(e => [e.x.n, e.own ? e.q : null]);
+  const pack = p.apply.map(e => [e.x.n, e.own ? e.q : null, e.sale ? { sale: e.sale, si: e.si, only: !!e.saleOnly } : null]);
   if (impGated(p)) {
     lsSet('bc-import-pending', { at: Date.now(), src: impFound.src, items: pack });
     impDlg.close(); openAuth(); $('authTitle').textContent = 'Sign up to finish your import';
@@ -3387,9 +3426,9 @@ async function impDo() {
   impDo.busy = true; $('impGo').disabled = $('impBack').disabled = true;
   try { await impSave(p.apply, 'Adding'); } finally { impDo.busy = false; $('impBack').disabled = false; impProg('review', null, ''); }
   impDlg.close();
-  const s = p.add.length, w = p.want.length, u = impState.update ? p.upd.length : 0;
-  toast([s && `Added ${s.toLocaleString()} to your collection`, w && `${s ? '' : 'Added '}${w.toLocaleString()} to your Wanted list`, u && `updated ${u.toLocaleString()}`].filter(Boolean).join(', '));
-  track('import', { source: impFound.src, added: s, wanted: w, updated: u, not_found: impFound.bad.length });
+  const s = p.add.length, w = p.want.length, u = impState.update ? p.upd.length : 0, fs = p.selling.length;
+  toast([s && `Added ${s.toLocaleString()} to your collection`, w && `${s ? '' : 'Added '}${w.toLocaleString()} to your Wanted list`, u && `updated ${u.toLocaleString()}`, fs && `${fs.toLocaleString()} marked for sale or trade`].filter(Boolean).join(', '));
+  track('import', { source: impFound.src, added: s, wanted: w, updated: u, for_sale: fs, not_found: impFound.bad.length });
   trackSize();
 }
 // After signing up from the import, finish it (called once the account's collection has loaded).
@@ -3398,12 +3437,25 @@ function impFinishPending() {
   localStorage.removeItem('bc-import-pending');
   if (!uid || !CAT || Date.now() - (pend.at || 0) > 864e5 || !Array.isArray(pend.items)) return;
   const byN = new Map([...CAT.sets, ...CAT.figs].map(x => [x.n, x])), entries = [];
-  for (const [n, q] of pend.items) { const x = byN.get(n); if (!x) continue; entries.push(q ? { x, own: true, q } : { x, own: false }); }
+  for (const [n, q, sl] of pend.items) { const x = byN.get(n); if (!x) continue; entries.push(q ? { x, own: true, q, ...(sl ? { sale: sl.sale, si: sl.si, saleOnly: sl.only } : {}) } : { x, own: false }); }
   impSave(entries, 'Finishing your import', () => {});
   toast(`Imported ${entries.length.toLocaleString()} item${entries.length === 1 ? '' : 's'} into your account`);
   track('import', { source: pend.src, added: entries.length, after_signup: 1 });
 }
 $('importBtn').onclick = impOpen;
+// Selling spreadsheet: one row per copy (or identical copies with a Quantity). Import marks them for sale or trade with these details.
+// The example rows start with "e.g." so they're never imported by mistake (they show as not recognised).
+$('impTpl').onclick = () => {
+  const rows = [
+    ['Set number', 'Condition', 'Quantity', 'For sale', 'Sealed', 'Box', 'Instructions', 'What’s missing', 'Note for buyers', `Your price (${cur()})`, 'Private note', 'Stockroom'],
+    ['e.g. 75192', 'New', '1', 'Yes', 'Yes', '', '', '', 'Box has a small dent on one corner', '1200', 'Shelf A', 'Yes'],
+    ['e.g. 10294', 'Used', '1', 'Yes', '', 'Yes', 'Yes', '', 'Built once, kept on display', '', 'Bin 3', 'Yes'],
+    ['e.g. 21318', 'Incomplete', '1', 'Yes', '', 'No', 'Yes', '2 tiles and one minifigure', '', '150', '', 'No'],
+    ['e.g. sw0001a', 'Used', '2', 'Yes', '', '', '', '', '', '8.50', '', 'Yes'],
+  ];
+  saveCsv('brickcollect-selling-spreadsheet.csv', rows.map(r => r.map(cell).join(',')).join('\n'), 'the selling spreadsheet');
+  track('import_template');
+};
 $('impClose').onclick = () => { if (!impDo.busy) impDlg.close(); };
 impDlg.addEventListener('cancel', e => { if (impDo.busy) e.preventDefault(); });
 impDlg.addEventListener('click', e => { if (e.target === impDlg && !impDo.busy) impDlg.close(); });
@@ -3430,6 +3482,7 @@ const RELEASES = [
   { v: '0.18', date: '9 November 2026', title: 'Sell on BrickLink', items: [
     ['Listing details', 'for each copy on your sale or trade list, say whether it’s sealed, has its box and instructions, or what’s missing, add a note for buyers and set your price. Click a set’s condition chip, then Listing details.'],
     ['BrickLink store upload', 'Export → BrickLink store upload turns your sale or trade list into a file you can upload to your BrickLink store in one go, into your stockroom to check first, or straight on sale: you choose for each copy.'],
+    ['Selling spreadsheet', 'lots to list? Import → selling spreadsheet gives you a sheet to fill in (set number, condition, box, instructions, what’s missing, note, price). Import it and the copies are marked for sale or trade with all their details.'],
   ] },
   { v: '0.17', date: '9 November 2026', title: 'Your own tags', items: [
     ['My tags', 'add your own tags to the sets and minifigures you own or want, like On display, In storage or Childhood. Only you see them.'],
