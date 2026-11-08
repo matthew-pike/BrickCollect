@@ -632,6 +632,33 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .nudge p{margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
 .nudge p b{color:var(--fg)}
 .nudge-b{display:flex;gap:8px;justify-content:flex-end}
+.imp{width:min(540px,calc(100vw - 32px))}
+.imp .drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 14px;border:1.5px dashed var(--line-2);border-radius:10px;cursor:pointer;text-align:center;font-size:13px;color:var(--muted);margin:4px 0 12px}
+.imp .drop b{color:var(--accent);font-weight:600;font-size:14px}
+.imp .drop:hover,.imp .drop.over,.imp .drop:focus-within{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.imp .imp-or{display:block;margin:0 0 6px}
+.imp textarea{display:block;resize:vertical;min-height:96px;font:13px/1.45 var(--font-mono,ui-monospace,monospace);color:var(--fg)}
+.imp .imp-msg{min-height:0;margin:8px 0;font-size:13px;color:var(--coral)}
+.imp .imp-msg:empty{margin:4px 0}
+.imp .imp-mode{margin:0 0 12px}
+.imp .imp-sum{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.55;color:var(--muted)}
+.imp .imp-sum b{color:var(--fg);font-weight:600}
+.imp .imp-sum .bad b{color:var(--coral)}
+.imp .imp-sum .badlist{display:block;margin-top:4px;font:12px/1.5 var(--font-mono,ui-monospace,monospace);color:var(--faint);overflow-wrap:anywhere;max-height:90px;overflow:auto}
+.imp .imp-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;margin:0 0 10px}
+.imp .imp-row select{width:auto;flex:0 1 auto}
+.imp .imp-list{list-style:none;margin:10px 0 12px;padding:4px 0;max-height:min(260px,36vh);overflow:auto;border:1px solid var(--line);border-radius:9px}
+.imp .imp-list li{display:flex;gap:10px;align-items:baseline;padding:5px 12px;font-size:13px}
+.imp .imp-list .num{flex:0 0 76px;color:var(--faint);font-family:var(--font-mono,ui-monospace,monospace);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.imp .imp-list .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp .imp-list .nm small{color:var(--faint)}
+.imp .imp-list .cq{flex:none;color:var(--muted);font-size:12px}
+.imp .imp-list .more{color:var(--faint);justify-content:center}
+.imp #impUpdRow{margin:0 0 6px}
+.imp .acct-actions .btn:disabled{opacity:.55;cursor:default}
+.imp-hint{margin:14px 0 0;font-size:13.5px;color:var(--muted)}
+.linkbtn{all:unset;cursor:pointer;color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .dlg-x{position:absolute;top:14px;right:14px}
 .savemode{cursor:default}.savemode.local{cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;z-index:20;box-shadow:0 6px 24px rgba(0,0,0,.3)}
@@ -679,7 +706,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
       <li><b>Tick what you own</b><span>Tick the box beside a set. Tap its condition to set new, used or incomplete and how many copies.</span></li>
       <li><b>Star what you want</b><span>Starred sets go on your Wanted list with prices and Buy buttons. Export any list as a spreadsheet.</span></li>
     </ol>
-    <div class="welcome-foot"><span class="hint">Open the Timeline tab to see sets from your favourite films and shows in story order. Selling? “Sell or trade” shows what your collection is worth and keeps your sale or trade list.</span><button class="btn primary" type="button" id="gotIt">Got it</button></div>
+    <div class="welcome-foot"><span class="hint">Open the Timeline tab to see sets from your favourite films and shows in story order. Selling? “Sell or trade” shows what your collection is worth and keeps your sale or trade list. Already tracking your sets somewhere else? <button class="linkbtn" type="button" data-import>Import them</button>.</span><button class="btn primary" type="button" id="gotIt">Got it</button></div>
     <button class="icon-btn x" id="hideWelcome" aria-label="Hide getting started"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </section>
   <section class="stats" aria-label="Collection summary">
@@ -747,6 +774,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
       <span class="spacer" id="tbSpacer"></span>
       <div class="menuwrap"><button class="btn" id="regionBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="regionMenu" title="Which BrickLink sellers the prices come from">Prices: <span id="regionLabel">Australia</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="menu" id="regionMenu" role="menu" hidden><button role="menuitemradio" data-loc="AU">Australia<small>BrickLink sellers in Australia</small></button><button role="menuitemradio" data-loc="US">United States<small>Sellers in the US</small></button><button role="menuitemradio" data-loc="CA">Canada<small>Sellers in Canada</small></button><button role="menuitemradio" data-loc="EU">Europe (EU)<small>Sellers in the European Union</small></button><button role="menuitemradio" data-loc="UK">United Kingdom<small>Sellers in the UK</small></button><button role="menuitemradio" data-loc="world">Worldwide (W)<small>All sellers. Shown greyed with a W wherever a local price is missing</small></button></div></div>
+      <button class="btn" id="importBtn" title="Add sets from Rebrickable, Brickset, BrickLink, a spreadsheet or a BrickCollect export">Import</button>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
         <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button></div></div>
       <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view (site owner only; everyone else's prices refresh twice a day).">Sync Prices</button>
@@ -839,7 +867,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
   <div id="authOut" hidden>
     <h2>Your account</h2>
     <p>Signed in as <b id="acctEmail"></b>. Your collection is saved to your account and is the same on every device where you sign in.</p>
-    <div class="acct-actions"><button class="btn" type="button" id="acctExport">Export my collection</button><button class="btn" type="button" id="signOutBtn">Sign out</button></div>
+    <div class="acct-actions"><button class="btn" type="button" data-import>Import</button><button class="btn" type="button" id="acctExport">Export my collection</button><button class="btn" type="button" id="signOutBtn">Sign out</button></div>
     <p class="fine"><button class="btn mini danger-fill" type="button" id="delStart" style="width:auto">Delete my account</button></p>
     <div class="delbox" id="delBox" hidden>
       <p><b>Delete your account?</b> This permanently deletes your account and the collection saved to it. It can’t be undone.</p>
@@ -848,6 +876,30 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     </div>
   </div>
   <button class="icon-btn dlg-x" type="button" id="authClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</dialog>
+<dialog class="dlg imp" id="impDlg" aria-labelledby="impH">
+  <div id="impPick">
+    <h2 id="impH">Import your collection</h2>
+    <p>Add sets and minifigures from another site or a spreadsheet. You’ll see what was found before anything changes, and nothing you’ve already added is changed unless you choose.</p>
+    <label class="drop" id="impDrop" for="impFile"><b>Choose a file</b><span>or drop it here · CSV, TXT or XML</span><input type="file" id="impFile" accept=".csv,.tsv,.txt,.xml,text/csv,text/plain,text/xml" hidden></label>
+    <label for="impText" class="imp-or">or paste set numbers, one per line</label>
+    <textarea class="inp" id="impText" rows="5" spellcheck="false" placeholder="75192&#10;10305-1&#10;sw0001 x2"></textarea>
+    <p class="imp-msg" id="impMsg" role="status"></p>
+    <button class="btn primary" type="button" id="impCheck">Check list</button>
+    <p class="fine">Works with BrickCollect exports, Rebrickable and Brickset CSV files, BrickLink XML (wanted lists or inventory) and any spreadsheet with a column of set numbers. Your file stays on your device: only the sets found are saved.</p>
+  </div>
+  <div id="impReview" hidden>
+    <h2 id="impTitle">Found</h2>
+    <p id="impSrc"></p>
+    <div class="sellmode imp-mode" id="impMode" role="group" aria-label="Add them to"><button type="button" data-impm="own">My collection</button><button type="button" data-impm="want">Wanted list</button></div>
+    <ul class="imp-sum" id="impSum"></ul>
+    <label class="imp-row" id="impCondRow" for="impCond">Condition, where the file doesn’t say <select class="inp" id="impCond"><option value="used">Used (complete)</option><option value="new">New</option><option value="used-inc">Used (incomplete)</option></select></label>
+    <label class="keepbox" id="impUpdRow"><input type="checkbox" id="impUpd"><span>Change copies and condition of sets I already have to match the file</span></label>
+    <ul class="imp-list" id="impList"></ul>
+    <p class="gate" id="impGate" hidden><b>Sign up to import.</b> Imports are saved to your free account, so they’re safe and on every device. It’s free and there’s no password. Your import finishes as soon as you’re signed in.</p>
+    <div class="acct-actions"><button class="btn" type="button" id="impBack">Back</button><button class="btn primary" type="button" id="impGo">Add</button></div>
+  </div>
+  <button class="icon-btn dlg-x" type="button" id="impClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
 </dialog>
 <dialog class="news" id="newsDlg" aria-labelledby="newsTitle">
   <div class="news-head"><h2 id="newsTitle">What’s new</h2><button class="icon-btn" type="button" id="newsClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
@@ -1736,7 +1788,7 @@ function render() {
     empty.hidden = false;
     const pop = ['Star Wars', 'Technic', 'Harry Potter', 'Icons', 'Ideas', 'Ninjago'].filter(t => [...fi.theme.options].some(o => o.value === t));
     const otherBrands = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.brand))].sort();
-    empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>${popularHtml()}`;
+    empty.innerHTML = `<h3>Select a brand, theme or search above to view your collection</h3><p>The catalog holds ${CAT.sets.length.toLocaleString()} sets and ${CAT.figs.length.toLocaleString()} minifigures across ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}. Tick the ones you own and BrickCollect keeps count.</p><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>${mine.size < 20 ? '<p class="imp-hint">Already tracking your sets on Rebrickable, Brickset, BrickLink or a spreadsheet? <button class="linkbtn" type="button" data-import>Import them</button></p>' : ''}${popularHtml()}`;
   } else if (!rows.length && listView === 'sale') { empty.hidden = false; empty.innerHTML = '<h3>Nothing marked for sale or trade</h3><p>Click a set’s condition chip and use the Sale or trade column to choose which copies you’re letting go.</p>'; }
   else if (!rows.length && listView === 'wanted') { empty.hidden = false; empty.innerHTML = '<h3>Your wanted list is empty</h3><p>Tap the star next to any set or minifigure to add it here.</p>'; }
   else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Tick the sets and minifigures you own and they’ll show here.</p>'; }
@@ -2506,8 +2558,302 @@ async function saveCsv(name, csv, what) {
   }
 }
 
+/* ---------- import (file or pasted list; read in the browser, nothing uploaded) ----------
+   Reads a BrickCollect export, Rebrickable / Brickset / any spreadsheet CSV with a set-number column,
+   BrickLink XML (wanted list or inventory), or a plain list of numbers. Shows what it found first;
+   only adds, and only changes items you already have when you tick the box. */
+const impDlg = $('impDlg');
+let impIdx = null, impFound = null; // { rows: [{x, q|null, want}], bad: [], src, hasState }
+function impCsv(text) {
+  const first = text.split(/\r?\n/, 1)[0], cnt = ch => first.split(ch).length;
+  const d = cnt('\t') > cnt(',') && cnt('\t') > cnt(';') ? '\t' : cnt(';') > cnt(',') ? ';' : ',';
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === d) { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+    else f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(v => v.trim()));
+}
+async function impIndex() {
+  if (impIdx && impIdx.size === CAT.sets.length) return impIdx;
+  const by = new Map(), ext = new Map(), bl = new Map();
+  for (const x of CAT.lego) { const k = x.n.toLowerCase(); by.set(k, x); const m = k.match(/^(.+)-1$/); if (m && !by.has(m[1])) by.set(m[1], x); }
+  for (const x of CAT.figs) by.set(x.n.toLowerCase(), x);
+  for (const x of CAT.sets) if (x.extra) { const k = String(x.disp).toLowerCase(); if (!ext.has(k)) ext.set(k, []); ext.get(k).push(x); }
+  try { const j = await (await fetch('/bl-numbers.json')).json();
+    for (const [rb, b] of Object.entries(j.figs || {})) bl.set('m:' + String(b).toLowerCase(), rb);
+    for (const [rb, b] of Object.entries(j.sets || {})) bl.set('s:' + String(b).toLowerCase(), rb); } catch (e) { console.warn('bl-numbers', e); }
+  for (const [n, v] of shared) if (v.bl) bl.set((n.startsWith('fig-') ? 'm:' : 's:') + String(v.bl).toLowerCase(), n);
+  return impIdx = { by, ext, bl, size: CAT.sets.length };
+}
+// A number from any site -> the BrickCollect item (or null). kind: 's', 'm' or '' when unknown.
+function impFind(raw, kind = '', brand = '') {
+  let k = String(raw || '').trim().toLowerCase().replace(/^#/, '').replace(/\s+/g, '');
+  if (!k) return null;
+  const { by, ext, bl } = impIdx;
+  brand = String(brand || '').trim().toLowerCase();
+  if (brand && brand !== 'lego') { const l = (ext.get(k) || []).filter(x => x.brand.toLowerCase() === brand); if (l.length) return l[0]; }
+  const fm = k.match(/^fig-?0*(\d+)$/); if (fm) return by.get('fig-' + fm[1].padStart(6, '0')) || null;
+  const blFig = () => by.get(bl.get('m:' + k) || '') || null;
+  if (kind === 'm') return blFig();
+  return by.get(k) || by.get(bl.get('s:' + k) || '') || (kind ? null : blFig()) || (ext.get(k) || [])[0] || null;
+}
+const impTruthy = v => /^(1|y|yes|true|x|✓|✔|owned|wanted)$/i.test(String(v).trim()) || Number(v) > 0;
+const impNum = v => { const n = parseInt(String(v).replace(/[^\d]/g, ''), 10); return Number.isFinite(n) ? n : null; };
+function impCondOf(v) {
+  const s = String(v || '').trim().toLowerCase();
+  if (!s) return '';
+  if (/incomplete/.test(s)) return 'used-inc';
+  if (s === 'n' || /^new|sealed|mint|\bmisb\b/.test(s)) return 'new';
+  if (s === 'u' || /^used/.test(s)) return 'used';
+  return '';
+}
+// "2 × Used (complete), 1 × New" (BrickCollect export) -> { used: 2, new: 1 }
+function impCondText(s, copies) {
+  const q = {}; let any = false;
+  for (const part of String(s || '').split(',')) {
+    const m = part.trim().match(/^(?:(\d+)\s*[×x]\s*)?(.+)$/i); if (!m) continue;
+    const c = impCondOf(m[2]); if (!c) continue;
+    q[c] = (q[c] || 0) + (m[1] ? Number(m[1]) : 1); any = true;
+  }
+  if (any && !/×|\bx\b/i.test(String(s)) && copies > 1) { const c = Object.keys(q)[0]; q[c] = copies; }
+  return any ? q : null;
+}
+function impTable(rows) {
+  const norm = h => String(h).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const head = rows[0].map(norm), col = (...names) => { for (const nm of names) { const i = head.indexOf(nm); if (i >= 0) return i; } return -1; };
+  const c = {
+    num: col('setnumber', 'setnum', 'setno', 'number', 'set', 'itemno', 'itemnumber', 'itemid', 'legoid', 'productnumber', 'fignum', 'minifignumber', 'minifignum', 'minifigure', 'minifig', 'fig'),
+    variant: col('variant', 'numbervariant'), qty: col('quantity', 'qty', 'qtyowned', 'copies', 'minqty', 'numowned'),
+    owned: col('owned', 'own'), wanted: col('wanted', 'want', 'wishlist'), qtyWanted: col('qtywanted'),
+    type: col('type', 'itemtype'), cond: col('condition', 'cond'), brand: col('brand'),
+  };
+  if (c.num < 0) return null;
+  const bc = c.type >= 0 && c.brand >= 0 && head.includes('number');
+  const bcWanted = bc && c.cond < 0 && head.includes('buy');
+  const hasState = bcWanted || bc || c.owned >= 0 || c.wanted >= 0 || c.qtyWanted >= 0;
+  const out = { rows: [], bad: [], skipped: 0, hasState, src: bcWanted ? 'BrickCollect wanted list' : bc ? 'BrickCollect export' : 'spreadsheet' };
+  if (!bc && head.includes('setid') && c.variant >= 0) out.src = 'Brickset';
+  else if (!bc && (head.includes('includesspares') || head.includes('inventoryver') || head.includes('setnum') || head.includes('fignum'))) out.src = 'Rebrickable';
+  for (const r of rows.slice(1)) {
+    const get = i => i >= 0 ? (r[i] ?? '').trim() : '';
+    let num = get(c.num); if (!num) continue;
+    if (bc && /^total$/i.test(get(c.type))) continue;
+    if (c.variant >= 0 && get(c.variant) && !/-\d+$/.test(num)) num += '-' + get(c.variant);
+    const t = get(c.type).toLowerCase(), kind = /minifig|^m$/.test(t) ? 'm' : /^(set|s)$/.test(t) ? 's' : (c.num === col('fignum', 'minifignumber', 'minifignum', 'minifigure', 'minifig', 'fig') ? 'm' : '');
+    let qn = c.qty >= 0 ? impNum(get(c.qty)) : null;
+    let want = bcWanted || (c.wanted >= 0 && impTruthy(get(c.wanted))) || (c.qtyWanted >= 0 && impNum(get(c.qtyWanted)) > 0);
+    const own = bcWanted ? false : c.owned >= 0 ? impTruthy(get(c.owned)) : c.qty >= 0 && c.owned < 0 && (c.wanted >= 0 || c.qtyWanted >= 0) ? qn > 0 : !want || bc;
+    if (!own && !want) { out.skipped++; continue; }
+    if (own) want = false;
+    const x = impFind(num, kind, get(c.brand));
+    if (!x) { out.bad.push(num); continue; }
+    let q = null;
+    if (own) {
+      const n = Math.max(1, qn || 1);
+      if (bc) q = impCondText(get(c.cond), n);
+      else if (c.cond >= 0 && impCondOf(get(c.cond))) q = { [impCondOf(get(c.cond))]: n };
+      if (!q && n > 1) q = { '?': n };
+    }
+    out.rows.push({ x, q, want, own, either: !hasState });
+  }
+  return out;
+}
+function impXml(text) {
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  const items = [...doc.getElementsByTagName('ITEM')];
+  if (!items.length) return null;
+  const tag = (el, t) => (el.getElementsByTagName(t)[0]?.textContent || '').trim();
+  const wantedList = /<(MINQTY|WANTEDSHOW|MAXPRICE|WANTEDLISTID)>/i.test(text);
+  const out = { rows: [], bad: [], skipped: 0, hasState: false, src: wantedList ? 'BrickLink wanted list' : 'BrickLink inventory', defWant: wantedList };
+  for (const el of items) {
+    const type = tag(el, 'ITEMTYPE').toUpperCase(), id = tag(el, 'ITEMID');
+    if (type !== 'S' && type !== 'M') { out.skipped++; continue; }
+    const x = impFind(id, type === 'S' ? 's' : 'm');
+    if (!x) { out.bad.push(id); continue; }
+    const n = Math.max(1, impNum(tag(el, 'MINQTY') || tag(el, 'QTY')) || 1), cond = impCondOf(tag(el, 'CONDITION'));
+    out.rows.push({ x, q: cond ? { [cond]: n } : n > 1 ? { '?': n } : null, want: false, own: true, either: true });
+  }
+  return out;
+}
+function impList(text) {
+  const out = { rows: [], bad: [], skipped: 0, hasState: false, src: 'list' };
+  for (const line of text.split(/\r?\n/)) {
+    const toks = line.trim().split(/[\s,;|]+/).filter(Boolean); if (!toks.length) continue;
+    let found = 0; const missed = [];
+    for (let i = 0; i < toks.length; i++) {
+      const t = toks[i]; if (!/\d/.test(t) || t.replace(/[^\w]/g, '').length < 3 || /^[x×]\d+$|^\d+[x×]$/i.test(t)) continue;
+      const x = impFind(t);
+      if (!x) { missed.push(t); continue; }
+      const qm = (toks[i + 1] || '').match(/^[x×](\d+)$|^(\d+)[x×]$/i), n = qm ? Number(qm[1] || qm[2]) : 1;
+      out.rows.push({ x, q: n > 1 ? { '?': n } : null, want: false, own: true, either: true }); found++;
+    }
+    if (!found) out.bad.push(missed[0] || line.trim().slice(0, 40)); else out.bad.push(...missed.filter(t => /^\d{3,}(-\d+)?$/.test(t)));
+  }
+  return out;
+}
+async function impRead(text) {
+  text = String(text || '').replace(/^﻿/, '').trim();
+  if (!text) return null;
+  await impIndex();
+  if (/^</.test(text) && /<ITEM>/i.test(text)) { const r = impXml(text); if (r) return r; }
+  const rows = impCsv(text);
+  if (rows.length > 1 && rows[0].length > 1) { const r = impTable(rows); if (r) return r; }
+  if (rows.length > 1 && rows[0].length === 1 && !/\d/.test(rows[0][0])) { const r = impTable(rows); if (r) return r; } // one column with a heading
+  return impList(text);
+}
+// Merge duplicates and work out what would change.
+function impPlan(found, { cond, mode, update }) {
+  const by = new Map();
+  for (const r of found.rows) {
+    const asWant = r.either ? mode === 'want' : r.want;
+    const e = by.get(r.x.n) || { x: r.x, q: { new: 0, used: 0, 'used-inc': 0 }, own: false, want: false };
+    if (asWant) e.want = true;
+    else { e.own = true; const q = r.q || { [cond]: 1 }; for (const [c, n] of Object.entries(q)) e.q[c === '?' ? cond : c] += n; }
+    by.set(r.x.n, e);
+  }
+  const p = { add: [], upd: [], same: [], want: [], wantHave: [], ownHave: [] };
+  for (const e of by.values()) {
+    const cur = mine.get(e.x.n) || {};
+    if (e.own) {
+      for (const c of CONDS) e.q[c] = Math.min(999, e.q[c]);
+      if (!cur.owned) p.add.push(e);
+      else { const now = copiesOf(e.x); if (CONDS.every(c => now[c] === e.q[c])) p.same.push(e); else p.upd.push(e); }
+    } else if (cur.owned) p.ownHave.push(e);
+    else if (cur.wanted) p.wantHave.push(e);
+    else p.want.push(e);
+  }
+  p.apply = [...p.add, ...(update ? p.upd : []), ...p.want];
+  return p;
+}
+function impWrite(entries) {
+  for (const e of entries) {
+    const me = { ...(mine.get(e.x.n) || {}) };
+    if (e.own) {
+      const q = {}; for (const c of CONDS) if (e.q[c]) q[c] = e.q[c];
+      const total = Object.values(q).reduce((a, b) => a + b, 0); if (!total) continue;
+      me.owned = true; delete me.wanted; me.cond = CONDS.find(c => q[c]);
+      if (total === 1) delete me.qty; else me.qty = q;
+      if (me.sale) { const s = {}; for (const c of CONDS) { const v = Math.min(q[c] || 0, Number(me.sale[c]) || 0); if (v) s[c] = v; } if (Object.keys(s).length) me.sale = s; else delete me.sale; }
+    } else if (!me.owned) me.wanted = true;
+    mine.set(e.x.n, me);
+  }
+}
+const impState = { cond: 'used', mode: 'own', update: false };
+function impOpen() {
+  if (!CAT) { toast('The set list is still loading. Try again in a moment.'); return; }
+  setExportMenu(false); if (typeof setRegionMenu === 'function') setRegionMenu(false);
+  impFound = null; $('impText').value = ''; $('impFile').value = ''; $('impMsg').textContent = '';
+  $('impPick').hidden = false; $('impReview').hidden = true;
+  if (!impDlg.open) impDlg.showModal();
+  track('import_open');
+}
+async function impLoad(text, label) {
+  $('impMsg').textContent = 'Reading…';
+  let found = null;
+  try { found = await impRead(text); } catch (e) { console.warn('import', e); }
+  if (!found || (!found.rows.length && !found.bad.length)) { $('impMsg').textContent = `Couldn’t find any set numbers in ${label}. Try a CSV or XML export, or paste the numbers one per line.`; return; }
+  impFound = found; $('impMsg').textContent = '';
+  impState.cond = prefs.lastCond && CONDS.includes(prefs.lastCond) ? prefs.lastCond : 'used';
+  impState.mode = found.defWant ? 'want' : 'own'; impState.update = false;
+  $('impPick').hidden = true; $('impReview').hidden = false;
+  impPaint();
+  track('import_preview', { source: found.src, found: found.rows.length, not_found: found.bad.length });
+}
+function impGated(p) {
+  if (uid || !window.BC?.auth?.available) return false;
+  const now = [...mine.values()].filter(v => v && (v.owned || v.wanted)).length;
+  return now + p.add.length + p.want.length > FREE_ITEMS;
+}
+function impPaint() {
+  const f = impFound, p = impPlan(f, impState);
+  const plural = (n, w) => `${n.toLocaleString()} ${w}${n === 1 ? '' : 's'}`;
+  const kinds = list => { const s = list.filter(e => e.x.k === 's').length, m = list.length - s; return [s && plural(s, 'set'), m && plural(m, 'minifigure')].filter(Boolean).join(' and ') || 'nothing'; };
+  const all = [...p.add, ...p.upd, ...p.same, ...p.want, ...p.wantHave, ...p.ownHave];
+  $('impTitle').textContent = `Found ${kinds(all)}`;
+  $('impSrc').textContent = f.src === 'list' ? 'From your list.' : `From your ${f.src} file.`;
+  const either = f.rows.some(r => r.either);
+  $('impMode').hidden = !either;
+  $('impMode').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.impm === impState.mode));
+  const needCond = f.rows.some(r => (r.either ? impState.mode === 'own' : r.own) && (!r.q || r.q['?']));
+  $('impCondRow').hidden = !needCond; $('impCond').value = impState.cond;
+  const li = [];
+  if (p.add.length) li.push(`<li><b>${kinds(p.add)}</b> to add to your collection</li>`);
+  if (p.want.length) li.push(`<li><b>${kinds(p.want)}</b> to add to your Wanted list</li>`);
+  if (p.same.length || p.upd.length) li.push(`<li>${kinds([...p.same, ...p.upd])} already in your collection${p.upd.length ? `, ${p.upd.length.toLocaleString()} with different copies or condition` : ''}${p.upd.length && !impState.update ? ' (kept as they are)' : ''}</li>`);
+  if (p.wantHave.length) li.push(`<li>${kinds(p.wantHave)} already on your Wanted list</li>`);
+  if (p.ownHave.length) li.push(`<li>${kinds(p.ownHave)} you already own, so not added to Wanted</li>`);
+  if (f.bad.length) li.push(`<li class="bad"><b>${plural(f.bad.length, 'number')} not recognised</b> <button class="linkbtn" type="button" id="impBadBtn">Show</button><span class="badlist" id="impBadList" hidden>${esc([...new Set(f.bad)].slice(0, 300).join(', '))}${f.bad.length > 300 ? '…' : ''}</span></li>`);
+  $('impSum').innerHTML = li.join('');
+  $('impUpdRow').hidden = !p.upd.length; $('impUpd').checked = impState.update;
+  const show = p.apply.slice(0, 200), q = e => e.own ? CONDS.filter(c => e.q[c]).map(c => `${e.q[c] > 1 ? e.q[c] + ' ' : ''}${COND_SHORT[c]}`).join(' · ') : 'Wanted';
+  $('impList').innerHTML = show.map(e => `<li><span class="num">${esc(e.x.disp || e.x.n.replace(/-1$/, ''))}</span><span class="nm">${esc(e.x.name)}${e.x.brand !== 'LEGO' ? ` <small>${esc(e.x.brand)}</small>` : ''}</span><span class="cq">${esc(q(e))}</span></li>`).join('') + (p.apply.length > show.length ? `<li class="more">and ${(p.apply.length - show.length).toLocaleString()} more</li>` : '');
+  $('impList').hidden = !show.length;
+  const gated = impGated(p);
+  $('impGate').hidden = !(gated && p.apply.length);
+  const go = $('impGo');
+  go.disabled = !p.apply.length;
+  go.textContent = !p.apply.length ? 'Nothing new to add' : gated ? 'Sign up to import' : p.add.length + p.want.length ? `Add ${kinds([...p.add, ...p.want])}${p.upd.length && impState.update ? ` and update ${p.upd.length.toLocaleString()}` : ''}` : `Update ${kinds(p.upd)}`;
+  impFound.plan = p;
+}
+function impDo() {
+  const p = impFound?.plan; if (!p || !p.apply.length) return;
+  const pack = p.apply.map(e => [e.x.n, e.own ? e.q : null]);
+  if (impGated(p)) {
+    lsSet('bc-import-pending', { at: Date.now(), src: impFound.src, items: pack });
+    impDlg.close(); openAuth(); $('authTitle').textContent = 'Sign up to finish your import';
+    $('authGate').hidden = true; track('signup_gate', { items: pack.length, from: 'import' });
+    return;
+  }
+  impWrite(p.apply); savePersonal(); render();
+  impDlg.close();
+  const s = p.add.length, w = p.want.length, u = impState.update ? p.upd.length : 0;
+  toast([s && `Added ${s.toLocaleString()} to your collection`, w && `${s ? '' : 'Added '}${w.toLocaleString()} to your Wanted list`, u && `updated ${u.toLocaleString()}`].filter(Boolean).join(', '));
+  track('import', { source: impFound.src, added: s, wanted: w, updated: u, not_found: impFound.bad.length });
+  trackSize();
+}
+// After signing up from the import, finish it (called once the account's collection has loaded).
+function impFinishPending() {
+  const pend = lsGet('bc-import-pending'); if (!pend) return;
+  localStorage.removeItem('bc-import-pending');
+  if (!uid || !CAT || Date.now() - (pend.at || 0) > 864e5 || !Array.isArray(pend.items)) return;
+  const byN = new Map([...CAT.sets, ...CAT.figs].map(x => [x.n, x])), entries = [];
+  for (const [n, q] of pend.items) { const x = byN.get(n); if (!x) continue; entries.push(q ? { x, own: true, q } : { x, own: false }); }
+  impWrite(entries); savePersonal();
+  toast(`Imported ${entries.length.toLocaleString()} item${entries.length === 1 ? '' : 's'} into your account`);
+  track('import', { source: pend.src, added: entries.length, after_signup: 1 });
+}
+$('importBtn').onclick = impOpen;
+$('impClose').onclick = () => impDlg.close();
+impDlg.addEventListener('click', e => { if (e.target === impDlg) impDlg.close(); });
+$('impFile').addEventListener('change', async () => {
+  const file = $('impFile').files[0]; if (!file) return;
+  if (file.size > 5e6) { $('impMsg').textContent = 'That file is over 5 MB. Export just your sets, or paste the numbers instead.'; return; }
+  impLoad(await file.text(), file.name);
+});
+const drop = $('impDrop');
+['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', async e => { const file = e.dataTransfer.files[0]; if (file) impLoad(await file.text(), file.name); });
+$('impCheck').onclick = () => { const t = $('impText').value; if (!t.trim()) { $('impMsg').textContent = 'Paste some set numbers first, or choose a file.'; $('impText').focus(); return; } impLoad(t, 'that list'); };
+$('impBack').onclick = () => { $('impPick').hidden = false; $('impReview').hidden = true; $('impMsg').textContent = ''; };
+$('impMode').addEventListener('click', e => { const b = e.target.closest('[data-impm]'); if (b) { impState.mode = b.dataset.impm; impPaint(); } });
+$('impCond').onchange = () => { impState.cond = $('impCond').value; impPaint(); };
+$('impUpd').onchange = () => { impState.update = $('impUpd').checked; impPaint(); };
+$('impSum').addEventListener('click', e => { if (e.target.id === 'impBadBtn') { const l = $('impBadList'); l.hidden = !l.hidden; e.target.textContent = l.hidden ? 'Show' : 'Hide'; } });
+$('impGo').onclick = impDo;
+document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]')) return; if (dlg.open) dlg.close(); impOpen(); });
+
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.14', date: '8 November 2026', title: 'Bring your collection', items: [
+    ['Import', 'add your sets and minifigures from Rebrickable, Brickset, BrickLink, a spreadsheet or a list of set numbers. You see what was found before anything is added.'],
+  ] },
   { v: '0.13', date: '7 November 2026', title: 'Your collection at a glance', items: [
     ['Collection insights', 'a chart of your sets by brand and theme (or subtheme), by number of sets, value or pieces. Tap a theme to jump to it.'],
     ['Highlights', 'your biggest set, your most valuable set and how many have retired.'],
@@ -2734,6 +3080,7 @@ fetch('catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return r
       saveMode = 'cloud'; paintSaveMode();
       if (snap.exists) loadPersonal(snap.data().items);
       else { const local = lsGet('bc-collection'); if (local && Object.keys(local).length) { loadPersonal(local); savePersonal(); toast('Moved the collection saved in this browser to your account'); } }
+      impFinishPending();
       render(); return;
     }
     if (snap.metadata.hasPendingWrites || pWriting || pDirty) return;
