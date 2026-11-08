@@ -779,7 +779,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <div class="field"><label for="fiSet">Set</label><select id="fiSet"><option value="all">All sets</option><option value="owned">Owned</option><option value="missing">Still needed</option></select></div>
     <div class="field"><label for="fiFilm">Tag</label><select id="fiFilm"><option value="">All</option></select></div>
     <div class="field"><label for="fiYear">Year</label><select id="fiYear"><option value="">All</option></select></div>
-    <div class="field"><label for="fiRet">Retired</label><select id="fiRet"><option value="">All</option><option value="S">Retiring soon</option><option value="R">Retired</option><option value="A">Still in shops</option></select></div>
+    <div class="field"><label for="fiRet">Retired</label><select id="fiRet"><option value="">All</option><option value="S">Retiring soon</option><option value="R">Retired</option></select></div>
     <button class="btn" id="addBtn" hidden title="Add a set from another brand">Add set</button>
     <button class="btn" id="mytagBtn" hidden title="Add one of your own tags to everything you own or want in view">Add my tag</button>
     <button class="btn" id="bulkBtn" title="Set the subtheme, or add or remove a tag, for every set in view">Bulk edit</button>
@@ -1281,7 +1281,7 @@ function tallyToast(n) {
 /* ---------- filters ---------- */
 const fi = { brand: $('fiBrand'), theme: $('fiTheme'), sub: $('fiSub'), set: $('fiSet'), film: $('fiFilm'), year: $('fiYear'), ret: $('fiRet') };
 const saved = prefs.filters || {};
-if (['S', 'R', 'A'].includes(saved.ret)) fi.ret.value = saved.ret;
+if (['S', 'R'].includes(saved.ret)) fi.ret.value = saved.ret;
 function fill(sel, first, values, keep) {
   sel.innerHTML = `<option value="">${first}</option>` + values.map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('');
   sel.value = values.some(([v]) => v === keep) ? keep : '';
@@ -1760,7 +1760,7 @@ function render() {
   $('cFigs').textContent = (focusSet ? focusFigs : scopedFor('figs') ? CAT.figs.filter(inScope).length : CAT.figs.filter(x => has(x) || wanted(x)).length).toLocaleString();
   const retBar = !focusSet && !(tlFilter && !tlOpen) && !!fi.ret.value && !tlOpen;
   const fb = $('focusbar'); fb.hidden = !focusSet && !(tlFilter && !tlOpen) && !retBar;
-  if (retBar) { const w = { S: 'Sets retiring soon', R: 'Retired sets', A: 'Sets still in shops' }[fi.ret.value]; fb.innerHTML = `<span><b>${w}</b>${fi.ret.value === 'S' ? ', soonest first' : ''}${kind === 'figs' ? ' (minifigures from them)' : ''}. Other filters still apply.</span><span class="spacer"></span><button class="btn mini" data-retclear="1">Clear</button>`; }
+  if (retBar) { const w = { S: 'Sets retiring soon', R: 'Retired sets' }[fi.ret.value]; fb.innerHTML = `<span><b>${w}</b>${fi.ret.value === 'S' ? ', soonest first' : ''}${kind === 'figs' ? ' (minifigures from them)' : ''}. Other filters still apply.</span><span class="spacer"></span><button class="btn mini" data-retclear="1">Clear</button>`; }
   if (!focusSet && tlFilter && !tlOpen) { const fr = TIMELINES.find(f => f.id === tlFilter.fr), e = fr?.entries[tlFilter.i]; fb.innerHTML = `<span>${kind === 'sets' ? 'Sets' : 'Minifigures'} from <b>${esc(e?.t || '')}</b> (${esc(fr?.name || '')}), across every brand</span><span class="spacer"></span><button class="btn mini" data-tlback="1">Back to timeline</button><button class="btn mini" data-tlclear="1">Clear</button>`; }
   if (focusSet) fb.innerHTML = kind === 'sets'
     ? `<span>Selected <b>${esc(focusSet.name)}</b> <span class="mono muted">${esc(focusSet.n)}</span> · ${focusFigs ? `${focusFigs} minifigure${focusFigs > 1 ? 's' : ''}` : 'no minifigures'}</span><span class="spacer"></span>${focusFigs ? '<button class="btn mini primary" data-kind="figs">Show minifigures</button>' : ''}<button class="btn mini" data-clearfocus="1">Clear</button>`
@@ -3075,7 +3075,7 @@ const RELEASES = [
   ] },
   { v: '0.16', date: '9 November 2026', title: 'Before it’s gone', items: [
     ['Retiring soon', 'sets LEGO is about to retire now show a coral RS beside the year. Click it (or tap, then Show all) to see every set retiring soon, soonest first.'],
-    ['Retired filter', 'click a grey R, or use the new Retired filter, to see retired sets, sets retiring soon or sets still in shops. It works with your theme and Wanted list too.'],
+    ['Retired filter', 'click a grey R, or use the new Retired filter, to see retired sets or sets retiring soon. It works with your theme and Wanted list too.'],
   ] },
   { v: '0.15', date: '9 November 2026', title: 'A quicker first tick', items: [
     ['Running tally', 'each tick shows how many sets, pieces and minifigures you have, and how far through that theme or subtheme you are.'],
