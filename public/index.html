@@ -639,6 +639,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .imp .imp-or{display:block;margin:0 0 6px}
 .imp textarea{display:block;resize:vertical;min-height:96px;font:13px/1.45 var(--font-mono,ui-monospace,monospace);color:var(--fg)}
 .imp .imp-msg{min-height:0;margin:8px 0;font-size:13px;color:var(--coral)}
+.imp .imp-msg.busy{color:var(--muted);font-variant-numeric:tabular-nums}
 .imp .imp-msg:empty{margin:4px 0}
 .imp .imp-mode{margin:0 0 12px}
 .imp .imp-sum{margin:0 0 12px;padding-left:18px;font-size:13.5px;line-height:1.55;color:var(--muted)}
@@ -656,6 +657,8 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .imp .imp-list .more{color:var(--faint);justify-content:center}
 .imp #impUpdRow{margin:0 0 6px}
 .imp .acct-actions .btn:disabled{opacity:.55;cursor:default}
+.impdbar i{display:block;height:100%;width:0;background:var(--accent);border-radius:4px;transition:width .25s ease}
+.impdbar{height:8px;border-radius:4px;margin:10px 0 0;background:color-mix(in srgb,var(--accent) 18%,transparent);overflow:hidden}
 .imp-hint{margin:14px 0 0;font-size:13.5px;color:var(--muted)}
 .linkbtn{all:unset;cursor:pointer;color:var(--accent);text-decoration:underline;text-underline-offset:2px}
 .linkbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -884,6 +887,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <label class="drop" id="impDrop" for="impFile"><b>Choose a file</b><span>or drop it here · CSV, TXT or XML</span><input type="file" id="impFile" accept=".csv,.tsv,.txt,.xml,text/csv,text/plain,text/xml" hidden></label>
     <label for="impText" class="imp-or">or paste set numbers, one per line</label>
     <textarea class="inp" id="impText" rows="5" spellcheck="false" placeholder="75192&#10;10305-1&#10;sw0001 x2"></textarea>
+    <div class="impdbar" id="impDBar" role="progressbar" aria-label="Import progress" aria-valuemin="0" aria-valuemax="100" hidden><i></i></div>
     <p class="imp-msg" id="impMsg" role="status"></p>
     <button class="btn primary" type="button" id="impCheck">Check list</button>
     <p class="fine">Works with BrickCollect exports, Rebrickable and Brickset CSV files, BrickLink XML (wanted lists or inventory) and any spreadsheet with a column of set numbers. Your file stays on your device: only the sets found are saved.</p>
@@ -897,6 +901,8 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <label class="keepbox" id="impUpdRow"><input type="checkbox" id="impUpd"><span>Change copies and condition of sets I already have to match the file</span></label>
     <ul class="imp-list" id="impList"></ul>
     <p class="gate" id="impGate" hidden><b>Sign up to import.</b> Imports are saved to your free account, so they’re safe and on every device. It’s free and there’s no password. Your import finishes as soon as you’re signed in.</p>
+    <div class="impdbar" id="impRBar" role="progressbar" aria-label="Import progress" aria-valuemin="0" aria-valuemax="100" hidden><i></i></div>
+    <p class="imp-msg imp-rmsg" id="impRMsg" role="status"></p>
     <div class="acct-actions"><button class="btn" type="button" id="impBack">Back</button><button class="btn primary" type="button" id="impGo">Add</button></div>
   </div>
   <button class="icon-btn dlg-x" type="button" id="impClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -2579,13 +2585,21 @@ function impCsv(text) {
   if (f || row.length) { row.push(f); rows.push(row); }
   return rows.filter(r => r.some(v => v.trim()));
 }
-async function impIndex() {
+async function impIndex(onProg = () => {}) {
   if (impIdx && impIdx.size === CAT.sets.length) return impIdx;
   const by = new Map(), ext = new Map(), bl = new Map();
   for (const x of CAT.lego) { const k = x.n.toLowerCase(); by.set(k, x); const m = k.match(/^(.+)-1$/); if (m && !by.has(m[1])) by.set(m[1], x); }
   for (const x of CAT.figs) by.set(x.n.toLowerCase(), x);
   for (const x of CAT.sets) if (x.extra) { const k = String(x.disp).toLowerCase(); if (!ext.has(k)) ext.set(k, []); ext.get(k).push(x); }
-  try { const j = await (await fetch('/bl-numbers.json')).json();
+  try {
+    const res = await fetch('/bl-numbers.json'), total = Number(res.headers.get('content-length')) || 0;
+    let j;
+    if (res.body && total) {
+      const rd = res.body.getReader(), parts = []; let got = 0;
+      for (;;) { const { done, value } = await rd.read(); if (done) break; parts.push(value); got += value.length; onProg(Math.min(1, got / total)); }
+      j = JSON.parse(new TextDecoder().decode(await new Blob(parts).arrayBuffer()));
+    } else j = await res.json();
+    onProg(1);
     for (const [rb, b] of Object.entries(j.figs || {})) bl.set('m:' + String(b).toLowerCase(), rb);
     for (const [rb, b] of Object.entries(j.sets || {})) bl.set('s:' + String(b).toLowerCase(), rb); } catch (e) { console.warn('bl-numbers', e); }
   for (const [n, v] of shared) if (v.bl) bl.set((n.startsWith('fig-') ? 'm:' : 's:') + String(v.bl).toLowerCase(), n);
@@ -2624,7 +2638,7 @@ function impCondText(s, copies) {
   if (any && !/×|\bx\b/i.test(String(s)) && copies > 1) { const c = Object.keys(q)[0]; q[c] = copies; }
   return any ? q : null;
 }
-function impTable(rows) {
+async function impTable(rows, onProg = () => {}) {
   const norm = h => String(h).toLowerCase().replace(/[^a-z0-9]/g, '');
   const head = rows[0].map(norm), col = (...names) => { for (const nm of names) { const i = head.indexOf(nm); if (i >= 0) return i; } return -1; };
   const c = {
@@ -2640,7 +2654,10 @@ function impTable(rows) {
   const out = { rows: [], bad: [], skipped: 0, hasState, src: bcWanted ? 'BrickCollect wanted list' : bc ? 'BrickCollect export' : 'spreadsheet' };
   if (!bc && head.includes('setid') && c.variant >= 0) out.src = 'Brickset';
   else if (!bc && (head.includes('includesspares') || head.includes('inventoryver') || head.includes('setnum') || head.includes('fignum'))) out.src = 'Rebrickable';
-  for (const r of rows.slice(1)) {
+  const body = rows.slice(1);
+  for (let ri = 0; ri < body.length; ri++) {
+    if (ri % 400 === 399) { onProg(ri / body.length); await impFrame(); }
+    const r = body[ri];
     const get = i => i >= 0 ? (r[i] ?? '').trim() : '';
     let num = get(c.num); if (!num) continue;
     if (bc && /^total$/i.test(get(c.type))) continue;
@@ -2664,14 +2681,16 @@ function impTable(rows) {
   }
   return out;
 }
-function impXml(text) {
+async function impXml(text, onProg = () => {}) {
   const doc = new DOMParser().parseFromString(text, 'text/xml');
   const items = [...doc.getElementsByTagName('ITEM')];
   if (!items.length) return null;
   const tag = (el, t) => (el.getElementsByTagName(t)[0]?.textContent || '').trim();
   const wantedList = /<(MINQTY|WANTEDSHOW|MAXPRICE|WANTEDLISTID)>/i.test(text);
   const out = { rows: [], bad: [], skipped: 0, hasState: false, src: wantedList ? 'BrickLink wanted list' : 'BrickLink inventory', defWant: wantedList };
-  for (const el of items) {
+  for (let ii = 0; ii < items.length; ii++) {
+    if (ii % 400 === 399) { onProg(ii / items.length); await impFrame(); }
+    const el = items[ii];
     const type = tag(el, 'ITEMTYPE').toUpperCase(), id = tag(el, 'ITEMID');
     if (type !== 'S' && type !== 'M') { out.skipped++; continue; }
     const x = impFind(id, type === 'S' ? 's' : 'm');
@@ -2681,9 +2700,12 @@ function impXml(text) {
   }
   return out;
 }
-function impList(text) {
+async function impList(text, onProg = () => {}) {
   const out = { rows: [], bad: [], skipped: 0, hasState: false, src: 'list' };
-  for (const line of text.split(/\r?\n/)) {
+  const lines = text.split(/\r?\n/);
+  for (let li = 0; li < lines.length; li++) {
+    if (li % 400 === 399) { onProg(li / lines.length); await impFrame(); }
+    const line = lines[li];
     const toks = line.trim().split(/[\s,;|]+/).filter(Boolean); if (!toks.length) continue;
     let found = 0; const missed = [];
     for (let i = 0; i < toks.length; i++) {
@@ -2697,15 +2719,14 @@ function impList(text) {
   }
   return out;
 }
-async function impRead(text) {
+async function impRead(text, onProg = () => {}) {
   text = String(text || '').replace(/^﻿/, '').trim();
   if (!text) return null;
-  await impIndex();
-  if (/^</.test(text) && /<ITEM>/i.test(text)) { const r = impXml(text); if (r) return r; }
+  if (/^</.test(text) && /<ITEM>/i.test(text)) { const r = await impXml(text, onProg); if (r) return r; }
   const rows = impCsv(text);
-  if (rows.length > 1 && rows[0].length > 1) { const r = impTable(rows); if (r) return r; }
-  if (rows.length > 1 && rows[0].length === 1 && !/\d/.test(rows[0][0])) { const r = impTable(rows); if (r) return r; } // one column with a heading
-  return impList(text);
+  if (rows.length > 1 && rows[0].length > 1) { const r = await impTable(rows, onProg); if (r) return r; }
+  if (rows.length > 1 && rows[0].length === 1 && !/\d/.test(rows[0][0])) { const r = await impTable(rows, onProg); if (r) return r; } // one column with a heading
+  return impList(text, onProg);
 }
 // Merge duplicates and work out what would change.
 function impPlan(found, { cond, mode, update }) {
@@ -2745,18 +2766,52 @@ function impWrite(entries) {
   }
 }
 const impState = { cond: 'used', mode: 'own', update: false };
+const impFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+// Progress bar inside the import box, where "Reading…" shows. which: 'pick' or 'review'.
+function impProg(which, frac, text) {
+  const bar = $(which === 'pick' ? 'impDBar' : 'impRBar'), msg = $(which === 'pick' ? 'impMsg' : 'impRMsg');
+  if (frac == null) { bar.hidden = true; msg.classList.remove('busy'); if (text != null) msg.textContent = text; return; }
+  const pct = Math.round(Math.max(0, Math.min(1, frac)) * 100);
+  bar.hidden = false; bar.firstElementChild.style.width = pct + '%'; bar.setAttribute('aria-valuenow', pct);
+  msg.classList.add('busy'); msg.textContent = `${text || ''} ${pct}%`.trim();
+}
+// Write in batches so the bar can move, then save and wait for the account to confirm.
+async function impSave(entries, label, show = (f, t) => impProg('review', f, t)) {
+  const n = entries.length, step = 250;
+  show(0.02, `${label} 0 of ${n.toLocaleString()}…`); await impFrame();
+  for (let i = 0; i < n; i += step) {
+    impWrite(entries.slice(i, i + step));
+    const done = Math.min(n, i + step);
+    show(0.02 + 0.6 * done / n, `${label} ${done.toLocaleString()} of ${n.toLocaleString()}…`); await impFrame();
+  }
+  show(0.66, 'Updating your list…'); await impFrame();
+  render();
+  show(0.8, saveMode === 'cloud' ? 'Saving to your account…' : 'Saving…'); await impFrame();
+  clearTimeout(pFlushT);
+  await Promise.race([flushPersonal(), new Promise(r => setTimeout(r, 30000))]);
+  show(1, 'Done'); await impFrame();
+}
 function impOpen() {
   if (!CAT) { toast('The set list is still loading. Try again in a moment.'); return; }
   setExportMenu(false); if (typeof setRegionMenu === 'function') setRegionMenu(false);
-  impFound = null; $('impText').value = ''; $('impFile').value = ''; $('impMsg').textContent = '';
+  impFound = null; $('impText').value = ''; $('impFile').value = ''; impProg('pick', null, ''); impProg('review', null, '');
   $('impPick').hidden = false; $('impReview').hidden = true;
   if (!impDlg.open) impDlg.showModal();
   track('import_open');
 }
 async function impLoad(text, label) {
-  $('impMsg').textContent = 'Reading…';
+  $('impCheck').disabled = true; impProg('pick', 0.03, 'Reading…'); await impFrame();
   let found = null;
-  try { found = await impRead(text); } catch (e) { console.warn('import', e); }
+  // Creep forward while waiting for the first bytes, so the bar never looks stuck.
+  let shown = 0.03; const creep = setInterval(() => { if (shown < 0.3) { shown += 0.01; impProg('pick', shown, 'Reading…'); } }, 200);
+  try {
+    await impIndex(f => { shown = Math.max(shown, 0.03 + 0.5 * f); impProg('pick', shown, 'Reading…'); });
+    clearInterval(creep);
+    impProg('pick', 0.55, 'Matching sets…'); await impFrame();
+    found = await impRead(text, f => impProg('pick', 0.55 + 0.43 * f, 'Matching sets…'));
+    impProg('pick', 1, 'Matching sets…'); await impFrame();
+  } catch (e) { console.warn('import', e); }
+  clearInterval(creep); impProg('pick', null, ''); $('impCheck').disabled = false;
   if (!found || (!found.rows.length && !found.bad.length)) { $('impMsg').textContent = `Couldn’t find any set numbers in ${label}. Try a CSV or XML export, or paste the numbers one per line.`; return; }
   impFound = found; $('impMsg').textContent = '';
   impState.cond = prefs.lastCond && CONDS.includes(prefs.lastCond) ? prefs.lastCond : 'used';
@@ -2801,8 +2856,8 @@ function impPaint() {
   go.textContent = !p.apply.length ? 'Nothing new to add' : gated ? 'Sign up to import' : p.add.length + p.want.length ? `Add ${kinds([...p.add, ...p.want])}${p.upd.length && impState.update ? ` and update ${p.upd.length.toLocaleString()}` : ''}` : `Update ${kinds(p.upd)}`;
   impFound.plan = p;
 }
-function impDo() {
-  const p = impFound?.plan; if (!p || !p.apply.length) return;
+async function impDo() {
+  const p = impFound?.plan; if (!p || !p.apply.length || impDo.busy) return;
   const pack = p.apply.map(e => [e.x.n, e.own ? e.q : null]);
   if (impGated(p)) {
     lsSet('bc-import-pending', { at: Date.now(), src: impFound.src, items: pack });
@@ -2810,7 +2865,8 @@ function impDo() {
     $('authGate').hidden = true; track('signup_gate', { items: pack.length, from: 'import' });
     return;
   }
-  impWrite(p.apply); savePersonal(); render();
+  impDo.busy = true; $('impGo').disabled = $('impBack').disabled = true;
+  try { await impSave(p.apply, 'Adding'); } finally { impDo.busy = false; $('impBack').disabled = false; impProg('review', null, ''); }
   impDlg.close();
   const s = p.add.length, w = p.want.length, u = impState.update ? p.upd.length : 0;
   toast([s && `Added ${s.toLocaleString()} to your collection`, w && `${s ? '' : 'Added '}${w.toLocaleString()} to your Wanted list`, u && `updated ${u.toLocaleString()}`].filter(Boolean).join(', '));
@@ -2824,13 +2880,14 @@ function impFinishPending() {
   if (!uid || !CAT || Date.now() - (pend.at || 0) > 864e5 || !Array.isArray(pend.items)) return;
   const byN = new Map([...CAT.sets, ...CAT.figs].map(x => [x.n, x])), entries = [];
   for (const [n, q] of pend.items) { const x = byN.get(n); if (!x) continue; entries.push(q ? { x, own: true, q } : { x, own: false }); }
-  impWrite(entries); savePersonal();
+  impSave(entries, 'Finishing your import', () => {});
   toast(`Imported ${entries.length.toLocaleString()} item${entries.length === 1 ? '' : 's'} into your account`);
   track('import', { source: pend.src, added: entries.length, after_signup: 1 });
 }
 $('importBtn').onclick = impOpen;
-$('impClose').onclick = () => impDlg.close();
-impDlg.addEventListener('click', e => { if (e.target === impDlg) impDlg.close(); });
+$('impClose').onclick = () => { if (!impDo.busy) impDlg.close(); };
+impDlg.addEventListener('cancel', e => { if (impDo.busy) e.preventDefault(); });
+impDlg.addEventListener('click', e => { if (e.target === impDlg && !impDo.busy) impDlg.close(); });
 $('impFile').addEventListener('change', async () => {
   const file = $('impFile').files[0]; if (!file) return;
   if (file.size > 5e6) { $('impMsg').textContent = 'That file is over 5 MB. Export just your sets, or paste the numbers instead.'; return; }
