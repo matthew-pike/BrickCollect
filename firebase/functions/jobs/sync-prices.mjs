@@ -3,7 +3,7 @@
 // Signed-in people only. Prices checked in the last 24 hours come straight from the database;
 // anything older is looked up on BrickLink, saved for everyone, and counts against the
 // person's daily allowance (admins have no allowance).
-import { env, json, getUser, syncUsed, syncAdd, isAdmin, bucketOf, readBuckets, savePrices, isFresh, priceItemAll, validLoc, locFresh, bricklinkReady, pool, BrickLinkAuthError } from '../lib/common.mjs';
+import { env, json, getUser, syncUsed, syncAdd, can, bucketOf, readBuckets, savePrices, isFresh, priceItemAll, validLoc, locFresh, bricklinkReady, pool, BrickLinkAuthError } from '../lib/common.mjs';
 
 const DAY = 24 * 3600 * 1000;
 const MAX_PER_CALL = 20;
@@ -23,8 +23,8 @@ export default async (req) => {
   const items = Array.isArray(body?.items) ? body.items.slice(0, MAX_PER_CALL).filter(x => x && valid(x.n)) : [];
   if (!items.length) return json(400, { code: 'bad_request', message: 'Nothing to sync.' });
 
-  const admin = await isAdmin(user.email);
-  // Only the site owner syncs by hand; everyone else's prices come from the twice-daily refresh.
+  const admin = await can(user.email, 'sync');
+  // Only super admins (and anyone given the Sync Prices permission) sync by hand; everyone else's prices come from the twice-daily refresh.
   if (!admin) return json(403, { code: 'admin_only', message: 'Prices refresh automatically twice a day.' });
   const buckets = await readBuckets([...new Set(items.map(x => bucketOf(x.n)))]);
   const entryOf = n => (buckets.get(bucketOf(n)) || {})[n];

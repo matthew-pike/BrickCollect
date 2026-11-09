@@ -2,7 +2,7 @@
    Same small API as backend.js (the Supabase version), so the page code doesn't change:
      BC.db.collection(name).onSnapshot(cb) / .doc(id).set(data) / .doc(id).delete()
      BC.db.doc('meta/rates') and BC.db.doc('data/users/<id>/collection')
-     BC.user.id(), BC.user.isOwner(), BC.user.email()
+     BC.user.id(), BC.user.role() ('super' | 'admin' | 'user'), BC.user.isOwner() (super admin), BC.user.email()
      BC.auth.signInWithEmail(email), BC.auth.signInWith('google'), BC.auth.signOut(), BC.auth.onChange(cb)
      BC.syncPrices({ type, items: [{ n, bl }] })
    Needs the Firebase compat scripts (app, auth, firestore) loaded before this file, and BC_CONFIG.firebase. */
@@ -89,14 +89,16 @@
     email: async () => { await ready; return current ? current.email : null; },
     // True on an account's first sign-in (created within the last couple of minutes).
     isNew: async () => { await ready; let n = false; try { n = sessionStorage.getItem('bc-new') === '1'; sessionStorage.removeItem('bc-new'); } catch { /* ignore */ } return n; },
-    isOwner: async () => {
+    // 'super' (listed in /admins with no role), 'admin' (role: 'admin') or 'user'. What each can do is in meta/permissions.
+    role: async () => {
       await ready;
-      if (!current || !current.email || !current.emailVerified) return false;
+      if (!current || !current.email || !current.emailVerified) return 'user';
       if (adminCache !== null) return adminCache;
-      try { adminCache = (await fstore.doc(`admins/${current.email.toLowerCase()}`).get()).exists; }
-      catch { adminCache = false; }
+      try { const d = await fstore.doc(`admins/${current.email.toLowerCase()}`).get(); adminCache = d.exists ? ((d.data() || {}).role === 'admin' ? 'admin' : 'super') : 'user'; }
+      catch { adminCache = 'user'; }
       return adminCache;
     },
+    isOwner: async () => (await user.role()) === 'super',
   };
 
   /* ---------- sign in / out ---------- */

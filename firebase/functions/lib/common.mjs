@@ -24,6 +24,15 @@ export async function isAdmin(email) {
   if (!email) return false;
   return (await fs.doc(`admins/${email.toLowerCase()}`).get()).exists;
 }
+// Same as the database rules: super admins (in /admins with no role) can do everything; admins (role: 'admin') and
+// users get what's ticked for their type in meta/permissions. email must be verified (getUser only returns verified ones).
+export async function can(email, perm) {
+  if (!email) return false;
+  const staff = await fs.doc(`admins/${email.toLowerCase()}`).get();
+  if (staff.exists && (staff.data() || {}).role !== 'admin') return true;
+  const perms = (await fs.doc('meta/permissions').get()).data() || {};
+  return perms[staff.exists ? 'admin' : 'user']?.[perm] === true;
+}
 
 /* ---------- shared documents ---------- */
 export async function readShared(collection, id) {

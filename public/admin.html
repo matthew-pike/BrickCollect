@@ -41,7 +41,8 @@ header h1 span{color:var(--muted);font-weight:400}
 header .back{margin-left:auto;font-size:13px;text-decoration:none;border:1px solid var(--line-2);border-radius:8px;padding:6px 12px;color:var(--fg)}
 header .back:hover{border-color:var(--accent);color:var(--accent)}
 main{max-width:1180px;margin:0 auto;padding:18px 20px 60px}
-.status{color:var(--muted);font-size:13px;margin:0 0 16px}
+.status{display:inline-block;font-size:13px;margin:0 0 16px;padding:5px 12px;border-radius:999px;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line))}
+:root[data-theme="light"] .status{background:color-mix(in srgb,var(--accent) 12%,#fff);border-color:var(--accent)}
 .msg{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px;text-align:center;color:var(--muted);margin-top:30px}
 .msg h2{color:var(--fg);font-size:18px;font-weight:500;margin:0 0 6px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
@@ -93,6 +94,19 @@ tr.owner td{color:var(--muted)}
 .type.t-admin{color:var(--fg);border:1px solid var(--admin)}
 .more{margin-top:10px;background:none;border:1px solid var(--line-2);color:var(--fg);border-radius:8px;padding:6px 12px;font:13px var(--font);cursor:pointer}
 .more:hover{border-color:var(--accent);color:var(--accent)}
+.perm td,.perm th{text-align:center;cursor:default}
+.perm th:first-child,.perm td:first-child{text-align:left;white-space:normal}
+.perm th:hover{color:var(--muted)}
+.perm td small{display:block;color:var(--faint);font-size:12px}
+.perm input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+.perm input:disabled{cursor:default;opacity:.6}
+.perm .lock{color:var(--good);font-weight:500}
+.perm .warnc{color:var(--coral)}
+.permbar{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.permbar .fine{margin:0}
+.save{background:var(--accent);color:#04121b;border:0;border-radius:8px;padding:8px 16px;font:500 13px var(--font);cursor:pointer}
+:root[data-theme="light"] .save{color:#fff}
+.save:disabled{opacity:.45;cursor:default}
 .links{display:flex;flex-wrap:wrap;gap:8px}
 .links a{font-size:13px;text-decoration:none;border:1px solid var(--line-2);border-radius:8px;padding:6px 12px}
 .links a:hover{border-color:var(--accent)}
@@ -145,7 +159,7 @@ tr.owner td{color:var(--muted)}
 
     <section class="box">
       <h2>Members</h2>
-      <p class="sub">Every account by member number. No emails or names: numbers are given in sign-up order and never change. Types: User, Admin, Super user. Click a heading to sort.</p>
+      <p class="sub">Every account by member number. No emails or names: numbers are given in sign-up order and never change. Types: User, Admin, Super admin. Click a heading to sort.</p>
       <div class="tblwrap"><table id="members"></table></div>
       <button class="more" id="moreRows" type="button" hidden></button>
       <p class="fine" id="olderNote" hidden></p>
@@ -158,6 +172,14 @@ tr.owner td{color:var(--muted)}
         <button type="button" data-top="themes" aria-pressed="true">Themes</button><button type="button" data-top="sets" aria-pressed="false">Sets</button><button type="button" data-top="figs" aria-pressed="false">Minifigures</button><button type="button" data-top="wanted" aria-pressed="false">Most wanted</button>
       </div>
       <div class="hbars" id="top"></div>
+    </section>
+
+    <section class="box" id="permBox">
+      <h2>Permissions</h2>
+      <p class="sub">What each account type can do. Super admins can do everything. Only a super admin can change these.</p>
+      <div class="tblwrap"><table class="perm" id="perm"></table></div>
+      <div class="permbar"><button class="save" id="permSave" type="button" disabled>Save permissions</button><span class="fine" id="permMsg"></span></div>
+      <p class="fine">To make someone an admin: in Firestore, add a document to <b>admins</b> named with their email in lower case, with the field <b>role</b> = <b>admin</b>. Anyone in admins without a role is a super admin.</p>
     </section>
 
     <div class="grid2">
@@ -287,7 +309,7 @@ tr.owner td{color:var(--muted)}
       row('Signed in with Google', fmt(M.google)), row('Signed in with an email link', fmt(M.email)),
       ...(M.apple ? [row('Signed in with Apple', fmt(M.apple))] : []), ...(M.other ? [row('Other sign-in', fmt(M.other))] : []),
       row('Have a wanted list', fmt(T.wantUsers)), row('Use My tags', fmt(T.tagUsers)), row('Have a sale or trade list', fmt(T.saleUsers)),
-      row('Super user and admin accounts', fmt(T.owners)),
+      row('Super admin and admin accounts', fmt(T.owners)),
     ].join('');
   }
 
@@ -297,7 +319,7 @@ tr.owner td{color:var(--muted)}
     ['w', 'Wanted'], ['x', 'For sale'], ['t', 'Tagged'], ['p', 'Sign-in', 'l'], ['r', 'Prices', 'l'],
   ];
   const METHOD = { google: 'Google', email: 'Email link', apple: 'Apple', other: 'Other' };
-  const TYPE = { super: 'Super user', admin: 'Admin', user: 'User' };
+  const TYPE = { super: 'Super admin', admin: 'Admin', user: 'User' };
   const typeOf = r => r.y || (r.o ? 'super' : 'user'); // rows saved before types existed
   function paintMembers() {
     const rows = [...(U.rows || [])].map(r => ({ ...r, y: typeOf(r) })).sort((a, b) => {
@@ -373,16 +395,60 @@ tr.owner td{color:var(--muted)}
     const T = U.totals || {};
     $('status').textContent = `Updated ${ago(U.at)} · worked out every hour · all accounts, yours included`;
     $('msg').hidden = true; $('page').hidden = false; // shown first, so the chart can measure its box
-    paintCards(); paintPerDay(); paintSizes(); paintFeatures(); paintMembers(); paintTop(); paintHealth();
+    paintCards(); paintPerDay(); paintSizes(); paintFeatures(); paintMembers(); paintTop(); paintHealth(); paintPerms();
   }
 
-  /* ---------- start: owner only ---------- */
+  /* ---------- permissions (meta/permissions; the database rules and Sync Prices check the same) ---------- */
+  const PERMS = [
+    ['usage', 'Open the Admin page', 'See these numbers'],
+    ['items', 'Edit prices, BrickLink numbers and retired status', 'Shared by everyone, including Bulk edit → retired'],
+    ['subthemes', 'Edit subthemes, tags and Film / Series', 'Shared by everyone, including Bulk edit → subtheme and tags'],
+    ['sets', 'Add and edit other brands’ sets', 'LumiBricks, Pantasy and other brands'],
+    ['sync', 'Sync Prices', 'Fetch BrickLink prices by hand, without the daily limit'],
+  ];
+  let perms = {}, draft = null, myRole = 'user';
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  const norm = p => Object.fromEntries(['admin', 'user'].map(r => [r, Object.fromEntries(PERMS.map(([k]) => [k, p?.[r]?.[k] === true]))]));
+  function paintPerms() {
+    const d = draft || norm(perms), canEdit = myRole === 'super';
+    const box = (r, k) => `<input type="checkbox" data-r="${r}" data-k="${k}" ${d[r][k] ? 'checked' : ''} ${canEdit ? '' : 'disabled'} aria-label="${esc(TYPE[r])}: ${esc(PERMS.find(p => p[0] === k)[1])}">`;
+    $('perm').innerHTML = '<thead><tr><th scope="col">Can…</th><th scope="col">Super admin</th><th scope="col">Admin</th><th scope="col">User</th></tr></thead><tbody>'
+      + PERMS.map(([k, label, hint]) => `<tr><td>${esc(label)}<small>${esc(hint)}</small></td><td class="lock" title="Super admins can always do this">✓</td><td>${box('admin', k)}</td><td>${box('user', k)}</td></tr>`).join('')
+      + '<tr><td>Change these permissions<small>Always super admins only</small></td><td class="lock">✓</td><td>—</td><td>—</td></tr></tbody>';
+    $('perm').querySelectorAll('input').forEach(i => i.onchange = () => {
+      draft = draft || norm(perms); draft[i.dataset.r][i.dataset.k] = i.checked;
+      if (same(draft, norm(perms))) draft = null;
+      paintPermBar();
+    });
+    paintPermBar();
+  }
+  function paintPermBar() {
+    const canEdit = myRole === 'super';
+    $('permSave').hidden = !canEdit;
+    $('permSave').disabled = !draft;
+    const userOn = draft && PERMS.some(([k]) => draft.user[k] && ['items', 'subthemes', 'sets'].includes(k));
+    $('permMsg').className = 'fine' + (userOn ? ' warnc' : '');
+    $('permMsg').textContent = !canEdit ? 'Only a super admin can change these.'
+      : userOn ? 'Careful: ticking these for User lets every signed-in member change shared data for everyone.'
+      : draft ? 'Not saved yet.' : perms.updatedAt ? `Last saved ${ago(perms.updatedAt)}.` : 'Nothing ticked yet: only super admins can do these.';
+  }
+  $('permSave').onclick = async () => {
+    if (!draft) return;
+    $('permSave').disabled = true; $('permMsg').textContent = 'Saving…';
+    try { await BC.db.doc('meta/permissions').set({ ...draft, updatedAt: Date.now() }); draft = null; $('permMsg').textContent = 'Saved.'; }
+    catch (e) { $('permSave').disabled = false; $('permMsg').className = 'fine warnc'; $('permMsg').textContent = 'Couldn’t save: ' + (e.message || e.code || 'unknown error'); }
+  };
+
+  /* ---------- start: super admins, and anyone given "Open the Admin page" ---------- */
   (async () => {
     const BC = window.BC || {};
     if (!BC.db || !BC.user) return show('Admin isn’t available here', 'This page works on brickcollect.app.');
     await BC.ready;
     if (!(await BC.user.id())) return show('Sign in first', 'Sign in on <a href="/">BrickCollect</a> with the owner account, then come back to this page.');
-    if (!(await BC.user.isOwner())) return show('Owner only', 'This page is only for the site owner. <a href="/">Back to BrickCollect</a>');
+    myRole = BC.user.role ? await BC.user.role() : ((await BC.user.isOwner()) ? 'super' : 'user');
+    try { let stop = null; const ps = await new Promise((res, rej) => { stop = BC.db.doc('meta/permissions').onSnapshot(res, rej); }); stop && stop(); perms = (ps.exists && ps.data()) || {}; } catch { perms = {}; }
+    if (myRole !== 'super' && perms?.[myRole]?.usage !== true) return show('Not available', 'You don’t have access to this page. <a href="/">Back to BrickCollect</a>');
+    BC.db.doc('meta/permissions').onSnapshot(s => { perms = (s.exists && s.data()) || {}; if (!draft && U) paintPerms(); }, () => {});
     loadNames().then(m => { names = m; if (U) { paintTop(); paintHealth(); } }).catch(e => console.warn('names', e));
     BC.db.doc('admin/usage').onSnapshot(snap => {
       if (!snap.exists) return show('No numbers yet', 'The usage numbers are worked out at 20 past each hour. Check back after the next run.');

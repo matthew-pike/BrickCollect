@@ -1179,7 +1179,7 @@ function buildCatalog(raw) {
      Saved to their private space data/users/<id>/collection when they can save there,
      otherwise in this browser only.
    Shared (curated by the site owner): prices, BrickLink #s, subthemes, films, other brands, rates. */
-let uid = null, isOwner = false, saveMode = 'loading'; // 'cloud' | 'local' | 'loading'
+let uid = null, isOwner = false, role = 'user', perms = {}, saveMode = 'loading'; // 'cloud' | 'local' | 'loading'
 const shared = new Map(); // n -> { used, new, bl, pricedAt, priceSource }
 const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice', 'loc', 'ret', 'exit', 'manualRet'];
 const OWNER_ONLY = new Set(['bl', 'manualPrice', 'ret', 'exit', 'manualRet']);
@@ -1292,7 +1292,7 @@ const bucketOf = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt
 const dirtyBuckets = new Set(); let sFlushT = null, sWriting = false;
 function saveShared(n) { dirtyBuckets.add(bucketOf(n)); clearTimeout(sFlushT); sFlushT = setTimeout(flushShared, 500); }
 async function flushShared() {
-  if (!db || !isOwner || sWriting) return;
+  if (!db || !can('items') || sWriting) return;
   sWriting = true;
   try {
     while (dirtyBuckets.size) {
@@ -1349,7 +1349,7 @@ function setInfo(n, patch, { quiet } = {}) {
   if (!me.wanted) delete me.wanted;
   const sharedPatch = {};
   for (const k of SHARED_KEYS) if (k in patch) {
-    if (canCurate()) {
+    if (can('items')) {
       sharedPatch[k] = patch[k]; delete me[k];
       // A price you type stays put: the twice-daily refresh skips it until you clear it.
       if ((k === 'used' || k === 'new') && !('manualPrice' in patch)) sharedPatch.manualPrice = patch[k] != null ? true : null;
@@ -1517,7 +1517,11 @@ function valueOne(i, c) {
   if (i.used == null) return null;
   return i.used; // used and used incomplete both count at the used price
 }
-const canCurate = () => isOwner && !!db;
+// What the signed-in person may change. Super admins: everything. Admins and users: what's ticked for their type
+// on the Admin page (meta/permissions). The database rules check the same thing.
+//   items = shared prices, BrickLink numbers, retired status · subthemes = subthemes, tags, Film / Series
+//   sets = other brands' sets · sync = Sync Prices · usage = Admin page
+const can = p => !!db && !!uid && (role === 'super' || perms?.[role]?.[p] === true);
 function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond: prefs.lastCond, incPct: prefs.incPct, currency: prefs.currency, sellPct: prefs.sellPct, sellOpen: prefs.sellOpen, insOpen: prefs.insOpen, insMetric: prefs.insMetric, needMode: prefs.needMode, region: prefs.region, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value, ret: fi.ret.value } }); }
 
 /* ---------- buy links (affiliate links when set up) ----------
@@ -2002,7 +2006,7 @@ function render() {
   const price = (x, f) => {
     const v = info(x.n)[f];
     if (editing === x.n + '|' + f) return `<input class="inp mono" id="edit-price" style="width:92px;text-align:right" type="number" step="0.01" min="0" data-n="${esc(x.n)}" data-f="${f}" value="${toLocal(v) ?? ''}" aria-label="${f} price in ${cur()}">`;
-    const mineV = (mine.get(x.n) || {})[f], sh = shared.get(x.n) || {}, isMine = mineV != null && !canCurate(), isManual = !isMine && canCurate() && sh.manualPrice && sh[f] != null;
+    const mineV = (mine.get(x.n) || {})[f], sh = shared.get(x.n) || {}, isMine = mineV != null && !can('items'), isManual = !isMine && can('items') && sh.manualPrice && sh[f] != null;
     const src = sh.priceSource && sh.priceSource !== 'BrickLink' ? sh.priceSource : 'BrickLink';
     const title = isMine ? `Your price, for you only.${sh[f] != null ? ` ${src}: ${money(sh[f])}.` : ''} Click and clear it to go back.`
       : isManual ? 'Set by you for everyone. The twice-daily refresh leaves it alone; clear it to go back to BrickLink.'
@@ -2012,20 +2016,20 @@ function render() {
   };
   const blCell = x => {
     const v = info(x.n).bl;
-    if (!canCurate()) return v ? `<span class="mono">${esc(v)}</span>` : '<span class="muted">—</span>';
+    if (!can('items')) return v ? `<span class="mono">${esc(v)}</span>` : '<span class="muted">—</span>';
     if (editing === x.n + '|bl') return `<input class="inp mono" id="edit-price" style="width:110px" type="text" maxlength="40" data-n="${esc(x.n)}" data-f="bl" value="${esc(v || '')}" placeholder="sw0001" aria-label="BrickLink number">`;
     return `<button class="btn ghost price ${v ? 'has' : ''}" style="justify-content:flex-start" data-price="bl" data-n="${esc(x.n)}" aria-label="Set BrickLink number">${v ? esc(v) : 'Add'}</button>`;
   };
   const subCell = x => {
-    if (x.k === 's' && canCurate() && editing === x.n + '|sub') return `<input class="inp" id="edit-price" style="width:180px" list="subNames" data-n="${esc(x.n)}" data-f="sub" value="${esc(x.sub)}" placeholder="Subtheme" aria-label="Subtheme">`;
+    if (x.k === 's' && can('subthemes') && editing === x.n + '|sub') return `<input class="inp" id="edit-price" style="width:180px" list="subNames" data-n="${esc(x.n)}" data-f="sub" value="${esc(x.sub)}" placeholder="Subtheme" aria-label="Subtheme">`;
     // Clicking the subtheme (or theme) shows every set in it; the pencil changes it (site owner only).
     const label = x.sub || x.theme;
     const show = label ? `<button class="subbtn" data-subfilter="${esc(x.sub || '')}" data-subtheme="${esc(x.theme || '')}" title="Show every set in ${esc(label)}">${esc(label)}</button>` : '';
-    const edit = x.k === 's' && canCurate() ? `<button class="subedit" data-price="sub" data-n="${esc(x.n)}" title="Change subtheme" aria-label="Change subtheme of ${esc(x.name)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>` : '';
+    const edit = x.k === 's' && can('subthemes') ? `<button class="subedit" data-price="sub" data-n="${esc(x.n)}" title="Change subtheme" aria-label="Change subtheme of ${esc(x.name)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>` : '';
     return show + edit;
   };
   const tagCell = x => {
-    const list = x.tags || [], admin = canCurate(), own = t => x.k === 's' || (x.ctags || []).includes(t);
+    const list = x.tags || [], admin = can('subthemes'), own = t => x.k === 's' || (x.ctags || []).includes(t);
     const open = tagsOpen.has(x.n), shown = open ? list : list.slice(0, 2);
     const chips = shown.map(t => `<span class="tagchip"><button class="tagbtn" data-tagfilter="${esc(t)}" title="${esc(t)}: show everything with this tag">${esc(t)}</button>${admin && own(t) ? `<button class="tagx" data-untag="${esc(t)}" data-n="${esc(x.n)}" aria-label="Remove tag ${esc(t)}" title="Remove tag">×</button>` : ''}</span>`).join('');
     const more = list.length > 2 && !open ? `<button class="tagmore" data-tagsmore="${esc(x.n)}" title="${esc(list.slice(2).join(', '))}">+${list.length - 2}</button>` : '';
@@ -2041,7 +2045,7 @@ function render() {
     return myChips || chips || more || addBtn || myAdd ? `<div class="tags">${myChips}${chips}${more}${addBtn}${myAdd}</div>` : '';
   };
   const filmCell = x => {
-    if (x.k === 's' && !canCurate()) return x.film ? esc(x.film) : '';
+    if (x.k === 's' && !can('subthemes')) return x.film ? esc(x.film) : '';
     if (x.k !== 's') return x.films.length ? `<span class="muted">${esc(x.films.slice(0, 2).join(', '))}${x.films.length > 2 ? ` +${x.films.length - 2}` : ''}</span>` : '';
     if (editing === x.n + '|film') return `<input class="inp" id="edit-price" style="width:180px" list="filmNames" data-n="${esc(x.n)}" data-f="film" value="${esc(x.film)}" placeholder="Film or series" aria-label="Film or series">`;
     return `<button class="subbtn ${x.film ? '' : 'none'}" data-price="film" data-n="${esc(x.n)}" title="Change film or series">${x.film ? esc(x.film) : 'Add'}</button>`;
@@ -2063,7 +2067,7 @@ function render() {
       <td class="num c-pcs">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
       <td class="num c-used">${price(x, 'used')}</td>
       <td class="num c-new">${price(x, 'new')}</td>
-      <td class="c-links"><div class="links">${buyLink(x)}${x.extra ? (canCurate() ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
+      <td class="c-links"><div class="links">${buyLink(x)}${x.extra ? (can('sets') ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
   tickTip(); setTimeout(newTips, 0);
 
@@ -2105,10 +2109,10 @@ function render() {
     $('more').hidden = left <= 0; $('more').textContent = `Show ${Math.min(PAGE, Math.max(left, 0))} more`;
     $('moreAll').hidden = left <= PAGE || rows.length > SHOW_ALL_MAX; $('moreAll').textContent = `Show all (${rows.length.toLocaleString()})`; }
   const ed = $('edit-price'); if (ed) { ed.focus(); ed.select(); }
-  $('syncBtn').hidden = !db || !canCurate() || (kind === 'sets' && !page.some(x => x.brand === 'LEGO'));
+  $('syncBtn').hidden = !db || !can('sync') || (kind === 'sets' && !page.some(x => x.brand === 'LEGO'));
   $('syncBtn').disabled = syncing || !page.length;
-  $('bulkBtn').hidden = !canCurate();
-  $('addBtn').hidden = !canCurate();
+  $('bulkBtn').hidden = !(can('subthemes') || can('items'));
+  $('addBtn').hidden = !can('sets');
   $('bulkBtn').disabled = !isScoped || !rows.length;
   $('bulkBtn').title = kind !== 'sets' ? (!isScoped ? 'Search or filter first, then tag every minifigure in view (e.g. a collection like Knights of Ren)' : `Add or remove a tag for the ${rows.length.toLocaleString()} minifigures in view`) : !isScoped ? 'Filter or search first, then set the subtheme or a tag for every set in view' : `Set the subtheme or a tag for the ${rows.length.toLocaleString()} sets in view`;
   bulkRows = isScoped ? rows : [];
@@ -2117,7 +2121,10 @@ function render() {
   { const w = myRows.length === 1 ? (kind === 'sets' ? 'set' : 'minifigure') : (kind === 'sets' ? 'sets' : 'minifigures');
     $('mytagBtn').hidden = !myRows.length; $('mytagBtn').title = `Add one of your own tags to the ${myRows.length.toLocaleString()} ${w} you own or want in view`;
     if (!$('mytagbar').hidden) { if (!myRows.length) $('mytagbar').hidden = true; else $('mytagLabel').textContent = `Your tag for the ${myRows.length.toLocaleString()} ${w} you own or want in view`; } }
-  { const f = $('bulkField'), sub = f.querySelector('[value=sub]'); sub.hidden = sub.disabled = kind !== 'sets'; for (const o of f.querySelectorAll('[value^="ret:"]')) o.hidden = o.disabled = kind !== 'sets'; if (kind !== 'sets' && (f.value === 'sub' || f.value.startsWith('ret:'))) { f.value = 'tag'; f.onchange(); } }
+  // Bulk edit choices: subtheme and retired are for sets only; each also needs its permission (tags and subthemes: subthemes; retired: items).
+  { const f = $('bulkField');
+    for (const o of f.options) { const ret = o.value.startsWith('ret:'), setsOnly = ret || o.value === 'sub'; o.hidden = o.disabled = (setsOnly && kind !== 'sets') || !(ret ? can('items') : can('subthemes')); }
+    if (f.selectedOptions[0]?.disabled) { const ok = [...f.options].find(o => !o.disabled); if (ok) { f.value = ok.value; f.onchange(); } } }
   if (!$('bulkbar').hidden) { if (!bulkRows.length) $('bulkbar').hidden = true; else $('bulkLabel').textContent = kind === 'sets' ? `Set for the ${bulkRows.length.toLocaleString()} set${bulkRows.length > 1 ? 's' : ''} in view` : `Tag the ${bulkRows.length.toLocaleString()} minifigure${bulkRows.length > 1 ? 's' : ''} in view`; }
   $('syncBtn').title = kind === 'figs' ? 'Fetch BrickLink prices for minifigures in view that have a BrickLink #' : 'Fetch BrickLink price guide averages for the sets in view';
   pumpImages();
@@ -2319,7 +2326,7 @@ $('syncBtn').onclick = async () => {
   let rows = ownRows.filter(x => x.k === 'm' || x.brand === 'LEGO').slice(0, limit);
   if (kind === 'figs') { rows = rows.filter(x => info(x.n).bl); if (!rows.length) { setStatus('Add a BrickLink # to the minifigures you want priced, then sync again.', true); return; } }
   if (!rows.length) { setStatus('Pick a theme or search first, then sync the sets in view.', true); return; }
-  const pairs = rows.slice(0, isOwner ? 400 : 60).map(x => ({ n: x.n, bl: kind === 'sets' ? (info(x.n).bl || x.n) : info(x.n).bl }));
+  const pairs = rows.slice(0, can('sync') ? 400 : 60).map(x => ({ n: x.n, bl: kind === 'sets' ? (info(x.n).bl || x.n) : info(x.n).bl }));
   const syncType = kind === 'sets' ? 'SET' : 'MINIFIG';
   syncing = true; render();
   let done = 0, fresh = 0, cached = 0, failed = 0, none = 0, left = null, stopped = false;
@@ -2387,7 +2394,7 @@ function saveSubDoc(theme) {
 function setManualSub(n, value, field = 'sub') {
   editing = null;
   const x = CAT.sets.find(s => s.n === n); if (!x) { render(); return; }
-  if (!canCurate()) { toast('Only the site owner can change subthemes.'); render(); return; }
+  if (!can('subthemes')) { toast('You don’t have permission to change subthemes.'); render(); return; }
   const id = slug(x.theme), d = subDocs.get(id) || { theme: x.theme, brickset: {}, manual: {}, films: {} };
   if (field === 'film') {
     const films = { ...(d.films || {}) };
@@ -2402,7 +2409,7 @@ function setManualSub(n, value, field = 'sub') {
 
 // Add or remove a tag on sets (site owner only). Folds any old Film / Series value into the tag list.
 function editTags(sets, tag, remove) {
-  if (!canCurate()) { toast('Only the site owner can change tags.'); return 0; }
+  if (!can('subthemes')) { toast('You don’t have permission to change tags.'); return 0; }
   tag = String(tag || '').trim().slice(0, 80); if (!tag) return 0;
   const touched = new Set(); let n = 0;
   for (const x of sets) {
@@ -2426,7 +2433,7 @@ const endOfMonth = (y, m) => { const d = new Date(Date.UTC(y, m, 0)); return d.t
 function nextEnd(month) { const now = new Date(), y = now.getFullYear(); return now.getMonth() + 1 <= month ? endOfMonth(y, month) : endOfMonth(y + 1, month); }
 // Owner: mark the sets in view retired (R), retiring soon (S, with LEGO's exit month if known), not retired (A), or back to automatic (age rule).
 function bulkRetired(mode, exit) {
-  if (!canCurate()) return;
+  if (!can('items')) return;
   const rows = bulkRows.filter(x => x.k === 's'); if (!rows.length) return;
   for (const x of rows) {
     const sh = { ...(shared.get(x.n) || {}) };
@@ -2439,7 +2446,7 @@ function bulkRetired(mode, exit) {
   toast(mode === 'R' ? `Marked ${w} retired` : mode === 'A' ? `Marked ${w} not retired` : mode === 'S' ? `Marked ${w} retiring soon${exit ? ` (by ${monthYear(exit)})` : ''}` : `${w} back to automatic (age rule)`);
 }
 function bulkSet(value) {
-  if (!canCurate()) { toast('Only the site owner can change subthemes.'); return; }
+  if (!can('subthemes')) { toast('You don’t have permission to change subthemes.'); return; }
   const field = $('bulkField').value;
   const rows = bulkRows.slice(); if (!rows.length) return;
   if (field === 'tag' || field === 'untag') {
@@ -2586,7 +2593,7 @@ function saveCat(slugId) {
 $('addBtn').onclick = () => openAdd();
 $('aCancel').onclick = () => { $('addPanel').hidden = true; };
 $('addPanel').addEventListener('submit', e => {
-  e.preventDefault(); if (!canCurate()) return;
+  e.preventDefault(); if (!can('sets')) return;
   const brand = $('aBrand').value.trim(), num = $('aNum').value.trim().replace(/\s+/g, ''), name = $('aName').value.trim();
   if (!brand || !num || !name) return;
   if (brand.toLowerCase() === 'lego') { toast('LEGO sets come from Rebrickable, so they’re already here.'); return; }
@@ -2604,7 +2611,7 @@ $('addPanel').addEventListener('submit', e => {
   editingSet = null; $('aBrand').disabled = $('aNum').disabled = false; $('aSave').textContent = 'Add set'; $('aDelete').hidden = true; $('addTitle').textContent = 'Add a set';
 });
 $('aDelete').onclick = () => {
-  if (!editingSet || !canCurate()) return;
+  if (!editingSet || !can('sets')) return;
   const btn = $('aDelete');
   if (btn.dataset.confirm !== '1') { btn.dataset.confirm = '1'; btn.textContent = 'Click again to remove'; setTimeout(() => { btn.dataset.confirm = ''; btn.textContent = 'Remove set'; }, 4000); return; }
   btn.dataset.confirm = ''; btn.textContent = 'Remove set';
@@ -2616,7 +2623,7 @@ $('aDelete').onclick = () => {
 
 /* ---------- exchange rates: the owner's connector refreshes them daily for everyone ---------- */
 async function refreshRates() {
-  if (!mcp || !canCurate()) return;
+  if (!mcp || role !== 'super') return;
   const age = Date.now() - (rates.fetchedAt || 0);
   if (rates !== BASE_RATES && age < 20 * 3600 * 1000) return;
   try {
@@ -3615,7 +3622,7 @@ async function paintAccount() {
   $('acctBtn').classList.toggle('in', !!email);
   $('acctEmail').textContent = email || '';
   $('acctBtn').hidden = !window.BC?.auth?.available;
-  $('usageLink').hidden = !(uid && isOwner);
+  $('usageLink').hidden = !can('usage');
 }
 // Owner only: total members beside the account button, from admin/usage (worked out hourly). Members newer than the
 // newest one seen on the Admin page (bc-admin-seen, this browser) turn it coral with "+N".
@@ -3624,7 +3631,7 @@ function watchUserCount() {
   if (ucStop) { ucStop(); ucStop = null; }
   const el = $('userCount');
   el.hidden = true;
-  if (!db || !uid || !isOwner) return;
+  if (!can('usage')) return;
   ucStop = db.doc('admin/usage').onSnapshot(snap => {
     const U = snap.exists ? snap.data() : null;
     if (!U) { el.hidden = true; return; }
@@ -3762,7 +3769,9 @@ fetch('catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return r
   const api = window.BC || {};
   db = api.db || null;
   const user = api.user || null;
-  if (user) { try { isOwner = !!(await user.isOwner()); uid = await user.id(); } catch (e) { console.warn('user', e); } }
+  if (user) { try { role = user.role ? await user.role() : ((await user.isOwner()) ? 'super' : 'user'); isOwner = role === 'super'; uid = await user.id(); } catch (e) { console.warn('user', e); } }
+  // Who may change what (Admin page tick boxes). Super admins don't need it; everyone else waits for it before editing.
+  if (db && uid && role !== 'super') db.doc('meta/permissions').onSnapshot(snap => { perms = (snap.exists && snap.data()) || {}; paintAccount(); watchUserCount(); render(); }, () => {});
   paintAccount();
   watchUserCount();
   if (!db || !uid) {

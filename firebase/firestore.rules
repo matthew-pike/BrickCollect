@@ -19,10 +19,26 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
     }
 
-    match /iteminfo/{id}  { allow read: if true; allow write: if isAdmin(); }
-    match /subthemes/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /catalog/{id}   { allow read: if true; allow write: if isAdmin(); }
-    match /meta/{id}      { allow read: if true; allow write: if isAdmin(); }
+    // Account types: anyone listed in /admins is a super admin, unless their entry has role: 'admin'.
+    // Everyone else is a user. Super admins can do everything; admins and users get what's ticked in
+    // meta/permissions ({ admin: { items: true, … }, user: { … } }), set on the Admin page by a super admin.
+    function staffEntry() { return get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())); }
+    function isSuper() { return isAdmin() && staffEntry().data.get('role', 'super') != 'admin'; }
+    function roleName() { return isAdmin() ? 'admin' : 'user'; }
+    function can(p) {
+      return isSuper() || (signedIn() && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/meta/permissions)
+        && get(/databases/$(database)/documents/meta/permissions).data.get(roleName(), {}).get(p, false) == true);
+    }
+
+    // items = prices, BrickLink numbers and retired status; subthemes = subthemes, tags and Film / Series;
+    // sets = other brands' sets.
+    match /iteminfo/{id}  { allow read: if true; allow write: if can('items'); }
+    match /subthemes/{id} { allow read: if true; allow write: if can('subthemes'); }
+    match /catalog/{id}   { allow read: if true; allow write: if can('sets'); }
+    // Only super admins change who can do what; other meta docs (exchange rates) stay with staff.
+    match /meta/permissions { allow read: if true; allow write: if isSuper(); }
+    match /meta/{id}      { allow read: if true; allow write: if isAdmin() && id != 'permissions'; }
 
     // Same path the page already uses: data/users/<uid>/collection
     match /data/users/{uid}/{docId} {
@@ -36,7 +52,7 @@ service cloud.firestore {
     }
 
     // Usage numbers for the owner's Usage page (written hourly by a job; counts only, no emails): admins may read.
-    match /admin/{id} { allow get: if isAdmin(); }
+    match /admin/{id} { allow get: if can('usage'); }
 
     // /private (sync counts, job state) has no rule, so the site can't touch it.
     // Anything not matched above is denied.

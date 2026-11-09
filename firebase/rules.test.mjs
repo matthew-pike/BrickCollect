@@ -25,6 +25,7 @@ beforeEach(async () => {
     await setDoc(doc(db, 'data/users/alice/collection'), { items: { '75364-1': { owned: true } } });
     await setDoc(doc(db, 'private/sync-log'), { n: 1 });
     await setDoc(doc(db, 'admin/usage'), { at: 1, totals: {} });
+    await setDoc(doc(db, 'admins/helper@example.com'), { role: 'admin' });
   });
 });
 
@@ -89,4 +90,38 @@ test('only an admin can read the usage numbers, and nobody can change them', asy
   await assertFails(setDoc(doc(admin(), 'admin/usage'), { at: 2 }));
   await assertFails(setDoc(doc(alice(), 'admin/usage'), { at: 2 }));
   await assertFails(getDoc(doc(admin(), 'private/members')));
+});
+
+const helper = () => env.authenticatedContext('h', { email: 'helper@example.com', email_verified: true }).firestore();
+const grant = perms => env.withSecurityRulesDisabled(ctx => setDoc(doc(ctx.firestore(), 'meta/permissions'), perms));
+
+test('an admin (role: admin) can do nothing until a permission is ticked', async () => {
+  await assertFails(setDoc(doc(helper(), 'subthemes/Star-Wars'), { manual: {} }));
+  await assertFails(setDoc(doc(helper(), 'iteminfo/b0'), { items: {} }));
+  await assertFails(getDoc(doc(helper(), 'admin/usage')));
+  await grant({ admin: { subthemes: true, usage: true }, user: {} });
+  await assertSucceeds(setDoc(doc(helper(), 'subthemes/Star-Wars'), { manual: {} }));
+  await assertSucceeds(getDoc(doc(helper(), 'admin/usage')));
+  await assertFails(setDoc(doc(helper(), 'iteminfo/b0'), { items: {} }));
+  await assertFails(setDoc(doc(helper(), 'catalog/Pantasy'), { items: {} }));
+});
+
+test('a user gets only what is ticked for users', async () => {
+  await grant({ admin: {}, user: { sets: true } });
+  await assertSucceeds(setDoc(doc(alice(), 'catalog/Pantasy'), { items: {} }));
+  await assertFails(setDoc(doc(alice(), 'subthemes/Star-Wars'), { manual: {} }));
+  await assertFails(setDoc(doc(anon(), 'catalog/Pantasy'), { items: {} }));
+  const unverified = env.authenticatedContext('u', { email: 'u@example.com', email_verified: false }).firestore();
+  await assertFails(setDoc(doc(unverified, 'catalog/Pantasy'), { items: {} }));
+});
+
+test('only a super admin can change permissions; the super admin keeps everything', async () => {
+  await grant({ admin: { items: true, subthemes: true, sets: true, sync: true, usage: true }, user: {} });
+  await assertFails(setDoc(doc(helper(), 'meta/permissions'), { user: { items: true } }));
+  await assertFails(setDoc(doc(alice(), 'meta/permissions'), { user: { items: true } }));
+  await assertSucceeds(setDoc(doc(admin(), 'meta/permissions'), { admin: {}, user: {} }));
+  await assertSucceeds(getDoc(doc(anon(), 'meta/permissions')));
+  await assertSucceeds(setDoc(doc(admin(), 'iteminfo/b0'), { items: {} }));
+  await assertSucceeds(getDoc(doc(admin(), 'admin/usage')));
+  await assertSucceeds(setDoc(doc(helper(), 'meta/rates'), { AUD: 1 }));
 });
