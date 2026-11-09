@@ -1,0 +1,24 @@
+# Owner data changes from files in firebase/data (e.g. the retiring-soon list from LEGO.com).
+# Runs when one of those files changes on preview or main, or by hand (Actions → Data → Run workflow).
+name: Data
+on:
+  push:
+    branches: [main, preview]
+    paths: ['firebase/data/**', 'firebase/mark-retiring.mjs']
+  workflow_dispatch:
+concurrency: data
+jobs:
+  retiring:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firebase } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: ./report.sh "npm install" npm install --no-audit --no-fund
+      - name: Mark the retiring-soon list
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Mark retiring soon" node mark-retiring.mjs data/retiring-soon.txt none
+          rm -f "$RUNNER_TEMP/sa.json"
