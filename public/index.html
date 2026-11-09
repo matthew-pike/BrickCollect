@@ -983,7 +983,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <p class="fine">Not there after a minute? Check your spam or promotions folder. It comes from BrickCollect.</p>
   </div>
   <div id="authOut" hidden>
-    <h2 class="acct-h">Your account <a id="usageLink" href="/admin" hidden title="Site owner only: members, collections and job health">Admin<span class="unew" id="usageLinkNew" hidden></span></a></h2>
+    <h2 class="acct-h">Your account <a id="usageLink" href="/admin" hidden title="Open the Admin page: members, collections and job health"><span id="usageLinkText">Admin</span><span class="unew" id="usageLinkNew" hidden></span></a></h2>
     <p>Signed in as <b id="acctEmail"></b>. Your collection is saved to your account and is the same on every device where you sign in.</p>
     <div class="acct-actions"><button class="btn" type="button" data-import>Import</button><button class="btn" type="button" id="acctExport">Export my collection</button><button class="btn" type="button" id="signOutBtn">Sign out</button></div>
     <p class="fine"><button class="btn mini danger-fill" type="button" id="delStart" style="width:auto">Delete my account</button></p>
@@ -3623,6 +3623,8 @@ async function paintAccount() {
   $('acctEmail').textContent = email || '';
   $('acctBtn').hidden = !window.BC?.auth?.available;
   $('usageLink').hidden = !can('usage');
+  // Shows your account type (Super admin / Admin); it still opens the Admin page.
+  $('usageLinkText').textContent = role === 'super' ? 'Super admin' : 'Admin';
 }
 // Owner only: total members beside the account button, from admin/usage (worked out hourly). Members newer than the
 // newest one seen on the Admin page (bc-admin-seen, this browser) turn it coral with "+N".
