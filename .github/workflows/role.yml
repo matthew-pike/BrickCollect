@@ -1,0 +1,24 @@
+# Set an account's type (super admin / admin / user) in Firestore /admins. Run by hand: Actions → Account type → Run workflow.
+# The email is a workflow input, so it's never stored in the repo; the log shows only the change.
+name: Account type
+on:
+  workflow_dispatch:
+    inputs:
+      email: { description: 'Email of the account', required: true }
+      type: { description: 'super, admin or user', required: true, default: 'super' }
+jobs:
+  role:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firebase } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: npm install --no-audit --no-fund
+      - name: Set the account type
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}', EMAIL: '${{ inputs.email }}', TYPE: '${{ inputs.type }}' }
+        run: |
+          echo "::add-mask::$EMAIL"
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node settings.mjs role "$EMAIL" "$TYPE"
+          rm -f "$RUNNER_TEMP/sa.json"

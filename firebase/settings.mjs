@@ -8,6 +8,15 @@ const cur = (await ref.get()).data() || {};
 if (process.argv[2] === 'live') {
   await ref.set({ jobsLive: true, switchedAt: cur.switchedAt || new Date().toISOString() }, { merge: true });
   console.log('::notice title=Switchover::Firebase is now the live database. Price jobs run in full; the Supabase copy is switched off.');
+} else if (process.argv[2] === 'role') {
+  // Set an account's type: node settings.mjs role <email> super|admin|user  (user = remove from /admins).
+  // Logs only the type change, never the email (Actions logs on this repo are public).
+  const email = String(process.argv[3] || '').trim().toLowerCase(), to = process.argv[4];
+  if (!/^[^@\s]+@[^@\s]+$/.test(email) || !['super', 'admin', 'user'].includes(to)) throw new Error('usage: role <email> super|admin|user');
+  const r = getFirestore().doc(`admins/${email}`), snap = await r.get();
+  const before = snap.exists ? ((snap.data() || {}).role === 'admin' ? 'admin' : `super (role field: ${JSON.stringify((snap.data() || {}).role ?? null)})`) : 'user (not in admins)';
+  if (to === 'user') await r.delete(); else await r.set({ ...(snap.data() || {}), role: to, roleSetAt: new Date().toISOString() });
+  console.log(`::notice title=Account type::was ${before}; now ${to}`);
 } else if (process.argv[2] === 'sweep') {
   // Progress of the hourly price sweep, as a notice on the GitHub run.
   const db = getFirestore(), sw = (await db.doc('private/sweep').get()).data() || {};
