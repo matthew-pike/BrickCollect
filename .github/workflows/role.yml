@@ -1,4 +1,4 @@
-# Set an account's type (super admin / admin / user) in Firestore /admins. Run by hand: Actions → Account type → Run workflow.
+# Set an account's type (super admin / admin / user) in Firestore /admins, then refresh the Admin page numbers. Run by hand: Actions → Account type → Run workflow.
 # The email is a workflow input, so it's never stored in the repo; the log shows only the change.
 name: Account type
 on:
@@ -20,5 +20,8 @@ jobs:
         run: |
           echo "::add-mask::$EMAIL"
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
-          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node settings.mjs role "$EMAIL" "$TYPE"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          node settings.mjs role "$EMAIL" "$TYPE"
+          # Refresh the Admin page numbers so the new type shows straight away (not at the next hourly run).
+          node refresh-usage.mjs | grep -v '^usage:' || true
           rm -f "$RUNNER_TEMP/sa.json"
