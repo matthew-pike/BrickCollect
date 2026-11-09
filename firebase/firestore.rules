@@ -51,6 +51,27 @@ service cloud.firestore {
                  && email == request.auth.token.email.lower();
     }
 
+    // Public sale or trade lists (brickcollect.app/sale/<id>): a copy of what someone chose to share.
+    // Anyone with the link can read one (get only: nobody can list them all). Only its owner can create,
+    // change or delete it, the owner field can't change hands, and only the known fields fit, with size limits.
+    function validShop() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['owner', 'v', 'name', 'place', 'ig', 'contact', 'cur', 'items', 'updatedAt'])
+        && d.owner == request.auth.uid
+        && d.items is list && d.items.size() <= 1000
+        && d.get('name', '') is string && d.get('name', '').size() <= 40
+        && d.get('place', '') is string && d.get('place', '').size() <= 60
+        && d.get('ig', '') is string && d.get('ig', '').size() <= 31
+        && d.get('contact', '') is string && d.get('contact', '').size() <= 200
+        && d.get('cur', '') is string && d.get('cur', '').size() <= 3;
+    }
+    match /shops/{id} {
+      allow get: if true;
+      allow create: if signedIn() && validShop();
+      allow update: if signedIn() && resource.data.owner == request.auth.uid && validShop();
+      allow delete: if signedIn() && resource.data.owner == request.auth.uid;
+    }
+
     // Usage numbers for the owner's Usage page (written hourly by a job; counts only, no emails): admins may read.
     match /admin/{id} { allow get: if can('usage'); }
 

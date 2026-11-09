@@ -125,3 +125,18 @@ test('only a super admin can change permissions; the super admin keeps everythin
   await assertSucceeds(getDoc(doc(admin(), 'admin/usage')));
   await assertSucceeds(setDoc(doc(helper(), 'meta/rates'), { AUD: 1 }));
 });
+
+test('sale lists: anyone with the link reads one, only its owner writes it', async () => {
+  const shop = (owner, extra = {}) => ({ owner, v: 1, name: 'Alice', place: 'Sydney', ig: 'alice', contact: '', cur: 'AUD', items: [{ n: '75192', c: 'new', q: 1 }], updatedAt: 1, ...extra });
+  await assertSucceeds(setDoc(doc(alice(), 'shops/abc123'), shop('alice')));
+  await assertSucceeds(getDoc(doc(anon(), 'shops/abc123')));
+  await assertFails(getDocs(collection(anon(), 'shops')));
+  await assertFails(setDoc(doc(anon(), 'shops/zzz'), shop('alice')));
+  await assertFails(setDoc(doc(bob(), 'shops/zzz'), shop('alice')));
+  await assertFails(setDoc(doc(bob(), 'shops/abc123'), shop('bob')));
+  await assertFails(deleteDoc(doc(bob(), 'shops/abc123')));
+  await assertFails(setDoc(doc(alice(), 'shops/abc123'), shop('alice', { email: 'a@b.c' })));
+  await assertFails(setDoc(doc(alice(), 'shops/abc123'), shop('alice', { name: 'x'.repeat(41) })));
+  await assertSucceeds(setDoc(doc(alice(), 'shops/abc123'), shop('alice', { items: [] })));
+  await assertSucceeds(deleteDoc(doc(alice(), 'shops/abc123')));
+});

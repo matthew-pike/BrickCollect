@@ -74,6 +74,10 @@
     ],
     "rewrites": [
       {
+        "source": "/sale/**",
+        "destination": "/sale.html"
+      },
+      {
         "source": "/api/sync-prices",
         "function": {
           "functionId": "syncPrices",

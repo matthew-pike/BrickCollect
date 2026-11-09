@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sale or trade list · BrickCollect</title>
+<meta name="description" content="Sets and minifigures a collector is selling or trading, shared from BrickCollect, the free collection tracker for LEGO and other brick brands.">
+<!-- Personal lists with contact details: kept out of search engines. -->
+<meta name="robots" content="noindex">
+<meta property="og:site_name" content="BrickCollect">
+<meta property="og:title" content="Sale or trade list on BrickCollect">
+<meta property="og:description" content="Sets and minifigures a collector is selling or trading. LEGO and other brick brands.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://brickcollect.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0a1120">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script>
+  // Same colour theme as the main page (Dark / Mid / Light), if this browser has chosen one.
+  try { const t = (JSON.parse(localStorage.getItem('bc-prefs') || '{}') || {}).theme; if (t === 'dark' || t === 'mid' || t === 'light') document.documentElement.dataset.theme = t; } catch { /* ignore */ }
+</script>
+<script src="/config.js"></script>
+<script src="/analytics.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --bg:#0a1120; --panel:#0f192d; --panel-2:#131f37; --line:#1e2b47; --line-2:#2a3a5c;
+  --fg:#e5ebf6; --muted:#8693ae; --faint:#5b6886; --accent:#1fb3e5; --accent-ink:#04121b; --coral:#ff6b57; --good:#2fcf7c; --violet:#a98bff;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]):not([data-theme="mid"]){
+  --bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1;
+  --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab; --accent:#0a86b8; --accent-ink:#ffffff; --coral:#e8513d; --good:#14915a; --violet:#6d4fd8; color-scheme:light}}
+:root[data-theme="mid"]{--bg:#1f2838; --panel:#273244; --panel-2:#2d394d; --line:#38465e; --line-2:#475771; --fg:#edf1f7; --muted:#aab5c8; --faint:#8190a8; --accent:#2bbdeb; --accent-ink:#04121b; --violet:#b9a3ff; color-scheme:dark}
+:root[data-theme="light"]{--bg:#eef2f8; --panel:#ffffff; --panel-2:#f5f8fc; --line:#dbe2ee; --line-2:#c6d0e1; --fg:#0f1a2e; --muted:#56637d; --faint:#8592ab; --accent:#0a86b8; --accent-ink:#ffffff; --coral:#e8513d; --good:#14915a; --violet:#6d4fd8; color-scheme:light}
+html{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 "Roboto",system-ui,-apple-system,"Segoe UI",sans-serif}
+[hidden]{display:none!important}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header.top{border-bottom:1px solid var(--line);background:var(--panel)}
+header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--fg);text-decoration:none;font-size:20px;font-weight:500}
+.brand img{width:36px;height:36px}
+.top .cta{margin-left:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg);border-radius:8px;padding:8px 14px;font:inherit;font-weight:500;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.btn.mini{padding:5px 10px;font-size:12.5px}
+.seller{margin:24px 0 14px;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--panel);display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center}
+.seller h1{margin:0 0 4px;font-size:24px;font-weight:500;line-height:1.2}
+.seller .meta{color:var(--muted);font-size:13.5px}
+.seller .who{flex:1 1 320px}
+.contact{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.contact .txt{color:var(--fg);font-size:13.5px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:8px;padding:7px 12px;overflow-wrap:anywhere}
+.note{margin:0 0 18px;font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.note svg{flex:0 0 auto;margin-top:2px;color:var(--faint)}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.inp,select{background:var(--panel);border:1px solid var(--line-2);color:var(--fg);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px}
+.inp{flex:1 1 220px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:999px;padding:5px 12px;font:inherit;font-size:12.5px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.count{color:var(--faint);font-size:12.5px;margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-bottom:30px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;display:flex;flex-direction:column}
+.pic{aspect-ratio:4/3;background:#fff;display:flex;align-items:center;justify-content:center;position:relative}
+.pic img{max-width:92%;max-height:92%;object-fit:contain}
+.pic .ph{color:#9aa6bb;font-size:12px}
+.pic .qty{position:absolute;top:8px;right:8px;background:var(--panel);color:var(--fg);border:1px solid var(--line-2);border-radius:999px;font-size:12px;font-weight:500;padding:2px 9px}
+.body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.sub{color:var(--faint);font-size:12px;font-family:"Roboto Mono",ui-monospace,monospace}
+.name{font-weight:500;font-size:15px;line-height:1.3}
+.th{color:var(--muted);font-size:12.5px}
+.cond{align-self:flex-start;font-size:11.5px;font-weight:500;letter-spacing:.02em;border-radius:6px;padding:2px 8px;border:1px solid var(--line-2);color:var(--fg)}
+.cond.new{border-color:color-mix(in srgb,var(--good) 55%,transparent);color:var(--good)}
+.cond.inc{border-color:color-mix(in srgb,var(--coral) 55%,transparent);color:var(--coral)}
+.desc{color:var(--muted);font-size:13px}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:8px}
+.price{font-size:18px;font-weight:500;color:var(--fg)}
+.price.ask{font-size:14px;color:var(--muted);font-weight:400}
+.empty,.state{text-align:center;color:var(--muted);padding:60px 20px}
+.state h1{color:var(--fg);font-weight:500;font-size:22px;margin:0 0 8px}
+.state p{margin:0 auto 18px;max-width:440px}
+footer.bot{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--faint);font-size:12.5px}
+footer.bot .wrap{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+footer.bot a{color:var(--muted)}
+footer.bot .grow{flex:1}
+.promo{margin:0 0 30px;padding:18px 20px;border:1px dashed var(--line-2);border-radius:12px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;color:var(--muted)}
+.promo b{color:var(--fg);font-weight:500}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:9px;font-size:13.5px;max-width:calc(100vw - 32px);z-index:5;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+@media (max-width:640px){
+  .wrap{padding:0 14px}
+  .brand{font-size:18px} .brand img{width:30px;height:30px}
+  .top .cta{padding:6px 10px;font-size:12.5px}
+  .seller{padding:16px;margin-top:16px} .seller h1{font-size:20px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .body{padding:10px 10px 12px} .name{font-size:13.5px} .price{font-size:16px} .desc{font-size:12px}
+  .foot{flex-direction:column;align-items:stretch} .foot .btn{width:100%}
+  .count{margin-left:0;width:100%}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/"><img src="/logo.svg" alt="">BrickCollect</a>
+  <a class="btn primary cta" href="/" id="ctaTop">Track your collection free</a>
+</div></header>
+
+<main class="wrap" id="main">
+  <div class="state" id="state"><p>Loading the list…</p></div>
+  <div id="list" hidden>
+    <section class="seller">
+      <div class="who"><h1 id="sTitle"></h1><div class="meta" id="sMeta"></div></div>
+      <div class="contact" id="sContact"></div>
+    </section>
+    <p class="note"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>Contact the seller to buy or trade. BrickCollect doesn’t handle payments or postage, so agree the details between you and use a payment method that protects you. Prices are the seller’s, in <b id="sCur"></b>.</span></p>
+    <div class="tools">
+      <input class="inp" id="q" type="search" placeholder="Search by name, number or theme" aria-label="Search">
+      <select id="sort" aria-label="Sort">
+        <option value="brand">Brand and theme</option>
+        <option value="low">Price: low to high</option>
+        <option value="high">Price: high to low</option>
+        <option value="year">Newest first</option>
+        <option value="name">Name</option>
+      </select>
+      <div class="chips" id="brands"></div>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="empty" id="none" hidden>Nothing matches. Try a different search.</p>
+    <div class="promo"><span><b>Collect bricks too?</b> Track your sets free in BrickCollect, see what they’re worth, and share your own sale or trade list like this one.</span><a class="btn" href="/" id="ctaBottom">Try BrickCollect</a></div>
+  </div>
+</main>
+
+<footer class="bot"><div class="wrap">
+  <span class="grow">BrickCollect is an Art of Bricks project. LEGO® is a trademark of the LEGO Group, which doesn’t sponsor or endorse this site.</span>
+  <a href="#" id="report">Report this list</a>
+  <a href="/privacy">Privacy</a>
+</div></footer>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const track = (name, p = {}) => { try { if (typeof window.gtag === 'function') window.gtag('event', name, p); } catch { /* ignore */ } };
+  const toast = msg => { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3200); };
+  const COND = { new: 'New', used: 'Used', 'used-inc': 'Used, incomplete' };
+  const id = (location.pathname.match(/^\/sale\/([a-z0-9]{6,24})\/?$/) || [])[1] || new URLSearchParams(location.search).get('id') || '';
+  let shop = null, brand = '', sort = 'brand';
+
+  $('report').onclick = e => {
+    e.preventDefault();
+    location.href = `mailto:brickcollectapp@gmail.com?subject=${encodeURIComponent('Report a sale or trade list: ' + (id || location.pathname))}&body=${encodeURIComponent('Page: ' + location.href + '\n\nWhat’s wrong with it:\n')}`;
+  };
+  ['ctaTop', 'ctaBottom'].forEach(k => $(k).addEventListener('click', () => track('sale_cta', { where: k === 'ctaTop' ? 'top' : 'bottom' })));
+
+  function showState(title, text) {
+    $('list').hidden = true;
+    $('state').innerHTML = `<h1>${esc(title)}</h1><p>${esc(text)}</p><a class="btn primary" href="/">Go to BrickCollect</a>`;
+  }
+
+  // Firestore's REST answer has typed values ({ stringValue: … }); turn them back into plain values.
+  function plain(v) {
+    if (!v || typeof v !== 'object') return null;
+    if ('stringValue' in v) return v.stringValue;
+    if ('integerValue' in v) return Number(v.integerValue);
+    if ('doubleValue' in v) return Number(v.doubleValue);
+    if ('booleanValue' in v) return v.booleanValue;
+    if ('nullValue' in v) return null;
+    if ('timestampValue' in v) return Date.parse(v.timestampValue);
+    if ('arrayValue' in v) return (v.arrayValue.values || []).map(plain);
+    if ('mapValue' in v) { const o = {}; for (const [k, x] of Object.entries(v.mapValue.fields || {})) o[k] = plain(x); return o; }
+    return null;
+  }
+
+  async function load() {
+    if (!/^[a-z0-9]{6,24}$/.test(id)) { showState('List not found', 'Check the link: it may have been copied only in part.'); return; }
+    const fb = (window.BC_CONFIG || {}).firebase || {};
+    try {
+      const r = await fetch(`https://firestore.googleapis.com/v1/projects/${fb.projectId}/databases/(default)/documents/shops/${id}?key=${fb.apiKey}`);
+      if (r.status === 404 || r.status === 403) { showState('This list isn’t shared any more', 'The collector may have sold everything or stopped sharing it.'); track('sale_view', { found: false }); return; }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      shop = plain({ mapValue: await r.json() });
+    } catch (e) { console.warn(e); showState('Couldn’t load the list', 'Check your connection and try again.'); return; }
+    paint();
+    track('sale_view', { found: true, items: (shop.items || []).length, contact: shop.ig ? 'instagram' : 'other' });
+  }
+
+  function money(p) {
+    if (!(p > 0)) return null;
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: shop.cur || 'AUD' }).format(p); }
+    catch { return `${(shop.cur || '')} ${p.toFixed(2)}`; }
+  }
+  const isUrl = s => /^https?:\/\/[^\s]+$/i.test(s);
+  const isMail = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
+  // How buyers reach the seller: Instagram, a link, an email, or plain text the seller wrote.
+  function contactHtml() {
+    const out = [];
+    if (shop.ig) out.push(`<a class="btn primary" href="https://ig.me/m/${encodeURIComponent(shop.ig)}" target="_blank" rel="noopener nofollow" data-how="instagram">Message @${esc(shop.ig)} on Instagram</a>`);
+    const c = (shop.contact || '').trim();
+    if (c) {
+      if (isUrl(c)) out.push(`<a class="btn${shop.ig ? '' : ' primary'}" href="${esc(c)}" target="_blank" rel="noopener nofollow" data-how="link">${esc(linkLabel(c))}</a>`);
+      else if (isMail(c)) out.push(`<a class="btn${shop.ig ? '' : ' primary'}" href="mailto:${esc(c)}" data-how="email">Email ${esc(c)}</a>`);
+      else out.push(`<span class="txt">${esc(c)}</span>`);
+    }
+    return out.join('');
+  }
+  function linkLabel(u) {
+    try { const h = new URL(u).hostname.replace(/^www\./, ''); if (/facebook\.com|fb\.com|m\.me/.test(h)) return 'Contact on Facebook'; return 'Contact: ' + h; } catch { return 'Contact the seller'; }
+  }
+  // "Ask about this": copies a ready message, then opens the seller's contact (Instagram can't pre-fill a message).
+  async function ask(it) {
+    const msg = `Hi! Is ${it.nm} (${it.n}, ${COND[it.c] || it.c}) from your BrickCollect sale or trade list still available?`;
+    const c = (shop.contact || '').trim();
+    track('sale_contact', { how: shop.ig ? 'instagram' : isMail(c) ? 'email' : isUrl(c) ? 'link' : 'text', from: 'item' });
+    if (!shop.ig && isMail(c)) { location.href = `mailto:${c}?subject=${encodeURIComponent(`${it.nm} (${it.n})`)}&body=${encodeURIComponent(msg)}`; return; }
+    let copied = false; try { await navigator.clipboard.writeText(msg); copied = true; } catch { /* not allowed */ }
+    if (shop.ig) { window.open(`https://ig.me/m/${encodeURIComponent(shop.ig)}`, '_blank', 'noopener'); toast(copied ? 'Message copied: paste it into Instagram' : msg); }
+    else if (isUrl(c)) { window.open(c, '_blank', 'noopener'); toast(copied ? 'Message copied: paste it when you contact the seller' : msg); }
+    else toast(copied ? `Message copied. Contact the seller: ${c}` : `Contact the seller: ${c}`);
+  }
+
+  function paint() {
+    const items = Array.isArray(shop.items) ? shop.items : [];
+    const copies = items.reduce((t, x) => t + (x.q || 1), 0);
+    document.title = `${shop.name ? shop.name + '’s' : 'A collector’s'} sale or trade list · BrickCollect`;
+    $('sTitle').textContent = `${shop.name ? shop.name + '’s' : 'A collector’s'} sale or trade list`;
+    const when = shop.updatedAt ? new Date(shop.updatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+    $('sMeta').innerHTML = [shop.place ? esc(shop.place) : '', `${copies.toLocaleString()} ${copies === 1 ? 'item' : 'items'}`, when ? `Updated ${esc(when)}` : ''].filter(Boolean).join(' · ');
+    $('sContact').innerHTML = contactHtml();
+    $('sContact').onclick = e => { const a = e.target.closest('[data-how]'); if (a) track('sale_contact', { how: a.dataset.how, from: 'header' }); };
+    $('sCur').textContent = shop.cur || 'AUD';
+    const brands = [...new Set(items.map(x => x.b).filter(Boolean))].sort((a, b) => (a === 'LEGO' ? -1 : b === 'LEGO' ? 1 : a.localeCompare(b)));
+    $('brands').innerHTML = brands.length > 1 ? [`<button class="chip" type="button" data-b="" aria-pressed="true">All brands</button>`, ...brands.map(b => `<button class="chip" type="button" data-b="${esc(b)}" aria-pressed="false">${esc(b)}</button>`)].join('') : '';
+    $('state').hidden = true; $('list').hidden = false;
+    if (!items.length) { $('grid').innerHTML = ''; $('none').hidden = false; $('none').textContent = 'Nothing listed right now. Check back later.'; $('q').parentElement.hidden = true; return; }
+    paintGrid();
+  }
+
+  function paintGrid() {
+    const q = $('q').value.trim().toLowerCase();
+    let rows = (shop.items || []).filter(x => (!brand || x.b === brand) && (!q || `${x.nm} ${x.n} ${x.th} ${x.b} ${x.d}`.toLowerCase().includes(q)));
+    const byNum = (a, b) => String(a.n).localeCompare(String(b.n), undefined, { numeric: true });
+    const cmp = {
+      brand: (a, b) => (a.b === b.b ? 0 : a.b === 'LEGO' ? -1 : b.b === 'LEGO' ? 1 : a.b.localeCompare(b.b)) || (a.th || '').localeCompare(b.th || '') || byNum(a, b),
+      low: (a, b) => (a.p > 0 ? a.p : Infinity) - (b.p > 0 ? b.p : Infinity) || byNum(a, b),
+      high: (a, b) => (b.p || 0) - (a.p || 0) || byNum(a, b),
+      year: (a, b) => (b.y || 0) - (a.y || 0) || byNum(a, b),
+      name: (a, b) => (a.nm || '').localeCompare(b.nm || ''),
+    }[sort];
+    rows = rows.slice().sort(cmp);
+    const copies = rows.reduce((t, x) => t + (x.q || 1), 0);
+    $('count').textContent = `${copies.toLocaleString()} ${copies === 1 ? 'item' : 'items'}`;
+    $('none').hidden = rows.length > 0;
+    $('grid').innerHTML = rows.map((x, i) => {
+      const m = money(x.p), cc = x.c === 'new' ? 'new' : x.c === 'used-inc' ? 'inc' : '';
+      return `<article class="card">
+        <div class="pic">${x.im ? `<img src="${esc(x.im)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="ph">No picture</span>'}${x.q > 1 ? `<span class="qty">× ${x.q}</span>` : ''}</div>
+        <div class="body">
+          <span class="sub">${esc([x.b, x.n, x.y || ''].filter(Boolean).join(' · '))}</span>
+          <span class="name">${esc(x.nm)}</span>
+          ${x.th || x.pc ? `<span class="th">${esc([x.th, x.pc ? `${Number(x.pc).toLocaleString()} pieces` : ''].filter(Boolean).join(' · '))}</span>` : ''}
+          <span class="cond ${cc}">${esc(COND[x.c] || x.c)}</span>
+          ${x.d ? `<span class="desc">${esc(x.d)}</span>` : ''}
+          <div class="foot">${m ? `<span class="price">${esc(m)}</span>` : '<span class="price ask">Ask for price</span>'}<button class="btn mini" type="button" data-ask="${i}">Ask about this</button></div>
+        </div></article>`;
+    }).join('');
+    $('grid').querySelectorAll('img').forEach(im => im.addEventListener('error', () => { im.replaceWith(Object.assign(document.createElement('span'), { className: 'ph', textContent: 'No picture' })); }, { once: true }));
+    $('grid').onclick = e => { const b = e.target.closest('[data-ask]'); if (b) ask(rows[Number(b.dataset.ask)]); };
+  }
+
+  $('q').addEventListener('input', () => paintGrid());
+  $('sort').addEventListener('change', e => { sort = e.target.value; paintGrid(); });
+  $('brands').addEventListener('click', e => {
+    const b = e.target.closest('[data-b]'); if (!b) return;
+    brand = b.dataset.b; $('brands').querySelectorAll('[data-b]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); paintGrid();
+  });
+  load();
+})();
+</script>
+</body>
+</html>

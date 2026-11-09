@@ -646,6 +646,20 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .blx .blfile .btn{width:auto;flex:0 0 auto}
 .blrow{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0;font-size:13px;color:var(--muted)}
 .blrow span{flex:1 1 260px}
+.shx{width:min(480px,calc(100vw - 32px))}
+.shx .shfields{display:flex;flex-direction:column;gap:10px}
+.shx .shfields label{display:flex;flex-direction:column;gap:4px}
+.shx .shfields .inp,.shx .shlink .inp{font-size:14px;color:var(--fg)}
+.shx .shlink{margin:0 0 16px;padding:12px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg)}
+.shx .shlink>label{display:block;margin-bottom:6px}
+.shx .shlinkrow{display:flex;gap:8px}
+.shx .shlinkrow .btn{width:auto;flex:0 0 auto}
+.shx .shlinkbtns{display:flex;gap:8px;margin-top:8px}
+.shx .shlinkbtns .btn{width:auto;flex:1 1 0;text-decoration:none}
+.shx .shstat{margin:8px 0 0;font-size:12px}
+.shx .shnote{margin:12px 0 0}
+.shx .acct-actions{margin-top:14px}
+.shx .shstop{margin:12px 0 0;font-size:12px}
 .buy{--bd:var(--stud);--hv:#000;background:var(--stud);border-color:var(--bd);color:#1a1300;font-weight:600}
 .buy-lego{--t:#e3000b;--bd:#e3000b;--hv:#8a0008;--hb:#8a0008}
 .buy-pantasy{--t:#14259a;--bd:#f2a6cf;--hv:#0b1560;--hb:#14259a}
@@ -840,6 +854,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <div class="sellbody" id="sellBody" hidden>
     <div class="sellmode" role="group" aria-label="Value"><button type="button" data-salemode="own" aria-pressed="true">Everything you own</button><button type="button" data-salemode="sale" aria-pressed="false" title="Copies you've marked for sale or trade. Also shows just those in the list below.">Sale or trade list <b id="cSale">0</b></button></div>
     <p class="blrow" id="blRow" hidden><span>Selling on BrickLink? Add details and your price to each copy (click its condition chip, then Listing details), then make your upload file.</span><button class="btn" type="button" id="blOpen2">BrickLink upload</button></p>
+    <p class="blrow" id="shareRow" hidden><span>Selling or trading with other collectors? Share a link to your list in Facebook groups, on Instagram or anywhere, and buyers contact you directly.</span><button class="btn" type="button" id="shareOpen2">Share your list</button></p>
     <div class="sellhead"><h3 id="sellTitle" class="vh">Sell or trade</h3><p class="sellintro"><button type="button" class="tip" data-tip="Based on what you&#x27;ve ticked as owned and the copies you&#x27;ve set in the Condition column. Sellers and buyers often agree on a share of market value, like 70%, to allow for fees, shipping and time." aria-label="What is this?">i</button> Market value of what you own, by condition. Pick a percentage to see what you’d ask or offer.</p></div>
     <div class="pct"><div class="pctchips" role="group" aria-label="Quick percentages"><button class="pctchip" data-pct="60">60%</button><button class="pctchip" data-pct="70">70%</button><button class="pctchip" data-pct="80">80%</button><button class="pctchip" data-pct="100">100%</button></div><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="100" aria-label="Percentage of market value"><span>%</span></div>
     <dl class="sellgrid">
@@ -888,7 +903,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
         <div class="menu" id="regionMenu" role="menu" hidden><button role="menuitemradio" data-loc="AU">Australia<small>BrickLink sellers in Australia</small></button><button role="menuitemradio" data-loc="US">United States<small>Sellers in the US</small></button><button role="menuitemradio" data-loc="CA">Canada<small>Sellers in Canada</small></button><button role="menuitemradio" data-loc="EU">Europe (EU)<small>Sellers in the European Union</small></button><button role="menuitemradio" data-loc="UK">United Kingdom<small>Sellers in the UK</small></button><button role="menuitemradio" data-loc="world">Worldwide (W)<small>All sellers. Shown greyed with a W wherever a local price is missing</small></button></div></div>
       <button class="btn" id="importBtn" title="Add sets from Rebrickable, Brickset, BrickLink, a spreadsheet or a BrickCollect export">Import</button>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button><button role="menuitem" id="exportBlBtn">BrickLink store upload<small>Your sale or trade list, ready to upload to your BrickLink store</small></button></div></div>
+        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button><button role="menuitem" id="exportBlBtn">BrickLink store upload<small>Your sale or trade list, ready to upload to your BrickLink store</small></button><button role="menuitem" id="exportShareBtn">Share your sale or trade list<small>A link anyone can open to see what you’re selling or trading, any brand</small></button></div></div>
       <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view (site owner only; everyone else's prices refresh twice a day).">Sync Prices</button>
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
@@ -1047,6 +1062,29 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
   <div class="blfiles" id="blFiles"></div>
   <p class="fine" id="blFine"></p>
   <button class="icon-btn dlg-x" type="button" id="blClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</dialog>
+<dialog class="dlg shx" id="shDlg" aria-labelledby="shH">
+  <h2 id="shH">Share your sale or trade list</h2>
+  <p>Get a link to a page showing the copies on your Sale or trade list, any brand, with pictures, condition, details and your price. Post it in Facebook groups, on Instagram or anywhere. Buyers contact you the way you choose below, and you sort out payment and postage between you.</p>
+  <div id="shOut" hidden><p><b>Sign up free to share your list.</b> Your link needs an account, so it keeps working and updates when your list changes.</p><button class="btn primary" type="button" id="shSignIn">Sign up or sign in</button></div>
+  <div id="shIn">
+    <div class="shlink" id="shLinkBox" hidden>
+      <label for="shLink">Your link</label>
+      <div class="shlinkrow"><input class="inp" id="shLink" readonly><button class="btn primary" type="button" id="shCopy">Copy</button></div>
+      <div class="shlinkbtns"><button class="btn" type="button" id="shShare" hidden>Share…</button><a class="btn" id="shView" target="_blank" rel="noopener">Open page ↗</a></div>
+      <p class="shstat" id="shStat"></p>
+    </div>
+    <div class="shfields">
+      <label>Name to show <input class="inp" id="shName" maxlength="40" placeholder="Optional, e.g. Matt"></label>
+      <label>Where you are <input class="inp" id="shPlace" maxlength="60" placeholder="e.g. Sydney, Australia (helps with postage or pick-up)"></label>
+      <label>Instagram <input class="inp" id="shIg" maxlength="31" placeholder="@yourname" autocapitalize="off" spellcheck="false"></label>
+      <label>Other way to reach you <input class="inp" id="shContact" maxlength="200" placeholder="e.g. a Facebook profile link, or an email you’re happy to show"></label>
+    </div>
+    <p class="fine shnote">Everything above is shown on the page. Your email address, private notes and stockroom choices never are.</p>
+    <div class="acct-actions"><button class="btn primary" type="button" id="shGo">Create my link</button></div>
+    <p class="shstop" id="shStopP" hidden><button class="linkbtn" type="button" id="shStop">Stop sharing</button> <span class="fine">takes the page down; sharing again gives you a new link</span></p>
+  </div>
+  <button class="icon-btn dlg-x" type="button" id="shClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
 </dialog>
 <dialog class="news" id="newsDlg" aria-labelledby="newsTitle">
   <div class="news-head"><h2 id="newsTitle">What’s new</h2><button class="icon-btn" type="button" id="newsClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
@@ -1272,6 +1310,7 @@ async function flushPersonal() {
   pWriting = true;
   try {
     do { pAgain = false; await db.doc(`data/users/${uid}/collection`).set({ items: personalObj(), loc: priceRegion(), updatedAt: Date.now() }); } while (pAgain);
+    shareQueue();
   } catch (e) {
     console.warn('personal save', e);
     if (['invalid_argument', 'not_granted', 'revoked', 'capability_disabled'].includes(e?.code)) {
@@ -1587,6 +1626,7 @@ function tickTip() {
    one per visit, only to people who were already using BrickCollect before the feature came out, and for 30 days.
    Add an entry here with each new feature (newest first). sel = the first visible match on screen gets the note. */
 const NEW_TIPS = [
+  { id: 'shareSale', at: '2026-11-09T16:00:00+11:00', sel: '#exportMenuBtn', title: 'Share your sale or trade list', text: 'Export → Share your sale or trade list gives you a link to a page of everything you’re letting go, any brand, to post in Facebook groups or on Instagram.' },
   { id: 'blupload', at: '2026-11-09T10:30:00+11:00', sel: '#exportMenuBtn', title: 'Sell on BrickLink', text: 'Mark copies for sale or trade, add details and your price to each, then Export → BrickLink store upload to list them all in one go.' },
   { id: 'mytags', at: '2026-11-09T09:20:00+11:00', sel: '#rows .mytagadd', title: 'My tags', text: 'Add your own tags, like On display or In storage, to the sets you own or want. Only you see them, and the Tag filter finds them.' },
   { id: 'retsoon', at: '2026-11-09T09:20:00+11:00', sel: '#rows .retb', title: 'Retired and retiring soon', text: 'R means LEGO has retired a set; RS means it’s retiring soon. Click either to see them all.', phone: 'R means LEGO has retired a set; RS means it’s retiring soon. Tap either to see them all.' },
@@ -1952,6 +1992,7 @@ function render() {
     const tot = byVal.new + byVal.used + byVal['used-inc'];
     $('sellSub').textContent = saleMode ? 'Your sale or trade list' : 'See what your collection is worth';
     $('blRow').hidden = !saleMode || !src.length;
+    $('shareRow').hidden = !saleMode || !src.length;
     document.querySelectorAll('[data-salemode]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.salemode === 'sale') === saleMode)));
     $('sellNew').textContent = money(byVal.new); $('sellUsed').textContent = money(byVal.used); $('sellInc').textContent = money(byVal['used-inc']);
     const cnt = (n, c) => n ? `${n.toLocaleString()} item${n > 1 ? 's' : ''}` : 'None';
@@ -2823,7 +2864,7 @@ function setExportMenu(open) { $('exportMenu').hidden = !open; $('exportMenuBtn'
 $('exportMenuBtn').onclick = e => { e.stopPropagation(); if (typeof setRegionMenu === 'function') setRegionMenu(false); setExportMenu($('exportMenu').hidden); };
 document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) setExportMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('exportMenu').hidden) { setExportMenu(false); $('exportMenuBtn').focus(); } });
-['exportBtn', 'exportWantBtn', 'exportSaleBtn', 'exportBlBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
+['exportBtn', 'exportWantBtn', 'exportSaleBtn', 'exportBlBtn', 'exportShareBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
 $('exportBtn').onclick = async () => { track('export', { list: 'collection' });
   if (!CAT) return;
   // Everything you own, sets then minifigures, whatever the filters are.
@@ -3119,6 +3160,103 @@ $('blSum').addEventListener('click', async e => {
 });
 $('exportBlBtn').onclick = blOpen;
 $('blOpen2').onclick = blOpen;
+
+/* ---------- share your sale or trade list: a public page at brickcollect.app/sale/<id> ----------
+   Settings live in data/users/<uid>/share ({ on, id, name, place, ig, contact }). The public copy is shops/<id>:
+   only what buyers need (set, brand, picture, condition, details, price, copies), never the email, private notes
+   or stockroom choice. Every brand is included. It's published again after each change to your collection while
+   sharing is on, and once per visit so suggested prices stay fresh. Stop sharing deletes the page. */
+let share = null, shareT = null, shareLast = '';
+const SH_ALPHA = 'abcdefghjkmnpqrstuvwxyz23456789';
+const newShareId = () => [...crypto.getRandomValues(new Uint8Array(10))].map(v => SH_ALPHA[v % SH_ALPHA.length]).join('');
+const shareUrl = id => `${location.origin}/sale/${id}`;
+const saleCopies = () => CAT ? [...CAT.sets, ...CAT.figs].reduce((t, x) => t + saleCount(x), 0) : 0;
+function shareItems() {
+  const out = new Map();
+  for (const x of [...CAT.sets, ...CAT.figs].filter(y => saleCount(y) > 0)) {
+    for (const { c, d } of listingsOf(x)) {
+      let p = lstPrice(d); if (p == null) p = lstSuggest(x, c);
+      const it = { n: shownNum(x), k: x.k, b: x.brand || '', nm: x.name || '', y: x.year || 0, pc: x.pieces || 0, th: x.theme || '', im: imgUrl(x) || '', c, p: p > 0 ? p : 0, d: ((x.k === 's' && c === 'new' && d.sealed !== false ? 'Sealed. ' : '') + lstDesc(x, c, d)).trim() };
+      const key = JSON.stringify(it);
+      if (out.has(key)) out.get(key).q++; else out.set(key, { ...it, q: 1 });
+    }
+  }
+  return [...out.values()].slice(0, 1000);
+}
+async function sharePublish(force) {
+  if (!share?.on || !share.id || !db || !uid || saveMode !== 'cloud') return;
+  if (!CAT) { clearTimeout(shareT); shareT = setTimeout(() => sharePublish(force).catch(e => console.warn('share', e)), 2000); return; }
+  const body = { owner: uid, v: 1, name: share.name || '', place: share.place || '', ig: share.ig || '', contact: share.contact || '', cur: cur(), items: shareItems() };
+  const sig = JSON.stringify(body);
+  if (!force && sig === shareLast) return;
+  await db.doc(`shops/${share.id}`).set({ ...body, updatedAt: Date.now() });
+  shareLast = sig;
+}
+function shareQueue() { if (!share?.on) return; clearTimeout(shareT); shareT = setTimeout(() => sharePublish().catch(e => console.warn('share', e)), 1500); }
+async function shareLoad() {
+  try { const s = await db.doc(`data/users/${uid}/share`).get(); share = s.exists ? (s.data() || null) : null; } catch (e) { console.warn('share settings', e); }
+  // Once per visit, after prices and rates have had time to arrive.
+  if (share?.on) { clearTimeout(shareT); shareT = setTimeout(() => sharePublish(true).catch(e => console.warn('share', e)), 8000); }
+}
+const shDlg = $('shDlg');
+function shOpen() {
+  setExportMenu(false);
+  const signed = !!(db && uid && saveMode === 'cloud');
+  $('shOut').hidden = signed; $('shIn').hidden = !signed;
+  if (signed) shPaint(true);
+  if (!shDlg.open) shDlg.showModal();
+  track('share_open', { on: !!share?.on, copies: saleCopies() });
+}
+function shPaint(fill) {
+  const on = !!(share?.on && share.id);
+  if (fill) { $('shName').value = share?.name || ''; $('shPlace').value = share?.place || ''; $('shIg').value = share?.ig ? '@' + share.ig : ''; $('shContact').value = share?.contact || ''; }
+  $('shLinkBox').hidden = !on; $('shStopP').hidden = !on;
+  $('shGo').textContent = on ? 'Save changes' : 'Create my link';
+  if (!on) return;
+  const u = shareUrl(share.id), n = saleCopies();
+  $('shLink').value = u; $('shView').href = u; $('shShare').hidden = !navigator.share;
+  $('shStat').textContent = n ? `Showing ${n.toLocaleString()} ${n === 1 ? 'copy' : 'copies'}. The page updates by itself when you change your Sale or trade list.` : 'Your Sale or trade list is empty, so the page says nothing is listed right now. Mark copies by clicking a set’s condition chip.';
+}
+function shRead() {
+  const t = (id, max) => $(id).value.replace(/\s+/g, ' ').trim().slice(0, max);
+  return { name: t('shName', 40), place: t('shPlace', 60), ig: t('shIg', 60).replace(/^.*instagram\.com\//i, '').replace(/^@+/, '').replace(/[^A-Za-z0-9._]/g, '').slice(0, 30), contact: t('shContact', 200) };
+}
+$('shGo').onclick = async () => {
+  const f = shRead();
+  if (!f.ig && !f.contact) { toast('Add at least one way for buyers to reach you.'); $('shIg').focus(); return; }
+  const first = !(share?.on && share.id), next = { ...f, on: true, id: first ? newShareId() : share.id };
+  $('shGo').disabled = true;
+  try {
+    await db.doc(`data/users/${uid}/share`).set(next);
+    share = next; await sharePublish(true); shPaint(true);
+    toast(first ? 'Your link is ready: copy it and share it anywhere' : 'Saved');
+    track('share_sale', { action: first ? 'create' : 'save', copies: saleCopies(), ig: !!f.ig, contact: !!f.contact });
+  } catch (e) { console.warn('share', e); toast('Couldn’t save that. Try again.'); }
+  finally { $('shGo').disabled = false; }
+};
+$('shStop').onclick = async () => {
+  if (!share?.on || !share.id) return;
+  try {
+    await db.doc(`shops/${share.id}`).delete();
+    share = { name: share.name || '', place: share.place || '', ig: share.ig || '', contact: share.contact || '', on: false };
+    await db.doc(`data/users/${uid}/share`).set(share);
+    shareLast = ''; shPaint(); toast('Sharing stopped. That link no longer works.'); track('share_sale', { action: 'stop' });
+  } catch (e) { console.warn('share stop', e); toast('Couldn’t stop sharing. Try again.'); }
+};
+$('shCopy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('shLink').value); toast('Link copied'); }
+  catch { $('shLink').select(); toast('Select the link and copy it.'); }
+  track('share_sale', { action: 'copy' });
+};
+$('shShare').onclick = async () => {
+  try { await navigator.share({ title: 'My sale or trade list', text: 'Sets I’m selling or trading, on BrickCollect', url: $('shLink').value }); track('share_sale', { action: 'share' }); } catch { /* cancelled */ }
+};
+$('shView').addEventListener('click', () => track('share_sale', { action: 'open' }));
+$('shSignIn').onclick = () => { shDlg.close(); openAuth(); };
+$('shClose').onclick = () => shDlg.close();
+shDlg.addEventListener('click', e => { if (e.target === shDlg) shDlg.close(); });
+$('shareOpen2').onclick = shOpen;
+$('exportShareBtn').onclick = shOpen;
 $('blClose').onclick = () => $('blDlg').close();
 $('blDlg').addEventListener('click', e => { if (e.target === $('blDlg')) $('blDlg').close(); });
 
@@ -3521,6 +3659,10 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.19', date: '9 November 2026', title: 'Share what you’re selling', items: [
+    ['Share your sale or trade list', 'get a link to a page showing everything on your Sale or trade list, from LEGO to LumiBricks, Pantasy and every other brand, with pictures, condition, details and your price. Post it in Facebook groups, on Instagram or anywhere.'],
+    ['Buyers contact you', 'choose how: your Instagram, a Facebook link or anything else. Your email is never shown. The page updates by itself when your list changes, and you can stop sharing at any time. Export → Share your sale or trade list.'],
+  ] },
   { v: '0.18', date: '9 November 2026', title: 'Sell on BrickLink', items: [
     ['Listing details', 'for each copy on your sale or trade list, say whether it’s sealed, has its box and instructions, or what’s missing, add a note for buyers and set your price. Click a set’s condition chip, then Listing details.'],
     ['BrickLink store upload', 'Export → BrickLink store upload turns your sale or trade list into a file you can upload to your BrickLink store in one go, into your stockroom to check first, or straight on sale: you choose for each copy.'],
@@ -3834,6 +3976,7 @@ fetch('catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return r
       if (snap.exists) loadPersonal(snap.data().items);
       else { const local = lsGet('bc-collection'); if (local && Object.keys(local).length) { loadPersonal(local); savePersonal(); toast('Moved the collection saved in this browser to your account'); } }
       impFinishPending();
+      shareLoad();
       render(); return;
     }
     if (snap.metadata.hasPendingWrites || pWriting || pDirty) return;

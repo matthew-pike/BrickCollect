@@ -157,6 +157,13 @@
           catch (e) { if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') throw err('cancelled', 'Account not deleted.'); throw e; }
         } else throw err('recent_login', 'For your security, sign out, sign in again with a new email link, then delete your account within a few minutes.');
       }
+      // A shared sale or trade list (public page) goes too, then its settings.
+      try {
+        const sh = await fstore.doc(`data/users/${u.uid}/share`).get();
+        const id = sh.exists && (sh.data() || {}).id;
+        if (id) await fstore.doc(`shops/${id}`).delete().catch(() => {});
+        if (sh.exists) await fstore.doc(`data/users/${u.uid}/share`).delete();
+      } catch (e) { console.warn('share delete', e); }
       await fstore.doc(`data/users/${u.uid}/collection`).delete();
       await u.delete();
     },
