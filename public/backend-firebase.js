@@ -99,6 +99,16 @@
       return adminCache;
     },
     isOwner: async () => (await user.role()) === 'super',
+    // Calls cb(newRole) when this person's entry in /admins changes after the page has loaded (e.g. made super admin).
+    watchRole(cb) {
+      ready.then(() => {
+        if (!current || !current.email || !current.emailVerified) return;
+        fstore.doc(`admins/${current.email.toLowerCase()}`).onSnapshot(d => {
+          const r = d.exists ? ((d.data() || {}).role === 'admin' ? 'admin' : 'super') : 'user';
+          if (adminCache !== null && r !== adminCache) { adminCache = r; cb(r); } else adminCache = r;
+        }, () => {});
+      });
+    },
   };
 
   /* ---------- sign in / out ---------- */

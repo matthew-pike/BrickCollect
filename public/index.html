@@ -3770,6 +3770,8 @@ fetch('catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return r
   db = api.db || null;
   const user = api.user || null;
   if (user) { try { role = user.role ? await user.role() : ((await user.isOwner()) ? 'super' : 'user'); isOwner = role === 'super'; uid = await user.id(); } catch (e) { console.warn('user', e); } }
+  // If your account type changes while the page is open, reload so every tool follows it.
+  if (db && uid && user?.watchRole) user.watchRole(() => location.reload());
   // Who may change what (Admin page tick boxes). Super admins don't need it; everyone else waits for it before editing.
   if (db && uid && role !== 'super') db.doc('meta/permissions').onSnapshot(snap => { perms = (snap.exists && snap.data()) || {}; paintAccount(); watchUserCount(); render(); }, () => {});
   paintAccount();

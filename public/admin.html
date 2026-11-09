@@ -446,6 +446,7 @@ tr.owner td{color:var(--muted)}
     await BC.ready;
     if (!(await BC.user.id())) return show('Sign in first', 'Sign in on <a href="/">BrickCollect</a> with the owner account, then come back to this page.');
     myRole = BC.user.role ? await BC.user.role() : ((await BC.user.isOwner()) ? 'super' : 'user');
+    if (BC.user.watchRole) BC.user.watchRole(() => location.reload());
     try { let stop = null; const ps = await new Promise((res, rej) => { stop = BC.db.doc('meta/permissions').onSnapshot(res, rej); }); stop && stop(); perms = (ps.exists && ps.data()) || {}; } catch { perms = {}; }
     if (myRole !== 'super' && perms?.[myRole]?.usage !== true) return show('Not available', 'You don’t have access to this page. <a href="/">Back to BrickCollect</a>');
     BC.db.doc('meta/permissions').onSnapshot(s => { perms = (s.exists && s.data()) || {}; if (!draft && U) paintPerms(); }, () => {});
