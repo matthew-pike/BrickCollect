@@ -153,7 +153,7 @@ tr.owner td{color:var(--muted)}
 
     <section class="box">
       <h2>Most collected</h2>
-      <p class="sub">Across all users, not counting super user or admin accounts</p>
+      <p class="sub">Across all accounts</p>
       <div class="tabs3" role="group" aria-label="Show">
         <button type="button" data-top="themes" aria-pressed="true">Themes</button><button type="button" data-top="sets" aria-pressed="false">Sets</button><button type="button" data-top="figs" aria-pressed="false">Minifigures</button><button type="button" data-top="wanted" aria-pressed="false">Most wanted</button>
       </div>
@@ -287,7 +287,7 @@ tr.owner td{color:var(--muted)}
       row('Signed in with Google', fmt(M.google)), row('Signed in with an email link', fmt(M.email)),
       ...(M.apple ? [row('Signed in with Apple', fmt(M.apple))] : []), ...(M.other ? [row('Other sign-in', fmt(M.other))] : []),
       row('Have a wanted list', fmt(T.wantUsers)), row('Use My tags', fmt(T.tagUsers)), row('Have a sale or trade list', fmt(T.saleUsers)),
-      row('Super user and admin accounts (left out)', fmt(T.owners)),
+      row('Super user and admin accounts', fmt(T.owners)),
     ].join('');
   }
 
@@ -371,7 +371,7 @@ tr.owner td{color:var(--muted)}
 
   function paint() {
     const T = U.totals || {};
-    $('status').textContent = `Updated ${ago(U.at)} · worked out every hour · ${T.owners ? `not counting super user or admin accounts` : 'all accounts'}`;
+    $('status').textContent = `Updated ${ago(U.at)} · worked out every hour · all accounts, yours included`;
     $('msg').hidden = true; $('page').hidden = false; // shown first, so the chart can measure its box
     paintCards(); paintPerDay(); paintSizes(); paintFeatures(); paintMembers(); paintTop(); paintHealth();
   }

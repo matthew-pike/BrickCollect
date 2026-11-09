@@ -2,8 +2,8 @@
 // Writes one document, admin/usage, that only admins can read (see firestore.rules).
 // Privacy: no emails, names or account IDs leave this job. Each account gets a member number (10001, 10002, …, in
 // sign-up order, kept in private/members so it never changes), and the page shows only counts per member.
-// Each account has a type: user, admin or super user (see staff below). Totals and top lists leave out staff
-// accounts (anyone in /admins), so they show real collectors.
+// Each account has a type: user, admin or super user (see staff below). Every account counts in the totals and
+// top lists, staff included (Matt uses BrickCollect too, 9 Nov). `o` marks staff rows (the main page's +N skips them).
 import { getAuth } from 'firebase-admin/auth';
 import { fs } from '../lib/common.mjs';
 
@@ -78,14 +78,12 @@ export default async ({ sweepTotal } = {}) => {
       if (v.wanted) w++;
       if (v.sale) x += Object.values(v.sale).reduce((a, b) => a + (Number(b) || 0), 0);
       if (v.mytags?.length) t++;
-      if (!isOwner) {
-        if (v.owned) owned.set(n, (owned.get(n) || 0) + 1);
-        if (v.wanted) wantedBy.set(n, (wantedBy.get(n) || 0) + 1);
-      }
+      if (v.owned) owned.set(n, (owned.get(n) || 0) + 1);
+      if (v.wanted) wantedBy.set(n, (wantedBy.get(n) || 0) + 1);
     }
     rows.push({ m: mem.ids[u.uid], j: joined, a: active, u: col.updatedAt || null, p: method(u), s, f, c, w, x, t,
       y: type, ...(col.loc ? { r: String(col.loc).slice(0, 4) } : {}), ...(isOwner ? { o: true } : {}) });
-    if (isOwner) { T.owners++; continue; }
+    if (isOwner) T.owners++;
 
     T.accounts++;
     T.methods[method(u)] = (T.methods[method(u)] || 0) + 1;
@@ -124,5 +122,5 @@ export default async ({ sweepTotal } = {}) => {
     at: now, totals: T, perDay, rows: rows.slice(0, MAX_ROWS), moreRows: Math.max(0, rows.length - MAX_ROWS),
     owned: top(owned), wantedBy: top(wantedBy), health,
   });
-  console.log(`usage: ${T.accounts} accounts (${T.collectors} with sets), ${T.new7} new this week, ${T.active7} active this week; ${T.owners} owner account(s) left out of the totals`);
+  console.log(`usage: ${T.accounts} accounts (${T.collectors} with sets), ${T.new7} new this week, ${T.active7} active this week; ${T.owners} super user / admin account(s), counted too`);
 };
