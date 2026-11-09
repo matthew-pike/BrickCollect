@@ -3,6 +3,7 @@ rules_version = '2';
 //  - Shared data (prices, BrickLink numbers, subthemes and tags, other brands, exchange rates):
 //    anyone can read; only admins can change it from the site.
 //  - Each person's collection: only that person can read or change it.
+//  - Usage numbers (admin/usage): only admins can read them; nobody can write them from the site.
 //  - Admin list and job bookkeeping: never readable or writable from the site.
 // The scheduled jobs use the Admin SDK, which is not limited by these rules.
 service cloud.firestore {
@@ -33,6 +34,9 @@ service cloud.firestore {
       allow get: if signedIn() && request.auth.token.email_verified == true
                  && email == request.auth.token.email.lower();
     }
+
+    // Usage numbers for the owner's Usage page (written hourly by a job; counts only, no emails): admins may read.
+    match /admin/{id} { allow get: if isAdmin(); }
 
     // /private (sync counts, job state) has no rule, so the site can't touch it.
     // Anything not matched above is denied.
