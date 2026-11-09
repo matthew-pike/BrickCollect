@@ -9,7 +9,8 @@ import rates from './jobs/rates.mjs';
 import brandPrices from './jobs/brand-prices.mjs';
 import minifigNumbers from './jobs/minifig-numbers.mjs';
 import syncPricesHandler from './jobs/sync-prices.mjs';
-import priceSweep from './jobs/price-sweep.mjs';
+import priceSweep, { sweepTotal } from './jobs/price-sweep.mjs';
+import usageStats from './jobs/usage-stats.mjs';
 import { readShared, blCalls } from './lib/common.mjs';
 
 const BL = ['BRICKLINK_CONSUMER_KEY', 'BRICKLINK_CONSUMER_SECRET', 'BRICKLINK_TOKEN_VALUE', 'BRICKLINK_TOKEN_SECRET'].map(defineSecret);
@@ -33,13 +34,18 @@ export const dailyStores = sched('0 4 * * *', async () => {
   await rates(); await brandPrices();
 }, 420);
 // Every hour at :20: BrickLink numbers for minifigures, then the catalog-wide price sweep with whatever is left of
-// about 170 BrickLink requests for the hour (about 4,000 a day, under BrickLink's 5,000 with room for the 3am/3pm refresh).
+// about 170 BrickLink requests for the hour (about 4,000 a day, under BrickLink's 5,000 with room for the 3am/3pm refresh),
+// then the numbers for the owner's Usage page.
 const HOURLY_BL = 170;
 export const minifigNumbersHourly = sched('20 * * * *', async () => {
   const c0 = blCalls.n;
   try { await minifigNumbers(); } catch (e) { console.log('minifig-numbers failed:', e.message); }
-  await priceSweep({ room: HOURLY_BL - (blCalls.n - c0) });
-}, 120);
+  try { await priceSweep({ room: HOURLY_BL - (blCalls.n - c0) }); }
+  finally {
+    // Then the numbers for the owner's Usage page (no BrickLink requests), even if the sweep failed.
+    try { await usageStats({ sweepTotal: sweepTotal() }); } catch (e) { console.log('usage stats failed:', e.message); }
+  }
+}, 180);
 
 // The Sync Prices button (admin only). The site reaches it at /api/sync-prices.
 export const syncPrices = onRequest({ secrets: BL, timeoutSeconds: 30, invoker: 'public', maxInstances: 2 }, async (req, res) => {

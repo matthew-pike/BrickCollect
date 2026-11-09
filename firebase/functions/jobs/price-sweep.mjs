@@ -19,6 +19,8 @@ const ROUNDS = { 1: ['AU'], 2: ['US', 'UK', 'EU', 'CA'] };
 const CATALOG_URL = 'https://brickcollect.app/catalog.json';
 
 let catalog = null; // cached for the life of the instance
+// How many sets the sweep works through (for the owner's Usage page); null until the catalog has loaded.
+export const sweepTotal = () => (catalog ? catalog.length : null);
 async function loadQueue() {
   if (catalog) return catalog;
   const res = await fetch(CATALOG_URL);

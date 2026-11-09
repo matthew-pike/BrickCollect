@@ -24,6 +24,7 @@ beforeEach(async () => {
     await setDoc(doc(db, 'meta/rates'), { AUD: 1.5 });
     await setDoc(doc(db, 'data/users/alice/collection'), { items: { '75364-1': { owned: true } } });
     await setDoc(doc(db, 'private/sync-log'), { n: 1 });
+    await setDoc(doc(db, 'admin/usage'), { at: 1, totals: {} });
   });
 });
 
@@ -76,4 +77,16 @@ test('admin list and private job data are off limits', async () => {
   await assertFails(setDoc(doc(alice(), 'admins/alice@example.com'), {}));
   await assertFails(getDoc(doc(admin(), 'private/sync-log')));
   await assertFails(setDoc(doc(anon(), 'somethingelse/x'), {}));
+});
+
+test('only an admin can read the usage numbers, and nobody can change them', async () => {
+  await assertSucceeds(getDoc(doc(admin(), 'admin/usage')));
+  await assertFails(getDoc(doc(alice(), 'admin/usage')));
+  await assertFails(getDoc(doc(anon(), 'admin/usage')));
+  const unverified = env.authenticatedContext('x', { email: 'm4ttpike@gmail.com', email_verified: false }).firestore();
+  await assertFails(getDoc(doc(unverified, 'admin/usage')));
+  await assertFails(getDocs(collection(admin(), 'admin')));
+  await assertFails(setDoc(doc(admin(), 'admin/usage'), { at: 2 }));
+  await assertFails(setDoc(doc(alice(), 'admin/usage'), { at: 2 }));
+  await assertFails(getDoc(doc(admin(), 'private/members')));
 });
