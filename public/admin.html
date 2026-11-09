@@ -382,6 +382,8 @@ tr.owner td{color:var(--muted)}
     BC.db.doc('admin/usage').onSnapshot(snap => {
       if (!snap.exists) return show('No numbers yet', 'The usage numbers are worked out at 20 past each hour. Check back after the next run.');
       U = snap.data(); paint();
+      // Mark everyone listed as seen, so the member count beside the account button on the main page stops showing "+N".
+      try { const top = Math.max(0, ...(U.rows || []).filter(r => !r.o).map(r => r.m)); if (top) localStorage.setItem('bc-admin-seen', String(top)); } catch {}
     }, e => show('Couldn’t load the numbers', esc(e.message || e.code || 'Unknown error')));
     // Keep "x min ago" fresh while the page is open.
     setInterval(() => { if (U) { $('status').textContent = $('status').textContent.replace(/^Updated [^·]+/, `Updated ${ago(U.at)} `); } }, 60000);

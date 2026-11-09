@@ -489,8 +489,8 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
 /* Owner-only tools in moonstone (the brand colour), quiet and separate from the aqua buttons everyone uses. */
 #syncBtn{background:var(--admin);border-color:var(--admin);color:var(--admin-ink)}
 #syncBtn:hover:not(:disabled){filter:brightness(1.1)}
-#bulkBtn:not(:disabled),#addBtn,[data-editset],#usageLink{border-color:var(--admin);color:var(--admin-fg)}
-#bulkBtn:not(:disabled):hover,#addBtn:hover,[data-editset]:hover,#usageLink:hover{background:color-mix(in srgb,var(--admin) 18%,transparent)}
+#bulkBtn:not(:disabled),#addBtn,[data-editset]{border-color:var(--admin);color:var(--admin-fg)}
+#bulkBtn:not(:disabled):hover,#addBtn:hover,[data-editset]:hover{background:color-mix(in srgb,var(--admin) 18%,transparent)}
 .subedit,.tagadd{color:var(--admin-fg)!important}
 @media (max-width:400px){.pills{gap:2px}.pills .pill{padding-inline:8px;font-size:13px}.pills .pill b,.pills .pill .mono{margin-left:2px}}
 .themewrap{position:relative;margin:0 0 2px}
@@ -671,6 +671,17 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .totop:hover{border-color:var(--accent);color:var(--accent)}
 .totop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .acct{height:34px;padding:0 12px}
+/* Owner only: member count beside the account button (from admin/usage); coral with +N when there are members you haven't seen on the Admin page. */
+.ucount{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 10px;border:1px solid var(--admin);border-radius:999px;color:var(--admin-fg);text-decoration:none;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ucount b{font-weight:500;color:var(--fg)}
+.ucount:hover{background:color-mix(in srgb,var(--admin) 18%,transparent)}
+.ucount:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ucount.has-new{border-color:var(--coral);color:var(--coral);background:color-mix(in srgb,var(--coral) 12%,transparent)}
+.ucount.has-new b{color:var(--coral)}
+.ucount.has-new:hover{background:color-mix(in srgb,var(--coral) 22%,transparent)}
+.unew{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--coral-ink);background:var(--coral);border-radius:999px;padding:1px 6px;margin-left:1px}
+/* Phones: no room in the one-row header, so it becomes a small bubble on the corner of the account button. */
+@media (max-width:640px){.top-actions{position:relative}.ucount{position:absolute;z-index:2;left:20px;top:-7px;height:17px;min-width:17px;padding:0 5px;gap:0;justify-content:center;font-size:10px;border:0;background:var(--admin);color:#fff;box-shadow:0 0 0 2px var(--panel)}.ucount svg,.ucount .unew{display:none!important}.ucount b{color:#fff;font-weight:600}.ucount.has-new,.ucount.has-new:hover{background:var(--coral)}.ucount.has-new b{color:var(--coral-ink)}}
 .acct .short{display:none}
 @media (max-width:640px){.acct .full{display:none}.acct .short{display:inline}.acct.in{padding:0;width:34px;border-radius:50%;font-weight:600}.top .wrap{flex-wrap:wrap;column-gap:8px}.brand{flex:0 1 auto;gap:8px}.brand h1{font-size:18px;gap:6px;white-space:nowrap}.brand .beta{font-size:9px;padding:4px 5px 3px 6px}.brandmark{width:32px;height:32px}.top-actions{gap:6px;flex:none}.top-actions .icon-btn,.acct.in{width:32px;height:32px}.acct{height:32px;padding:0 10px}.top-actions .cur{height:32px;padding:5px 4px 5px 6px;font-size:12px}}
 @media (max-width:420px){.brand .beta{display:none}}
@@ -697,7 +708,12 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .dlg .keepbox input{width:16px;height:16px;margin:0;flex:none;accent-color:var(--accent)}
 .dlg .keepbox span{flex:1;min-width:0}
 .dlg .acct-actions .btn{width:auto;flex:1 1 140px}
-#usageLink{text-decoration:none}
+/* Owner only: Admin link beside "Your account" (moonstone like the other owner tools; coral +N for new members). */
+.dlg h2.acct-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#usageLink{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:500;text-decoration:none;color:var(--admin-fg);border:1px solid var(--admin);border-radius:999px;padding:3px 11px}
+#usageLink:hover{background:color-mix(in srgb,var(--admin) 18%,transparent)}
+#usageLink:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#usageLink.has-new{border-color:var(--coral);color:var(--coral)}
 .btn.danger-fill{background:var(--danger);border-color:var(--danger);color:#fff}
 .gate{margin:0 0 12px;padding:10px 12px;border-radius:9px;background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
 .nudge{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(360px,calc(100vw - 32px));background:var(--panel);color:var(--fg);border:1px solid var(--accent);border-radius:12px;padding:14px 16px;box-shadow:0 10px 30px rgb(0 0 0/.3);display:flex;flex-direction:column;gap:10px}
@@ -762,6 +778,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
       <input id="q" type="search" placeholder="Search name, set #, subtheme or tag…" autocomplete="off" aria-label="Search by set name, number, subtheme or tag">
     </label>
     <div class="top-actions">
+      <a class="ucount" id="userCount" href="/admin" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg><b id="userCountN"></b><span class="unew" id="userCountNew" hidden></span></a>
       <button class="btn acct" id="acctBtn" type="button">Sign in</button>
       <select id="curSel" class="cur" aria-label="Currency" title="Currency"></select>
       <button class="icon-btn" id="themeBtn" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
@@ -959,9 +976,9 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <p class="fine">Not there after a minute? Check your spam or promotions folder. It comes from BrickCollect.</p>
   </div>
   <div id="authOut" hidden>
-    <h2>Your account</h2>
+    <h2 class="acct-h">Your account <a id="usageLink" href="/admin" hidden title="Site owner only: members, collections and job health">Admin<span class="unew" id="usageLinkNew" hidden></span></a></h2>
     <p>Signed in as <b id="acctEmail"></b>. Your collection is saved to your account and is the same on every device where you sign in.</p>
-    <div class="acct-actions"><button class="btn" type="button" data-import>Import</button><button class="btn" type="button" id="acctExport">Export my collection</button><button class="btn" type="button" id="signOutBtn">Sign out</button><a class="btn admin-btn" id="usageLink" href="/admin" hidden title="Site owner only: accounts, collections and job health">Admin</a></div>
+    <div class="acct-actions"><button class="btn" type="button" data-import>Import</button><button class="btn" type="button" id="acctExport">Export my collection</button><button class="btn" type="button" id="signOutBtn">Sign out</button></div>
     <p class="fine"><button class="btn mini danger-fill" type="button" id="delStart" style="width:auto">Delete my account</button></p>
     <div class="delbox" id="delBox" hidden>
       <p><b>Delete your account?</b> This permanently deletes your account and the collection saved to it. It can’t be undone.</p>
@@ -3593,6 +3610,36 @@ async function paintAccount() {
   $('acctBtn').hidden = !window.BC?.auth?.available;
   $('usageLink').hidden = !(uid && isOwner);
 }
+// Owner only: total members beside the account button, from admin/usage (worked out hourly). Members newer than the
+// newest one seen on the Admin page (bc-admin-seen, this browser) turn it coral with "+N".
+let ucStop = null;
+function watchUserCount() {
+  if (ucStop) { ucStop(); ucStop = null; }
+  const el = $('userCount');
+  el.hidden = true;
+  if (!db || !uid || !isOwner) return;
+  ucStop = db.doc('admin/usage').onSnapshot(snap => {
+    const U = snap.exists ? snap.data() : null;
+    if (!U) { el.hidden = true; return; }
+    const people = (U.rows || []).filter(r => !r.o);
+    const total = U.totals?.accounts ?? people.length;
+    const seen = Number(lsGet('bc-admin-seen')) || 0;
+    // Before Admin has been opened in this browser, members from the last 24 hours count as new.
+    const fresh = people.filter(r => (seen ? r.m > seen : Date.now() - r.j < 864e5)).length;
+    $('userCountN').textContent = total.toLocaleString();
+    $('userCountNew').textContent = fresh ? `+${fresh}` : '';
+    $('userCountNew').hidden = !fresh;
+    el.classList.toggle('has-new', !!fresh);
+    const label = `${total.toLocaleString()} member${total === 1 ? '' : 's'}${fresh ? `, ${fresh} new since you last opened Admin` : ''}`;
+    el.title = `${label}. Open Admin`;
+    el.setAttribute('aria-label', `${label}. Open Admin`);
+    el.hidden = false;
+    $('usageLinkNew').textContent = fresh ? `+${fresh}` : '';
+    $('usageLinkNew').hidden = !fresh;
+    $('usageLink').classList.toggle('has-new', !!fresh);
+    $('usageLink').title = `${label}. Open Admin`;
+  }, () => { el.hidden = true; });
+}
 $('acctBtn').onclick = openAuth;
 $('acctExport').onclick = () => { dlg.close(); $('exportBtn').click(); };
 // Without an account: up to FREE_ITEMS sets and minifigures (owned or wanted), then sign up to add more.
@@ -3710,6 +3757,7 @@ fetch('catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return r
   const user = api.user || null;
   if (user) { try { isOwner = !!(await user.isOwner()); uid = await user.id(); } catch (e) { console.warn('user', e); } }
   paintAccount();
+  watchUserCount();
   if (!db || !uid) {
     loadPersonal(lsGet('bc-collection')); goLocal(); render();
   }
