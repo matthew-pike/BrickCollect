@@ -660,6 +660,10 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .shx .shnote{margin:12px 0 0}
 .shx .acct-actions{margin-top:14px}
 .shx .shstop{margin:12px 0 0;font-size:12px}
+.shx .shhow{margin:0 0 14px;border:1px solid var(--line-2);border-radius:10px;padding:8px 12px;font-size:13px}
+.shx .shhow summary{cursor:pointer;color:var(--accent);font-weight:500}
+.shx .shhow ol{margin:8px 0 2px;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
+.shx .shhow b{color:var(--fg);font-weight:500}
 .buy{--bd:var(--stud);--hv:#000;background:var(--stud);border-color:var(--bd);color:#1a1300;font-weight:600}
 .buy-lego{--t:#e3000b;--bd:#e3000b;--hv:#8a0008;--hb:#8a0008}
 .buy-pantasy{--t:#14259a;--bd:#f2a6cf;--hv:#0b1560;--hb:#14259a}
@@ -854,7 +858,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <div class="sellbody" id="sellBody" hidden>
     <div class="sellmode" role="group" aria-label="Value"><button type="button" data-salemode="own" aria-pressed="true">Everything you own</button><button type="button" data-salemode="sale" aria-pressed="false" title="Copies you've marked for sale or trade. Also shows just those in the list below.">Sale or trade list <b id="cSale">0</b></button></div>
     <p class="blrow" id="blRow" hidden><span>Selling on BrickLink? Add details and your price to each copy (click its condition chip, then Listing details), then make your upload file.</span><button class="btn" type="button" id="blOpen2">BrickLink upload</button></p>
-    <p class="blrow" id="shareRow" hidden><span>Selling or trading with other collectors? Share a link to your list in Facebook groups, on Instagram or anywhere, and buyers contact you directly.</span><button class="btn" type="button" id="shareOpen2">Share your list</button></p>
+    <p class="blrow" id="shareRow" hidden><span>Selling or trading in Facebook groups? Share one link to your whole list instead of posting every set. Buyers see pictures, details and prices, and contact you directly.</span><button class="btn" type="button" id="shareOpen2">Share your list</button></p>
     <div class="sellhead"><h3 id="sellTitle" class="vh">Sell or trade</h3><p class="sellintro"><button type="button" class="tip" data-tip="Based on what you&#x27;ve ticked as owned and the copies you&#x27;ve set in the Condition column. Sellers and buyers often agree on a share of market value, like 70%, to allow for fees, shipping and time." aria-label="What is this?">i</button> Market value of what you own, by condition. Pick a percentage to see what you’d ask or offer.</p></div>
     <div class="pct"><div class="pctchips" role="group" aria-label="Quick percentages"><button class="pctchip" data-pct="60">60%</button><button class="pctchip" data-pct="70">70%</button><button class="pctchip" data-pct="80">80%</button><button class="pctchip" data-pct="100">100%</button></div><input class="inp" id="sellPct" type="number" min="0" max="200" step="1" inputmode="numeric" placeholder="100" aria-label="Percentage of market value"><span>%</span></div>
     <dl class="sellgrid">
@@ -1065,13 +1069,21 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 </dialog>
 <dialog class="dlg shx" id="shDlg" aria-labelledby="shH">
   <h2 id="shH">Share your sale or trade list</h2>
-  <p>Get a link to a page showing the copies on your Sale or trade list, any brand, with pictures, condition, details and your price. Post it in Facebook groups, on Instagram or anywhere. Buyers contact you the way you choose below, and you sort out payment and postage between you.</p>
+  <p>Post your whole list in one go. Instead of a separate post for every set, share one link in Facebook groups, on Instagram or in a message. It opens a page with everything you’re selling or trading, any brand, with pictures, condition, details and your prices.</p>
+  <details class="shhow"><summary>How it works</summary><ol>
+    <li><b>Mark what you’re letting go.</b> Click a set’s condition chip and choose how many copies are for sale or trade. Add details and your own price under Listing details if you like.</li>
+    <li><b>Say how buyers reach you</b> below, then create your link.</li>
+    <li><b>Share it.</b> Paste the link, or <b>Copy a post</b> with your list already written, into Facebook groups or anywhere.</li>
+    <li><b>Buyers message you directly.</b> You agree payment and postage between you: BrickCollect isn’t part of the sale.</li>
+    <li><b>It keeps itself up to date.</b> Sold something? Mark it Sold or traded and it drops off the page. The same link keeps working.</li>
+  </ol></details>
   <div id="shOut" hidden><p><b>Sign up free to share your list.</b> Your link needs an account, so it keeps working and updates when your list changes.</p><button class="btn primary" type="button" id="shSignIn">Sign up or sign in</button></div>
   <div id="shIn">
     <div class="shlink" id="shLinkBox" hidden>
       <label for="shLink">Your link</label>
       <div class="shlinkrow"><input class="inp" id="shLink" readonly><button class="btn primary" type="button" id="shCopy">Copy</button></div>
-      <div class="shlinkbtns"><button class="btn" type="button" id="shShare" hidden>Share…</button><a class="btn" id="shView" target="_blank" rel="noopener">Open page ↗</a></div>
+      <div class="shlinkbtns"><button class="btn" type="button" id="shPost">Copy a post</button><button class="btn" type="button" id="shShare" hidden>Share…</button><a class="btn" id="shView" target="_blank" rel="noopener">Open page ↗</a></div>
+      <textarea class="inp" id="shPostTxt" rows="8" readonly hidden style="width:100%;margin-top:8px;font-size:12.5px"></textarea>
       <p class="shstat" id="shStat"></p>
     </div>
     <div class="shfields">
@@ -3252,6 +3264,24 @@ $('shShare').onclick = async () => {
   try { await navigator.share({ title: 'My sale or trade list', text: 'Sets I’m selling or trading, on BrickCollect', url: $('shLink').value }); track('share_sale', { action: 'share' }); } catch { /* cancelled */ }
 };
 $('shView').addEventListener('click', () => track('share_sale', { action: 'open' }));
+// A ready-written post for Facebook groups (or anywhere): the first 12 items with prices, then the link.
+function sharePost() {
+  const COND_W = { new: 'New', used: 'Used', 'used-inc': 'Used, incomplete' };
+  const its = shareItems().sort((a, b) => (b.p || 0) - (a.p || 0)), MAX = 12;
+  const fmt = p => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur() }).format(p); } catch { return p.toFixed(2); } };
+  const lines = its.slice(0, MAX).map(x => `• ${x.n} ${x.nm} (${COND_W[x.c] || x.c}${x.d.startsWith('Sealed') ? ', sealed' : ''})${x.q > 1 ? ` ×${x.q}` : ''}: ${x.p > 0 ? fmt(x.p) : 'make an offer'}`);
+  const more = its.length - MAX;
+  const reach = share.ig ? `Message me here or on Instagram @${share.ig}.` : 'Message me if you’re interested.';
+  return [`For sale or trade 🧱${share.place ? ` (${share.place})` : ''}`, '', ...lines, ...(more > 0 ? [`…and ${more} more`] : []), '',
+    `Pictures, details and prices: ${shareUrl(share.id)}`, reach].join('\n');
+}
+$('shPost').onclick = async () => {
+  if (!share?.on || !CAT) return;
+  const txt = sharePost();
+  try { await navigator.clipboard.writeText(txt); toast('Post copied: paste it into a Facebook group or anywhere'); }
+  catch { const t = $('shPostTxt'); t.value = txt; t.hidden = false; t.select(); toast('Select the post and copy it'); }
+  track('share_sale', { action: 'post', copies: saleCopies() });
+};
 $('shSignIn').onclick = () => { shDlg.close(); openAuth(); };
 $('shClose').onclick = () => shDlg.close();
 shDlg.addEventListener('click', e => { if (e.target === shDlg) shDlg.close(); });
@@ -3660,7 +3690,8 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
   { v: '0.19', date: '9 November 2026', title: 'Share what you’re selling', items: [
-    ['Share your sale or trade list', 'get a link to a page showing everything on your Sale or trade list, from LEGO to LumiBricks, Pantasy and every other brand, with pictures, condition, details and your price. Post it in Facebook groups, on Instagram or anywhere.'],
+    ['Share your sale or trade list', 'post your whole list in one go: one link instead of a post for every set. It opens a page with everything you’re selling or trading, from LEGO to LumiBricks, Pantasy and every other brand, with pictures, condition, details and your prices.'],
+    ['Copy a post', 'a ready-written post with your sets, prices and link, to paste into Facebook groups or anywhere.'],
     ['Buyers contact you', 'choose how: your Instagram, a Facebook link or anything else. Your email is never shown. The page updates by itself when your list changes, and you can stop sharing at any time. Export → Share your sale or trade list.'],
   ] },
   { v: '0.18', date: '9 November 2026', title: 'Sell on BrickLink', items: [
