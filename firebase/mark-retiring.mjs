@@ -1,7 +1,7 @@
 // Owner data job: mark the sets listed in a file as "retiring soon" (same as Bulk edit → Mark retiring soon).
 // One set number per line (with or without -1); lines starting with # are notes.
 // Usage: node mark-retiring.mjs data/retiring-soon.txt [YYYY-MM-DD exit date | none]
-// Sets already hand-marked retiring soon keep their exit date unless one is given here. Writes each bucket in a
+// Sets that already have a hand setting (retired, retiring soon, not retired) are left alone, so re-running is safe. Writes each bucket in a
 // transaction (like the price jobs), so nothing they save at the same time is lost.
 import { readFileSync } from 'node:fs';
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
@@ -27,7 +27,7 @@ for (const [b, list] of byBucket) {
     const items = { ...((snap.exists && snap.data().items) || {}) };
     for (const n of list) {
       const cur = { ...(items[n] || {}) };
-      if (cur.ret === 'S' && cur.manualRet && !exit) { already++; continue; }
+      if (cur.manualRet) { already++; continue; } // never override a hand setting (re-runs, or sets changed since)
       cur.ret = 'S'; cur.manualRet = true;
       if (exit) cur.exit = exit; else delete cur.exit;
       items[n] = cur; marked++;
@@ -35,4 +35,4 @@ for (const [b, list] of byBucket) {
     tx.set(ref, { items, updatedAt: Date.now() });
   });
 }
-console.log(`::notice title=Retiring soon::${nums.length} sets in ${file}: ${marked} marked retiring soon${exit ? ` (by ${exit})` : ' (no date)'}, ${already} already marked.`);
+console.log(`::notice title=Retiring soon::${nums.length} sets in ${file}: ${marked} marked retiring soon${exit ? ` (by ${exit})` : ' (no date)'}, ${already} skipped (already set by hand).`);
