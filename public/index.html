@@ -702,6 +702,9 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .dlg label{font-size:12px;color:var(--muted)}
 .dlg .btn{justify-content:center;width:100%}
 .socials{display:flex;flex-direction:column;gap:8px}
+.inapp-note{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 10%,var(--panel));border-radius:10px;padding:10px 12px;margin:0 0 12px}
+.inapp-note p{margin:0;font-size:13.5px}
+.inapp-note .btn{margin-top:10px;width:100%}
 .dlg .or{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--faint);font-size:12px}
 .dlg .or::before,.dlg .or::after{content:"";flex:1;border-top:1px solid var(--line)}
 .dlg .fine{margin:14px 0 0}
@@ -975,6 +978,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     </form>
     <div class="or"><span>or</span></div>
     <div class="socials" id="socialBtns"></div>
+    <div class="inapp-note" id="inAppNote" hidden></div>
     <p class="fine">Anything you’ve already ticked in this browser moves into your account. By signing in you agree to our <a href="/privacy">privacy policy</a>.</p>
   </div>
   <div id="authSent" hidden>
@@ -3608,6 +3612,15 @@ function openAuth() {
   const list = (window.BC_CONFIG?.socialSignIn || (window.BC_CONFIG?.googleSignIn ? ['google'] : [])).filter(k => NAMES[k] && !(IN_APP && k === 'google')); // Google blocks sign-in inside app browsers
   $('socialBtns').innerHTML = list.map(k => `<button class="btn" type="button" data-provider="${k}">Continue with ${NAMES[k]}</button>`).join('');
   dlg.querySelector('.or').hidden = !list.length;
+  // In Instagram's (etc.) browser Google sign-in is blocked, so say why it's missing and how to get it.
+  const googleHidden = IN_APP && (window.BC_CONFIG?.socialSignIn || (window.BC_CONFIG?.googleSignIn ? ['google'] : [])).includes('google');
+  $('inAppNote').hidden = !googleHidden;
+  if (googleHidden) {
+    dlg.querySelector('.or').hidden = false;
+    $('inAppNote').innerHTML = `<p><b>Want to use Google?</b> ${IN_APP}’s browser doesn’t allow Google sign-in. Open BrickCollect in ${IS_ANDROID ? 'Chrome' : 'Safari'} to use it${IS_ANDROID ? '.' : `: tap <b>•••</b> and choose <b>Open in browser</b>.`}</p>`
+      + (IS_ANDROID ? '<button class="btn" type="button" id="openChrome">Open in Chrome</button>' : '');
+    if (IS_ANDROID) $('openChrome').onclick = () => { track('save_nudge', { outcome: 'open', items: Object.keys(personalObj()).length, in_app: IN_APP, from: 'sign_in' }); openInChrome(); };
+  }
   try { dlg.showModal(); } catch { dlg.setAttribute('open', ''); }
   if (!uid) setTimeout(() => $('authEmail').focus(), 50);
 }
@@ -3681,6 +3694,12 @@ const IN_APP = (() => { const ua = navigator.userAgent || '';
   if (/musical_ly|TikTok|BytedanceWebview/i.test(ua)) return 'TikTok'; if (/Snapchat/i.test(ua)) return 'Snapchat';
   if (/LinkedInApp/i.test(ua)) return 'LinkedIn'; return ''; })();
 const IS_ANDROID = /Android/i.test(navigator.userAgent || '');
+// Android: open this page in Chrome, taking along anything ticked here (?carry=, used only if Chrome has nothing saved yet).
+function openInChrome() {
+  const local = personalObj(), carry = Object.keys(local).length ? JSON.stringify(local) : '';
+  const q = new URLSearchParams(location.search); if (carry && carry.length < 3000) q.set('carry', carry);
+  location.href = `intent://${location.host}${location.pathname}${q.toString() ? '?' + q : ''}#Intent;scheme=https;package=com.android.chrome;end`;
+}
 // A one-time, gentle ask to save: after 3 items (after the first tick in an in-app browser), well before the 10-item limit.
 const NUDGE_AT = 3;
 function maybeNudge() {
@@ -3698,7 +3717,7 @@ function maybeNudge() {
   el.addEventListener('click', e => {
     const v = e.target.closest('button')?.dataset.n; if (!v) return;
     track('save_nudge', { outcome: v, items: n, in_app: IN_APP || 'no' });
-    if (v === 'open') { location.href = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=com.android.chrome;end`; return; }
+    if (v === 'open') { openInChrome(); return; }
     el.remove(); if (v === 'in') openAuth();
   });
   document.body.append(el);

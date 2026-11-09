@@ -25,7 +25,17 @@
   // Firebase says when a sign-in created a brand-new account; remember it for this tab so it's counted once as a sign-up.
   function markNew(r) { try { if (r && r.additionalUserInfo && r.additionalUserInfo.isNewUser) sessionStorage.setItem('bc-new', '1'); } catch { /* ignore */ } }
   async function finishEmailLink() {
-    if (!fauth.isSignInWithEmailLink(location.href)) return;
+    if (!fauth.isSignInWithEmailLink(location.href)) {
+      // "Open in Chrome" from an app's browser (Instagram etc.) carries the sets ticked there, so they aren't left behind.
+      // Only used if this browser has nothing saved yet; then the address bar is tidied.
+      const carry = new URLSearchParams(location.search).get('carry');
+      if (carry) {
+        try { if (!store.get('bc-collection') && carry.length < 3000) { const o = JSON.parse(carry); if (o && typeof o === 'object' && !Array.isArray(o)) store.set('bc-collection', JSON.stringify(o)); } } catch { /* ignore */ }
+        const q = new URLSearchParams(location.search); q.delete('carry');
+        history.replaceState(null, '', location.origin + location.pathname + (q.toString() ? '?' + q : '') + location.hash);
+      }
+      return;
+    }
     let email = store.get(EMAIL_KEY);
     // Opened on a different device or browser: ask which email the link was sent to.
     if (!email) email = window.prompt('To finish signing in, enter the email address the link was sent to:');
