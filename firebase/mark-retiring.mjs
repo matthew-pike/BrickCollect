@@ -12,7 +12,11 @@ const bucketOf = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt
 const [file, exitArg] = process.argv.slice(2);
 const exit = exitArg && exitArg !== 'none' ? exitArg : null;
 if (exit && !/^\d{4}-\d{2}-\d{2}$/.test(exit)) throw new Error('exit date must be YYYY-MM-DD');
-const nums = [...new Set(readFileSync(file, 'utf8').split(/\s+/).map(s => s.trim()).filter(s => s && !s.startsWith('#')).map(s => /-\d+$/.test(s) ? s : `${s}-1`))];
+const lines = readFileSync(file, 'utf8').split('\n').map(l => l.replace(/#.*/, ''));
+const toks = lines.flatMap(l => l.split(/[\s,;]+/)).filter(Boolean);
+const bad = toks.filter(t => !/^\d{3,7}(-\d+)?$/.test(t));
+if (bad.length) throw new Error(`not set numbers: ${bad.slice(0, 10).join(', ')}`);
+const nums = [...new Set(toks.map(s => /-\d+$/.test(s) ? s : `${s}-1`))];
 const byBucket = new Map();
 for (const n of nums) { const b = bucketOf(n); if (!byBucket.has(b)) byBucket.set(b, []); byBucket.get(b).push(n); }
 let marked = 0, already = 0;
