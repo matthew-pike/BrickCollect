@@ -24,11 +24,23 @@ const BRANDS = [
   { brand: 'Mould King', shop: 'https://mouldkingcorp.com', numRe: /\b(\d{5})\b/ },
   // JMBricklayer set numbers are 5 digits (e.g. 61031), usually in the product title or SKU.
   { brand: 'JMBricklayer', shop: 'https://jmbricklayer.com', numRe: /\b(\d{5})\b/ },
+  // Brickcraft (US, licensed pop-culture sets): the SKU is the set number plus a licence code, e.g. 72772FTM.
+  // MX = bundles of other sets, and bundles with no SKU don't match either, so neither is added.
+  // The licence code becomes the theme (unknown codes stay Unsorted for the owner to sort).
+  { brand: 'Brickcraft', shop: 'https://shopbrickcraft.com', numRe: /\b(\d{5})(?!MX)[A-Z]{2,3}\b/i, themeOf: p => BRICKCRAFT_LINES[skuCode(p)] },
 ];
+
+const skuCode = p => { for (const v of p.variants || []) { const m = /^\d{5}([A-Z]{2,3})$/i.exec(String(v.sku || '').trim()); if (m) return m[1].toUpperCase(); } return ''; };
+const BRICKCRAFT_LINES = {
+  BBD: 'Breaking Bad', BEV: 'Beavis and Butt-Head', BFS: 'Brickcraft Originals', BRK: 'Brickcraft Originals',
+  FMG: 'Family Guy', FTM: 'Futurama', GDG: 'The Golden Girls', GRD: 'Grateful Dead', GRI: 'The Grinch',
+  HID: 'Mo Willems', JSN: 'Friday the 13th', KOH: 'King of the Hill', MTV: 'MTV', NCK: 'Nickelodeon',
+  PPT: 'Poppy Playtime', RUD: 'Rudolph', SAN: 'Sanrio', SUS: 'Dr. Seuss', TYT: 'Toyota', YS: 'Yellowstone',
+};
 
 // The set number is the last number in the address, optionally followed by a region (e.g. pantasy-t-800-87503-us-eu).
 const numFromHandle = h => { const m = /-([a-z]?\d{4,6})(?:-[a-z]{2,3})*$/i.exec(h || ''); return m ? m[1].toUpperCase() : null; };
-const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy|JMBricklayer|JM\s?Bricklayer)\b[\s:–-]*/i, '').trim() || num;
+const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy|JMBricklayer|JM\s?Bricklayer|Brickcraft)\b[\s:–-]*/i, '').trim() || num;
 
 async function fetchJson(url) {
   const res = await fetch(url, { headers: { 'User-Agent': 'BrickCollect price updater (an Art of Bricks project)', Accept: 'application/json' } });
@@ -55,7 +67,7 @@ function numFor(p, numRe) {
   return null;
 }
 
-export async function updateBrand({ brand, shop, series = [], numRe }, rates, manual = new Set()) {
+export async function updateBrand({ brand, shop, series = [], numRe, themeOf }, rates, manual = new Set()) {
   let currency = 'USD';
   try { currency = (await fetchJson(`${shop}/cart.js`)).currency || currency; } catch { /* keep default */ }
   const perAud = currency === 'AUD' ? 1 : rates?.[currency];
@@ -88,8 +100,8 @@ export async function updateBrand({ brand, shop, series = [], numRe }, rates, ma
       const cur = items[num];
       if (/^https:\/\//.test(img) && cur.img !== img && (!cur.img || cur.imgAuto)) { items[num] = { ...cur, img, imgAuto: true }; pictured++; }
     }
-    // Theme: the store's series when it has them, otherwise the store's product type (e.g. "Technic").
-    const ser = seriesOf.get(p.handle) || (series.length ? null : String(p.product_type || '').trim() || null), it = items[num];
+    // Theme: the store's series when it has them, else the brand's own rule (themeOf), otherwise the store's product type (e.g. "Technic").
+    const ser = seriesOf.get(p.handle) || (themeOf ? themeOf(p) || null : series.length ? null : String(p.product_type || '').trim() || null), it = items[num];
     if (ser && it.theme !== ser && (!it.theme || it.theme === 'Unsorted' || it.themeAuto)) { items[num] = { ...it, theme: ser, themeAuto: true }; themed++; }
     if (prices.length) {
       const aud = Math.round(Math.min(...prices) / perAud * 100) / 100;
