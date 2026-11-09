@@ -489,8 +489,8 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
 /* Owner-only tools in moonstone (the brand colour), quiet and separate from the aqua buttons everyone uses. */
 #syncBtn{background:var(--admin);border-color:var(--admin);color:var(--admin-ink)}
 #syncBtn:hover:not(:disabled){filter:brightness(1.1)}
-#bulkBtn:not(:disabled),#addBtn,[data-editset]{border-color:var(--admin);color:var(--admin-fg)}
-#bulkBtn:not(:disabled):hover,#addBtn:hover,[data-editset]:hover{background:color-mix(in srgb,var(--admin) 18%,transparent)}
+#bulkBtn:not(:disabled),#addBtn,[data-editset],#usageLink{border-color:var(--admin);color:var(--admin-fg)}
+#bulkBtn:not(:disabled):hover,#addBtn:hover,[data-editset]:hover,#usageLink:hover{background:color-mix(in srgb,var(--admin) 18%,transparent)}
 .subedit,.tagadd{color:var(--admin-fg)!important}
 @media (max-width:400px){.pills{gap:2px}.pills .pill{padding-inline:8px;font-size:13px}.pills .pill b,.pills .pill .mono{margin-left:2px}}
 .themewrap{position:relative;margin:0 0 2px}
@@ -697,6 +697,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .dlg .keepbox input{width:16px;height:16px;margin:0;flex:none;accent-color:var(--accent)}
 .dlg .keepbox span{flex:1;min-width:0}
 .dlg .acct-actions .btn{width:auto;flex:1 1 140px}
+#usageLink{text-decoration:none}
 .btn.danger-fill{background:var(--danger);border-color:var(--danger);color:#fff}
 .gate{margin:0 0 12px;padding:10px 12px;border-radius:9px;background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
 .nudge{position:fixed;z-index:40;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(360px,calc(100vw - 32px));background:var(--panel);color:var(--fg);border:1px solid var(--accent);border-radius:12px;padding:14px 16px;box-shadow:0 10px 30px rgb(0 0 0/.3);display:flex;flex-direction:column;gap:10px}
@@ -960,7 +961,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
   <div id="authOut" hidden>
     <h2>Your account</h2>
     <p>Signed in as <b id="acctEmail"></b>. Your collection is saved to your account and is the same on every device where you sign in.</p>
-    <div class="acct-actions"><button class="btn" type="button" data-import>Import</button><button class="btn" type="button" id="acctExport">Export my collection</button><button class="btn" type="button" id="signOutBtn">Sign out</button></div>
+    <div class="acct-actions"><button class="btn" type="button" data-import>Import</button><button class="btn" type="button" id="acctExport">Export my collection</button><button class="btn" type="button" id="signOutBtn">Sign out</button><a class="btn admin-btn" id="usageLink" href="/admin" hidden title="Site owner only: accounts, collections and job health">Usage</a></div>
     <p class="fine"><button class="btn mini danger-fill" type="button" id="delStart" style="width:auto">Delete my account</button></p>
     <div class="delbox" id="delBox" hidden>
       <p><b>Delete your account?</b> This permanently deletes your account and the collection saved to it. It can’t be undone.</p>
@@ -3590,6 +3591,7 @@ async function paintAccount() {
   $('acctBtn').classList.toggle('in', !!email);
   $('acctEmail').textContent = email || '';
   $('acctBtn').hidden = !window.BC?.auth?.available;
+  $('usageLink').hidden = !(uid && isOwner);
 }
 $('acctBtn').onclick = openAuth;
 $('acctExport').onclick = () => { dlg.close(); $('exportBtn').click(); };
