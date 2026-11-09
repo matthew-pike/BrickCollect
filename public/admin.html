@@ -391,9 +391,11 @@ tr.owner td{color:var(--muted)}
     ].join('');
   }
 
+  // e.g. "Updated 6 min ago · 9 Nov 2026, 1:20 pm"
+  const statusText = () => `Updated ${ago(U.at)} · ${new Date(U.at).toLocaleString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
   function paint() {
     const T = U.totals || {};
-    $('status').textContent = `Updated ${ago(U.at)} · worked out every hour · all accounts, yours included`;
+    $('status').textContent = statusText();
     $('msg').hidden = true; $('page').hidden = false; // shown first, so the chart can measure its box
     paintCards(); paintPerDay(); paintSizes(); paintFeatures(); paintMembers(); paintTop(); paintHealth(); paintPerms();
   }
@@ -458,7 +460,7 @@ tr.owner td{color:var(--muted)}
       try { const top = Math.max(0, ...(U.rows || []).filter(r => !r.o).map(r => r.m)); if (top) localStorage.setItem('bc-admin-seen', String(top)); } catch {}
     }, e => show('Couldn’t load the numbers', esc(e.message || e.code || 'Unknown error')));
     // Keep "x min ago" fresh while the page is open.
-    setInterval(() => { if (U) { $('status').textContent = $('status').textContent.replace(/^Updated [^·]+/, `Updated ${ago(U.at)} `); } }, 60000);
+    setInterval(() => { if (U) $('status').textContent = statusText(); }, 60000);
   })();
 })();
 </script>
