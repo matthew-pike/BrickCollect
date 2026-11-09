@@ -88,7 +88,9 @@ td.zero{color:var(--faint)}
 tr.owner td{color:var(--muted)}
 .pill{display:inline-block;font-size:10.5px;font-weight:500;letter-spacing:.08em;padding:1px 6px;border-radius:5px;margin-left:6px;vertical-align:1px}
 .pill.new{color:var(--coral);background:color-mix(in srgb,var(--coral) 16%,transparent)}
-.pill.you{color:var(--fg);background:color-mix(in srgb,var(--admin) 45%,transparent)}
+.type{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;color:var(--muted)}
+.type.t-super{color:var(--fg);background:color-mix(in srgb,var(--admin) 45%,transparent);font-weight:500}
+.type.t-admin{color:var(--fg);border:1px solid var(--admin)}
 .more{margin-top:10px;background:none;border:1px solid var(--line-2);color:var(--fg);border-radius:8px;padding:6px 12px;font:13px var(--font);cursor:pointer}
 .more:hover{border-color:var(--accent);color:var(--accent)}
 .links{display:flex;flex-wrap:wrap;gap:8px}
@@ -143,7 +145,7 @@ tr.owner td{color:var(--muted)}
 
     <section class="box">
       <h2>Members</h2>
-      <p class="sub">Every account by member number. No emails or names: numbers are given in sign-up order and never change. Click a heading to sort.</p>
+      <p class="sub">Every account by member number. No emails or names: numbers are given in sign-up order and never change. Types: User, Admin, Super user. Click a heading to sort.</p>
       <div class="tblwrap"><table id="members"></table></div>
       <button class="more" id="moreRows" type="button" hidden></button>
       <p class="fine" id="olderNote" hidden></p>
@@ -151,7 +153,7 @@ tr.owner td{color:var(--muted)}
 
     <section class="box">
       <h2>Most collected</h2>
-      <p class="sub">Across all members, not counting your own account</p>
+      <p class="sub">Across all users, not counting super user or admin accounts</p>
       <div class="tabs3" role="group" aria-label="Show">
         <button type="button" data-top="themes" aria-pressed="true">Themes</button><button type="button" data-top="sets" aria-pressed="false">Sets</button><button type="button" data-top="figs" aria-pressed="false">Minifigures</button><button type="button" data-top="wanted" aria-pressed="false">Most wanted</button>
       </div>
@@ -285,18 +287,20 @@ tr.owner td{color:var(--muted)}
       row('Signed in with Google', fmt(M.google)), row('Signed in with an email link', fmt(M.email)),
       ...(M.apple ? [row('Signed in with Apple', fmt(M.apple))] : []), ...(M.other ? [row('Other sign-in', fmt(M.other))] : []),
       row('Have a wanted list', fmt(T.wantUsers)), row('Use My tags', fmt(T.tagUsers)), row('Have a sale or trade list', fmt(T.saleUsers)),
-      row('Your own accounts (left out)', fmt(T.owners)),
+      row('Super user and admin accounts (left out)', fmt(T.owners)),
     ].join('');
   }
 
   /* ---------- members table ---------- */
   const COLS = [
-    ['m', 'Member'], ['j', 'Joined'], ['a', 'Last active'], ['s', 'Sets'], ['c', 'Copies'], ['f', 'Minifigures'],
+    ['m', 'Member'], ['y', 'Type', 'l'], ['j', 'Joined'], ['a', 'Last active'], ['s', 'Sets'], ['c', 'Copies'], ['f', 'Minifigures'],
     ['w', 'Wanted'], ['x', 'For sale'], ['t', 'Tagged'], ['p', 'Sign-in', 'l'], ['r', 'Prices', 'l'],
   ];
   const METHOD = { google: 'Google', email: 'Email link', apple: 'Apple', other: 'Other' };
+  const TYPE = { super: 'Super user', admin: 'Admin', user: 'User' };
+  const typeOf = r => r.y || (r.o ? 'super' : 'user'); // rows saved before types existed
   function paintMembers() {
-    const rows = [...(U.rows || [])].sort((a, b) => {
+    const rows = [...(U.rows || [])].map(r => ({ ...r, y: typeOf(r) })).sort((a, b) => {
       const x = a[sortKey] ?? -1, y = b[sortKey] ?? -1;
       return (typeof x === 'string' ? String(x).localeCompare(String(y)) : x - y) * sortDir || b.m - a.m;
     });
@@ -304,14 +308,15 @@ tr.owner td{color:var(--muted)}
     const head = '<thead><tr>' + COLS.map(([k, label, cls]) => `<th scope="col" data-k="${k}"${cls ? ` class="${cls}"` : ''}${k === sortKey ? ` aria-sort="${sortDir > 0 ? 'ascending' : 'descending'}"` : ''}>${label}</th>`).join('') + '</tr></thead>';
     const body = rows.slice(0, rowLimit).map(r => {
       const isNew = Date.now() - r.j < 7 * DAY;
-      return `<tr${r.o ? ' class="owner"' : ''}><td>${r.m}${r.o ? '<span class="pill you">YOU</span>' : isNew ? '<span class="pill new">NEW</span>' : ''}</td>`
+      return `<tr${r.o ? ' class="owner"' : ''}><td>${r.m}${isNew && !r.o ? '<span class="pill new">NEW</span>' : ''}</td>`
+        + `<td class="l"><span class="type t-${r.y}">${TYPE[r.y] || esc(r.y)}</span></td>`
         + `<td title="${esc(new Date(r.j).toLocaleString('en-AU'))}">${date(r.j)}</td><td title="${esc(r.a ? new Date(r.a).toLocaleString('en-AU') : '')}">${ago(r.a)}</td>`
         + num(r.s) + num(r.c) + num(r.f) + num(r.w) + num(r.x) + num(r.t)
         + `<td class="l">${esc(METHOD[r.p] || r.p || '—')}</td><td class="l">${esc(r.r || '—')}</td></tr>`;
     }).join('');
     $('members').innerHTML = head + `<tbody>${body || `<tr><td colspan="${COLS.length}" class="l">No accounts yet.</td></tr>`}</tbody>`;
     $('members').querySelectorAll('th').forEach(th => th.onclick = () => {
-      const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = ['p', 'r'].includes(k) ? 1 : -1; }
+      const k = th.dataset.k; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = ['p', 'r', 'y'].includes(k) ? 1 : -1; }
       paintMembers();
     });
     const left = rows.length - rowLimit;
@@ -366,7 +371,7 @@ tr.owner td{color:var(--muted)}
 
   function paint() {
     const T = U.totals || {};
-    $('status').textContent = `Updated ${ago(U.at)} · worked out every hour · ${T.owners ? `not counting your own account${T.owners > 1 ? 's' : ''}` : 'all accounts'}`;
+    $('status').textContent = `Updated ${ago(U.at)} · worked out every hour · ${T.owners ? `not counting super user or admin accounts` : 'all accounts'}`;
     $('msg').hidden = true; $('page').hidden = false; // shown first, so the chart can measure its box
     paintCards(); paintPerDay(); paintSizes(); paintFeatures(); paintMembers(); paintTop(); paintHealth();
   }

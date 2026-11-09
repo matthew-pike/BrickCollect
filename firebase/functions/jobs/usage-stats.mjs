@@ -2,7 +2,8 @@
 // Writes one document, admin/usage, that only admins can read (see firestore.rules).
 // Privacy: no emails, names or account IDs leave this job. Each account gets a member number (10001, 10002, …, in
 // sign-up order, kept in private/members so it never changes), and the page shows only counts per member.
-// Totals and top lists leave out the owner's own accounts (anyone in /admins), so they show real collectors.
+// Each account has a type: user, admin or super user (see staff below). Totals and top lists leave out staff
+// accounts (anyone in /admins), so they show real collectors.
 import { getAuth } from 'firebase-admin/auth';
 import { fs } from '../lib/common.mjs';
 
@@ -37,7 +38,8 @@ export default async ({ sweepTotal } = {}) => {
   const [users, adminSnap, membersSnap] = await Promise.all([
     allUsers(), fs.collection('admins').get(), fs.doc('private/members').get(),
   ]);
-  const admins = new Set(adminSnap.docs.map(d => d.id.toLowerCase()));
+  // Staff accounts are listed in /admins by email. role 'admin' = admin; anything else (e.g. no role, as today) = super user.
+  const staff = new Map(adminSnap.docs.map(d => [d.id.toLowerCase(), (d.data() || {}).role === 'admin' ? 'admin' : 'super']));
 
   // Member numbers: existing ones are kept; new accounts get the next number, oldest first.
   const mem = { next: FIRST_MEMBER, ids: {}, ...(membersSnap.data() || {}) };
@@ -63,7 +65,8 @@ export default async ({ sweepTotal } = {}) => {
   const rows = [];
 
   for (const u of users) {
-    const isOwner = !!(u.email && admins.has(u.email.toLowerCase()));
+    const type = (u.email && staff.get(u.email.toLowerCase())) || 'user';
+    const isOwner = type !== 'user';
     const joined = Date.parse(u.metadata.creationTime);
     const active = Math.max(Date.parse(u.metadata.lastRefreshTime || 0) || 0, Date.parse(u.metadata.lastSignInTime || 0) || 0, joined);
     const col = cols.get(u.uid) || {};
@@ -81,7 +84,7 @@ export default async ({ sweepTotal } = {}) => {
       }
     }
     rows.push({ m: mem.ids[u.uid], j: joined, a: active, u: col.updatedAt || null, p: method(u), s, f, c, w, x, t,
-      ...(col.loc ? { r: String(col.loc).slice(0, 4) } : {}), ...(isOwner ? { o: true } : {}) });
+      y: type, ...(col.loc ? { r: String(col.loc).slice(0, 4) } : {}), ...(isOwner ? { o: true } : {}) });
     if (isOwner) { T.owners++; continue; }
 
     T.accounts++;
