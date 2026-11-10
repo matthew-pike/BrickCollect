@@ -31,7 +31,7 @@ const BRANDS = [
   // Reobrix (Chinese brand, licensed World of Tanks, Maserati, Lambretta sets). Its store runs on UeeShop, not Shopify,
   // so products are read from the store's pages instead (ueeshopProducts below). Set numbers are on each product page
   // as "No.RB99009"; the store's collections (Car, Ship, Space, Train…) become the theme. Prices are in USD.
-  { brand: 'Reobrix', shop: 'https://reobrix.com', currency: 'USD', products: shop => ueeshopProducts(shop), imgSize: false },
+  { brand: 'Reobrix', shop: 'https://reobrix.com', currency: 'USD', products: (shop, known) => ueeshopProducts(shop, known), imgSize: false },
 ];
 
 const skuCode = p => { for (const v of p.variants || []) { const m = /^\d{5}([A-Z]{2,3})$/i.exec(String(v.sku || '').trim()); if (m) return m[1].toUpperCase(); } return ''; };
@@ -68,10 +68,16 @@ async function allProducts(url) {
 // then each product page for its name, set number, price and photo, and each collection's pages for the theme.
 // Returns products shaped like Shopify's (handle, title, variants[{price, sku}], images[{src}], product_type).
 const UA = { 'User-Agent': 'BrickCollect price updater (an Art of Bricks project)' };
+// Each page gets 20 seconds, and one more try after a pause if the store is busy (429/5xx) or slow.
 async function fetchHtml(url) {
-  const res = await fetch(url, { headers: { ...UA, Accept: 'text/html' } });
-  if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
-  return res.text();
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { ...UA, Accept: 'text/html' }, signal: AbortSignal.timeout(20e3) });
+      if (res.ok) return await res.text();
+      if (attempt >= 2 || !(res.status === 429 || res.status >= 500)) throw new Error(`HTTP ${res.status}`);
+    } catch (e) { if (attempt >= 2 || /^HTTP 4/.test(e.message)) throw e; }
+    await new Promise(r => setTimeout(r, 3000));
+  }
 }
 const decodeEnt = s => String(s || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n)).trim();
 const metaOf = (html, prop) => {
@@ -110,9 +116,9 @@ export function parseUeeshopProduct(html) {
   if (img.startsWith('//')) img = `https:${img}`;
   return { title, num, price: price > 0 ? price : 0, currency, img: /^https:\/\//.test(img) ? img : '' };
 }
-async function pagedHandles(url, maxPages = 40) {
+async function pagedHandles(url, maxPages = 40, until = Infinity) {
   const seen = [];
-  for (let page = 1; page <= maxPages; page++) {
+  for (let page = 1; page <= maxPages && Date.now() < until; page++) {
     const html = await fetchHtml(`${url}?page=${page}`);
     const fresh = productHandles(html).filter(h => !seen.includes(h));
     if (!fresh.length) break; // past the last page (UeeShop repeats the last page or shows none)
@@ -121,25 +127,36 @@ async function pagedHandles(url, maxPages = 40) {
   return seen;
 }
 async function inBatches(list, size, fn) { for (let i = 0; i < list.length; i += size) await Promise.all(list.slice(i, i + size).map(fn)); }
-async function ueeshopProducts(shop) {
-  const first = await fetchHtml(`${shop}/products`);
-  const handles = await pagedHandles(`${shop}/products`);
-  // Theme: the first menu collection a product is in (menu order).
+// known: product addresses already in BrickCollect. Pages not read yet go first, then the rest oldest-read first,
+// so if the time runs out, the next day carries on where this one stopped.
+export async function ueeshopProducts(shop, known = new Set(), budgetMs = 200e3) {
+  const started = Date.now(), stop = started + budgetMs, fails = {};
+  const handles = await pagedHandles(`${shop}/products`, 40, stop);
+  // Theme: the first menu collection a product is in (menu order). At most 60 seconds on this.
   const typeOf = new Map();
-  for (const [handle, name] of collectionLinks(first)) {
-    try { for (const h of await pagedHandles(`${shop}/collections/${handle}`, 15)) if (!typeOf.has(h)) typeOf.set(h, name); }
-    catch (e) { console.log(`brand-prices: ${shop} collection ${handle} skipped:`, e.message); }
-  }
-  const out = [], started = Date.now();
-  await inBatches(handles, 4, async h => {
-    if (Date.now() - started > 150e3) return; // leave time for the other brands; the rest are read tomorrow
-    try {
-      const p = parseUeeshopProduct(await fetchHtml(`${shop}/products/${encodeURIComponent(h)}`));
-      if (!p.num) return;
-      out.push({ handle: h, num: p.num, title: p.title, product_type: typeOf.get(h) || '', variants: [{ price: p.price, sku: p.num }], images: p.img ? [{ src: p.img }] : [], currency: p.currency });
-    } catch (e) { console.log(`brand-prices: ${shop}/products/${h} skipped:`, e.message); }
-  });
-  console.log(`brand-prices: ${shop} read ${out.length} of ${handles.length} product pages in ${Math.round((Date.now() - started) / 1000)}s`);
+  try {
+    const menuStop = Math.min(stop, Date.now() + 60e3);
+    for (const [handle, name] of collectionLinks(await fetchHtml(`${shop}/products`))) {
+      if (Date.now() > menuStop) break;
+      try { for (const h of await pagedHandles(`${shop}/collections/${handle}`, 15, menuStop)) if (!typeOf.has(h)) typeOf.set(h, name); }
+      catch (e) { console.log(`brand-prices: ${shop} collection ${handle} skipped:`, e.message); }
+    }
+  } catch (e) { console.log(`brand-prices: ${shop} menu skipped:`, e.message); }
+  const order = [...handles.filter(h => !known.has(`/products/${h}`)), ...handles.filter(h => known.has(`/products/${h}`))];
+  const out = [];
+  let i = 0;
+  // Six at a time, each taking the next address until the list or the time runs out.
+  await Promise.all(Array.from({ length: 6 }, async () => {
+    while (i < order.length && Date.now() < stop) {
+      const h = order[i++];
+      try {
+        const p = parseUeeshopProduct(await fetchHtml(`${shop}/products/${encodeURIComponent(h)}`));
+        if (!p.num) { fails['no set number'] = (fails['no set number'] || 0) + 1; continue; }
+        out.push({ handle: h, num: p.num, title: p.title, product_type: typeOf.get(h) || '', variants: [{ price: p.price, sku: p.num }], images: p.img ? [{ src: p.img }] : [], currency: p.currency });
+      } catch (e) { const k = e.name === 'TimeoutError' ? 'timed out' : e.message; fails[k] = (fails[k] || 0) + 1; }
+    }
+  }));
+  console.log(`brand-prices: ${shop} ${handles.length} products listed, ${typeOf.size} with a theme, ${out.length} read (${order.filter(h => !known.has(`/products/${h}`)).length} new before this run) in ${Math.round((Date.now() - started) / 1000)}s; not read: ${JSON.stringify(fails)}${i < order.length ? `; ${order.length - i} left for tomorrow` : ''}`);
   return out;
 }
 
@@ -158,7 +175,9 @@ export async function updateBrand({ brand, shop, series = [], numRe, themeOf, cu
   const perAud = currency === 'AUD' ? 1 : rates?.[currency];
   if (!perAud) throw new Error(`No exchange rate for ${currency}`);
 
-  const products = await (readProducts || allProducts)(shop);
+  const cat = (await readShared('catalog', brand)) || { brand, items: {} };
+  const known = new Set(Object.values(cat.items || {}).map(v => v?.url).filter(Boolean));
+  const products = await (readProducts || allProducts)(shop, known);
   // Which series (theme) each product belongs to: the first matching collection in the brand's list.
   const seriesOf = new Map();
   for (const [handle, name] of series) {
@@ -166,7 +185,6 @@ export async function updateBrand({ brand, shop, series = [], numRe, themeOf, cu
     catch (e) { console.log(`brand-prices: ${brand} series ${handle} skipped:`, e.message); }
   }
 
-  const cat = (await readShared('catalog', brand)) || { brand, items: {} };
   const items = { ...(cat.items || {}) };
   const updates = new Map(), now = new Date().toISOString();
   let added = 0, priced = 0, linked = 0, themed = 0, pictured = 0;
