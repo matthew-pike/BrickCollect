@@ -611,6 +611,9 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .copyrow button:hover{border-color:var(--accent)}
 .copyrow button:disabled{opacity:.35;cursor:default}
 .copies .hint{font-size:11.5px;color:var(--faint)}
+.copies .copyx{position:absolute;top:5px;right:5px;width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:6px;background:none;color:var(--faint);cursor:pointer}
+.copies .copyx:hover{color:var(--fg);background:var(--panel-2)}
+.copies .copyhead{margin-top:16px}
 .copies .code{font-family:var(--font-mono);font-size:10.5px;color:var(--faint);margin-left:2px}
 .copyhead{display:grid;grid-template-columns:1fr 104px 104px;gap:10px;align-items:end}.copyhead h4:first-child{grid-column:2}.copyhead h4{text-align:center;margin:0;font-size:11px;font-weight:500;color:var(--muted)}
 .copyhead h4:last-child{color:var(--violet)}
@@ -2303,7 +2306,8 @@ function paintCopies() {
   copiesEl.innerHTML = `<div class="copyhead"><h4>Copies you own</h4><h4>Sale or trade <span class="code">ST</span></h4></div>${CONDS.map(c => `<div class="copyrow"><span class="lab"><span class="dot" style="--c:${colour[c]}"></span>${COND[c]} <span class="code">${{ new: 'N', used: 'UC', 'used-inc': 'UI' }[c]}</span></span>${step('copy', c, q[c])}${step('sale', c, sq[c], q[c])}</div>`).join('')}
     ${ns ? `<button class="lstbtn" data-listing="1">Listing details…<small>for BrickLink</small></button>` : ''}
     ${ns ? `<button class="soldbtn ${soldConfirm ? 'confirm' : ''}" data-sold="1">${soldConfirm ? `Remove ${ns} sold or traded ${ns === 1 ? 'copy' : 'copies'} from your collection?` : `Sold or traded (${ns})…`}</button>` : ''}
-    <span class="hint">Set all copies to 0 to remove it from your collection.</span>`;
+    <span class="hint">Set all copies to 0 to remove it from your collection.</span>
+    <button class="copyx" type="button" data-copiesclose="1" aria-label="Close" title="Close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
 }
 function placeCopies() {
   const chip = document.querySelector(`[data-condmenu="${CSS.escape(copiesFor)}"]`);
@@ -2346,6 +2350,7 @@ document.addEventListener('click', e => {
   if (t.dataset.unmytag) { const x = findItem(t.dataset.n); if (x) editMyTags([x], t.dataset.unmytag, true); return; }
   if (t.dataset.tagfilter) { focus = null; fill(fi.film, 'All', [[t.dataset.tagfilter, t.dataset.tagfilter]], t.dataset.tagfilter); filmOptions(t.dataset.tagfilter); limit = PAGE; savePrefs(); render(); window.scrollTo({ top: $('fiFilm').getBoundingClientRect().top + scrollY - 120, behavior: 'smooth' }); return; }
   if (t.dataset.price) { editing = t.dataset.n + '|' + t.dataset.price; render(); return; }
+  if (t.dataset.copiesclose) { closeCopies(); return; }
   if (t.dataset.condmenu) { copiesFor === t.dataset.condmenu ? closeCopies() : openCopies(t.dataset.condmenu); return; }
   if (t.dataset.sale) { soldConfirm = false; const n = copiesFor, q = saleOf({ n }); q[t.dataset.sale] += Number(t.dataset.d); setInfo(n, { sale: q }); placeCopies(); return; }
   if (t.dataset.listing) { const n = copiesFor; closeCopies(); openListing(n); return; }
