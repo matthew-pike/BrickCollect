@@ -28,6 +28,10 @@ const BRANDS = [
   // MX = bundles of other sets, and bundles with no SKU don't match either, so neither is added.
   // The licence code becomes the theme (unknown codes stay Unsorted for the owner to sort).
   { brand: 'Brickcraft', shop: 'https://shopbrickcraft.com', numRe: /\b(\d{5})(?!MX)[A-Z]{2,3}\b/i, themeOf: p => BRICKCRAFT_LINES[skuCode(p)] },
+  // Reobrix (Chinese brand, licensed World of Tanks, Maserati, Lambretta sets). Its store runs on UeeShop, not Shopify,
+  // so products are read from the store's pages instead (ueeshopProducts below). Set numbers are on each product page
+  // as "No.RB99009"; the store's collections (Car, Ship, Space, Train…) become the theme. Prices are in USD.
+  { brand: 'Reobrix', shop: 'https://reobrix.com', currency: 'USD', products: shop => ueeshopProducts(shop), imgSize: false },
 ];
 
 const skuCode = p => { for (const v of p.variants || []) { const m = /^\d{5}([A-Z]{2,3})$/i.exec(String(v.sku || '').trim()); if (m) return m[1].toUpperCase(); } return ''; };
@@ -40,7 +44,7 @@ const BRICKCRAFT_LINES = {
 
 // The set number is the last number in the address, optionally followed by a region (e.g. pantasy-t-800-87503-us-eu).
 const numFromHandle = h => { const m = /-([a-z]?\d{4,6})(?:-[a-z]{2,3})*$/i.exec(h || ''); return m ? m[1].toUpperCase() : null; };
-const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy|JMBricklayer|JM\s?Bricklayer|Brickcraft)\b[\s:–-]*/i, '').trim() || num;
+const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy|JMBricklayer|JM\s?Bricklayer|Brickcraft|Reobrix)\b[\s:–-]*/i, '').trim() || num;
 
 async function fetchJson(url) {
   const res = await fetch(url, { headers: { 'User-Agent': 'BrickCollect price updater (an Art of Bricks project)', Accept: 'application/json' } });
@@ -59,7 +63,88 @@ async function allProducts(url) {
   return out;
 }
 
+// ---------- UeeShop stores (Reobrix) ----------
+// No product list in JSON, so: read the store's product list pages (/products?page=N) for the product addresses,
+// then each product page for its name, set number, price and photo, and each collection's pages for the theme.
+// Returns products shaped like Shopify's (handle, title, variants[{price, sku}], images[{src}], product_type).
+const UA = { 'User-Agent': 'BrickCollect price updater (an Art of Bricks project)' };
+async function fetchHtml(url) {
+  const res = await fetch(url, { headers: { ...UA, Accept: 'text/html' } });
+  if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
+  return res.text();
+}
+const decodeEnt = s => String(s || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n)).trim();
+const metaOf = (html, prop) => {
+  const m = new RegExp(`<meta[^>]+(?:property|name|itemprop)=["']${prop.replace(/[.:]/g, '\\$&')}["'][^>]*content=["']([^"']*)["']`, 'i').exec(html)
+    || new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]*(?:property|name|itemprop)=["']${prop.replace(/[.:]/g, '\\$&')}["']`, 'i').exec(html);
+  return m ? decodeEnt(m[1]) : '';
+};
+// Product addresses on a page (decoded, so "bat-châtillon…" is one handle however the page writes it).
+export function productHandles(html) {
+  const out = [];
+  for (const m of html.matchAll(/href=["'](?:https?:\/\/[^/"']+)?\/products\/([^"'?#/]+)\/?["'?#]/gi)) {
+    let h = m[1]; try { h = decodeURIComponent(h); } catch { /* keep as written */ }
+    if (h && !out.includes(h)) out.push(h);
+  }
+  return out;
+}
+// The store's collections from its menu: [handle, name]. Skips catch-alls like "All products", "New", "Sale".
+export function collectionLinks(html) {
+  const out = new Map();
+  for (const m of html.matchAll(/<a[^>]+href=["'](?:https?:\/\/[^/"']+)?\/collections\/([a-z0-9-]+)\/?["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const name = decodeEnt(m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '));
+    if (!name || name.length > 40 || /\b(all|new|hot|sale|best|deals?|discount|gift|clearance|pre-?order)\b/i.test(name)) continue;
+    if (!out.has(m[1])) out.set(m[1], name);
+  }
+  return [...out];
+}
+// One product page → { title, num, price, currency, img }.
+export function parseUeeshopProduct(html) {
+  const title = metaOf(html, 'og:title') || decodeEnt((/<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html) || [])[1]?.replace(/<[^>]+>/g, ''));
+  const text = html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<[^>]+>/g, ' ');
+  const num = (/\bNo\.?\s*:?\s*RB\s?-?(\d{3,6})\b/i.exec(text) || /\bRB(\d{3,6})\b/.exec(metaOf(html, 'product:retailer_item_id')) || [])[1] || '';
+  let price = Number(metaOf(html, 'product:price:amount') || metaOf(html, 'og:price:amount') || metaOf(html, 'price'));
+  if (!(price > 0)) { const m = /"price"\s*:\s*"?([\d.]+)/.exec(html); price = m ? Number(m[1]) : 0; }
+  const currency = (metaOf(html, 'product:price:currency') || metaOf(html, 'og:price:currency') || metaOf(html, 'priceCurrency')).toUpperCase();
+  let img = metaOf(html, 'og:image');
+  if (img.startsWith('//')) img = `https:${img}`;
+  return { title, num, price: price > 0 ? price : 0, currency, img: /^https:\/\//.test(img) ? img : '' };
+}
+async function pagedHandles(url, maxPages = 40) {
+  const seen = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const html = await fetchHtml(`${url}?page=${page}`);
+    const fresh = productHandles(html).filter(h => !seen.includes(h));
+    if (!fresh.length) break; // past the last page (UeeShop repeats the last page or shows none)
+    seen.push(...fresh);
+  }
+  return seen;
+}
+async function inBatches(list, size, fn) { for (let i = 0; i < list.length; i += size) await Promise.all(list.slice(i, i + size).map(fn)); }
+async function ueeshopProducts(shop) {
+  const first = await fetchHtml(`${shop}/products`);
+  const handles = await pagedHandles(`${shop}/products`);
+  // Theme: the first menu collection a product is in (menu order).
+  const typeOf = new Map();
+  for (const [handle, name] of collectionLinks(first)) {
+    try { for (const h of await pagedHandles(`${shop}/collections/${handle}`, 15)) if (!typeOf.has(h)) typeOf.set(h, name); }
+    catch (e) { console.log(`brand-prices: ${shop} collection ${handle} skipped:`, e.message); }
+  }
+  const out = [], started = Date.now();
+  await inBatches(handles, 4, async h => {
+    if (Date.now() - started > 150e3) return; // leave time for the other brands; the rest are read tomorrow
+    try {
+      const p = parseUeeshopProduct(await fetchHtml(`${shop}/products/${encodeURIComponent(h)}`));
+      if (!p.num) return;
+      out.push({ handle: h, num: p.num, title: p.title, product_type: typeOf.get(h) || '', variants: [{ price: p.price, sku: p.num }], images: p.img ? [{ src: p.img }] : [], currency: p.currency });
+    } catch (e) { console.log(`brand-prices: ${shop}/products/${h} skipped:`, e.message); }
+  });
+  console.log(`brand-prices: ${shop} read ${out.length} of ${handles.length} product pages in ${Math.round((Date.now() - started) / 1000)}s`);
+  return out;
+}
+
 function numFor(p, numRe) {
+  if (p.num) return String(p.num).toUpperCase(); // read straight from the product page (UeeShop stores)
   if (!numRe) return numFromHandle(p.handle);
   for (const s of [String(p.handle || '').replace(/-/g, ' '), p.title, ...(p.variants || []).map(v => v.sku)]) {
     const m = numRe.exec(String(s || '')); if (m) return m[1].toUpperCase();
@@ -67,13 +152,13 @@ function numFor(p, numRe) {
   return null;
 }
 
-export async function updateBrand({ brand, shop, series = [], numRe, themeOf }, rates, manual = new Set()) {
-  let currency = 'USD';
-  try { currency = (await fetchJson(`${shop}/cart.js`)).currency || currency; } catch { /* keep default */ }
+export async function updateBrand({ brand, shop, series = [], numRe, themeOf, currency: fixedCurrency, products: readProducts, imgSize = true }, rates, manual = new Set()) {
+  let currency = fixedCurrency || 'USD';
+  if (!fixedCurrency) try { currency = (await fetchJson(`${shop}/cart.js`)).currency || currency; } catch { /* keep default */ }
   const perAud = currency === 'AUD' ? 1 : rates?.[currency];
   if (!perAud) throw new Error(`No exchange rate for ${currency}`);
 
-  const products = await allProducts(shop);
+  const products = await (readProducts || allProducts)(shop);
   // Which series (theme) each product belongs to: the first matching collection in the brand's list.
   const seriesOf = new Map();
   for (const [handle, name] of series) {
@@ -96,7 +181,7 @@ export async function updateBrand({ brand, shop, series = [], numRe, themeOf }, 
     // Product photo from the store, unless you've set a picture yourself (imgAuto marks ones set here).
     const src = p.images?.[0]?.src || p.image?.src;
     if (src) {
-      const img = src.replace(/^\/\//, 'https://') + (src.includes('?') ? '&' : '?') + 'width=640';
+      const img = src.replace(/^\/\//, 'https://') + (imgSize ? (src.includes('?') ? '&' : '?') + 'width=640' : '');
       const cur = items[num];
       if (/^https:\/\//.test(img) && cur.img !== img && (!cur.img || cur.imgAuto)) { items[num] = { ...cur, img, imgAuto: true }; pictured++; }
     }

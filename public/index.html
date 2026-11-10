@@ -705,6 +705,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .buy-jmbricklayer{--t:#1b1b1b;--bd:#f39800;--hv:#b86f00;--hb:#b86f00}
 .buy-mould-king{--t:#0b3a82;--bd:#0b3a82;--hv:#062452;--hb:#f5c400}
 .buy-brickcraft{--t:#c8102e;--bd:#c8102e;--hv:#7d0a1d;--hb:#7d0a1d}
+.buy-reobrix{--t:#1d1d1f;--bd:#8a8f98;--hv:#000;--hb:#1d1d1f}
 /* Hover: the chip keeps its brand colours and only the letters change colour */
 .btn.buy,.btn.bl{transition:color .15s ease}
 .btn.mini.buy:not(.buy-wide),.btn.mini.bl{box-sizing:border-box;min-width:36px}
@@ -1653,6 +1654,7 @@ const BUY = Object.assign({
   JMBricklayer: { label: 'JM', name: 'JMBricklayer', title: 'Buy at JMBricklayer', product: 'https://jmbricklayer.com{path}', url: 'https://jmbricklayer.com/search?q={num}' },
   'Mould King': { label: 'MK', name: 'Mould King', title: 'Buy at Mould King', product: 'https://mouldkingcorp.com{path}', url: 'https://mouldkingcorp.com/search?q={num}' },
   Brickcraft: { label: 'BR', name: 'Brickcraft', title: 'Buy at Brickcraft', product: 'https://shopbrickcraft.com{path}', url: 'https://shopbrickcraft.com/search?q={num}' },
+  Reobrix: { label: 'RX', name: 'Reobrix', title: 'Buy at Reobrix', product: 'https://reobrix.com{path}', url: 'https://reobrix.com/products/' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
 // Set number as shown: LEGO's usual "-1" is hidden (75192), later versions keep theirs (75192-2). Exports keep the full number.
 const shownNum = x => x.disp || (x.brand === 'LEGO' && x.k === 's' ? x.n.replace(/-1$/, '') : x.n);
@@ -1744,7 +1746,7 @@ const THEME_TILES = [
   ['Ideas', 'Ideas', '21330-1'], ['Art', 'LEGO Art', '31208-1'], ['Disney', 'Disney', '43222-1'], ['Speed Champions', 'Speed Champions', '76916-1'],
   ['Friends', 'Friends', '41704-1'], ['Minecraft', 'Minecraft', '21189-1'], ['Bionicle', 'Bionicle', '8733-1'],
 ];
-const BRAND_TILES = ['LumiBricks', 'Pantasy', 'JMBricklayer', 'Brickcraft'];
+const BRAND_TILES = ['LumiBricks', 'Pantasy', 'JMBricklayer', 'Brickcraft', 'Reobrix'];
 function paintThemeStrip() {
   const el = $('themeStrip'); if (!el || !CAT) return;
   const themes = new Set([...fi.theme.options].map(o => o.value).filter(Boolean));
@@ -1999,7 +2001,7 @@ const COLS = () => [
   { key: 'n', label: kind === 'sets' ? 'Set #' : 'RB #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BL #' }] : []), { key: 'year', label: 'Year' },
   { key: 'pieces', label: 'Pieces', cls: 'num' },
   { key: 'used', label: `Used ${cur()}`, cls: 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
-  { key: 'new', label: `New ${cur()}`, cls: 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or the brand’s own store price for LumiBricks, Pantasy, CaDA and Mould King. In your currency.` },
+  { key: 'new', label: `New ${cur()}`, cls: 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or the brand’s own store price for the other brands (LumiBricks, Pantasy, Reobrix and more). In your currency.` },
   { label: 'Links ↗', cls: 'num', tip: 'Each button opens a new tab. The coloured button opens the set at the brand’s own store (some are affiliate links that support BrickCollect). BL opens it on BrickLink.' },
 ];
 const val = (x, k) => k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
@@ -3934,6 +3936,7 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 const RELEASES = [
   { v: '0.20', date: '10 November 2026', title: 'Show off your collection', items: [
     ['Share your collection', 'turn your collection into a picture for your Instagram Story, a post, Facebook or anywhere: your sets, minifigures, pieces, value, retired sets and top themes. Open Collection insights and tap Share, or Export → Share your collection.'],
+    ['Reobrix', 'joins the other brands: tanks, cars, ships, trains and buildings, with store prices, photos and a button to the Reobrix store.'],
     ['You choose what shows', 'hide the value, add your name or @handle, and pick a theme first to share just that part of your collection, like your Star Wars sets.'],
   ] },
   { v: '0.19', date: '9 November 2026', title: 'Share what you’re selling', items: [

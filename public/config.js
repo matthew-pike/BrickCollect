@@ -31,5 +31,7 @@ window.BC_CONFIG = {
     JMBricklayer: { label: 'JM', name: 'JMBricklayer', title: 'Buy at JMBricklayer', product: 'https://jmbricklayer.com{path}', url: 'https://jmbricklayer.com/search?q={num}' },
     'Mould King': { label: 'MK', name: 'Mould King', title: 'Buy at Mould King', product: 'https://mouldkingcorp.com{path}', url: 'https://mouldkingcorp.com/search?q={num}' },
     Brickcraft:   { label: 'BR', name: 'Brickcraft', title: 'Buy at Brickcraft', product: 'https://shopbrickcraft.com{path}', url: 'https://shopbrickcraft.com/search?q={num}' },
+    // Reobrix's store (UeeShop) has no search address we can link to, so sets without a product page go to the full product list.
+    Reobrix:      { label: 'RX', name: 'Reobrix', title: 'Buy at Reobrix', product: 'https://reobrix.com{path}', url: 'https://reobrix.com/products/' },
   },
 };
