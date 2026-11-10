@@ -249,7 +249,7 @@ button.hitile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .notice b{font-weight:500}
 .notice p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.4;max-width:none}
 .notice .x{position:absolute;top:50%;right:6px;transform:translateY(-50%)}
-@media (max-width:640px){.notice .nmore{display:none}}
+@media (max-width:640px){.notice .nmore{display:none}.notice{padding:9px 38px 9px 10px;gap:8px}.notice p{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}}
 :root[data-theme="light"] .notice{background:color-mix(in srgb,var(--accent) 18%,#fff);border-color:var(--accent)}
 :root[data-theme="light"] .notice b{color:var(--accent)}
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]):not([data-theme="mid"]) .notice{background:color-mix(in srgb,var(--accent) 18%,#fff);border-color:var(--accent)}:root:not([data-theme="dark"]):not([data-theme="mid"]) .notice b{color:var(--accent)}}
@@ -830,7 +830,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 <main>
   <section class="notice" id="blNotice" role="status" hidden>
     <span class="ni" aria-hidden="true">!</span>
-    <p><b>BrickLink is offline</b> until at least <span id="blBack">Wed 11 Nov, 6pm CET</span>.<span class="nmore"> BrickLink prices here are from before the outage.</span></p>
+    <p><b>BrickLink is offline</b> until<span class="nmore"> at least</span> <span id="blBack">Wed 11 Nov, 6pm CET</span>.<span class="nmore"> BrickLink prices here are from before the outage.</span></p>
     <button class="icon-btn x" type="button" id="hideBlNotice" aria-label="Hide this notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </section>
   <div class="themewrap arrowwrap" id="themeWrap" hidden>
@@ -2358,7 +2358,7 @@ $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start',
   if (gone) return;
   try {
     const back = new Date('2026-11-11T17:00:00Z');
-    $('blBack').textContent = back.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+    $('blBack').textContent = back.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', ...(back.getMinutes() ? { minute: '2-digit' } : {}) }).replace(/,(?= \d+ )/, '');
   } catch {}
   $('blNotice').hidden = false;
   $('hideBlNotice').onclick = () => { $('blNotice').hidden = true; lsSet(KEY, 1); track('notice_hide', { id: 'bl_outage' }); };
