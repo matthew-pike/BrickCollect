@@ -681,12 +681,14 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .shx .shhow b{color:var(--fg);font-weight:500}
 .insshare{flex:0 0 auto;align-self:stretch;padding-inline:14px}
 .insshare svg{margin-right:-1px}
-.cdx{width:min(660px,calc(100vw - 32px))}
+.dlg.cdx{width:min(660px,calc(100vw - 32px))}
 .cdx .cdgrid{display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;align-items:start}
 .cdx .cdprev{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;justify-content:center}
 .cdx .cdprev img{display:block;width:100%;height:auto;max-height:62vh;object-fit:contain;border-radius:6px}
 .cdx .cdopts{display:flex;flex-direction:column;gap:12px}
-.cdx .cdopts .sellmode{grid-column:auto}
+.cdx .cdopts .sellmode{grid-column:auto;align-self:flex-start}
+.cdx .cdcols button{display:inline-flex;align-items:center;gap:7px}
+.cdx .cdcols i{width:14px;height:14px;border-radius:50%;background:var(--sw);box-shadow:0 0 0 1px rgba(127,140,160,.6)}
 .cdx .cdchk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--fg);cursor:pointer}
 .cdx .cdchk input{width:16px;height:16px;accent-color:var(--accent);margin:0}
 .cdx .cdname{display:flex;flex-direction:column;gap:4px}
@@ -1143,6 +1145,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <div class="cdprev"><img id="cardImg" alt="Preview of your collection picture"></div>
     <div class="cdopts">
       <div class="sellmode" role="group" aria-label="Picture size"><button type="button" data-cdsize="story" aria-pressed="true">Story</button><button type="button" data-cdsize="post" aria-pressed="false">Post</button></div>
+      <div class="sellmode cdcols" role="group" aria-label="Colour"><button type="button" data-cdcol="navy" aria-pressed="true"><i style="--sw:#0F192D"></i>Navy</button><button type="button" data-cdcol="ocean" aria-pressed="false"><i style="--sw:#0A3550"></i>Ocean</button><button type="button" data-cdcol="cloud" aria-pressed="false"><i style="--sw:#F2F4F7"></i>Cloud</button></div>
       <label class="cdchk"><input type="checkbox" id="cdVal" checked> Collection value</label>
       <label class="cdchk"><input type="checkbox" id="cdThemes" checked> Top themes</label>
       <label class="cdname">Name or @handle <input class="inp" id="cdName" maxlength="30" placeholder="Optional" autocapitalize="off" spellcheck="false"></label>
@@ -3361,7 +3364,13 @@ $('shClose').onclick = () => shDlg.close();
    Drawn on a canvas in the browser: nothing is uploaded. Follows the filters in view (pick a theme to share just that).
    Story 1080×1920 or Post 1080×1350, in the navy Instagram colours (see the BrickCollect brand doc). */
 const CARD_K = 'bc-card', CARD_W = 1080, CARD_H = { story: 1920, post: 1350 };
-const CARD_C = { bg: '#0F192D', card: '#16233D', line: '#2E3B55', fg: '#FFFFFF', muted: '#A9B4C4', accent: '#1FB3E5', value: '#B9A8FF', coral: '#FF8A78', badge: '#6B7888', themes: ['#1FB3E5', '#7FDCFF', '#B9A8FF', '#4A5A78'] };
+// Three backgrounds from the Instagram post colours (BrickCollect brand doc). The badge stays moonstone on all of them.
+const CARD_COLS = {
+  navy: { bg: '#0F192D', card: '#16233D', line: '#2E3B55', fg: '#FFFFFF', muted: '#A9B4C4', accent: '#1FB3E5', value: '#B9A8FF', themes: ['#1FB3E5', '#7FDCFF', '#B9A8FF', '#4A5A78'] },
+  ocean: { bg: '#0A3550', card: '#0E4263', line: '#24557A', fg: '#FFFFFF', muted: '#A8C7DA', accent: '#4FCBF2', value: '#C4B5FF', themes: ['#4FCBF2', '#A8E6FA', '#C4B5FF', '#3A6A8C'] },
+  cloud: { bg: '#F2F4F7', card: '#FFFFFF', line: '#CBD3DE', fg: '#0F192D', muted: '#4A5566', accent: '#0A86B8', value: '#6D4FD8', themes: ['#0A86B8', '#4FCBF2', '#8B73E6', '#CBD3DE'] },
+};
+const CARD_BADGE = '#6B7888';
 let cardBlob = null, cardUrl = '', cardFonts = null, cardT = null;
 function cardFontLoad() {
   if (cardFonts) return cardFonts;
@@ -3388,7 +3397,7 @@ function cardData() {
     return { sets: sets.length, figs: figs.length, pieces, value, priced, retired: sets.filter(x => retState(x) === 'R').length, themes, bySub, scopeName, filtered: sc };
   } finally { focus = fo; }
 }
-function cardOpts() { const p = lsGet(CARD_K) || {}; return { size: p.size === 'post' ? 'post' : 'story', value: p.value !== false, themes: p.themes !== false, name: typeof p.name === 'string' ? p.name : '' }; }
+function cardOpts() { const p = lsGet(CARD_K) || {}; return { size: p.size === 'post' ? 'post' : 'story', color: CARD_COLS[p.color] ? p.color : 'navy', value: p.value !== false, themes: p.themes !== false, name: typeof p.name === 'string' ? p.name : '' }; }
 const cardNum = n => n >= 100000 ? new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(n) : n.toLocaleString();
 function cardMoney(aud) {
   const c = cur(), v = (aud || 0) * rate();
@@ -3397,7 +3406,7 @@ function cardMoney(aud) {
 }
 // oy shifts the content down (the Story picture centres it between Instagram's top and bottom bars). Returns where the content ends.
 function cardDraw(cv, d, o, oy = 0) {
-  const W = CARD_W, H = CARD_H[o.size], story = o.size === 'story', P = 90;
+  const W = CARD_W, H = CARD_H[o.size], story = o.size === 'story', P = 90, CARD_C = CARD_COLS[o.color] || CARD_COLS.navy;
   cv.width = W; cv.height = H;
   const g = cv.getContext('2d'), F = (w, px) => `${w} ${px}px Jost, Roboto, system-ui, sans-serif`;
   const sp = px => { try { g.letterSpacing = `${px}px`; } catch { /* older browsers: no spacing */ } };
@@ -3409,17 +3418,17 @@ function cardDraw(cv, d, o, oy = 0) {
   const rr = (x, y, w, h, r, col) => { g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); g.fill(); };
   g.fillStyle = CARD_C.bg; g.fillRect(0, 0, W, H);
   // Header: BC badge, whose collection, date
-  const by = (story ? 150 : 120) + oy, br = 46;
-  g.fillStyle = CARD_C.badge; g.beginPath(); g.arc(P + br, by, br, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2.2; g.beginPath(); g.arc(P + br, by, br - 4.5, 0, Math.PI * 2); g.stroke();
-  g.textBaseline = 'middle'; g.font = F(400, 36); g.fillStyle = '#fff'; g.textAlign = 'center'; sp(2); g.fillText('BC', P + br + 1, by + 2); sp(0);
+  const by = (story ? 170 : 136) + oy, br = 64;
+  g.fillStyle = CARD_BADGE; g.beginPath(); g.arc(P + br, by, br, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 3; g.beginPath(); g.arc(P + br, by, br - 6, 0, Math.PI * 2); g.stroke();
+  g.textBaseline = 'middle'; g.font = F(400, 50); g.fillStyle = '#fff'; g.textAlign = 'center'; sp(3); g.fillText('BC', P + br + 1.5, by + 3); sp(0);
   // Line 1: your name or @handle as typed (or "My … collection"); line 2: the collection and the date.
   const what = d.scopeName ? `${d.scopeName} collection` : 'collection', date = new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
-  const tx = P + br * 2 + 30, tmax = W - tx - P;
-  text(o.name || `My ${what}`, tx, by - 4, F(500, 38), CARD_C.fg, { max: tmax });
-  text(o.name ? `${what[0].toUpperCase()}${what.slice(1)} · ${date}` : date, tx, by + 38, F(400, 28), CARD_C.muted, { max: tmax });
+  const tx = P + br * 2 + 34, tmax = W - tx - P;
+  text(o.name || `My ${what}`, tx, by + 2, F(500, 56), CARD_C.fg, { max: tmax });
+  text(o.name ? `${what[0].toUpperCase()}${what.slice(1)} · ${date}` : date, tx, by + 52, F(400, 32), CARD_C.muted, { max: tmax });
   // Big number
-  let y = (story ? 470 : 380) + oy;
+  let y = (story ? 520 : 420) + oy;
   text(d.sets.toLocaleString(), P - 6, y, F(500, story ? 230 : 190), CARD_C.fg);
   text(d.sets === 1 ? 'set' : 'sets', P, y + (story ? 70 : 62), F(400, 46), CARD_C.muted);
   y += story ? 140 : 115;
@@ -3427,7 +3436,7 @@ function cardDraw(cv, d, o, oy = 0) {
   const tiles = [[cardNum(d.figs), d.figs === 1 ? 'minifigure' : 'minifigures', CARD_C.fg], [cardNum(d.pieces), 'pieces', CARD_C.fg]];
   if (o.value && d.priced) tiles.push([cardMoney(d.value), 'value', CARD_C.value]);
   tiles.push([d.retired.toLocaleString(), 'retired', CARD_C.fg]);
-  const gap = 24, tw = (W - P * 2 - gap) / 2, th = story ? 190 : 160;
+  const gap = 24, tw = (W - P * 2 - gap) / 2, th = story ? 190 : 150;
   tiles.forEach(([v, k, col], i) => {
     const last = i === tiles.length - 1 && tiles.length % 2, x = P + (i % 2) * (tw + gap), ty = y + Math.floor(i / 2) * (th + gap), w = last ? W - P * 2 : tw;
     rr(x, ty, w, th, 22, CARD_C.card);
@@ -3459,26 +3468,26 @@ function cardDraw(cv, d, o, oy = 0) {
   const fy = H - (story ? 150 : 100);
   g.fillStyle = CARD_C.line; g.fillRect(P, fy - 56, W - P * 2, 2);
   text('brickcollect.app', P, fy, F(500, 38), CARD_C.accent, { spacing: 3 });
-  text('Free collection tracker', W - P, fy, F(400, 28), CARD_C.muted, { align: 'right' });
   return end;
 }
 async function cardPaint() {
   const d = cardData(), o = cardOpts();
   document.querySelectorAll('[data-cdsize]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cdsize === o.size)));
+  document.querySelectorAll('[data-cdcol]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cdcol === o.color)));
   $('cdVal').checked = o.value; $('cdThemes').checked = o.themes;
   $('cdVal').closest('label').hidden = !d.priced;
   $('cdScope').textContent = d.filtered ? `Shows the ${d.sets.toLocaleString()} set${d.sets === 1 ? '' : 's'} you own that are in view${d.scopeName ? ` (${d.scopeName})` : ''}. Clear the filters to share your whole collection.` : 'Tip: pick a theme first to share just that part of your collection.';
   await cardFontLoad();
   const cv = document.createElement('canvas');
   const end = cardDraw(cv, d, o);
-  if (o.size === 'story') { const top = 104, room = [230, CARD_H.story - 300], h = end - top; cardDraw(cv, d, o, Math.max(0, Math.round(room[0] + (room[1] - room[0] - h) / 2 - top))); }
+  if (o.size === 'story') { const top = 106, room = [230, CARD_H.story - 300], h = end - top; cardDraw(cv, d, o, Math.max(0, Math.round(room[0] + (room[1] - room[0] - h) / 2 - top))); }
   cardBlob = await new Promise(r => cv.toBlob(r, 'image/png'));
   if (cardUrl) URL.revokeObjectURL(cardUrl);
   cardUrl = cardBlob ? URL.createObjectURL(cardBlob) : '';
   $('cardImg').src = cardUrl;
 }
 const cardFile = () => new File([cardBlob], `brickcollect-${new Date().toISOString().slice(0, 10)}.png`, { type: 'image/png' });
-const cardEv = action => { const o = cardOpts(); track('share_card', { action, size: o.size, value: o.value, themes: o.themes, name: !!o.name }); };
+const cardEv = action => { const o = cardOpts(); track('share_card', { action, size: o.size, color: o.color, value: o.value, themes: o.themes, name: !!o.name }); };
 function cardOpen(from) {
   if (!CAT) return;
   setExportMenu(false);
@@ -3495,6 +3504,7 @@ function cardOpen(from) {
 }
 const cardSet = patch => { lsSet(CARD_K, { ...cardOpts(), ...patch }); clearTimeout(cardT); cardT = setTimeout(cardPaint, 120); };
 document.querySelectorAll('[data-cdsize]').forEach(b => b.addEventListener('click', () => cardSet({ size: b.dataset.cdsize })));
+document.querySelectorAll('[data-cdcol]').forEach(b => b.addEventListener('click', () => cardSet({ color: b.dataset.cdcol })));
 $('cdVal').onchange = () => cardSet({ value: $('cdVal').checked });
 $('cdThemes').onchange = () => cardSet({ themes: $('cdThemes').checked });
 $('cdName').oninput = () => cardSet({ name: $('cdName').value.replace(/\s+/g, ' ').trim().slice(0, 30) });
