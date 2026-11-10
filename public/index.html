@@ -243,6 +243,15 @@ button.hitile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .welcome .narrow-only{display:none}
 @media (max-width:640px){.welcome .wide-only{display:none}.welcome .narrow-only{display:inline}}
 .welcome .x{position:absolute;top:12px;right:12px}
+/* Notice banner (e.g. BrickLink outage): the same light BrickCollect-blue tint as Getting started, the notification colour */
+.notice{display:flex;align-items:flex-start;gap:12px;padding:12px 44px 12px 14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 12%,var(--panel));position:relative}
+.notice .ni{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:13px;margin-top:1px}
+.notice b{font-weight:500}
+.notice p{margin:2px 0 0;color:var(--muted);font-size:13px;line-height:1.45;max-width:none}
+.notice .x{position:absolute;top:8px;right:8px}
+:root[data-theme="light"] .notice{background:color-mix(in srgb,var(--accent) 18%,#fff);border-color:var(--accent)}
+:root[data-theme="light"] .notice b{color:var(--accent)}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]):not([data-theme="mid"]) .notice{background:color-mix(in srgb,var(--accent) 18%,#fff);border-color:var(--accent)}:root:not([data-theme="dark"]):not([data-theme="mid"]) .notice b{color:var(--accent)}}
 
 #filtToggle{display:none}
 .filtrow{display:contents}
@@ -818,6 +827,12 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 
 <div class="wrap">
 <main>
+  <section class="notice" id="blNotice" role="status" hidden>
+    <span class="ni" aria-hidden="true">!</span>
+    <div><b>BrickLink is offline</b>
+      <p>LEGO has had BrickLink down for maintenance since 6 November. Until it’s back, BrickLink prices here are from before the outage, and BrickLink links and store uploads won’t work. It’s expected back <span id="blBack">Wednesday 11 November, 6pm CET</span> at the earliest.</p></div>
+    <button class="icon-btn x" type="button" id="hideBlNotice" aria-label="Hide this notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </section>
   <div class="themewrap arrowwrap" id="themeWrap" hidden>
     <button type="button" class="tarrow prev" id="themePrev" data-dir="-1" aria-label="Scroll left" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
     <nav class="themestrip hstrip" id="themeStrip" aria-label="Jump to a theme or brand"></nav>
@@ -2336,6 +2351,18 @@ $('more').onclick = () => { limit += PAGE; render(); };
 $('moreAll').onclick = () => { limit = SHOW_ALL_MAX; render(); };
 $('fiReset').onclick = $('fiClearM').onclick = () => { focus = null; tlFilter = null; leaveSale(); Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
+// BrickLink outage notice (Nov 2026). Hidden once dismissed; remove this block when BrickLink is back.
+(() => {
+  const KEY = 'bc-notice-blout1';
+  let gone = false; try { gone = !!localStorage.getItem(KEY); } catch {}
+  if (gone) return;
+  try {
+    const back = new Date('2026-11-11T17:00:00Z');
+    $('blBack').textContent = back.toLocaleString(undefined, { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }) + ' your time';
+  } catch {}
+  $('blNotice').hidden = false;
+  $('hideBlNotice').onclick = () => { $('blNotice').hidden = true; lsSet(KEY, 1); track('notice_hide', { id: 'bl_outage' }); };
+})();
 $('gotIt').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 // Getting started shows until the person closes it (Got it or ×), with its own marker so other saved settings can't hide it.
 if (!lsGet('bc-start')) $('welcome').hidden = false;
