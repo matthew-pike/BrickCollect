@@ -83,6 +83,13 @@
           "functionId": "syncPrices",
           "region": "australia-southeast1"
         }
+      },
+      {
+        "source": "/api/refresh-usage",
+        "function": {
+          "functionId": "refreshUsage",
+          "region": "australia-southeast1"
+        }
       }
     ]
   },

@@ -109,6 +109,8 @@
       return adminCache;
     },
     isOwner: async () => (await user.role()) === 'super',
+    // A fresh sign-in token for calls to BrickCollect's own functions (e.g. the Admin page's Sync button).
+    token: async () => { await ready; return current ? current.getIdToken() : null; },
     // Calls cb(newRole) when this person's entry in /admins changes after the page has loaded (e.g. made super admin).
     watchRole(cb) {
       ready.then(() => {

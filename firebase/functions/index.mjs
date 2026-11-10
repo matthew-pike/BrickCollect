@@ -11,7 +11,7 @@ import minifigNumbers from './jobs/minifig-numbers.mjs';
 import syncPricesHandler from './jobs/sync-prices.mjs';
 import priceSweep, { sweepTotal } from './jobs/price-sweep.mjs';
 import usageStats from './jobs/usage-stats.mjs';
-import { readShared, blCalls } from './lib/common.mjs';
+import { readShared, blCalls, fs, getUser, can } from './lib/common.mjs';
 
 const BL = ['BRICKLINK_CONSUMER_KEY', 'BRICKLINK_CONSUMER_SECRET', 'BRICKLINK_TOKEN_VALUE', 'BRICKLINK_TOKEN_SECRET'].map(defineSecret);
 // Guard rails against runaway costs: one copy of each job at a time, small machines, short time limits.
@@ -59,4 +59,19 @@ export const syncPrices = onRequest({ secrets: BL, timeoutSeconds: 30, invoker: 
   res.status(out.status);
   out.headers.forEach((v, k) => res.set(k, v));
   res.send(await out.text());
+});
+
+// The Sync button on the Admin page: works out the Admin page numbers now instead of waiting for :20 past the hour.
+// Super admins and anyone with "Open the Admin page". No BrickLink requests. The site reaches it at /api/refresh-usage.
+export const refreshUsage = onRequest({ timeoutSeconds: 120, invoker: 'public', maxInstances: 1 }, async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (req.method !== 'POST') return res.status(405).json({ code: 'method', message: 'Use POST.' });
+  const user = await getUser(String(req.headers.authorization || '').replace(/^Bearer\s+/i, ''));
+  if (!user) return res.status(401).json({ code: 'signed_out', message: 'Sign in first.' });
+  if (!(await can(user.email, 'usage'))) return res.status(403).json({ code: 'no_access', message: 'You don’t have access to the Admin page.' });
+  const prev = (await fs.doc('admin/usage').get()).data();
+  // Ran in the last 30 seconds already (e.g. a double tap): nothing to do.
+  if (prev?.at && Date.now() - prev.at < 30e3) return res.json({ ok: true, at: prev.at, skipped: true });
+  await usageStats({ sweepTotal: prev?.health?.sweep?.total ?? null });
+  res.json({ ok: true });
 });

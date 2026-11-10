@@ -41,7 +41,16 @@ header h1 span{color:var(--muted);font-weight:400}
 header .back{margin-left:auto;font-size:13px;text-decoration:none;border:1px solid var(--line-2);border-radius:8px;padding:6px 12px;color:var(--fg)}
 header .back:hover{border-color:var(--accent);color:var(--accent)}
 main{max-width:1180px;margin:0 auto;padding:18px 20px 60px}
-.status{display:inline-block;font-size:13px;margin:0 0 16px;padding:5px 12px;border-radius:999px;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line))}
+.statusrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+.statusrow .fine{margin:0}
+.statusrow .warnc{color:var(--coral)}
+.sync{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:none;color:var(--fg);border:1px solid var(--line-2);border-radius:8px;padding:6px 12px;font:13px var(--font);cursor:pointer}
+.sync:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.sync:disabled{opacity:.6;cursor:default}
+.sync svg{width:14px;height:14px}
+.sync.busy svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status{display:inline-block;font-size:13px;margin:0;padding:5px 12px;border-radius:999px;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line))}
 :root[data-theme="light"] .status{background:color-mix(in srgb,var(--accent) 12%,#fff);border-color:var(--accent)}
 .msg{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:28px;text-align:center;color:var(--muted);margin-top:30px}
 .msg h2{color:var(--fg);font-size:18px;font-weight:500;margin:0 0 6px}
@@ -135,7 +144,11 @@ tr.owner td{color:var(--muted)}
 <main>
   <div class="msg" id="msg"><h2>Loading…</h2></div>
   <div id="page" hidden>
-    <p class="status" id="status"></p>
+    <div class="statusrow">
+      <p class="status" id="status"></p>
+      <span class="fine" id="syncMsg" role="status"></span>
+      <button class="sync" id="sync" type="button" title="Work out these numbers now instead of waiting for 20 past the hour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Sync now</button>
+    </div>
     <div class="cards" id="cards"></div>
 
     <section class="box">
@@ -459,6 +472,19 @@ tr.owner td{color:var(--muted)}
       // Mark everyone listed as seen, so the member count beside the account button on the main page stops showing "+N".
       try { const top = Math.max(0, ...(U.rows || []).filter(r => !r.o).map(r => r.m)); if (top) localStorage.setItem('bc-admin-seen', String(top)); } catch {}
     }, e => show('Couldn’t load the numbers', esc(e.message || e.code || 'Unknown error')));
+    // Sync now: works out the numbers straight away (/api/refresh-usage). The page updates itself when admin/usage changes.
+    $('sync').onclick = async () => {
+      const b = $('sync'), m = $('syncMsg');
+      b.disabled = true; b.classList.add('busy'); m.className = 'fine'; m.textContent = 'Syncing… (up to a minute)';
+      try {
+        const res = await fetch('/api/refresh-usage', { method: 'POST', headers: { Authorization: `Bearer ${await BC.user.token()}` } });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.message || `HTTP ${res.status}`);
+        m.textContent = out.skipped ? 'Already up to date.' : 'Synced.';
+        setTimeout(() => { if (m.textContent !== 'Syncing… (up to a minute)') m.textContent = ''; }, 4000);
+      } catch (e) { m.className = 'fine warnc'; m.textContent = 'Couldn’t sync: ' + (e.message || 'unknown error'); }
+      finally { b.disabled = false; b.classList.remove('busy'); }
+    };
     // Keep "x min ago" fresh while the page is open.
     setInterval(() => { if (U) $('status').textContent = statusText(); }, 60000);
   })();
