@@ -68,6 +68,22 @@ header.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
 .chip{border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:999px;padding:5px 12px;font:inherit;font-size:12.5px;cursor:pointer}
 .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .count{color:var(--faint);font-size:12.5px;margin-left:auto}
+.views{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden}
+.views button{display:inline-flex;align-items:center;gap:6px;border:0;background:var(--panel);color:var(--muted);font:inherit;font-size:13px;padding:8px 12px;cursor:pointer}
+.views button+button{border-left:1px solid var(--line-2)}
+.views button[aria-pressed="true"]{background:color-mix(in srgb,var(--accent) 14%,var(--panel));color:var(--accent);font-weight:500}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;margin-bottom:30px}
+.lrow{display:grid;grid-template-columns:64px minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:10px 14px}
+.lrow+.lrow{border-top:1px solid var(--line)}
+.lpic{width:64px;height:48px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.lpic img{max-width:100%;max-height:100%;object-fit:contain}
+.lpic .ph{font-size:9px;color:#9aa6bb;text-align:center}
+.linfo{display:flex;flex-direction:column;gap:3px;min-width:0}
+.linfo .name{font-size:14px}
+.linfo .line{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.lprice{text-align:right;white-space:nowrap}
+.lprice .price{font-size:16px}
+.lprice .q{display:block;color:var(--muted);font-size:12px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-bottom:30px}
 .card{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;display:flex;flex-direction:column}
 .pic{aspect-ratio:4/3;background:#fff;display:flex;align-items:center;justify-content:center;position:relative}
@@ -104,6 +120,10 @@ footer.bot .grow{flex:1}
   .body{padding:10px 10px 12px} .name{font-size:13.5px} .price{font-size:16px} .desc{font-size:12px}
   .foot{flex-direction:column;align-items:stretch} .foot .btn{width:100%}
   .count{margin-left:0;width:100%}
+  .lrow{grid-template-columns:52px minmax(0,1fr) auto;gap:10px;padding:10px}
+  .lpic{width:52px;height:40px}
+  .lrow .btn{grid-column:2 / 4;justify-self:start}
+  .linfo .desc{font-size:12px}
 }
 </style>
 </head>
@@ -130,6 +150,10 @@ footer.bot .grow{flex:1}
         <option value="year">Newest first</option>
         <option value="name">Name</option>
       </select>
+      <div class="views" role="group" aria-label="View">
+        <button type="button" data-view="cards" aria-pressed="true" title="Cards with pictures"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Cards</button>
+        <button type="button" data-view="list" aria-pressed="false" title="A compact list"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
+      </div>
       <div class="chips" id="brands"></div>
       <span class="count" id="count"></span>
     </div>
@@ -155,6 +179,8 @@ footer.bot .grow{flex:1}
   const COND = { new: 'New', used: 'Used', 'used-inc': 'Used, incomplete' };
   const id = (location.pathname.match(/^\/sale\/([a-z0-9]{6,24})\/?$/) || [])[1] || new URLSearchParams(location.search).get('id') || '';
   let shop = null, brand = '', sort = 'brand';
+  // Cards or List: ?view=list in the link wins, else this browser's last choice.
+  let view = (() => { const v = new URLSearchParams(location.search).get('view'); if (v === 'list' || v === 'cards') return v; try { return localStorage.getItem('bc-sale-view') === 'list' ? 'list' : 'cards'; } catch { return 'cards'; } })();
 
   $('report').onclick = e => {
     e.preventDefault();
@@ -261,10 +287,26 @@ footer.bot .grow{flex:1}
     const copies = rows.reduce((t, x) => t + (x.q || 1), 0);
     $('count').textContent = `${copies.toLocaleString()} ${copies === 1 ? 'item' : 'items'}`;
     $('none').hidden = rows.length > 0;
-    $('grid').innerHTML = rows.map((x, i) => {
+    document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+    $('grid').className = view === 'list' ? 'list' : 'grid';
+    const pic = x => x.im ? `<img src="${esc(x.im)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="ph">No picture</span>';
+    if (view === 'list') $('grid').innerHTML = rows.map((x, i) => {
+      const m = money(x.p), cc = x.c === 'new' ? 'new' : x.c === 'used-inc' ? 'inc' : '';
+      return `<div class="lrow">
+        <div class="lpic">${pic(x)}</div>
+        <div class="linfo">
+          <span class="sub">${esc([x.b, x.n, x.y || ''].filter(Boolean).join(' · '))}</span>
+          <span class="name">${esc(x.nm)}</span>
+          <span class="line"><span class="cond ${cc}">${esc(COND[x.c] || x.c)}</span>${x.d ? `<span class="desc">${esc(x.d)}</span>` : ''}</span>
+        </div>
+        <div class="lprice">${m ? `<span class="price">${esc(m)}</span>` : '<span class="price ask">Ask for price</span>'}${x.q > 1 ? `<span class="q">× ${x.q} available</span>` : ''}</div>
+        <button class="btn mini" type="button" data-ask="${i}">Ask about this</button>
+      </div>`;
+    }).join('');
+    else $('grid').innerHTML = rows.map((x, i) => {
       const m = money(x.p), cc = x.c === 'new' ? 'new' : x.c === 'used-inc' ? 'inc' : '';
       return `<article class="card">
-        <div class="pic">${x.im ? `<img src="${esc(x.im)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="ph">No picture</span>'}${x.q > 1 ? `<span class="qty">× ${x.q}</span>` : ''}</div>
+        <div class="pic">${pic(x)}${x.q > 1 ? `<span class="qty">× ${x.q}</span>` : ''}</div>
         <div class="body">
           <span class="sub">${esc([x.b, x.n, x.y || ''].filter(Boolean).join(' · '))}</span>
           <span class="name">${esc(x.nm)}</span>
@@ -279,6 +321,10 @@ footer.bot .grow{flex:1}
   }
 
   $('q').addEventListener('input', () => paintGrid());
+  document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+    view = b.dataset.view; try { localStorage.setItem('bc-sale-view', view); } catch { /* ignore */ }
+    paintGrid(); track('sale_view_mode', { view });
+  }));
   $('sort').addEventListener('change', e => { sort = e.target.value; paintGrid(); });
   $('brands').addEventListener('click', e => {
     const b = e.target.closest('[data-b]'); if (!b) return;
