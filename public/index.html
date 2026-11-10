@@ -675,6 +675,22 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .shx .shhow summary{cursor:pointer;color:var(--accent);font-weight:500}
 .shx .shhow ol{margin:8px 0 2px;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
 .shx .shhow b{color:var(--fg);font-weight:500}
+.insshare{flex:0 0 auto;margin-left:auto}
+.insshare svg{margin-right:-1px}
+.cdx{width:min(660px,calc(100vw - 32px))}
+.cdx .cdgrid{display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;align-items:start}
+.cdx .cdprev{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;justify-content:center}
+.cdx .cdprev img{display:block;width:100%;height:auto;max-height:62vh;object-fit:contain;border-radius:6px}
+.cdx .cdopts{display:flex;flex-direction:column;gap:12px}
+.cdx .cdopts .sellmode{grid-column:auto}
+.cdx .cdchk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--fg);cursor:pointer}
+.cdx .cdchk input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.cdx .cdname{display:flex;flex-direction:column;gap:4px}
+.cdx .cdname .inp{font-size:14px;color:var(--fg)}
+.cdx .cdopts .fine{margin:0;font-size:12px}
+.cdx .cdbtns{margin-top:16px}
+.cdx .cdbtns .btn{width:auto;flex:1 1 0}
+@media (max-width:560px){.cdx{padding:18px}.cdx>p{font-size:13px;margin-bottom:10px}.cdx .cdgrid{grid-template-columns:1fr;gap:12px}.cdx .cdprev{padding:8px}.cdx .cdprev img{max-height:34vh;width:auto;max-width:100%}.cdx .cdopts{gap:10px}.cdx .cdbtns{margin-top:12px;position:sticky;bottom:-18px;background:var(--panel);padding:8px 0 4px}}
 .buy{--bd:var(--stud);--hv:#000;background:var(--stud);border-color:var(--bd);color:#1a1300;font-weight:600}
 .buy-lego{--t:#e3000b;--bd:#e3000b;--hv:#8a0008;--hb:#8a0008}
 .buy-pantasy{--t:#14259a;--bd:#f2a6cf;--hv:#0b1560;--hb:#14259a}
@@ -799,6 +815,8 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .toast.tally{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;max-width:calc(100vw - 32px);padding:10px 18px}
 .toast.tally b{font-weight:600}
 .toast.tally span{opacity:.75;font-size:12px}
+.toast.tally span.tms{opacity:1;font-size:13px;margin-top:4px}
+.toast.tally .tms .tbtn{margin-left:6px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -863,7 +881,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
   <section class="sellbox insbox" id="insbox" hidden aria-labelledby="insTitle">
     <button class="sellopen" id="insToggle" aria-expanded="false" aria-controls="insBody"><span class="sellq"><span class="selltl"><b id="insTitle">Collection insights</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span> <span class="muted">Your sets by theme and brand</span></span><span class="sellpeek" id="insPeek"></span></button>
     <div class="insbody" id="insBody" hidden>
-      <div class="inshead"><div class="insnav"><button type="button" class="btn mini insback" id="insBack" hidden></button><p id="insIntro">Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.</p></div><div class="sellmode insm" role="group" aria-label="Measure by"><button type="button" data-insm="sets" aria-pressed="true">Sets</button><button type="button" data-insm="value" aria-pressed="false">Value</button><button type="button" data-insm="pieces" aria-pressed="false">Pieces</button></div></div>
+      <div class="inshead"><div class="insnav"><button type="button" class="btn mini insback" id="insBack" hidden></button><p id="insIntro">Inner ring: brands. Outer ring: themes. Tap a theme to show its sets.</p></div><div class="sellmode insm" role="group" aria-label="Measure by"><button type="button" data-insm="sets" aria-pressed="true">Sets</button><button type="button" data-insm="value" aria-pressed="false">Value</button><button type="button" data-insm="pieces" aria-pressed="false">Pieces</button></div><button type="button" class="btn mini insshare" id="insShare" title="Make a picture of your collection to share"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Share</button></div>
       <div class="insgrid" id="insGrid"><div class="insdonut" id="insDonut"></div><ul class="insleg" id="insLeg"></ul><div class="inshi" id="insHi"></div></div>
       <p class="insempty" id="insEmpty" hidden></p>
     </div>
@@ -923,7 +941,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
         <div class="menu" id="regionMenu" role="menu" hidden><button role="menuitemradio" data-loc="AU">Australia<small>BrickLink sellers in Australia</small></button><button role="menuitemradio" data-loc="US">United States<small>Sellers in the US</small></button><button role="menuitemradio" data-loc="CA">Canada<small>Sellers in Canada</small></button><button role="menuitemradio" data-loc="EU">Europe (EU)<small>Sellers in the European Union</small></button><button role="menuitemradio" data-loc="UK">United Kingdom<small>Sellers in the UK</small></button><button role="menuitemradio" data-loc="world">Worldwide (W)<small>All sellers. Shown greyed with a W wherever a local price is missing</small></button></div></div>
       <button class="btn" id="importBtn" title="Add sets from Rebrickable, Brickset, BrickLink, a spreadsheet or a BrickCollect export">Import</button>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button><button role="menuitem" id="exportBlBtn">BrickLink store upload<small>Your sale or trade list, ready to upload to your BrickLink store</small></button><button role="menuitem" id="exportShareBtn">Share your sale or trade list<small>A link anyone can open to see what you’re selling or trading, any brand</small></button></div></div>
+        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button><button role="menuitem" id="exportBlBtn">BrickLink store upload<small>Your sale or trade list, ready to upload to your BrickLink store</small></button><button role="menuitem" id="exportCardBtn">Share your collection<small>A picture of your totals for Instagram, Facebook or anywhere</small></button><button role="menuitem" id="exportShareBtn">Share your sale or trade list<small>A link anyone can open to see what you’re selling or trading, any brand</small></button></div></div>
       <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view (site owner only; everyone else's prices refresh twice a day).">Sync Prices</button>
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
@@ -1113,6 +1131,22 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <p class="shstop" id="shStopP" hidden><button class="linkbtn" type="button" id="shStop">Stop sharing</button> <span class="fine">takes the page down; sharing again gives you a new link</span></p>
   </div>
   <button class="icon-btn dlg-x" type="button" id="shClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</dialog>
+<dialog class="dlg cdx" id="cardDlg" aria-labelledby="cardH">
+  <h2 id="cardH">Share your collection</h2>
+  <p>A picture of your collection for Instagram, Facebook or anywhere. It’s made on your device: nothing is uploaded.</p>
+  <div class="cdgrid">
+    <div class="cdprev"><img id="cardImg" alt="Preview of your collection picture"></div>
+    <div class="cdopts">
+      <div class="sellmode" role="group" aria-label="Picture size"><button type="button" data-cdsize="story" aria-pressed="true">Story</button><button type="button" data-cdsize="post" aria-pressed="false">Post</button></div>
+      <label class="cdchk"><input type="checkbox" id="cdVal" checked> Collection value</label>
+      <label class="cdchk"><input type="checkbox" id="cdThemes" checked> Top themes</label>
+      <label class="cdname">Name or @handle <input class="inp" id="cdName" maxlength="30" placeholder="Optional" autocapitalize="off" spellcheck="false"></label>
+      <p class="fine" id="cdScope"></p>
+    </div>
+  </div>
+  <div class="acct-actions cdbtns"><button class="btn primary" type="button" id="cdShare" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Share</button><button class="btn" type="button" id="cdSave">Save image</button><button class="btn" type="button" id="cdCopy" hidden>Copy image</button></div>
+  <button class="icon-btn dlg-x" type="button" id="cardClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
 </dialog>
 <dialog class="news" id="newsDlg" aria-labelledby="newsTitle">
   <div class="news-head"><h2 id="newsTitle">What’s new</h2><button class="icon-btn" type="button" id="newsClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
@@ -1437,6 +1471,7 @@ function setInfo(n, patch, { quiet } = {}) {
 const change = (n, patch) => setInfo(n, patch);
 // After each tick: a short running tally (sets · pieces · minifigures) and how far through the set's
 // subtheme or theme you are. About collecting, not money: value stays in the stat cards.
+const CARD_MS = [25, 50, 100, 150, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000];
 function tallyToast(n) {
   const x = [...CAT.sets, ...CAT.figs].find(y => y.n === n); if (!x) return;
   const sets = CAT.sets.filter(owned), figs = CAT.figs.filter(has).length;
@@ -1451,9 +1486,12 @@ function tallyToast(n) {
     if (grp.length > 1) prog = `${grp.filter(owned).length.toLocaleString()} of ${grp.length.toLocaleString()} ${label} sets`;
   }
   const t = $('toast');
-  t.innerHTML = `<b>✓ ${bits.join(' · ')}</b>${prog ? `<span>${esc(prog)}</span>` : ''}`;
+  // Milestones (25, 50, 100… sets): once each, offer to share the collection.
+  const ms = x.k === 's' && CARD_MS.includes(sets.length) && (Number(lsGet('bc-ms')) || 0) < sets.length;
+  if (ms) { lsSet('bc-ms', sets.length); track('share_card', { action: 'milestone', sets: sets.length }); }
+  t.innerHTML = `<b>✓ ${bits.join(' · ')}</b>${prog ? `<span>${esc(prog)}</span>` : ''}${ms ? `<span class="tms">That’s ${sets.length.toLocaleString()} sets! <button type="button" class="tbtn" data-cardms="1">Share your collection</button></span>` : ''}`;
   t.classList.add('tally'); t.hidden = false; clearTimeout(toast.t);
-  toast.t = setTimeout(() => { t.hidden = true; t.classList.remove('tally'); }, 3600);
+  toast.t = setTimeout(() => { t.hidden = true; t.classList.remove('tally'); }, ms ? 8000 : 3600);
 }
 
 /* ---------- filters ---------- */
@@ -1654,6 +1692,7 @@ function tickTip() {
    one per visit, only to people who were already using BrickCollect before the feature came out, and for 30 days.
    Add an entry here with each new feature (newest first). sel = the first visible match on screen gets the note. */
 const NEW_TIPS = [
+  { id: 'shareCard', at: '2026-11-10T19:30:00+11:00', sel: '#insToggle', title: 'Share your collection', text: 'Open Collection insights and tap Share to make a picture of your collection for Instagram, Facebook or anywhere.' },
   { id: 'shareSale', at: '2026-11-09T20:45:00+11:00', sel: '#exportMenuBtn', title: 'Share your sale or trade list', text: 'Export → Share your sale or trade list gives you a link to a page of everything you’re letting go, any brand, to post in Facebook groups or on Instagram.' },
   { id: 'blupload', at: '2026-11-09T10:30:00+11:00', sel: '#exportMenuBtn', title: 'Sell on BrickLink', text: 'Mark copies for sale or trade, add details and your price to each, then Export → BrickLink store upload to list them all in one go.' },
   { id: 'mytags', at: '2026-11-09T09:20:00+11:00', sel: '#rows .mytagadd', title: 'My tags', text: 'Add your own tags, like On display or In storage, to the sets you own or want. Only you see them, and the Tag filter finds them.' },
@@ -2904,7 +2943,7 @@ function setExportMenu(open) { $('exportMenu').hidden = !open; $('exportMenuBtn'
 $('exportMenuBtn').onclick = e => { e.stopPropagation(); if (typeof setRegionMenu === 'function') setRegionMenu(false); setExportMenu($('exportMenu').hidden); };
 document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) setExportMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('exportMenu').hidden) { setExportMenu(false); $('exportMenuBtn').focus(); } });
-['exportBtn', 'exportWantBtn', 'exportSaleBtn', 'exportBlBtn', 'exportShareBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
+['exportBtn', 'exportWantBtn', 'exportSaleBtn', 'exportBlBtn', 'exportShareBtn', 'exportCardBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
 $('exportBtn').onclick = async () => { track('export', { list: 'collection' });
   if (!CAT) return;
   // Everything you own, sets then minifigures, whatever the filters are.
@@ -3312,6 +3351,168 @@ $('shPost').onclick = async () => {
 };
 $('shSignIn').onclick = () => { shDlg.close(); openAuth(); };
 $('shClose').onclick = () => shDlg.close();
+
+/* ---------- Share your collection ----------
+   A picture of your totals (sets, minifigures, pieces, value, retired, top themes) for Instagram Stories, posts or anywhere.
+   Drawn on a canvas in the browser: nothing is uploaded. Follows the filters in view (pick a theme to share just that).
+   Story 1080×1920 or Post 1080×1350, in the navy Instagram colours (see the BrickCollect brand doc). */
+const CARD_K = 'bc-card', CARD_W = 1080, CARD_H = { story: 1920, post: 1350 };
+const CARD_C = { bg: '#0F192D', card: '#16233D', line: '#2E3B55', fg: '#FFFFFF', muted: '#A9B4C4', accent: '#1FB3E5', value: '#B9A8FF', coral: '#FF8A78', badge: '#6B7888', themes: ['#1FB3E5', '#7FDCFF', '#B9A8FF', '#4A5A78'] };
+let cardBlob = null, cardUrl = '', cardFonts = null, cardT = null;
+function cardFontLoad() {
+  if (cardFonts) return cardFonts;
+  if (!document.getElementById('jostFont')) { const l = document.createElement('link'); l.id = 'jostFont'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Jost:wght@400;500&display=swap'; document.head.append(l); }
+  const wait = new Promise(r => setTimeout(r, 2500));
+  cardFonts = Promise.race([wait, new Promise(r => { const l = document.getElementById('jostFont'); const go = () => Promise.all([document.fonts.load('400 40px Jost'), document.fonts.load('500 40px Jost')]).then(r, r); if (l.sheet) go(); else { l.onload = go; l.onerror = r; } })]);
+  return cardFonts;
+}
+// What the picture shows: your owned sets in view (all of them when no filter is on).
+function cardData() {
+  const fo = focus; focus = null; // a selected set isn't a filter here
+  try {
+    const sc = scopedFor('sets'), allSets = CAT.sets.filter(owned), sets = sc ? allSets.filter(inScope) : allSets;
+    const allFigs = CAT.figs.filter(has), figs = sc ? allFigs.filter(inScope) : allFigs;
+    const pieces = sets.reduce((t, x) => t + (Number(x.pieces) || 0) * Math.max(1, copyCount(x)), 0);
+    let value = 0, priced = 0;
+    for (const x of [...sets, ...figs.filter(owned)]) { const v = valueOf(x); if (v != null) { value += v; priced++; } }
+    const bySub = !!fi.theme.value, groups = new Map();
+    for (const x of sets) { const k = bySub ? (x.sub || '') : (x.theme || ''); if (k) groups.set(k, (groups.get(k) || 0) + 1); }
+    const themes = [...groups].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([name, n]) => ({ name, n }));
+    // Subthemes only when most of the sets have one (otherwise a lone subtheme would show as a few %).
+    if (bySub && themes.reduce((t, x) => t + x.n, 0) < sets.length / 2) themes.length = 0;
+    const scopeName = fi.sub.value || fi.theme.value || (fi.brand.value && fi.brand.value !== 'LEGO' ? fi.brand.value : '');
+    return { sets: sets.length, figs: figs.length, pieces, value, priced, retired: sets.filter(x => retState(x) === 'R').length, themes, bySub, scopeName, filtered: sc };
+  } finally { focus = fo; }
+}
+function cardOpts() { const p = lsGet(CARD_K) || {}; return { size: p.size === 'post' ? 'post' : 'story', value: p.value !== false, themes: p.themes !== false, name: typeof p.name === 'string' ? p.name : '' }; }
+const cardNum = n => n >= 100000 ? new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(n) : n.toLocaleString();
+function cardMoney(aud) {
+  const c = cur(), v = (aud || 0) * rate();
+  try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: c, currencyDisplay: 'narrowSymbol', notation: v >= 10000 ? 'compact' : 'standard', maximumFractionDigits: v >= 10000 ? 1 : 0 }).format(v); }
+  catch { return money(aud); }
+}
+// oy shifts the content down (the Story picture centres it between Instagram's top and bottom bars). Returns where the content ends.
+function cardDraw(cv, d, o, oy = 0) {
+  const W = CARD_W, H = CARD_H[o.size], story = o.size === 'story', P = 90;
+  cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'), F = (w, px) => `${w} ${px}px Jost, Roboto, system-ui, sans-serif`;
+  const sp = px => { try { g.letterSpacing = `${px}px`; } catch { /* older browsers: no spacing */ } };
+  const text = (t, x, y, font, col, { align = 'left', spacing = 0, max } = {}) => {
+    g.font = font; g.fillStyle = col; g.textAlign = align; g.textBaseline = 'alphabetic'; sp(spacing);
+    if (max) { let size = parseFloat(font.split(' ')[1]); while (g.measureText(t).width > max && size > 20) { size -= 2; g.font = font.replace(/\d+px/, `${size}px`); } }
+    g.fillText(t, x, y); sp(0);
+  };
+  const rr = (x, y, w, h, r, col) => { g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); g.fill(); };
+  g.fillStyle = CARD_C.bg; g.fillRect(0, 0, W, H);
+  // Header: BC badge, whose collection, date
+  const by = (story ? 150 : 120) + oy, br = 46;
+  g.fillStyle = CARD_C.badge; g.beginPath(); g.arc(P + br, by, br, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2.2; g.beginPath(); g.arc(P + br, by, br - 4.5, 0, Math.PI * 2); g.stroke();
+  g.textBaseline = 'middle'; g.font = F(400, 36); g.fillStyle = '#fff'; g.textAlign = 'center'; sp(2); g.fillText('BC', P + br + 1, by + 2); sp(0);
+  // Line 1: your name or @handle as typed (or "My … collection"); line 2: the collection and the date.
+  const what = d.scopeName ? `${d.scopeName} collection` : 'collection', date = new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+  const tx = P + br * 2 + 30, tmax = W - tx - P;
+  text(o.name || `My ${what}`, tx, by - 4, F(500, 38), CARD_C.fg, { max: tmax });
+  text(o.name ? `${what[0].toUpperCase()}${what.slice(1)} · ${date}` : date, tx, by + 38, F(400, 28), CARD_C.muted, { max: tmax });
+  // Big number
+  let y = (story ? 470 : 380) + oy;
+  text(d.sets.toLocaleString(), P - 6, y, F(500, story ? 230 : 190), CARD_C.fg);
+  text(d.sets === 1 ? 'set' : 'sets', P, y + (story ? 70 : 62), F(400, 46), CARD_C.muted);
+  y += story ? 140 : 115;
+  // Tiles
+  const tiles = [[cardNum(d.figs), d.figs === 1 ? 'minifigure' : 'minifigures', CARD_C.fg], [cardNum(d.pieces), 'pieces', CARD_C.fg]];
+  if (o.value && d.priced) tiles.push([cardMoney(d.value), 'value', CARD_C.value]);
+  tiles.push([d.retired.toLocaleString(), 'retired', CARD_C.fg]);
+  const gap = 24, tw = (W - P * 2 - gap) / 2, th = story ? 190 : 160;
+  tiles.forEach(([v, k, col], i) => {
+    const last = i === tiles.length - 1 && tiles.length % 2, x = P + (i % 2) * (tw + gap), ty = y + Math.floor(i / 2) * (th + gap), w = last ? W - P * 2 : tw;
+    rr(x, ty, w, th, 22, CARD_C.card);
+    text(v, x + 34, ty + th * 0.55, F(500, story ? 76 : 66), col, { max: w - 68 });
+    text(k, x + 36, ty + th * 0.55 + (story ? 52 : 46), F(400, 30), CARD_C.muted);
+  });
+  y += Math.ceil(tiles.length / 2) * (th + gap) + (story ? 50 : 30);
+  // Top themes: a bar and up to three rows
+  if (o.themes && d.themes.length && d.sets) {
+    text((d.bySub ? 'Top subthemes' : 'Top themes').toUpperCase(), P, y + 20, F(500, 26), CARD_C.muted, { spacing: 4 });
+    y += 48;
+    const top = d.themes.slice(0, 3), rest = d.sets - top.reduce((t, x) => t + x.n, 0), parts = [...top.map((x, i) => [x, CARD_C.themes[i]]), ...(rest > 0 ? [[{ name: 'Other', n: rest }, CARD_C.themes[3]]] : [])];
+    const bw = W - P * 2; let bx = P;
+    g.save(); g.beginPath(); g.roundRect ? g.roundRect(P, y, bw, 22, 11) : g.rect(P, y, bw, 22); g.clip();
+    for (const [x, col] of parts) { const w = x.n / d.sets * bw; g.fillStyle = col; g.fillRect(bx, y, w + 1, 22); bx += w; }
+    g.restore();
+    y += 22 + (story ? 66 : 52);
+    for (const [x, col] of top.map((x, i) => [x, CARD_C.themes[i]])) {
+      g.fillStyle = col; g.beginPath(); g.arc(P + 12, y - 12, 12, 0, Math.PI * 2); g.fill();
+      const pc = `${Math.round(x.n / d.sets * 100)}%`;
+      g.font = F(500, 36); const pw = g.measureText(pc).width;
+      text(x.name, P + 42, y, F(400, 36), CARD_C.fg, { max: W - P * 2 - 42 - pw - 30 });
+      text(pc, W - P, y, F(500, 36), CARD_C.fg, { align: 'right' });
+      y += story ? 62 : 54;
+    }
+  }
+  const end = y;
+  // Footer
+  const fy = H - (story ? 150 : 100);
+  g.fillStyle = CARD_C.line; g.fillRect(P, fy - 56, W - P * 2, 2);
+  text('brickcollect.app', P, fy, F(500, 38), CARD_C.accent, { spacing: 3 });
+  text('Free collection tracker', W - P, fy, F(400, 28), CARD_C.muted, { align: 'right' });
+  return end;
+}
+async function cardPaint() {
+  const d = cardData(), o = cardOpts();
+  document.querySelectorAll('[data-cdsize]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cdsize === o.size)));
+  $('cdVal').checked = o.value; $('cdThemes').checked = o.themes;
+  $('cdVal').closest('label').hidden = !d.priced;
+  $('cdScope').textContent = d.filtered ? `Shows the ${d.sets.toLocaleString()} set${d.sets === 1 ? '' : 's'} you own that are in view${d.scopeName ? ` (${d.scopeName})` : ''}. Clear the filters to share your whole collection.` : 'Tip: pick a theme first to share just that part of your collection.';
+  await cardFontLoad();
+  const cv = document.createElement('canvas');
+  const end = cardDraw(cv, d, o);
+  if (o.size === 'story') { const top = 104, room = [230, CARD_H.story - 300], h = end - top; cardDraw(cv, d, o, Math.max(0, Math.round(room[0] + (room[1] - room[0] - h) / 2 - top))); }
+  cardBlob = await new Promise(r => cv.toBlob(r, 'image/png'));
+  if (cardUrl) URL.revokeObjectURL(cardUrl);
+  cardUrl = cardBlob ? URL.createObjectURL(cardBlob) : '';
+  $('cardImg').src = cardUrl;
+}
+const cardFile = () => new File([cardBlob], `brickcollect-${new Date().toISOString().slice(0, 10)}.png`, { type: 'image/png' });
+const cardEv = action => { const o = cardOpts(); track('share_card', { action, size: o.size, value: o.value, themes: o.themes, name: !!o.name }); };
+function cardOpen(from) {
+  if (!CAT) return;
+  setExportMenu(false);
+  if (!CAT.sets.some(owned)) { toast('Tick the sets you own first, then share your collection.'); return; }
+  $('cdName').value = cardOpts().name;
+  let canFiles = false; try { canFiles = !!navigator.canShare?.({ files: [new File([new Blob(['x'])], 'x.png', { type: 'image/png' })] }); } catch { /* no file sharing */ }
+  $('cdShare').hidden = !canFiles;
+  $('cdSave').classList.toggle('primary', !canFiles);
+  $('cdCopy').hidden = !(window.ClipboardItem && navigator.clipboard?.write && matchMedia('(hover: hover) and (pointer: fine)').matches);
+  $('cardImg').removeAttribute('src');
+  if (!$('cardDlg').open) $('cardDlg').showModal();
+  cardPaint();
+  track('share_card', { action: 'open', from });
+}
+const cardSet = patch => { lsSet(CARD_K, { ...cardOpts(), ...patch }); clearTimeout(cardT); cardT = setTimeout(cardPaint, 120); };
+document.querySelectorAll('[data-cdsize]').forEach(b => b.addEventListener('click', () => cardSet({ size: b.dataset.cdsize })));
+$('cdVal').onchange = () => cardSet({ value: $('cdVal').checked });
+$('cdThemes').onchange = () => cardSet({ themes: $('cdThemes').checked });
+$('cdName').oninput = () => cardSet({ name: $('cdName').value.replace(/\s+/g, ' ').trim().slice(0, 30) });
+$('cdShare').onclick = async () => {
+  if (!cardBlob) return;
+  try { await navigator.share({ files: [cardFile()], title: 'My collection', text: 'My collection on BrickCollect: brickcollect.app' }); cardEv('share'); }
+  catch (e) { if (e?.name !== 'AbortError') { toast('Couldn’t open sharing here. Save the image instead.'); console.warn('share card', e); } }
+};
+$('cdSave').onclick = () => {
+  if (!cardBlob) return;
+  const a = document.createElement('a'); a.href = cardUrl; a.download = cardFile().name; document.body.append(a); a.click(); a.remove();
+  toast('Image saved'); cardEv('save');
+};
+$('cdCopy').onclick = async () => {
+  if (!cardBlob) return;
+  try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': cardBlob })]); toast('Image copied: paste it into a post or message'); cardEv('copy'); }
+  catch (e) { console.warn('copy card', e); toast('Couldn’t copy the image. Save it instead.'); }
+};
+$('cardClose').onclick = () => $('cardDlg').close();
+$('insShare').onclick = e => { e.stopPropagation(); cardOpen('insights'); };
+$('exportCardBtn').onclick = () => cardOpen('export');
+document.addEventListener('click', e => { if (e.target.closest?.('[data-cardms]')) { $('toast').hidden = true; cardOpen('milestone'); } });
 shDlg.addEventListener('click', e => { if (e.target === shDlg) shDlg.close(); });
 $('shareOpen2').onclick = shOpen;
 $('exportShareBtn').onclick = shOpen;
@@ -3717,6 +3918,10 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.20', date: '10 November 2026', title: 'Show off your collection', items: [
+    ['Share your collection', 'turn your collection into a picture for your Instagram Story, a post, Facebook or anywhere: your sets, minifigures, pieces, value, retired sets and top themes. Open Collection insights and tap Share, or Export → Share your collection.'],
+    ['You choose what shows', 'hide the value, add your name or @handle, and pick a theme first to share just that part of your collection, like your Star Wars sets.'],
+  ] },
   { v: '0.19', date: '9 November 2026', title: 'Share what you’re selling', items: [
     ['Share your sale or trade list', 'post your whole list in one go: one link instead of a post for every set. It opens a page with everything you’re selling or trading, from LEGO to LumiBricks, Pantasy and every other brand, with pictures, condition, details and your prices.'],
     ['Copy a post', 'a ready-written post with your sets, prices and link, to paste into Facebook groups or anywhere.'],
