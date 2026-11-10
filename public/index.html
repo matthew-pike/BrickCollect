@@ -650,6 +650,8 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 .lst .lstprev b{color:var(--muted);font-weight:500}
 .lst .sellmode{margin:0}
 .lst .lstwhere{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.lst .lstwhere>span{min-width:84px}
+@media (max-width:480px){.lst .lstwhere>span{flex-basis:100%}}
 .lst .acct-actions{margin-top:14px}
 @media (max-width:480px){.lst .lstrow{grid-template-columns:1fr}}
 .blx{width:min(500px,calc(100vw - 24px))}
@@ -1122,6 +1124,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
     <li><b>Say how buyers reach you</b> below, then create your link.</li>
     <li><b>Share it.</b> Paste the link, or <b>Copy a post</b> with your list already written, into Facebook groups or anywhere.</li>
     <li><b>Buyers message you directly.</b> You agree payment and postage between you: BrickCollect isn’t part of the sale.</li>
+    <li><b>Hold something back.</b> Set a copy to Unlisted in its Listing details (e.g. it’s reserved) and it stays on your Sale or trade list but leaves the page. Set it back to Listed any time.</li>
     <li><b>It keeps itself up to date.</b> Sold something? Mark it Sold or traded and it drops off the page. The same link keeps working.</li>
   </ol></details>
   <div id="shOut" hidden><p><b>Sign up free to share your list.</b> Your link needs an account, so it keeps working and updates when your list changes.</p><button class="btn primary" type="button" id="shSignIn">Sign up or sign in</button></div>
@@ -1707,6 +1710,7 @@ function tickTip() {
    one per visit, only to people who were already using BrickCollect before the feature came out, and for 30 days.
    Add an entry here with each new feature (newest first). sel = the first visible match on screen gets the note. */
 const NEW_TIPS = [
+  { id: 'unlisted', at: '2026-11-11T08:00:00+11:00', sel: '#shareOpen2', title: 'Listed or unlisted', text: 'Reserved something? In a copy’s Listing details, set Shared page to Unlisted: it stays on your Sale or trade list but leaves your shared page.' },
   { id: 'shareCard', at: '2026-11-10T19:30:00+11:00', sel: '#insToggle', title: 'Share your collection', text: 'Open Collection insights and tap Share to make a picture of your collection for Instagram, Facebook or anywhere.' },
   { id: 'shareSale', at: '2026-11-09T20:45:00+11:00', sel: '#exportMenuBtn', title: 'Share your sale or trade list', text: 'Export → Share your sale or trade list gives you a link to a page of everything you’re letting go, any brand, to post in Facebook groups or on Instagram.' },
   { id: 'blupload', at: '2026-11-09T10:30:00+11:00', sel: '#exportMenuBtn', title: 'Sell on BrickLink', text: 'Mark copies for sale or trade, add details and your price to each, then Export → BrickLink store upload to list them all in one go.' },
@@ -2308,7 +2312,7 @@ function paintCopies() {
   const step = (kind, c, v, max) => `<span class="stepper"><button data-${kind}="${c}" data-d="-1" aria-label="One fewer ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${v ? '' : 'disabled'}>−</button><span class="n" aria-live="polite">${v}</span><button data-${kind}="${c}" data-d="1" aria-label="One more ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${max != null && v >= max ? 'disabled' : ''}>+</button></span>`;
   const it = findItem(copiesFor);
   copiesEl.innerHTML = `<div class="copytitle"><div class="t"><h3 id="copiesTitle">Manage your copies</h3>${it ? `<small title="${esc(it.name)}">${esc(shownNum(it))} · ${esc(it.name)}</small>` : ''}</div><button class="copyx" type="button" data-copiesclose="1" aria-label="Close" title="Close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="copyhead"><h4>Copies you own</h4><h4>Sale or trade <span class="code">ST</span></h4></div>${CONDS.map(c => `<div class="copyrow"><span class="lab"><span class="dot" style="--c:${colour[c]}"></span>${COND[c]} <span class="code">${{ new: 'N', used: 'UC', 'used-inc': 'UI' }[c]}</span></span>${step('copy', c, q[c])}${step('sale', c, sq[c], q[c])}</div>`).join('')}
-    ${ns ? `<button class="lstbtn" data-listing="1">Listing details…<small>for BrickLink</small></button>` : ''}
+    ${ns ? `<button class="lstbtn" data-listing="1">Listing details…<small>for BrickLink and your shared page</small></button>` : ''}
     ${ns ? `<button class="soldbtn ${soldConfirm ? 'confirm' : ''}" data-sold="1">${soldConfirm ? `Remove ${ns} sold or traded ${ns === 1 ? 'copy' : 'copies'} from your collection?` : `Sold or traded (${ns})…`}</button>` : ''}
     <span class="hint">Set all copies to 0 to remove it from your collection.</span>`;
 }
@@ -3027,13 +3031,14 @@ async function saveCsv(name, csv, what) {
    Each copy marked for sale or trade can have its own details (saved as saleInfo with the collection):
    sealed (new sets), box and instructions (used sets), what's missing (incomplete), a note for buyers,
    your price ({ p, c }: amount and currency), a private note (BrickLink's Remarks, e.g. where it's kept) and
-   stock: false to put it on sale straight away (default: BrickLink stockroom, so you can check it first).
+   stock: false to put it on sale straight away (default: BrickLink stockroom, so you can check it first), and
+   pub: false to leave it off your shared sale or trade page (Unlisted; default Listed). BrickLink upload ignores pub.
    Export → BrickLink store upload writes BrickLink's Mass Upload XML: one lot per copy, identical copies together. */
 const LST_MAX = { miss: 200, note: 500, rem: 100 };
 function cleanListing(v) {
   if (!v || typeof v !== 'object') return null;
   const o = {};
-  for (const k of ['sealed', 'box', 'inst', 'stock']) if (typeof v[k] === 'boolean') o[k] = v[k];
+  for (const k of ['sealed', 'box', 'inst', 'stock', 'pub']) if (typeof v[k] === 'boolean') o[k] = v[k];
   for (const k of ['miss', 'note', 'rem']) { const t = String(v[k] ?? '').replace(/\s+/g, ' ').trim().slice(0, LST_MAX[k]); if (t) o[k] = t; }
   if (v.price && Number(v.price.p) > 0 && /^[A-Z]{3}$/.test(v.price.c || '')) o.price = { p: Math.round(Number(v.price.p) * 100) / 100, c: v.price.c };
   return Object.keys(o).length ? o : null;
@@ -3103,6 +3108,7 @@ function paintListing() {
       <h3>Copy ${k} · ${COND[c]} <span class="code">${ab[c]}</span>${sameCond(c) > 1 ? `<button class="linkbtn" type="button" data-lcopy="${id}">Same for all ${COND_SHORT[c].toLowerCase()} copies</button>` : ''}</h3>
       ${set && c === 'new' ? `<div class="sellmode" role="group" aria-label="New: sealed or opened"><button type="button" data-lseal="1" aria-pressed="${d.sealed !== false}">Sealed</button><button type="button" data-lseal="0" aria-pressed="${d.sealed === false}">Opened, complete</button></div>` : ''}
       <div class="lstwhere"><span>On BrickLink</span><div class="sellmode" role="group" aria-label="On BrickLink: stockroom or on sale now"><button type="button" data-lstock="1" aria-pressed="${d.stock !== false}" title="Hidden from buyers until you move it out of your stockroom">Stockroom</button><button type="button" data-lstock="0" aria-pressed="${d.stock === false}" title="Buyers can see and buy it as soon as it's uploaded">On sale now</button></div></div>
+      <div class="lstwhere"><span>Shared page</span><div class="sellmode" role="group" aria-label="On your shared sale or trade page: listed or unlisted"><button type="button" data-lpub="1" aria-pressed="${d.pub !== false}" title="Shown on your shared sale or trade page">Listed</button><button type="button" data-lpub="0" aria-pressed="${d.pub === false}" title="Kept on your Sale or trade list but hidden from your shared page, e.g. reserved for someone">Unlisted</button></div></div>
       ${set && c !== 'new' ? `<div class="lstchecks">${chk('box', 'Box')}${chk('inst', 'Instructions')}</div>` : ''}
       <div class="lstrow">
         ${c === 'used-inc' ? `<label class="lstf wide">What’s missing<input class="inp" data-lf="miss" maxlength="${LST_MAX.miss}" value="${esc(d.miss || '')}" placeholder="e.g. 3 tiles and the Rey minifigure"></label>` : ''}
@@ -3139,6 +3145,10 @@ lstDlg.addEventListener('click', e => {
   const card = b.closest('.lstcard');
   if (b.dataset.lstock != null && card) {
     lstFlush(); const { si, c, i } = lstRead(card); si[c][i].stock = b.dataset.lstock === '1'; lstSave(si); paintListing(); return;
+  }
+  if (b.dataset.lpub != null && card) {
+    lstFlush(); const { si, c, i } = lstRead(card); si[c][i].pub = b.dataset.lpub === '1'; lstSave(si); paintListing();
+    track('listing_pub', { listed: b.dataset.lpub === '1' }); return;
   }
   if (b.dataset.lseal != null && card) {
     lstFlush(); const { si, c, i } = lstRead(card); si[c][i].sealed = b.dataset.lseal === '1'; lstSave(si); paintListing(); return;
@@ -3267,10 +3277,12 @@ const SH_ALPHA = 'abcdefghjkmnpqrstuvwxyz23456789';
 const newShareId = () => [...crypto.getRandomValues(new Uint8Array(10))].map(v => SH_ALPHA[v % SH_ALPHA.length]).join('');
 const shareUrl = id => `${location.origin}/sale/${id}`;
 const saleCopies = () => CAT ? [...CAT.sets, ...CAT.figs].reduce((t, x) => t + saleCount(x), 0) : 0;
+const unlistedCopies = () => CAT ? [...CAT.sets, ...CAT.figs].filter(x => saleCount(x) > 0).reduce((t, x) => t + listingsOf(x).filter(l => l.d.pub === false).length, 0) : 0;
 function shareItems() {
   const out = new Map();
   for (const x of [...CAT.sets, ...CAT.figs].filter(y => saleCount(y) > 0)) {
     for (const { c, d } of listingsOf(x)) {
+      if (d.pub === false) continue; // Unlisted: on your Sale or trade list, not on the shared page
       let p = lstPrice(d); if (p == null) p = lstSuggest(x, c);
       const it = { n: shownNum(x), k: x.k, b: x.brand || '', nm: x.name || '', y: x.year || 0, pc: x.pieces || 0, th: x.theme || '', im: imgUrl(x) || '', c, p: p > 0 ? p : 0, d: ((x.k === 's' && c === 'new' && d.sealed !== false ? 'Sealed. ' : '') + lstDesc(x, c, d)).trim() };
       const key = JSON.stringify(it);
@@ -3309,9 +3321,9 @@ function shPaint(fill) {
   $('shLinkBox').hidden = !on; $('shStopP').hidden = !on;
   $('shGo').textContent = on ? 'Save changes' : 'Create my link';
   if (!on) return;
-  const u = shareUrl(share.id), n = saleCopies();
+  const u = shareUrl(share.id), un = unlistedCopies(), n = saleCopies() - un;
   $('shLink').value = u; $('shView').href = u; $('shShare').hidden = !navigator.share;
-  $('shStat').textContent = n ? `Showing ${n.toLocaleString()} ${n === 1 ? 'copy' : 'copies'}. The page updates by itself when you change your Sale or trade list.` : 'Your Sale or trade list is empty, so the page says nothing is listed right now. Mark copies by clicking a set’s condition chip.';
+  $('shStat').textContent = n ? `Showing ${n.toLocaleString()} ${n === 1 ? 'copy' : 'copies'}${un ? ` (${un.toLocaleString()} unlisted, hidden from the page)` : ''}. The page updates by itself when you change your Sale or trade list.` : un ? 'Everything on your Sale or trade list is set to Unlisted, so the page says nothing is listed right now.' : 'Your Sale or trade list is empty, so the page says nothing is listed right now. Mark copies by clicking a set’s condition chip.';
 }
 function shRead() {
   const t = (id, max) => $(id).value.replace(/\s+/g, ' ').trim().slice(0, max);
@@ -3942,6 +3954,9 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.21', date: '11 November 2026', title: 'Listed or unlisted', items: [
+    ['Listed or unlisted', 'keep a copy on your Sale or trade list but off your shared page, for example when it’s reserved for someone. Click the set’s condition chip, then Listing details, and set Shared page to Unlisted. Set it back to Listed any time.'],
+  ] },
   { v: '0.20', date: '10 November 2026', title: 'Show off your collection', items: [
     ['Share your collection', 'turn your collection into a picture for your Instagram Story, a post, Facebook or anywhere: your sets, minifigures, pieces, value, retired sets and top themes. Open Collection insights and tap Share, or Export → Share your collection.'],
     ['Reobrix', 'joins the other brands: tanks, cars, ships, trains and buildings, with store prices, photos and a button to the Reobrix store.'],
