@@ -61,9 +61,11 @@ button,input,select{font:inherit;color:inherit}
 @media (max-width:380px){.top .wrap{column-gap:6px}.brand{gap:6px}.top-actions{gap:5px}.top .btn.acct{padding:0 8px}.top-actions .cur{background-image:none;padding:5px 7px;text-align:center}}
 @media (max-width:340px){.bname{font-size:16px}.brandmark{width:28px;height:28px}}
 .muted{color:var(--muted)}
+/* The footer's full-width band and line reach past the page edges: never let that scroll sideways */
+html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 .foot-site{margin-top:40px;border-top:1px solid var(--line);padding-block:20px 28px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--muted)}
 .foot-site{position:relative;border-top:0!important;background:var(--panel);box-shadow:0 0 0 100vmax var(--panel);clip-path:inset(-1px -100vmax 0)}
-.foot-site::before{content:"";position:absolute;top:-1px;left:-100vmax;right:-100vmax;border-top:1px solid var(--line)}
+.foot-site::before{content:"";position:absolute;top:-1px;left:calc(50% - 50vw);width:100vw;border-top:1px solid var(--line)}
 .foot-row{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap}
 .foot-brand b{color:var(--fg);font-weight:700}
 .foot-links{display:flex;gap:8px 20px;flex-wrap:wrap;align-items:center}
