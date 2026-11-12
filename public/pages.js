@@ -53,6 +53,67 @@
   if (lsGet('bc-admin')) document.querySelectorAll('.hm-admin').forEach(x => { x.hidden = false; });
   if (acct) document.querySelectorAll('.hm-in').forEach(x => { x.hidden = false; }); // Sign out, when signed in on this browser
 
+  /* Sign in on any page: a pop-up like the one in My collection, so you stay where you are.
+     The sign-in code (Firebase) loads only when it's needed: when the pop-up opens, or when an email
+     sign-in link brings you back to this page (the link returns to the page you started on). */
+  const FB_SRC = ['app', 'auth', 'firestore'].map(m => `https://www.gstatic.com/firebasejs/11.10.0/firebase-${m}-compat.js`).concat(['/config.js', '/backend-firebase.js']);
+  let fbLoading = null;
+  const loadFB = () => fbLoading || (fbLoading = (async () => {
+    if (window.BC && window.BC.auth) return window.BC;
+    for (const src of FB_SRC) await new Promise((ok, bad) => { if (document.querySelector(`script[src="${src}"]`)) return ok(); const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = bad; document.head.appendChild(t); });
+    return window.BC;
+  })());
+  const IN_APP = (() => { const ua = navigator.userAgent || '';
+    if (/Instagram/i.test(ua)) return 'Instagram'; if (/FBAN|FBAV|FB_IAB|FBIOS/i.test(ua)) return 'Facebook';
+    if (/musical_ly|TikTok|BytedanceWebview/i.test(ua)) return 'TikTok'; if (/Snapchat/i.test(ua)) return 'Snapchat';
+    if (/LinkedInApp/i.test(ua)) return 'LinkedIn'; return ''; })();
+  // After signing in here: remember your initial for the header (like the app), count a new account once, then refresh this page.
+  const signedIn = async (BC, how) => {
+    const email = await BC.user.email(); if (!email) return false;
+    lsSet('bc-acct', { n: email.split('@')[0] });
+    try { if (await BC.user.isNew()) track('sign_up', { method: how, from: location.pathname }); else track('login', { method: how, from: location.pathname }); } catch {}
+    return true;
+  };
+  function authDialog() {
+    let d = $('authDlg'); if (d) return d;
+    d = document.createElement('dialog'); d.className = 'dlg authdlg'; d.id = 'authDlg'; d.setAttribute('aria-labelledby', 'authTitle');
+    d.innerHTML = `<div class="dhead"><h2 id="authTitle">Sign in or create an account</h2><button type="button" class="icon-btn" data-close aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+<div class="authbody" id="authIn"><p><b>New here?</b> Signing in creates your free account, so your collection is on every device where you sign in.</p>
+<form id="authForm" autocomplete="on"><label for="authEmail">Email</label><input class="inp" id="authEmail" type="email" required autocomplete="email" placeholder="you@example.com"><button class="btn primary" type="submit" id="authSend">Email me a sign-in link</button></form>
+<div class="or" id="authOr"><span>or</span></div><button class="btn" type="button" id="authGoogle">Continue with Google</button>
+<p class="fine" id="authInApp" hidden></p>
+<p class="fine">Anything you’ve added in this browser moves into your account. By signing in you agree to our <a href="/privacy">privacy policy</a>.</p><p class="fine err" id="authErr" hidden></p></div>
+<div class="authbody" id="authSent" hidden><p>We’ve sent a sign-in link to <b id="authSentTo"></b>. Open it on this device to finish signing in: it brings you back to this page.</p><p class="fine">Not there after a minute? Check your spam or promotions folder. It comes from BrickCollect.</p></div>`;
+    document.body.appendChild(d);
+    if (IN_APP) { $('authGoogle').hidden = $('authOr').hidden = true; const n = $('authInApp'); n.hidden = false; n.textContent = `Google sign-in doesn’t work inside ${IN_APP}’s browser: use your email, or open this page in Safari or Chrome.`; }
+    const fail = e => { const el = $('authErr'); el.hidden = false; el.textContent = (e && e.message) || 'That didn’t work. Please try again.'; };
+    $('authForm').onsubmit = async e => {
+      e.preventDefault(); $('authErr').hidden = true; const email = $('authEmail').value.trim(); if (!email) return;
+      $('authSend').disabled = true; $('authSend').textContent = 'Sending…';
+      try {
+        const BC = await loadFB(); const local = lsGet('bc-collection') || {};
+        await BC.auth.signInWithEmail(email, Object.keys(local).length ? JSON.stringify(local) : '');
+        $('authIn').hidden = true; $('authSent').hidden = false; $('authSentTo').textContent = email; $('authTitle').textContent = 'Check your email';
+        track('login_link_sent', { from: location.pathname });
+      } catch (err) { fail(err); }
+      $('authSend').disabled = false; $('authSend').textContent = 'Email me a sign-in link';
+    };
+    $('authGoogle').onclick = async () => {
+      $('authErr').hidden = true;
+      try { const BC = await loadFB(); await BC.auth.signInWithGoogle(); if (await signedIn(BC, 'google')) { if (d.dataset.next) location.href = d.dataset.next; else location.reload(); } } catch (err) { fail(err); }
+    };
+    return d;
+  }
+  const openSignIn = (e, next) => { e.preventDefault(); const d = authDialog(); d.dataset.next = next || ''; d.showModal(); loadFB().catch(() => {}); track('signin_open', { from: location.pathname }); };
+  if (ab && !acct) ab.addEventListener('click', e => openSignIn(e));
+  // Home: "Sign in to view your collection" signs in here, then opens My collection.
+  if (hb && !acct) hb.addEventListener('click', e => openSignIn(e, '/collection'));
+  // Back from an email sign-in link (or a Google redirect on phones that block pop-ups): finish here.
+  { const q = new URLSearchParams(location.search);
+    if ((q.get('mode') === 'signIn' && q.get('oobCode')) || sessionStorage.getItem('firebase:pendingRedirect') || /firebase:pendingRedirect/.test(Object.keys(sessionStorage).join(' '))) {
+      loadFB().then(async BC => { await BC.ready; if (await signedIn(BC, q.get('oobCode') ? 'email' : 'google')) location.replace(location.pathname + location.hash); }).catch(() => {});
+    } }
+
   /* ☰ menu */
   const m = document.querySelector('details.hmenu');
   if (m) {

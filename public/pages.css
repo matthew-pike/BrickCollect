@@ -221,3 +221,12 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 @media (max-width:640px){.tiles{grid-template-columns:1fr 1fr;gap:8px}.tile{padding:10px 12px}}
 .upd .hhead h2 a{color:var(--fg);text-decoration:none}.upd .hhead h2 a:hover{color:var(--accent)}
 .upd .cards{margin-top:12px}
+.authdlg{width:min(440px,94vw)}
+.authbody{padding:18px 20px 20px;background:var(--panel)}
+.authbody p{margin:0 0 12px;color:var(--muted);font-size:14px}.authbody p b{color:var(--fg);font-weight:500}
+.authbody label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.authbody .inp{width:100%;background:var(--bg);border:1px solid var(--line-2);border-radius:8px;padding:10px 12px;font-size:15px;margin-bottom:10px}
+.authbody .btn{width:100%}
+.authbody .or{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--faint);font-size:12px}.authbody .or::before,.authbody .or::after{content:"";flex:1;border-top:1px solid var(--line)}
+.authbody .fine{font-size:12px;margin-top:12px}.authbody .err{color:var(--coral)}
+.authdlg [hidden]{display:none!important}

@@ -53,7 +53,7 @@ const HEADER = `<header class="top"><div class="wrap">
 <div class="brand"><a href="/" class="brandmark" aria-hidden="true" tabindex="-1">${MARK}</a><div><p class="bname"><a href="/">BrickCollect</a> <span class="beta">BETA</span></p><p class="tag">Collect. Track. Value. Export. In one place.</p></div></div>
 <form class="search" action="/collection" role="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input name="q" type="search" placeholder="Search name, set #, subtheme or tag…" autocomplete="off" aria-label="Search by set name, number, subtheme or tag"></form>
 <div class="top-actions">
-<a class="btn acct" id="acctBtn" href="/collection#signin" title="Sign in to save your collection to a free account">Sign in</a>
+<a class="btn acct" id="acctBtn" href="#signin" title="Sign in to save your collection to a free account">Sign in</a>
 <select id="curSel" class="cur" aria-label="Currency" title="Currency">${CURS.map(c => `<option>${c}</option>`).join('')}</select>
 <button class="icon-btn" id="themeBtn" type="button" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
 <details class="hmenu"><summary class="icon-btn" title="Menu" aria-label="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
@@ -326,7 +326,7 @@ const brandTile = ([b, l]) => { const pic = l.find(x => x.img); return `<a class
 const section = (title, more, list) => list.length ? `<section class="hsec"><div class="hhead"><h2>${title}</h2>${more || ''}</div><div class="tcards">${list.map(tcard).join('')}</div></section>` : '';
 const REDIRECT = `<script>/* Collectors who already have sets (or are signed in) go straight to My collection, and old links like /?set=… keep working. Coming from another BrickCollect page (Home in the menu) stays here. */
 (()=>{try{const qs=new URLSearchParams(location.search),r=document.referrer,same=!!r&&new URL(r).origin===location.origin;
-const go=['set','carry','apiKey','oobCode','mode','q','source'].some(k=>qs.has(k))||location.hash==='#about'||location.hash==='#signin';
+const go=['set','carry','q','source'].some(k=>qs.has(k))&&!qs.has('oobCode')||location.hash==='#about'||location.hash==='#signin';
 const has=!!localStorage.getItem('bc-acct')||Object.keys(JSON.parse(localStorage.getItem('bc-collection')||'{}')||{}).length>0;
 if(go||(has&&!same&&!qs.has('home')))location.replace('/collection'+location.search+location.hash)}catch{}})();</script>\n`;
 write('./index.html', shell({
