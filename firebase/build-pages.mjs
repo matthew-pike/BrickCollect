@@ -130,7 +130,7 @@ ${robots ? `<meta name="robots" content="${robots}">\n` : ''}<link rel="canonica
 <header class="top"><div class="wrap">
 <div class="brand"><a href="/" class="brandmark" aria-hidden="true" tabindex="-1">${MARK}</a><div><p class="name"><a href="/">BrickCollect</a> <span class="beta">BETA</span></p><p class="tag">Collect. Track. Value. Export. In one place.</p></div></div>
 <details class="menu"><summary aria-label="Menu" title="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
-<nav aria-label="Menu"><a href="/" data-cta="menu">Track your sets free</a><a href="/sets">All sets</a><a href="/theme/star-wars">LEGO Star Wars</a><a href="/sets#brands">Other brands</a><a href="https://www.instagram.com/brickcollect.app/" target="_blank" rel="noopener">Instagram</a><a href="/privacy">Privacy</a></nav></details>
+<nav aria-label="Menu"><a href="/" data-cta="menu">Home</a><a href="/sets">All sets</a><a href="/theme/star-wars">LEGO Star Wars</a><a href="/sets#brands">Other brands</a><a href="https://www.instagram.com/brickcollect.app/" target="_blank" rel="noopener">Instagram</a><a href="/privacy">Privacy</a></nav></details>
 </div></header>
 <main class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb">${crumbs.map((c, i) => i === crumbs.length - 1 ? `<span>${esc(c[0])}</span>` : `<a href="${esc(c[1])}">${esc(c[0])}</a>`).join('<span class="sep">›</span>')}</nav>
