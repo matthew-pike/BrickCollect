@@ -103,7 +103,10 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
 for (const x of [...lego, ...extras]) if (subOv.has(x.n)) x.sub = subOv.get(x.n) || '';
 
 // Pages for real sets: LEGO entries with pieces (leaves out gear, books and keyrings), every set of other brands.
-const sets = [...lego.filter(x => x.pieces > 0), ...extras];
+// New and upcoming sets come from Rebrickable before their piece count does: keep those (normal set numbers,
+// from last year on) so every new set has a page; the pieces show up once Rebrickable adds them.
+const NEWER = now.getFullYear() - 1;
+const sets = [...lego.filter(x => x.pieces > 0 || (x.year >= NEWER && /^\d{4,6}-\d+$/.test(x.n))), ...extras];
 const used = new Set();
 for (const x of sets) {
   let p = x.brand === 'LEGO' ? slug(x.n) : `${slug(x.brand)}-${slug(x.disp)}`;
@@ -276,6 +279,20 @@ ${brands.size ? `<h2 id="brands">Brands</h2><div class="tiles">${[...brands].sor
 <h2>LEGO themes</h2>${azThemes()}`,
 }));
 
+/* ---------- Brick updates (/updates): what the weekly catalog refresh added (public/updates.json) ---------- */
+const byNum = new Map(sets.map(x => [x.n, x]));
+const UPDATES = (() => { try { return JSON.parse(readFileSync(new URL('updates.json', PUB), 'utf8')); } catch { return []; } })()
+  .map(u => {
+    const list = u.sets.map(n => byNum.get(n)).filter(Boolean).sort((a, b) => (b.year || 0) - (a.year || 0) || (b.pieces || 0) - (a.pieces || 0));
+    const d = new Date(u.date + 'T00:00:00Z'), day = d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+    const themesIn = [...new Set(list.map(x => x.theme))];
+    const title = `${list.length} new set${list.length === 1 ? '' : 's'} · ${d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', timeZone: 'UTC' })}`;
+    return { ...u, list, day, title, themesIn, path: `/update/${u.date}` };
+  }).filter(u => u.list.length).sort((a, b) => b.date.localeCompare(a.date));
+const latestUpdate = UPDATES[0] || null;
+const updCard = u => `<section class="box upd"><div class="hhead"><h2><a href="${esc(u.path)}">${esc(u.title)}</a></h2><a href="${esc(u.path)}">See this update →</a></div>
+<p class="muted">New in BrickCollect on ${esc(u.day)}${u.themesIn.length ? `, from ${u.themesIn.slice(0, 6).map(t => `<a href="${esc(themePath(t))}">${esc(t)}</a>`).join(', ')}${u.themesIn.length > 6 ? ' and more' : ''}` : ''}.</p>
+<div class="cards">${u.list.slice(0, 8).map(card).join('')}</div>${u.list.length > 8 ? `<p><a href="${esc(u.path)}">and ${u.list.length - 8} more →</a></p>` : ''}</section>`;
 /* ---------- home page (/) ---------- */
 // The app moves to /collection (My collection); / becomes a page of sets you can tick straight away.
 {
@@ -322,11 +339,23 @@ write('./index.html', shell({
 <div class="row"><a class="btn primary" href="/collection#signin" id="heroBtn" data-cta="hero">Sign in to view your collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
 ${section('Popular sets', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
 ${section('Retiring soon', '<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon →</a>', retiring)}
-${section(`New in ${thisYear}`, '', newest)}
+${latestUpdate ? section(`Latest brick updates: ${esc(latestUpdate.title)}`, `<a href="/updates" data-cta="more_updates">All brick updates →</a>`, latestUpdate.list.slice(0, 12)) : section(`New in ${thisYear}`, '', newest)}
 <section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes →</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>
 ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><a href="/sets#brands">All brands →</a></div><div class="ttiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(brandTile).join('')}</div></section>` : ''}
 <div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> added to your collection</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection →</a></div>`,
 }));
+
+if (UPDATES.length) {
+  write('./updates.html', shell({ path: '/updates', title: 'Brick updates: new LEGO sets | BrickCollect', h1: 'Brick updates', crumbs: [['Brick updates', '/updates']],
+    desc: `New LEGO sets as they arrive in BrickCollect, every week. Latest: ${latestUpdate.title}.`,
+    body: `<p class="sub">New sets as they arrive in BrickCollect, every week. Select “I own it” or “I want it” on any set page.</p><div class="prose">${UPDATES.map(updCard).join('\n')}</div>` }));
+  for (const u of UPDATES) {
+    const groups = new Map(); for (const x of u.list) { const k = x.theme; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
+    write(`.${u.path}.html`, shell({ path: u.path, title: `${u.title}: new LEGO sets | BrickCollect`, h1: esc(u.title), crumbs: [['Brick updates', '/updates'], [u.day, u.path]],
+      desc: `New LEGO sets in BrickCollect on ${u.day}: ${u.list.slice(0, 6).map(x => `${shownNum(x)} ${x.name}`).join(', ')}${u.list.length > 6 ? ' and more' : ''}.`,
+      body: `<p class="sub">New in BrickCollect on ${esc(u.day)}. Select “I own it” or “I want it” on any set page.</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}` }));
+  }
+}
 
 /* ---------- About and Privacy: their text from public/about.html and public/privacy.html, in the site's page ---------- */
 for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.html', '/privacy', 'Privacy'], ['getting-started.html', '/getting-started', 'Getting started']]) {
@@ -458,7 +487,7 @@ write('./404.html', shell({ path: '/404', title: 'Page not found · BrickCollect
 
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
-write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/getting-started', '/privacy', '/whats-new', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
+write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/getting-started', '/privacy', '/whats-new', ...(UPDATES.length ? ['/updates', ...UPDATES.map(u => u.path)] : []), ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
 write('./sitemap-sets.xml', urlset(sets.map(x => x.path)));
 const day = now.toISOString().slice(0, 10);
 write('./sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${SITE}/sitemap-pages.xml</loc><lastmod>${day}</lastmod></sitemap>\n  <sitemap><loc>${SITE}/sitemap-sets.xml</loc><lastmod>${day}</lastmod></sitemap>\n</sitemapindex>\n`);

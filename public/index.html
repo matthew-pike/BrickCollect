@@ -878,7 +878,7 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
       <button class="icon-btn" id="themeBtn" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
       <button class="icon-btn" id="showWelcome" hidden title="Getting started" aria-label="Getting started"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
       <details class="hmenu" id="hMenu"><summary class="icon-btn" title="Menu" aria-label="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
-        <nav aria-label="Menu"><a href="/">Home</a><a href="/collection">My collection</a><a href="/selling">My sale or trade list</a><a href="/sets">All sets</a><hr><a href="/getting-started">Getting started</a><a href="/about">About BrickCollect</a><a href="/privacy">Privacy</a><a href="/whats-new">What’s new</a><hr><a href="/account">My account</a><a href="/admin" class="hm-admin" id="hmAdmin" hidden>Admin <span class="unew" id="hmAdminNew" hidden></span></a><hr class="hm-in" hidden><a href="#" data-hm="signOutBtn" class="hm-in" hidden>Sign out</a></nav></details>
+        <nav aria-label="Menu"><a href="/">Home</a><a href="/collection">My collection</a><a href="/selling">My sale or trade list</a><a href="/sets">All sets</a><a href="/updates">Brick updates</a><hr><a href="/getting-started">Getting started</a><a href="/about">About BrickCollect</a><a href="/privacy">Privacy</a><a href="/whats-new">What’s new</a><hr><a href="/account">My account</a><a href="/admin" class="hm-admin" id="hmAdmin" hidden>Admin <span class="unew" id="hmAdminNew" hidden></span></a><hr class="hm-in" hidden><a href="#" data-hm="signOutBtn" class="hm-in" hidden>Sign out</a></nav></details>
     </div>
   </div>
 </header>
@@ -2297,7 +2297,7 @@ function render() {
 let zoomFrom = null;
 /* Each set's own page (brickcollect.app/set/…, built by firebase/build-pages.mjs with the same addresses). */
 const pageSlug = t => String(t).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x';
-const setPage = x => x && x.k === 's' && (x.extra || x.pieces > 0) ? `/set/${x.brand === 'LEGO' ? pageSlug(x.n) : `${pageSlug(x.brand)}-${pageSlug(x.disp || x.n)}`}` : '';
+const setPage = x => x && x.k === 's' && (x.extra || x.pieces > 0 || (x.year >= new Date().getFullYear() - 1 && /^\d{4,6}-\d+$/.test(x.n))) ? `/set/${x.brand === 'LEGO' ? pageSlug(x.n) : `${pageSlug(x.brand)}-${pageSlug(x.disp || x.n)}`}` : '';
 const setPageLink = x => { const u = setPage(x); return u ? `<a class="spage" href="${esc(u)}" title="Open the set page" aria-label="Open the page for ${esc(x.name)}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>` : ''; };
 function openZoom(btn) {
   const pic = btn.querySelector('img'); if (!pic) return;

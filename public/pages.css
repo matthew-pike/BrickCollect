@@ -144,8 +144,8 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .lead{margin:0;color:var(--muted);max-width:720px;font-size:16px}
 .hsec{margin-top:30px}
 .hhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.hhead h2{margin:0}
-.hhead a{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:13.5px;font-weight:500;text-decoration:none;color:var(--fg);padding:7px 13px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel)}
-.hhead a:hover{border-color:var(--accent);color:var(--accent)}
+.hhead > a{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:13.5px;font-weight:500;text-decoration:none;color:var(--fg);padding:7px 13px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel)}
+.hhead > a:hover{border-color:var(--accent);color:var(--accent)}
 .tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
 .tcard{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .tcard.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--panel))}
@@ -194,7 +194,7 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .zoombody{background:#fff;display:flex;align-items:center;justify-content:center;padding:24px;min-height:300px}
 .zoombody img{max-width:100%;max-height:72vh;object-fit:contain}
 @media (max-width:640px){.zoomdlg{width:100vw}}
-@media (max-width:640px){.hhead{flex-wrap:wrap;row-gap:8px}.hhead a{white-space:normal}}
+@media (max-width:640px){.hhead{flex-wrap:wrap;row-gap:8px}.hhead > a{white-space:normal}}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;margin:8px 0 0}.kv dt{color:var(--muted)}.kv dd{margin:0}
 .prose ol{color:var(--muted)}.prose ol li{margin:6px 0}
 /* Delete your account: light red box with a red border */
@@ -219,3 +219,5 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .azh{margin:22px 0 10px;font-size:16px;font-weight:600;color:var(--accent)}
 @media (max-width:640px){.az{position:static;gap:3px}.az a,.az span{min-width:26px;height:28px;font-size:12.5px}}
 @media (max-width:640px){.tiles{grid-template-columns:1fr 1fr;gap:8px}.tile{padding:10px 12px}}
+.upd .hhead h2 a{color:var(--fg);text-decoration:none}.upd .hhead h2 a:hover{color:var(--accent)}
+.upd .cards{margin-top:12px}
