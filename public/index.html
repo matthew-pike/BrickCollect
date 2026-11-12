@@ -4252,6 +4252,7 @@ function linkAction() {
   // From the header search on the other pages (/collection?q=…), and their About / Sign in buttons.
   if (q.get('q') && !n) { $('q').value = q.get('q'); q.delete('q'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); track('search_from_page'); }
   if (['S', 'R'].includes(q.get('ret')) && !n) { fi.ret.value = q.get('ret'); fi.ret.classList.add('set-on'); q.delete('ret'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); }
+  if (location.hash === '#news') { history.replaceState(null, '', location.pathname + location.search); setTimeout(openNews, 300); }
   if (location.hash === '#about') { $('welcome').hidden = false; history.replaceState(null, '', location.pathname + location.search); $('welcome').scrollIntoView({ block: 'start' }); }
   if (location.hash === '#signin') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => { if (saveMode !== 'cloud') $('acctBtn').click(); }, 1500); }
   if (!n) return;

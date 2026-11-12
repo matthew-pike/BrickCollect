@@ -40,6 +40,12 @@ const MENU = (() => {
   if (!m) throw new Error('Menu not found in index.html; update build-pages.mjs');
   return m[1];
 })();
+// The app's footer is the template too. What's new opens in My collection; Install app only works inside the app.
+const FOOTER = (() => {
+  const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<footer class="foot-site">[\s\S]*?<\/footer>/);
+  if (!m) throw new Error('Footer not found in index.html; update build-pages.mjs');
+  return m[0].replace(/\s*<a href="#" id="installLink"[^>]*>[\s\S]*?<\/a>/, '').replace('<a href="#" id="newsLink">', '<a href="/collection#news">').replace(/<span id="ratesNote"><\/span>/, '');
+})();
 const CURS = ['AUD', 'USD', 'EUR', 'GBP', 'CAD', 'NZD', 'JPY', 'CHF'];
 const HEADER = `<header class="top"><div class="wrap">
 <div class="brand"><a href="/" class="brandmark" aria-hidden="true" tabindex="-1">${MARK}</a><div><p class="bname"><a href="/">BrickCollect</a> <span class="beta">BETA</span></p><p class="tag">Collect. Track. Value. Export. In one place.</p></div></div>
@@ -74,13 +80,15 @@ for (const [fn, name, , si] of raw.figs) for (const i of si) if (lego[i]) lego[i
 const shared = new Map();   // n -> { ret, exit, bl }
 const extras = [];
 const subOv = new Map();   // n -> subtheme
+let mostOwned = {};       // n -> how many collectors own it (Admin page numbers)
 if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
   try {
     const { initializeApp, applicationDefault } = await import('firebase-admin/app');
     const { getFirestore } = await import('firebase-admin/firestore');
     initializeApp({ credential: applicationDefault(), projectId: 'brickcollect-app' });
     const db = getFirestore();
-    const [info, cat, subs] = await Promise.all([db.collection('iteminfo').get(), db.collection('catalog').get(), db.collection('subthemes').get()]);
+    const [info, cat, subs, usage] = await Promise.all([db.collection('iteminfo').get(), db.collection('catalog').get(), db.collection('subthemes').get(), db.doc('admin/usage').get()]);
+    mostOwned = (usage.exists && usage.data().owned) || {};
     // Subthemes as the app shows them: the automatic layer, then the owner's hand edits.
     for (const d of subs.docs) { const v = d.data() || {}; for (const [k, sub] of Object.entries(v.brickset || {})) subOv.set(k, sub); for (const [k, sub] of Object.entries(v.manual || {})) subOv.set(k, sub); }
     for (const d of info.docs) for (const [n, v] of Object.entries((d.data() || {}).items || {})) shared.set(n, { ret: v.ret, exit: v.exit, bl: v.bl });
@@ -155,10 +163,7 @@ ${HEADER}
 ${crumbs.length ? `<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span class="sep">›</span>${crumbs.map((c, i) => i === crumbs.length - 1 ? `<span>${esc(c[0])}</span>` : `<a href="${esc(c[1])}">${esc(c[0])}</a>`).join('<span class="sep">›</span>')}</nav>` : ''}
 ${h1 ? `<h1>${h1}</h1>\n` : ''}${body}
 </main>
-<footer class="foot"><div class="wrap">
-<div class="promo"><b>BrickCollect</b> is the free collection tracker for LEGO and other brick brands. Tick the sets you own, keep a Wanted list, see what your collection is worth, and share or sell it. <a href="/collection" data-cta="footer">Open My collection</a></div>
-<p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © <a href="https://rebrickable.com/" rel="noopener">Rebrickable</a>, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Some store links are affiliate links: if you buy through them, The Art of Bricks may earn a small commission at no extra cost to you. <a href="/privacy">Privacy</a></p>
-</div></footer>
+<div class="wrap">${FOOTER}</div>
 <script src="/pages.js?v=${JS_V}"></script>
 </body>
 </html>
@@ -269,13 +274,22 @@ ${brands.size ? `<h2 id="brands">Brands</h2><div class="tiles">${[...brands].sor
 const POPULAR = (() => { const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/const POPULAR = \[([^\]]*)\]/); return m ? [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]) : []; })();
 const byN = new Map(sets.map(x => [x.n, x]));
 const tcard = x => `<div class="tcard"><a href="${esc(x.path)}" class="tpic">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="" loading="lazy" width="96" height="72">` : '<span class="noimg"></span>'}</a><div class="cb"><a class="cn" href="${esc(x.path)}">${esc(x.name)}</a><span class="cm">${esc(x.brand === 'LEGO' ? shownNum(x) : `${x.brand} ${shownNum(x)}`)}${x.year ? ` · ${x.year}` : ''}</span><label class="tick"><input type="checkbox" data-own="${esc(x.n)}"> I own it</label></div></div>`;
-const popular = POPULAR.map(n => byN.get(n)).filter(Boolean);
-const thisYear = now.getFullYear();
-const retiring = sets.filter(x => (retState(x) || {}).s === 'S').sort((a, b) => (Date.parse((shared.get(a.n) || {}).exit || '9999') - Date.parse((shared.get(b.n) || {}).exit || '9999')) || (b.pieces || 0) - (a.pieces || 0)).slice(0, 12);
-const newest = sets.filter(x => x.brand === 'LEGO' && x.year >= thisYear).sort((a, b) => (b.pieces || 0) - (a.pieces || 0)).slice(0, 12);
 // Same themes and pictures as the theme row in My collection.
 const THEME_TILES = (() => { const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/const THEME_TILES = \[([\s\S]*?)\];/); return m ? [...m[1].matchAll(/\['([^']+)', '([^']+)', '([^']+)'\]/g)].map(x => ({ label: x[1], theme: x[2], pic: x[3] })) : []; })();
 const bigTheme = THEME_TILES.filter(t => legoThemes.has(t.theme)).map(t => ({ ...t, list: legoThemes.get(t.theme) }));
+// Popular sets: the ones most collectors own in BrickCollect (Admin numbers, 2+ collectors), topped up with
+// the biggest recent sets from the favourite themes, one per theme, then the app's own POPULAR list.
+const popular = (() => {
+  const out = [], seen = new Set(), add = x => { if (x && !seen.has(x.n) && out.length < 12) { seen.add(x.n); out.push(x); } };
+  Object.entries(mostOwned).filter(([n, c]) => c >= 2 && byN.has(n)).sort((a, b) => b[1] - a[1]).forEach(([n]) => add(byN.get(n)));
+  const recent = now.getFullYear() - 2;
+  for (const t of THEME_TILES) { const l = legoThemes.get(t.theme) || []; add(l.filter(x => x.year >= recent && /^\d{4,5}-1$/.test(x.n)).sort((a, b) => (b.pieces || 0) - (a.pieces || 0))[0]); }
+  POPULAR.forEach(n => add(byN.get(n)));
+  return out;
+})();
+const thisYear = now.getFullYear();
+const retiring = sets.filter(x => (retState(x) || {}).s === 'S').sort((a, b) => (Date.parse((shared.get(a.n) || {}).exit || '9999') - Date.parse((shared.get(b.n) || {}).exit || '9999')) || (b.pieces || 0) - (a.pieces || 0)).slice(0, 12);
+const newest = sets.filter(x => x.brand === 'LEGO' && x.year >= thisYear).sort((a, b) => (b.pieces || 0) - (a.pieces || 0)).slice(0, 12);
 const themeTile = t => { const pic = byN.get(t.pic) || t.list.slice().sort((a, b) => (b.pieces || 0) - (a.pieces || 0))[0]; return `<a class="ttile" href="${esc(themePath(t.theme))}">${pic ? `<img src="${esc(imgUrl(pic))}" alt="" loading="lazy" width="120" height="80">` : ''}<span class="cn">${esc(t.label)}</span><span class="cm">${fmt(t.list.length)} sets</span></a>`; };
 const brandTile = ([b, l]) => { const pic = l.find(x => x.img); return `<a class="ttile" href="${esc(brandPath(b))}">${pic ? `<img src="${esc(pic.img)}" alt="" loading="lazy" width="120" height="80">` : ''}<span class="cn">${esc(b)}</span><span class="cm">${fmt(l.length)} sets</span></a>`; };
 const section = (title, more, list) => list.length ? `<section class="hsec"><div class="hhead"><h2>${title}</h2>${more || ''}</div><div class="tcards">${list.map(tcard).join('')}</div></section>` : '';
@@ -291,8 +305,8 @@ write('./index.html', shell({
   h1: '', crumbs: [],
   body: `<section class="hero"><div><h1>Your brick collection, all in one place</h1>
 <p class="lead">The free collection tracker for LEGO and other brick brands. Tick the sets you own, keep a Wanted list, see what your collection is worth, and share or sell it.</p>
-<div class="row"><a class="btn primary" href="/collection" data-cta="hero">Open My collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
-${section('Tick the sets you own', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
+<div class="row"><a class="btn primary" href="/collection#signin" id="heroBtn" data-cta="hero">Sign in to view your collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
+${section('Popular sets: tick the ones you own', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
 ${section('Retiring soon', '<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon →</a>', retiring)}
 ${section(`New in ${thisYear}`, '', newest)}
 <section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes →</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>

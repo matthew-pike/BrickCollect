@@ -35,6 +35,9 @@
   const acct = lsGet('bc-acct'), ab = $('acctBtn');
   if (ab && acct && acct.n) { ab.classList.add('in'); ab.innerHTML = `<span class="full"></span><span class="short" aria-hidden="true"></span>`; ab.querySelector('.full').textContent = acct.n.slice(0, 14); ab.querySelector('.short').textContent = acct.n.slice(0, 1).toUpperCase(); ab.title = 'Your account · My collection'; ab.href = '/collection'; }
 
+  /* home: the main button opens My collection once you're signed in */
+  const hb = $('heroBtn'); if (hb && acct) { hb.textContent = 'Open My collection'; hb.href = '/collection'; }
+
   /* ☰ menu */
   const m = document.querySelector('details.hmenu');
   if (m) {
