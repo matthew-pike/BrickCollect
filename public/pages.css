@@ -165,7 +165,7 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .prose{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
 .box > :first-child{margin-top:0}.box > :last-child{margin-bottom:0}
-.prose p,.prose ul{max-width:860px}
+.prose p,.prose ul{max-width:none}
 .prose p,.prose li{color:var(--muted);line-height:1.65}
 .prose li{margin:6px 0}
 .prose b{color:var(--fg);font-weight:500}
@@ -196,7 +196,7 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 @media (max-width:640px){.zoomdlg{width:100vw}}
 @media (max-width:640px){.hhead{flex-wrap:wrap;row-gap:8px}.hhead a{white-space:normal}}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;margin:8px 0 0}.kv dt{color:var(--muted)}.kv dd{margin:0}
-.prose ol{max-width:860px;color:var(--muted)}.prose ol li{margin:6px 0}
+.prose ol{color:var(--muted)}.prose ol li{margin:6px 0}
 /* Delete your account: light red box with a red border */
 .box.danger{--red:#d93036;background:color-mix(in srgb,var(--red) 7%,var(--panel));border-color:var(--red)}
 :root[data-theme="dark"] .box.danger,:root[data-theme="mid"] .box.danger{--red:#ff5c62;background:color-mix(in srgb,var(--red) 12%,var(--panel))}
