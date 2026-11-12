@@ -16,6 +16,9 @@ body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "Roboto",system
 a{color:var(--accent)}
 .muted{color:var(--muted)}
 .wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1320px;margin:0 auto}
+/* Jumps to a heading (theme page chips, #minifigures, #brands) stop below the sticky header */
+html{scroll-padding-top:88px}
+@media (max-width:640px){html{scroll-padding-top:130px}}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;gap:16px;padding-block:12px;flex-wrap:wrap}
 button,input,select{font:inherit;color:inherit}
