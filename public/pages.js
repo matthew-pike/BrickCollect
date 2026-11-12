@@ -49,6 +49,14 @@
   /* clicks worth counting */
   document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[data-cta]'); if (a) track('set_page_cta', { cta: a.dataset.cta, page: location.pathname }); });
 
+  /* pop-up windows (minifigures): open from any [data-open], close with ×, Esc or a click outside */
+  document.addEventListener('click', e => {
+    const o = e.target.closest && e.target.closest('[data-open]');
+    if (o) { const d = $(o.dataset.open); if (d && d.showModal) { d.showModal(); track('set_page_figs', { page: location.pathname }); } return; }
+    const d = e.target.closest && e.target.closest('dialog');
+    if (d && (e.target === d || e.target.closest('[data-close]'))) d.close();
+  });
+
   /* LEGO.com in the visitor's own country */
   { const mp = { AU: 'en-au', GB: 'en-gb', CA: 'en-ca', NZ: 'en-nz', IE: 'en-ie' }; const c = (navigator.language || '').split('-')[1]; const l = mp[(c || '').toUpperCase()]; if (l) document.querySelectorAll('a[href*="lego.com/en-us/"]').forEach(a => { a.href = a.href.replace('/en-us/', `/${l}/`); }); }
 
