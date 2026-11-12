@@ -148,6 +148,47 @@
   /* LEGO.com in the visitor's own country */
   { const mp = { AU: 'en-au', GB: 'en-gb', CA: 'en-ca', NZ: 'en-nz', IE: 'en-ie' }; const c = (navigator.language || '').split('-')[1]; const l = mp[(c || '').toUpperCase()]; if (l) document.querySelectorAll('a[href*="lego.com/en-us/"]').forEach(a => { a.href = a.href.replace('/en-us/', `/${l}/`); }); }
 
+  /* set page: today's price, in your currency. The page was built with the price in AUD; this reads the latest
+     from Firestore (just this set's entry in its price bucket) and converts it with the app's exchange rates.
+     LEGO: BrickLink's average of recent sales, from sellers in the location you've picked in My collection
+     (or the one that goes with your currency), falling back to worldwide, as My collection does. */
+  const pb = $('priceBox');
+  if (pb && pb.dataset.fb) {
+    const [proj, key] = pb.dataset.fb.split('|'), n = pb.dataset.n;
+    const base = `https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents`;
+    const plain = v => { if (!v) return null; if ('stringValue' in v) return v.stringValue; if ('integerValue' in v) return Number(v.integerValue); if ('doubleValue' in v) return Number(v.doubleValue); if ('booleanValue' in v) return v.booleanValue; if ('timestampValue' in v) return v.timestampValue; if ('mapValue' in v) { const o = {}; for (const [k, x] of Object.entries(v.mapValue.fields || {})) o[k] = plain(x); return o; } return null; };
+    const get = async (path, fields) => { const r = await fetch(`${base}/${path}?key=${key}${fields.map(f => `&mask.fieldPaths=${encodeURIComponent(f)}`).join('')}`); if (!r.ok) throw new Error('HTTP ' + r.status); return plain({ mapValue: await r.json() }) || {}; };
+    const bucketOf = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return 'b' + (h % 16); };
+    const LOCS = { AU: 'Australia', US: 'the United States', CA: 'Canada', EU: 'Europe (EU)', UK: 'the United Kingdom' };
+    const LOC_FOR_CUR = { AUD: 'AU', USD: 'US', CAD: 'CA', EUR: 'EU', GBP: 'UK' };
+    let item = null, rates = null, ratesP = null;
+    const curNow = () => (sel && sel.value) || prefs().currency || detect();
+    const loadRates = () => ratesP || (ratesP = get('meta/rates', ['rates', 'date']).then(r => { rates = r; }).catch(() => {}));
+    const fmtDay = d => { const t = Date.parse(d || ''); return isNaN(t) ? '' : new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); };
+    const paintPrice = () => {
+      if (!item) return;
+      const want = curNow(), r = (rates && rates.rates) || {}, c = want === 'AUD' || r[want] ? want : 'AUD', k = c === 'AUD' ? 1 : r[c];
+      let f; try { f = new Intl.NumberFormat(undefined, { style: 'currency', currency: c, currencyDisplay: 'narrowSymbol' }); } catch { f = new Intl.NumberFormat(undefined, { style: 'currency', currency: c }); }
+      const src = item.priceSource || 'BrickLink', bl = src === 'BrickLink' && !item.manualPrice;
+      const rg = prefs().region && (LOCS[prefs().region] || prefs().region === 'world') ? prefs().region : (LOC_FOR_CUR[c] || 'world');
+      const lp = bl && rg !== 'world' ? (item.loc || {})[rg] : null, local = !!(lp && (lp.used != null || lp.new != null));
+      const val = fld => local && lp[fld] != null ? lp[fld] : item[fld];
+      let any = false;
+      pb.querySelectorAll('[data-f]').forEach(el => { const v = val(el.dataset.f); if (v != null) any = true; el.textContent = v != null ? f.format(v * k) : '—'; });
+      const at = fmtDay(local && lp.at ? lp.at : item.pricedAt), when = at ? ` · ${at}` : '';
+      $('priceNote').textContent = !any ? 'No price yet.' : item.manualPrice ? `Value set by BrickCollect${when}` : bl ? `Average of the last 6 months’ sales by sellers ${local ? 'in ' + LOCS[rg] : 'worldwide'} on BrickLink${when}` : `Price on the ${pb.dataset.brand} store${when}`;
+      $('priceCur').textContent = c !== 'AUD' && rates && rates.date ? `${c}, converted from AUD at ${fmtDay(rates.date)} rates` : '';
+    };
+    (async () => {
+      try {
+        const [b] = await Promise.all([get(`iteminfo/${bucketOf(n)}`, ['items.`' + n.replace(/[`\\]/g, '\\$&') + '`']), curNow() !== 'AUD' ? loadRates() : null]);
+        item = (b.items || {})[n] || {};
+        paintPrice();
+      } catch (e) { console.warn('price', e); }
+    })();
+    if (sel) sel.addEventListener('change', () => { (sel.value !== 'AUD' ? loadRates() : Promise.resolve()).then(paintPrice); });
+  }
+
   /* home page: tick sets here */
   const boxes = [...document.querySelectorAll('input[data-own]')];
   if (!boxes.length) return;

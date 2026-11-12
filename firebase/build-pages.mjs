@@ -28,6 +28,8 @@ const write = (path, html) => { const u = new URL(path, OUT); mkdirSync(new URL(
 // Buy links, the same ones the app uses (config.js).
 const cfg = (() => { const sb = { window: {} }; vm.runInNewContext(readFileSync(new URL('config.js', PUB), 'utf8'), sb); return sb.window.BC_CONFIG || {}; })();
 const BUY = cfg.buyLinks || {};
+// Where pages.js reads today's price and exchange rates (public by design; Firestore rules protect the data).
+const FB_KEY = cfg.firebase ? `${cfg.firebase.projectId}|${cfg.firebase.apiKey}` : '';
 // The shared style and script get a version from their content, so browsers never use an old copy after a release.
 const ver = f => createHash('sha1').update(readFileSync(new URL(f, PUB))).digest('hex').slice(0, 10);
 const CSS_V = ver('pages.css'), JS_V = ver('pages.js');
@@ -78,7 +80,7 @@ const lego = raw.sets.map(([n, name, year, tid, pieces]) => {
 });
 for (const [fn, name, , si] of raw.figs) for (const i of si) if (lego[i]) lego[i].figs.push({ n: fn, name });
 
-const shared = new Map();   // n -> { ret, exit, bl }
+const shared = new Map();   // n -> { ret, exit, bl, used, new, loc, pricedAt, priceSource, manualPrice }
 const extras = [];
 const subOv = new Map();   // n -> subtheme
 let mostOwned = {};       // n -> how many collectors own it (Admin page numbers)
@@ -92,7 +94,7 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     mostOwned = (usage.exists && usage.data().owned) || {};
     // Subthemes as the app shows them: the automatic layer, then the owner's hand edits.
     for (const d of subs.docs) { const v = d.data() || {}; for (const [k, sub] of Object.entries(v.brickset || {})) subOv.set(k, sub); for (const [k, sub] of Object.entries(v.manual || {})) subOv.set(k, sub); }
-    for (const d of info.docs) for (const [n, v] of Object.entries((d.data() || {}).items || {})) shared.set(n, { ret: v.ret, exit: v.exit, bl: v.bl });
+    for (const d of info.docs) for (const [n, v] of Object.entries((d.data() || {}).items || {})) shared.set(n, { ret: v.ret, exit: v.exit, bl: v.bl, used: v.used, new: v.new, loc: v.loc, pricedAt: v.pricedAt, priceSource: v.priceSource, manualPrice: v.manualPrice });
     for (const d of cat.docs) {
       const v = d.data() || {};
       for (const [num, it] of Object.entries(v.items || {})) extras.push({ n: `${d.id}:${num}`, disp: num, name: it.name || num, year: it.year ?? null, pieces: it.pieces ?? null, img: it.img || '', url: it.url || '', theme: it.theme || 'Unsorted', sub: it.sub || '', brand: v.brand || d.id, figs: [] });
@@ -184,6 +186,39 @@ const byGroup = new Map();
 for (const x of sets) { const k = `${x.brand}|${x.theme}|${x.sub}`; if (!byGroup.has(k)) byGroup.set(k, []); byGroup.get(k).push(x); }
 for (const a of byGroup.values()) a.sort(byNewest);
 
+// Price on the set page, in AUD as of this build (pages.js updates it from Firestore and converts it to
+// the visitor's currency, the same way My collection does). LEGO: BrickLink's average of recent sales,
+// Australian sellers when known, else worldwide. Other brands: the price on the brand's own store.
+const aud = n => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(n).replace(/^\$/, 'A$');
+const dayMonth = d => { const t = Date.parse(d || ''); return Number.isFinite(t) ? new Date(t).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Australia/Sydney' }) : ''; };
+function priceOf(x) {
+  const sh = shared.get(x.n) || {}, src = sh.priceSource || 'BrickLink';
+  if (src === 'BrickLink' && !sh.manualPrice) {
+    const au = (sh.loc || {}).AU || {};
+    const pick = f => au[f] != null ? au[f] : sh[f];
+    return { used: pick('used'), new: pick('new'), where: au.used != null || au.new != null ? 'AU' : 'world', at: (au.used != null || au.new != null) && au.at ? au.at : sh.pricedAt, src };
+  }
+  return { used: sh.used, new: sh.new, where: '', at: sh.pricedAt, src, manual: !!sh.manualPrice };
+}
+const WHERE = { AU: 'sellers in Australia', US: 'sellers in the United States', CA: 'sellers in Canada', EU: 'sellers in Europe (EU)', UK: 'sellers in the United Kingdom', world: 'sellers worldwide' };
+function priceNote(p, brand) {
+  const when = dayMonth(p.at) ? ` · ${dayMonth(p.at)}` : '';
+  if (p.manual) return `Value set by BrickCollect${when}`;
+  if (p.src === 'BrickLink') return `Average of the last 6 months’ sales by ${WHERE[p.where] || WHERE.world} on BrickLink${when}`;
+  return `Price on the ${brand} store${when}`;
+}
+function priceBox(x, blNum) {
+  const p = priceOf(x), store = x.brand !== 'LEGO' && p.src !== 'BrickLink';
+  const rows = store ? [['Store price', 'new']] : [['New', 'new'], ['Used', 'used']];
+  const has = rows.some(([, f]) => p[f] != null);
+  const cell = f => p[f] != null ? aud(p[f]) : '—';
+  return `<div class="pricebox" id="priceBox" data-n="${esc(x.n)}" data-brand="${esc(x.brand)}" data-fb="${esc(FB_KEY)}"${blNum ? ` data-bl="${esc(blNum)}"` : ''}>
+<div class="phead"><b>${store ? 'Price' : 'What it’s worth'}</b><span class="cur-note muted" id="priceCur"></span></div>
+<div class="pvals">${rows.map(([k, f]) => `<div class="pv"><span class="pk">${k}</span><span class="pn" data-f="${f}">${cell(f)}</span></div>`).join('')}</div>
+<p class="fine" id="priceNote">${has ? esc(priceNote(p, x.brand)) : 'No price yet.'}</p>
+</div>`;
+}
+
 for (const x of sets) {
   const num = shownNum(x), ret = retState(x), buy = buyHref(x);
   const blNum = (shared.get(x.n) || {}).bl || (x.brand === 'LEGO' ? (bl.sets[x.n] || x.n) : '');
@@ -215,6 +250,7 @@ for (const x of sets) {
 <div class="side">
 <div class="track"><b>Got this set?</b><span class="muted">Select “I own it” to add it to your collection and keep count of your sets, pieces and minifigures. It’s free.</span>
 <div class="row"><a class="btn primary" href="${esc(app)}&amp;add=own" rel="nofollow" data-cta="own">✓ I own it</a><a class="btn" href="${esc(app)}&amp;add=want" rel="nofollow" data-cta="want">☆ I want it</a></div></div>
+${priceBox(x, blNum)}
 <dl class="facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
 ${links ? `<div class="row links">${links}</div>` : ''}
 </div>
