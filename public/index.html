@@ -258,7 +258,7 @@ button.hitile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 @media (max-width:640px){.welcome .wide-only{display:none}.welcome .narrow-only{display:inline}}
 .welcome .x{position:absolute;top:12px;right:12px}
 /* Notice banner (e.g. BrickLink outage): the same light BrickCollect-blue tint as Getting started, the notification colour */
-.notice{display:flex;align-items:center;gap:10px;padding:9px 44px 9px 12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 12%,var(--panel));position:relative}
+.notice{display:flex;align-items:center;gap:10px;padding:7px 40px 7px 10px;border-radius:10px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 12%,var(--panel));position:relative}
 .notice .ni{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:12px}
 .notice b{font-weight:500}
 .notice p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.4;max-width:none}
@@ -2454,7 +2454,9 @@ $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start',
 $('gotIt').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 // Getting started shows until the person closes it (Got it or ×), with its own marker so other saved settings can't hide it.
 if (!lsGet('bc-start')) $('welcome').hidden = false;
-$('showWelcome').onclick = () => { $('welcome').hidden = !$('welcome').hidden; savePrefs(); };
+$('showWelcome').onclick = () => { $('welcome').hidden = !$('welcome').hidden; savePrefs(); if (!$('welcome').hidden) showGettingStarted(); };
+// Getting started (menu, or /collection#about from other pages): open it and scroll so its title sits just under the header.
+function showGettingStarted() { const w = $('welcome'); w.hidden = false; savePrefs(); requestAnimationFrame(() => { const h = document.querySelector('header.top'), off = h && getComputedStyle(h).position !== 'static' ? h.offsetHeight : 0; scrollTo({ top: Math.max(0, w.getBoundingClientRect().top + scrollY - off - 12), behavior: 'smooth' }); }); }
 
 /* ---------- local BrickCollect connector: images + BrickLink prices ---------- */
 function hostMessage(e) {
@@ -4074,7 +4076,7 @@ $('newsPill').onclick = openNews;
 // Menu (☰): Home, My collection, All sets, then About (opens Getting started) and Privacy.
 { const m = $('hMenu');
   m.addEventListener('toggle', () => { if (m.open) track('menu_open'); });
-  m.addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; if (a.dataset.hm) { e.preventDefault(); $(a.dataset.hm).click(); } m.open = false; });
+  m.addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; if (a.dataset.hm === 'showWelcome') { e.preventDefault(); showGettingStarted(); } else if (a.dataset.hm) { e.preventDefault(); $(a.dataset.hm).click(); } m.open = false; });
   document.addEventListener('click', e => { if (m.open && !m.contains(e.target)) m.open = false; });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && m.open) { m.open = false; m.querySelector('summary').focus(); } }); }
 $('newsClose').onclick = () => $('newsDlg').close();
@@ -4271,7 +4273,7 @@ function linkAction() {
   if (q.get('q') && !n) { $('q').value = q.get('q'); q.delete('q'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); track('search_from_page'); }
   if (['S', 'R'].includes(q.get('ret')) && !n) { fi.ret.value = q.get('ret'); fi.ret.classList.add('set-on'); q.delete('ret'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); }
   if (location.hash === '#news') { history.replaceState(null, '', location.pathname + location.search); setTimeout(openNews, 300); }
-  if (location.hash === '#about') { $('welcome').hidden = false; history.replaceState(null, '', location.pathname + location.search); $('welcome').scrollIntoView({ block: 'start' }); }
+  if (location.hash === '#about') { history.replaceState(null, '', location.pathname + location.search); setTimeout(showGettingStarted, 50); }
   if (location.hash === '#signin') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => { if (saveMode !== 'cloud') $('acctBtn').click(); }, 1500); }
   if (!n) return;
   const add = q.get('add'); let tries = 0;

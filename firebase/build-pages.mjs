@@ -343,6 +343,32 @@ for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.
   write('./whats-new.html', shell({ path: '/whats-new', title: 'What’s new · BrickCollect', desc: 'New features and improvements in BrickCollect, the free collection tracker for LEGO and other brick brands.', h1: 'What’s new', crumbs: [['What’s new', '/whats-new']], body, notice: false }));
 }
 
+/* ---------- Admin page: same header, menu and footer as the other pages ----------
+   public/admin.html keeps its own styles for the numbers; it gets chrome.css (the shared part of pages.css:
+   colours, header, menu, notice, footer) and pages.js, and its old header is swapped for the site's. */
+{
+  const css = readFileSync(new URL('pages.css', PUB), 'utf8');
+  const cut = css.indexOf('/* ===== page content');
+  if (cut < 0) throw new Error('pages.css lost its "page content" marker; update build-pages.mjs');
+  const chrome = css.slice(0, cut), CHROME_V = createHash('sha1').update(chrome).digest('hex').slice(0, 10);
+  writeFileSync(new URL('chrome.css', OUT), chrome);
+  const f = new URL('admin.html', OUT);
+  let a = readFileSync(f, 'utf8');
+  const hs = a.indexOf('<header>'), he = a.indexOf('</header>');
+  if (hs < 0 || he < 0) throw new Error('Admin page header not found; update build-pages.mjs');
+  a = a.slice(0, hs) + HEADER + a.slice(he + '</header>'.length);
+  a = a.replace('<style>', `<link rel="stylesheet" href="/chrome.css?v=${CHROME_V}">\n<style>`)
+       // its own old header rules would style the new header: drop them
+       .replace(/^header[^\n]*\n/gm, '')
+       .replace(/\s*header\{padding:12px 14px\}header h1\{font-size:17px\}header \.back\{padding:5px 9px\}/, '')
+       .replace(/\s*header \.wide\{display:none\}/, '')
+       .replace('main{max-width:1180px;margin:0 auto;padding:18px 20px 60px}', 'main{max-width:1320px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px))}\n.adm-h1{font-size:30px;font-weight:500;margin:6px 0 16px;line-height:1.2}')
+       .replace('<main>', '<main>\n  <h1 class="adm-h1">Admin</h1>')
+       .replace('</main>', `</main>\n<div class="wrap">${FOOTER}</div>`)
+       .replace('</body>', `<script src="/pages.js?v=${JS_V}"></script>\n</body>`);
+  writeFileSync(f, a);
+}
+
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
 write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/privacy', '/whats-new', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
