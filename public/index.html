@@ -914,11 +914,6 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 
 <div class="wrap">
 <main>
-  <section class="notice" id="blNotice" role="status" data-key="bc-notice-blout1" hidden>
-    <span class="ni" aria-hidden="true">!</span>
-    <p><b>BrickLink is offline</b>, with no date yet for when it’s back.<span class="nmore"> BrickLink prices here are from before the outage.</span></p>
-    <button class="icon-btn x" type="button" id="hideBlNotice" aria-label="Hide this notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </section>
   <div class="pagehead"><nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span class="sep">›</span><span>My collection</span></nav><h2 class="pg-h1">My collection</h2></div>
   <div class="themewrap arrowwrap" id="themeWrap" hidden>
     <button type="button" class="tarrow prev" id="themePrev" data-dir="-1" aria-label="Scroll left" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -2494,20 +2489,6 @@ $('fiReset').onclick = $('fiClearM').onclick = $('fiClearS').onclick = () => { c
   // From the sticky header: go back to the top of the list, which is now a different (longer) list
   if (stuck) { const top = document.querySelector('.top'), off = getComputedStyle(top).position === 'sticky' ? top.offsetHeight : 0; scrollTo({ top: Math.max(0, $('boardHead').closest('.board').getBoundingClientRect().top + scrollY - off - 8), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
-// BrickLink outage notice (Nov 2026). Hidden once dismissed; remove this block when BrickLink is back.
-(() => {
-  // The other pages copy this notice (firebase/build-pages.mjs) and show it the same way (pages.js): change it here only.
-  const KEY = $('blNotice').dataset.key;
-  let gone = false; try { gone = !!localStorage.getItem(KEY); } catch {}
-  if (gone) return;
-  // data-back on the notice: the date BrickLink says it's back, shown in the visitor's time (leave it out when there's no date).
-  if ($('blNotice').dataset.back && $('blBack')) try {
-    const back = new Date($('blNotice').dataset.back);
-    $('blBack').textContent = back.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', ...(back.getMinutes() ? { minute: '2-digit' } : {}) }).replace(/,(?= \d+ )/, '');
-  } catch {}
-  $('blNotice').hidden = false;
-  $('hideBlNotice').onclick = () => { $('blNotice').hidden = true; lsSet(KEY, 1); track('notice_hide', { id: 'bl_outage' }); };
-})();
 $('gotIt').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 // Getting started shows until the person closes it (Got it or ×), with its own marker so other saved settings can't hide it.
 if (!lsGet('bc-start')) $('welcome').hidden = false;
