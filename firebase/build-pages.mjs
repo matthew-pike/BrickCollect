@@ -9,6 +9,7 @@
 // without it (or if that fails) it builds the LEGO pages only.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import vm from 'node:vm';
+import { createHash } from 'node:crypto';
 
 const SITE = 'https://brickcollect.app';
 const OUT = new URL('./hosting/', import.meta.url);
@@ -27,6 +28,9 @@ const write = (path, html) => { const u = new URL(path, OUT); mkdirSync(new URL(
 // Buy links, the same ones the app uses (config.js).
 const cfg = (() => { const sb = { window: {} }; vm.runInNewContext(readFileSync(new URL('config.js', PUB), 'utf8'), sb); return sb.window.BC_CONFIG || {}; })();
 const BUY = cfg.buyLinks || {};
+// The shared style and script get a version from their content, so browsers never use an old copy after a release.
+const ver = f => createHash('sha1').update(readFileSync(new URL(f, PUB))).digest('hex').slice(0, 10);
+const CSS_V = ver('pages.css'), JS_V = ver('pages.js');
 // The app's logo, taken from index.html so the pages keep matching it.
 const MARK = (readFileSync(new URL('index.html', PUB), 'utf8').match(/class="brandmark[^>]*>(<svg[\s\S]*?<\/svg>)<\/a>/) || [])[1] || '';
 if (!MARK) throw new Error('Logo not found in index.html; update build-pages.mjs');
@@ -34,7 +38,7 @@ if (!MARK) throw new Error('Logo not found in index.html; update build-pages.mjs
 const MENU = (() => {
   const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<details class="hmenu"[\s\S]*?<nav aria-label="Menu">([\s\S]*?)<\/nav><\/details>/);
   if (!m) throw new Error('Menu not found in index.html; update build-pages.mjs');
-  return m[1].replace(/<a href="#" data-hm="showWelcome">/, '<a href="/collection#about">');
+  return m[1];
 })();
 const CURS = ['AUD', 'USD', 'EUR', 'GBP', 'CAD', 'NZD', 'JPY', 'CHF'];
 const HEADER = `<header class="top"><div class="wrap">
@@ -44,7 +48,7 @@ const HEADER = `<header class="top"><div class="wrap">
 <a class="btn acct" id="acctBtn" href="/collection#signin" title="Sign in to save your collection to a free account">Sign in</a>
 <select id="curSel" class="cur" aria-label="Currency" title="Currency">${CURS.map(c => `<option>${c}</option>`).join('')}</select>
 <button class="icon-btn" id="themeBtn" type="button" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
-<a class="icon-btn" id="showWelcome" href="/collection#about" title="About BrickCollect" aria-label="About BrickCollect"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></a>
+<a class="icon-btn" id="showWelcome" href="/about" title="About BrickCollect" aria-label="About BrickCollect"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></a>
 <details class="hmenu"><summary class="icon-btn" title="Menu" aria-label="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
 <nav aria-label="Menu">${MENU}</nav></details>
 </div>
@@ -142,7 +146,7 @@ ${robots ? `<meta name="robots" content="${robots}">\n` : ''}<link rel="canonica
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script>try{const t=(JSON.parse(localStorage.getItem('bc-prefs')||'{}')||{}).theme;if(t==='dark'||t==='mid'||t==='light')document.documentElement.dataset.theme=t}catch{}</script>
 <script src="/analytics.js"></script>
-${head}<link rel="stylesheet" href="/pages.css">
+${head}<link rel="stylesheet" href="/pages.css?v=${CSS_V}">
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
@@ -155,7 +159,7 @@ ${h1 ? `<h1>${h1}</h1>\n` : ''}${body}
 <div class="promo"><b>BrickCollect</b> is the free collection tracker for LEGO and other brick brands. Tick the sets you own, keep a Wanted list, see what your collection is worth, and share or sell it. <a href="/collection" data-cta="footer">Open My collection</a></div>
 <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © <a href="https://rebrickable.com/" rel="noopener">Rebrickable</a>, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Some store links are affiliate links: if you buy through them, The Art of Bricks may earn a small commission at no extra cost to you. <a href="/privacy">Privacy</a></p>
 </div></footer>
-<script src="/pages.js"></script>
+<script src="/pages.js?v=${JS_V}"></script>
 </body>
 </html>
 `;
@@ -296,9 +300,22 @@ ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><
 <div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> ticked, saved in this browser</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection →</a></div>`,
 }));
 
+/* ---------- About and Privacy: their text from public/about.html and public/privacy.html, in the site's page ---------- */
+for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.html', '/privacy', 'Privacy']]) {
+  const src = readFileSync(new URL(file, PUB), 'utf8');
+  const main = (src.match(/<main>([\s\S]*?)<\/main>/) || [])[1];
+  if (!main) throw new Error(`No <main> in ${file}; update build-pages.mjs`);
+  const title = (src.match(/<title>([^<]*)<\/title>/) || [])[1] || `${crumb} · BrickCollect`;
+  const desc = (src.match(/<meta name="description" content="([^"]*)"/) || [])[1] || '';
+  const h1 = (main.match(/<h1>([\s\S]*?)<\/h1>/) || [])[1] || crumb;
+  const scripts = [...src.slice(src.indexOf('</main>')).matchAll(/<script>[\s\S]*?<\/script>/g)].map(m => m[0]).join('\n');
+  const body = `<div class="prose">${main.replace(/<a class="back"[^>]*>[\s\S]*?<\/a>/, '').replace(/<h1>[\s\S]*?<\/h1>/, '')}</div>\n${scripts}`;
+  write(`.${path}.html`, shell({ path, title, desc, h1, crumbs: [[crumb, path]], body }));
+}
+
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
-write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/privacy', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
+write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/privacy', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
 write('./sitemap-sets.xml', urlset(sets.map(x => x.path)));
 const day = now.toISOString().slice(0, 10);
 write('./sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${SITE}/sitemap-pages.xml</loc><lastmod>${day}</lastmod></sitemap>\n  <sitemap><loc>${SITE}/sitemap-sets.xml</loc><lastmod>${day}</lastmod></sitemap>\n</sitemapindex>\n`);

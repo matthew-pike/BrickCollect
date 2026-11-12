@@ -119,3 +119,15 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .tickbar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:14px;padding:10px 12px 10px 18px;border:1px solid var(--accent);border-radius:12px;background:var(--panel);box-shadow:0 10px 30px rgb(0 0 0/.3);width:max-content;max-width:calc(100vw - 24px)}
 .tickbar[hidden]{display:none}
 @media (max-width:640px){.hero{padding:20px}.hero h1{font-size:24px}.tickbar{gap:10px;font-size:13.5px}}
+/* About and Privacy */
+.prose{max-width:760px}
+.prose p,.prose li{color:var(--muted);line-height:1.65}
+.prose li{margin:6px 0}
+.prose b{color:var(--fg);font-weight:500}
+.prose h2{margin-top:30px}
+.prose .lead{font-size:17px}
+.prose .date{font-size:13px}
+.choice{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.choice button{font:inherit;font-size:14px;cursor:pointer;border-radius:7px;padding:6px 12px;border:1px solid var(--line-2);background:var(--panel);color:var(--fg)}
+.choice button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.choice span{font-size:13px;color:var(--muted)}
