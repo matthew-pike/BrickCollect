@@ -124,7 +124,7 @@ ${robots ? `<meta name="robots" content="${robots}">\n` : ''}<link rel="canonica
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
-<header class="top"><div class="wrap"><a class="brand" href="/"><img src="/logo.svg" alt="" width="34" height="34">BrickCollect</a><a class="hlink" href="/sets">All sets</a><a class="btn primary cta" href="/" data-cta="header">Track your sets free</a></div></header>
+<header class="top"><div class="wrap"><a class="brand" href="/"><img src="/logo.svg" alt="" width="34" height="34">BrickCollect</a><a class="hlink" href="/sets">All sets</a><a class="btn primary cta" href="/" data-cta="header"><span class="long">Track your sets free</span><span class="short">Track free</span></a></div></header>
 <main class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb">${crumbs.map((c, i) => i === crumbs.length - 1 ? `<span>${esc(c[0])}</span>` : `<a href="${esc(c[1])}">${esc(c[0])}</a>`).join('<span class="sep">›</span>')}</nav>
 <h1>${h1}</h1>

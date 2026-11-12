@@ -20,6 +20,7 @@ header.top .wrap{display:flex;align-items:center;gap:16px;height:60px}
 .brand{display:flex;align-items:center;gap:10px;color:var(--fg);text-decoration:none;font-size:20px;font-weight:500}
 .hlink{color:var(--muted);text-decoration:none;font-weight:500}.hlink:hover{color:var(--accent)}
 .top .cta{margin-left:auto}
+.cta .short{display:none}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg);border-radius:8px;padding:9px 16px;font:inherit;font-weight:500;text-decoration:none;white-space:nowrap}
 .btn:hover{border-color:var(--accent);color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -61,5 +62,7 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
   .setgrid{grid-template-columns:1fr}
   .pic{min-height:200px}
   h1{font-size:24px}
-  header.top .wrap{gap:10px}.brand{font-size:17px}.hlink{display:none}.top .cta{padding:7px 12px;font-size:14px}
+  header.top .wrap{gap:10px;height:54px}.brand{font-size:17px}.brand img{width:30px;height:30px}.hlink{display:none}
+  .top .cta{padding:5px 11px;font-size:13px;border-radius:7px}
 }
+@media (max-width:420px){.cta .long{display:none}.cta .short{display:inline}}
