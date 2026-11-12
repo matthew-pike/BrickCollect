@@ -127,6 +127,13 @@
 
   if (document.querySelector('.az')) document.documentElement.classList.add('has-az'); // /sets: jumps leave room for the A–Z bar
 
+  /* Pictures that are missing or don't load (new sets often have none for a few days): a brick and "No picture yet" */
+  const NOPIC = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120"><rect width="160" height="120" fill="#f3f5f9"/><g fill="#c9d2e0"><rect x="48" y="44" width="64" height="30" rx="5"/><rect x="58" y="37" width="14" height="9" rx="3"/><rect x="88" y="37" width="14" height="9" rx="3"/></g><text x="80" y="94" text-anchor="middle" font-family="Roboto,Arial,sans-serif" font-size="11" fill="#8592ab">No picture yet</text></svg>');
+  const noPic = img => { if (!img || img.dataset.nopic) return; img.dataset.nopic = '1'; img.src = NOPIC; img.classList.add('nopic'); const z = img.closest('[data-zoom]'); if (z) { z.removeAttribute('data-zoom'); z.title = ''; z.style.cursor = 'default'; } };
+  document.addEventListener('error', e => { if (e.target && e.target.tagName === 'IMG') noPic(e.target); }, true);
+  // Pictures that failed before this script ran
+  document.querySelectorAll('img').forEach(i => { if (i.complete && !i.naturalWidth && i.getAttribute('src')) noPic(i); });
+
   /* clicks worth counting */
   document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[data-cta]'); if (a) track('set_page_cta', { cta: a.dataset.cta, page: location.pathname }); });
 

@@ -176,7 +176,7 @@ ${h1 ? `<h1>${h1}</h1>\n` : ''}${body}
 `;
 }
 
-const card = x => `<a class="card" href="${esc(x.path)}">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="" loading="lazy" width="72" height="54">` : '<span class="noimg"></span>'}<span class="cb"><span class="cn">${esc(x.name)}</span><span class="cm">${esc(shownNum(x))}${x.year ? ` · ${x.year}` : ''}${x.pieces ? ` · ${fmt(x.pieces)} pcs` : ''}</span></span></a>`;
+const card = x => `<a class="card" href="${esc(x.path)}">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="" loading="lazy" width="72" height="54">` : '<span class="noimg" title="No picture yet"></span>'}<span class="cb"><span class="cn">${esc(x.name)}</span><span class="cm">${esc(shownNum(x))}${x.year ? ` · ${x.year}` : ''}${x.pieces ? ` · ${fmt(x.pieces)} pcs` : ''}</span></span></a>`;
 const byNewest = (a, b) => (b.year || 0) - (a.year || 0) || String(a.n).localeCompare(String(b.n), 'en', { numeric: true });
 
 /* ---------- set pages ---------- */
@@ -304,7 +304,7 @@ const updCard = u => `<section class="box upd"><div class="hhead"><h2><a href="$
 }
 const POPULAR = (() => { const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/const POPULAR = \[([^\]]*)\]/); return m ? [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]) : []; })();
 const byN = new Map(sets.map(x => [x.n, x]));
-const tcard = x => `<div class="tcard"><a href="${esc(x.path)}" class="tpic">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="" loading="lazy" width="96" height="72">` : '<span class="noimg"></span>'}</a><div class="cb"><a class="cn" href="${esc(x.path)}">${esc(x.name)}</a><span class="cm">${esc(x.brand === 'LEGO' ? shownNum(x) : `${x.brand} ${shownNum(x)}`)}${x.year ? ` · ${x.year}` : ''}</span><label class="tick"><input type="checkbox" data-own="${esc(x.n)}"> I own it</label></div></div>`;
+const tcard = x => `<div class="tcard"><a href="${esc(x.path)}" class="tpic">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="" loading="lazy" width="96" height="72">` : '<span class="noimg" title="No picture yet"></span>'}</a><div class="cb"><a class="cn" href="${esc(x.path)}">${esc(x.name)}</a><span class="cm">${esc(x.brand === 'LEGO' ? shownNum(x) : `${x.brand} ${shownNum(x)}`)}${x.year ? ` · ${x.year}` : ''}</span><label class="tick"><input type="checkbox" data-own="${esc(x.n)}"> I own it</label></div></div>`;
 // Same themes and pictures as the theme row in My collection.
 const THEME_TILES = (() => { const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/const THEME_TILES = \[([\s\S]*?)\];/); return m ? [...m[1].matchAll(/\['([^']+)', '([^']+)', '([^']+)'\]/g)].map(x => ({ label: x[1], theme: x[2], pic: x[3] })) : []; })();
 const bigTheme = THEME_TILES.filter(t => legoThemes.has(t.theme)).map(t => ({ ...t, list: legoThemes.get(t.theme) }));
