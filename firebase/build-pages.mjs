@@ -362,8 +362,8 @@ for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.
        .replace(/^header[^\n]*\n/gm, '')
        .replace(/\s*header\{padding:12px 14px\}header h1\{font-size:17px\}header \.back\{padding:5px 9px\}/, '')
        .replace(/\s*header \.wide\{display:none\}/, '')
-       .replace('main{max-width:1180px;margin:0 auto;padding:18px 20px 60px}', 'main{max-width:1320px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px))}\n.adm-h1{font-size:30px;font-weight:500;margin:6px 0 16px;line-height:1.2}')
-       .replace('<main>', '<main>\n  <h1 class="adm-h1">Admin</h1>')
+       .replace('main{max-width:1180px;margin:0 auto;padding:18px 20px 60px}', 'main{max-width:1320px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px))}\n.crumbs{margin:0 0 16px;font-size:13px;color:var(--muted)}.crumbs a{color:var(--muted);text-decoration:none}.crumbs a:hover{color:var(--accent)}.crumbs .sep{margin:0 6px;color:var(--faint)}\n.adm-h1{font-size:30px;font-weight:500;margin:0 0 16px;line-height:1.2}')
+       .replace('<main>', '<main>\n  <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span class="sep">›</span><span>Admin</span></nav>\n  <h1 class="adm-h1">Admin</h1>')
        .replace('</main>', `</main>\n<div class="wrap">${FOOTER}</div>`)
        .replace('</body>', `<script src="/pages.js?v=${JS_V}"></script>\n</body>`);
   writeFileSync(f, a);
