@@ -30,6 +30,12 @@ const BUY = cfg.buyLinks || {};
 // The app's logo, taken from index.html so the pages keep matching it.
 const MARK = (readFileSync(new URL('index.html', PUB), 'utf8').match(/class="brandmark[^>]*>(<svg[\s\S]*?<\/svg>)<\/a>/) || [])[1] || '';
 if (!MARK) throw new Error('Logo not found in index.html; update build-pages.mjs');
+// The app's ☰ menu is the template: same links, minus the ones that only work inside the app (data-hm), plus Home.
+const MENU = (() => {
+  const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<details class="hmenu"[\s\S]*?<nav aria-label="Menu">([\s\S]*?)<\/nav><\/details>/);
+  if (!m) throw new Error('Menu not found in index.html; update build-pages.mjs');
+  return '<a href="/" data-cta="menu">Home</a>' + m[1].replace(/<a [^>]*data-hm=[^>]*>[\s\S]*?<\/a>/g, '');
+})();
 
 /* ---------- data ---------- */
 const raw = JSON.parse(readFileSync(new URL('catalog.json', PUB), 'utf8'));
@@ -129,8 +135,8 @@ ${robots ? `<meta name="robots" content="${robots}">\n` : ''}<link rel="canonica
 <body>
 <header class="top"><div class="wrap">
 <div class="brand"><a href="/" class="brandmark" aria-hidden="true" tabindex="-1">${MARK}</a><div><p class="name"><a href="/">BrickCollect</a> <span class="beta">BETA</span></p><p class="tag">Collect. Track. Value. Export. In one place.</p></div></div>
-<details class="menu"><summary aria-label="Menu" title="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
-<nav aria-label="Menu"><a href="/" data-cta="menu">Home</a><a href="/sets">All sets</a><a href="/theme/star-wars">LEGO Star Wars</a><a href="/sets#brands">Other brands</a><a href="https://www.instagram.com/brickcollect.app/" target="_blank" rel="noopener">Instagram</a><a href="/privacy">Privacy</a></nav></details>
+<details class="hmenu"><summary class="icon-btn" aria-label="Menu" title="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+<nav aria-label="Menu">${MENU}</nav></details>
 </div></header>
 <main class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb">${crumbs.map((c, i) => i === crumbs.length - 1 ? `<span>${esc(c[0])}</span>` : `<a href="${esc(c[1])}">${esc(c[0])}</a>`).join('<span class="sep">›</span>')}</nav>
@@ -142,7 +148,7 @@ ${body}
 <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © <a href="https://rebrickable.com/" rel="noopener">Rebrickable</a>, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Some store links are affiliate links: if you buy through them, The Art of Bricks may earn a small commission at no extra cost to you. <a href="/privacy">Privacy</a></p>
 </div></footer>
 <script>
-document.addEventListener('click',e=>{const m=document.querySelector('details.menu');if(m&&m.open&&!m.contains(e.target))m.open=false});
+document.addEventListener('click',e=>{const m=document.querySelector('details.hmenu');if(m&&m.open&&!m.contains(e.target))m.open=false});
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-cta]');if(a&&window.gtag)gtag('event','set_page_cta',{cta:a.dataset.cta,page:location.pathname})});
 // LEGO.com in the visitor's own country.
 (()=>{const m={AU:'en-au',GB:'en-gb',CA:'en-ca',NZ:'en-nz',IE:'en-ie'};const c=(navigator.language||'').split('-')[1];const l=m[(c||'').toUpperCase()];if(l)document.querySelectorAll('a[href*="lego.com/en-us/"]').forEach(a=>a.href=a.href.replace('/en-us/','/'+l+'/'))})();

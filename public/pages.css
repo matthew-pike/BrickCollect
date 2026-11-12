@@ -26,13 +26,13 @@ a{color:var(--accent)}
 .brand .name a{color:var(--fg);text-decoration:none}
 .brand .tag{white-space:nowrap;margin:2px 0 0;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .beta{display:inline-flex;align-items:center;line-height:1;font-size:10px;font-weight:500;letter-spacing:.16em;padding:5px 6px 4px 8px;border-radius:5px;background:color-mix(in srgb,var(--coral) 18%,transparent);color:var(--coral)}
-.menu{margin-left:auto;position:relative}
-.menu summary{list-style:none;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:10px;background:var(--panel-2);color:var(--fg)}
-.menu summary::-webkit-details-marker{display:none}
-.menu summary:hover,.menu[open] summary{border-color:var(--accent);color:var(--accent)}
-.menu nav{position:absolute;right:0;top:calc(100% + 8px);min-width:220px;display:flex;flex-direction:column;padding:6px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);box-shadow:0 12px 32px rgb(0 0 0/.25)}
-.menu nav a{padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none;font-weight:500}
-.menu nav a:hover{background:var(--panel-2);color:var(--accent)}
+.hmenu{margin-left:auto;position:relative}
+.icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--line-2);background:var(--panel-2);cursor:pointer;color:var(--muted)}
+.hmenu summary{list-style:none}.hmenu summary::-webkit-details-marker{display:none}
+.hmenu summary:hover,.hmenu[open] summary{border-color:var(--accent);color:var(--accent)}
+.hmenu nav{position:absolute;right:0;top:calc(100% + 8px);z-index:30;min-width:210px;display:flex;flex-direction:column;padding:6px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);box-shadow:0 12px 32px rgb(0 0 0/.25)}
+.hmenu nav a{padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none;font-weight:500;font-size:14px}
+.hmenu nav a:hover{background:var(--panel-2);color:var(--accent)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg);border-radius:8px;padding:9px 16px;font:inherit;font-weight:500;text-decoration:none;white-space:nowrap}
 .btn:hover{border-color:var(--accent);color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -74,7 +74,7 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
   .setgrid{grid-template-columns:1fr}
   .pic{min-height:200px}
   h1{font-size:24px}
-  .top .wrap{gap:8px}.brand{gap:8px}.brand .name{font-size:18px;gap:6px}.brand .beta{font-size:9px;padding:4px 5px 3px 6px}.brandmark{width:32px;height:32px}.menu summary{width:36px;height:36px}
+  .top .wrap{gap:8px}.brand{gap:8px}.brand .name{font-size:18px;gap:6px}.brand .beta{font-size:9px;padding:4px 5px 3px 6px}.brandmark{width:32px;height:32px}.hmenu summary{width:32px;height:32px}
 }
 @media (max-width:460px){.brand .tag{display:none}}
 @media (max-width:420px){.brand .beta{display:none}}
