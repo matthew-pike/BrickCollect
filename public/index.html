@@ -412,6 +412,9 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .zoomcap{display:flex;flex-direction:column;gap:2px;padding-right:40px;min-width:0}
 .zoomcap b{font-size:16px;color:var(--fg)}
 .zoomcap span{color:var(--muted);font-size:13px}
+.zoomcap .zoompage{font-size:13px;color:var(--accent);text-decoration:none;margin-top:2px}.zoomcap .zoompage:hover{text-decoration:underline}
+.spage{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:4px;vertical-align:-3px;border-radius:5px;color:var(--faint)}
+.spage:hover{color:var(--accent);background:var(--panel-2)}
 .zoomx{position:absolute;top:10px;right:10px}
 .priced{display:block;font-size:10.5px;color:var(--faint);font-family:var(--font-body)}
 .price{font-family:var(--font-mono);font-size:12.5px;color:var(--faint);min-width:76px;justify-content:flex-end;padding:5px 8px}
@@ -1040,7 +1043,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 <div class="zoomwrap" id="zoom" hidden role="dialog" aria-modal="true" aria-labelledby="zoomName">
   <div class="zoombox">
     <button class="icon-btn zoomx" id="zoomClose" aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-    <div class="zoomcap"><b id="zoomName"></b><span id="zoomMeta"></span></div>
+    <div class="zoomcap"><b id="zoomName"></b><span id="zoomMeta"></span><a id="zoomPage" class="zoompage" href="#" hidden>Open the set page →</a></div>
     <img id="zoomImg" alt="">
   </div>
 </div>
@@ -2203,7 +2206,7 @@ function render() {
     <tr class="${owned(x) ? 'owned' : fromSet(x) ? 'fromset' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
       <td class="c-own"><div class="ownc"><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${has(x) ? 'checked' : ''} ${fromSet(x) ? 'disabled title="Comes with a set you own"' : ''} aria-label="I own ${esc(x.name)}">${has(x) ? '' : `<button class="star" data-want="${esc(x.n)}" aria-pressed="${wanted(x)}" title="${wanted(x) ? 'Remove from wanted' : 'Add to wanted'}" aria-label="${wanted(x) ? 'Remove' : 'Add'} ${esc(x.name)} ${wanted(x) ? 'from' : 'to'} wanted"><svg width="16" height="16" viewBox="0 0 24 24" fill="${wanted(x) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg></button>`}</div></td>
       <td class="c-img">${thumb(x)}</td>
-      <td class="nm c-nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
+      <td class="nm c-nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>${setPageLink(x)}` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
       <td class="c-cond">${condCell(x)}</td>
       ${fi.brand.value || x.k === 'm' ? '' : `<td class="muted c-brand">${x.brand}</td>`}
       <td class="sub c-sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}${tagCell(x)}</td>
@@ -2279,12 +2282,17 @@ function render() {
 
 /* ---------- events ---------- */
 let zoomFrom = null;
+/* Each set's own page (brickcollect.app/set/…, built by firebase/build-pages.mjs with the same addresses). */
+const pageSlug = t => String(t).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x';
+const setPage = x => x && x.k === 's' && (x.extra || x.pieces > 0) ? `/set/${x.brand === 'LEGO' ? pageSlug(x.n) : `${pageSlug(x.brand)}-${pageSlug(x.disp || x.n)}`}` : '';
+const setPageLink = x => { const u = setPage(x); return u ? `<a class="spage" href="${esc(u)}" title="Open the set page" aria-label="Open the page for ${esc(x.name)}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>` : ''; };
 function openZoom(btn) {
   const pic = btn.querySelector('img'); if (!pic) return;
   const n = btn.dataset.zoom, x = CAT.sets.find(s => s.n === n) || CAT.figs.find(f => f.n === n) || { n };
   $('zoomImg').src = pic.src; $('zoomImg').alt = x.name || '';
   $('zoomName').textContent = x.name || n;
   $('zoomMeta').textContent = [x.brand, shownNum(x), x.year, x.pieces ? x.pieces.toLocaleString() + ' pieces' : ''].filter(Boolean).join(' · ');
+  const sp = setPage(x); $('zoomPage').hidden = !sp; if (sp) $('zoomPage').href = sp;
   zoomFrom = btn; $('zoom').hidden = false; $('zoomClose').focus();
 }
 function closeZoom() { if ($('zoom').hidden) return; $('zoom').hidden = true; $('zoomImg').removeAttribute('src'); zoomFrom?.focus(); zoomFrom = null; }
