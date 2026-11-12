@@ -400,7 +400,7 @@ userPage('/selling', 'My sale or trade list · BrickCollect', 'My sale or trade 
 
 userPage('/account', 'My account · BrickCollect', 'My account', 'My account',
   `<section class="box out" hidden><h2>Sign in to your account</h2><p>Save your collection to a free account and see it on your phone and computer.</p><p><a class="btn primary" href="/collection#signin">Sign in</a></p></section>
-<section class="box in" hidden><h2>Your account</h2><dl class="kv"><dt>Email</dt><dd id="aEmail">—</dd><dt>Member since</dt><dd id="aSince">—</dd><dt>Signed in with</dt><dd id="aHow">—</dd></dl></section>
+<section class="box in" hidden><h2>Your account</h2><dl class="kv"><dt>Email</dt><dd id="aEmail">—</dd><dt>Member since</dt><dd id="aSince">—</dd><dt>Signed in with</dt><dd id="aHow">—</dd><dt id="aRoleK" hidden>Account type</dt><dd id="aRole" hidden></dd></dl></section>
 <section class="box in" hidden><h2>Your collection</h2><div class="stats"><div class="stat"><div class="k">Sets</div><div class="v" id="aSets">—</div></div><div class="stat"><div class="k">Minifigures</div><div class="v" id="aFigs">—</div></div><div class="stat"><div class="k">Wanted</div><div class="v" id="aWant">—</div></div><div class="stat"><div class="k">For sale or trade</div><div class="v" id="aSale">—</div></div></div><p class="row"><a class="btn primary" href="/collection">Open My collection</a><a class="btn" href="/collection#export">Export</a></p></section>
 <section class="box in" hidden><h2>Your sale or trade list</h2><p id="aShare">—</p><p class="row"><a class="btn" href="/selling">My sale or trade list</a></p></section>
 <section class="box in" hidden><h2>Sign out</h2><p>Your collection stays safe in your account. Sign in again any time to see it.</p><p class="row"><button class="btn" type="button" id="aOut">Sign out</button></p></section>
@@ -412,6 +412,8 @@ userPage('/account', 'My account · BrickCollect', 'My account', 'My account',
   if (u && u.metadata && u.metadata.creationTime) $('aSince').textContent = new Date(u.metadata.creationTime).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
   const how = u && (u.providerData || []).map(p => p.providerId === 'google.com' ? 'Google' : p.providerId === 'password' || p.providerId === 'emailLink' ? 'Email link' : p.providerId).join(', ');
   $('aHow').textContent = how || 'Email link';
+  // Account type only for staff (Admin / Super admin); everyone else is a User, which says nothing.
+  try { const r = BC.user.role ? await BC.user.role() : 'user'; if (r === 'super' || r === 'admin') { $('aRole').textContent = r === 'super' ? 'Super admin' : 'Admin'; $('aRole').hidden = $('aRoleK').hidden = false; } } catch {}
   try {
     const c = await BC.db.doc('data/users/' + uid + '/collection').get(); const it = (c.exists && c.data().items) || {};
     let sets = 0, figs = 0, want = 0, sale = 0;
