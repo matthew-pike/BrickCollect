@@ -49,6 +49,9 @@
     }
   }
 
+  /* Admin in the menu, for accounts that can open it (remembered by the app) */
+  if (lsGet('bc-admin')) document.querySelectorAll('.hm-admin').forEach(x => { x.hidden = false; });
+
   /* ☰ menu */
   const m = document.querySelector('details.hmenu');
   if (m) {

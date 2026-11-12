@@ -46,6 +46,8 @@ button,input,select{font:inherit;color:inherit}
 .hmenu nav a{padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none;font-weight:500;font-size:14px}
 .hmenu nav a:hover{background:var(--panel-2);color:var(--accent)}
 .hmenu nav hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
+.hmenu nav [hidden]{display:none}
+.hmenu .unew{margin-left:6px;font-size:11px;font-weight:600;color:#fff;background:var(--coral);border-radius:999px;padding:1px 6px}
 @media (max-width:640px){
   .search{order:3;flex-basis:100%;max-width:none}.top-actions{margin-left:auto}
   .brand .tag{display:none}.hmenu summary{width:32px;height:32px}
