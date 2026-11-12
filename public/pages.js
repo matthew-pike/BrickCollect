@@ -120,6 +120,15 @@
     document.addEventListener('click', e => { if (m.open && !m.contains(e.target)) m.open = false; });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && m.open) { m.open = false; m.querySelector('summary').focus(); } });
     m.addEventListener('toggle', () => { if (m.open) track('menu_open'); });
+    // NEW badge on links added recently (data-new="<release date>"), for 30 days until opened. Same as menuNewBadges in index.html.
+    const seen = lsGet('bc-new-seen') || {};
+    m.querySelectorAll('a[data-new]').forEach(a => {
+      const key = 'menu:' + a.getAttribute('href'), mark = () => { const s = lsGet('bc-new-seen') || {}; if (!s[key]) { s[key] = Date.now(); lsSet('bc-new-seen', s); } };
+      if (location.pathname === a.getAttribute('href')) mark();
+      if (seen[key] || location.pathname === a.getAttribute('href') || !(Date.now() - Date.parse(a.dataset.new) < 30 * 864e5)) return;
+      a.insertAdjacentHTML('beforeend', '<span class="mnew">NEW</span>');
+      a.addEventListener('click', mark);
+    });
   }
 
   /* What's new page: counts as seen, like opening it in the app */

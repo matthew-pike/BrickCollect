@@ -113,6 +113,7 @@ button,input,select{font:inherit;color:inherit}
 @media (max-width:640px){.pg-h1{font-size:24px;margin-top:6px}}
 .hmenu nav [hidden]{display:none}
 .hmenu .unew{margin-left:6px}
+.hmenu .mnew{display:inline-block;margin-left:7px;padding:1px 5px;border-radius:5px;border:1px solid var(--coral);font-size:9.5px;font-weight:600;letter-spacing:.1em;line-height:1.3;color:var(--beta-ink,var(--coral));background:color-mix(in srgb,var(--beta-fill,var(--coral)) var(--beta-tint,15%),transparent);vertical-align:1px}
 @media (max-width:640px){.hmenu summary{width:32px;height:32px}}
 .icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--line-2);background:var(--panel-2);cursor:pointer;color:var(--muted)}
 .icon-btn:hover{color:var(--fg);border-color:var(--accent)}
@@ -907,7 +908,7 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
       <button class="icon-btn" id="themeBtn" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
       <button class="icon-btn" id="showWelcome" hidden title="Getting started" aria-label="Getting started"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
       <details class="hmenu" id="hMenu"><summary class="icon-btn" title="Menu" aria-label="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
-        <nav aria-label="Menu"><a href="/">Home</a><a href="/collection">My collection</a><a href="/selling">My sale or trade list</a><a href="/sets">All sets</a><a href="/updates">Brick updates</a><hr><a href="/getting-started">Getting started</a><a href="/about">About BrickCollect</a><a href="/privacy">Privacy</a><a href="/whats-new">What’s new</a><hr><a href="/account">My account</a><a href="/admin" class="hm-admin" id="hmAdmin" hidden>Admin <span class="unew" id="hmAdminNew" hidden></span></a><hr class="hm-in" hidden><a href="#" data-hm="signOutBtn" class="hm-in" hidden>Sign out</a></nav></details>
+        <nav aria-label="Menu"><a href="/">Home</a><a href="/collection">My collection</a><a href="/selling">My sale or trade list</a><a href="/sets">All sets</a><a href="/updates" data-new="2026-11-13">Brick updates</a><hr><a href="/getting-started">Getting started</a><a href="/about">About BrickCollect</a><a href="/privacy">Privacy</a><a href="/whats-new">What’s new</a><hr><a href="/account">My account</a><a href="/admin" class="hm-admin" id="hmAdmin" hidden>Admin <span class="unew" id="hmAdminNew" hidden></span></a><hr class="hm-in" hidden><a href="#" data-hm="signOutBtn" class="hm-in" hidden>Sign out</a></nav></details>
     </div>
   </div>
 </header>
@@ -1773,6 +1774,18 @@ function tickTip() {
 /* NEW feature call-outs. For each new feature: a short note pointing at where it lives, shown once per browser,
    one per visit, only to people who were already using BrickCollect before the feature came out, and for 30 days.
    Add an entry here with each new feature (newest first). sel = the first visible match on screen gets the note. */
+// ☰ menu: a small NEW badge on links added recently (data-new="<release date>" on the link in the menu), for 30 days,
+// until that link is opened (or its page visited). Kept in bc-new-seen as "menu:<link>". Same code in pages.js.
+function menuNewBadges(root) {
+  const seen = lsGet('bc-new-seen') || {};
+  root.querySelectorAll('a[data-new]').forEach(a => {
+    const key = 'menu:' + a.getAttribute('href'), mark = () => { const s = lsGet('bc-new-seen') || {}; if (!s[key]) { s[key] = Date.now(); lsSet('bc-new-seen', s); } };
+    if (location.pathname === a.getAttribute('href')) mark();
+    if (seen[key] || location.pathname === a.getAttribute('href') || !(Date.now() - Date.parse(a.dataset.new) < 30 * 864e5)) return;
+    a.insertAdjacentHTML('beforeend', '<span class="mnew">NEW</span>');
+    a.addEventListener('click', mark);
+  });
+}
 const NEW_TIPS = [
   { id: 'menu', at: '2026-11-13T06:00:00+11:00', sel: '#hMenu summary', title: 'Everything in the menu', text: 'Your account, your sale or trade list, every set by theme, Getting started and What’s new are now in the ☰ menu, on every page.' },
   { id: 'unlisted', at: '2026-11-11T07:30:00+11:00', sel: '#shareOpen2', title: 'Listed or unlisted', text: 'Reserved something? In a copy’s Listing details, set Shared page to Unlisted: it stays on your Sale or trade list but leaves your shared page.' },
@@ -4203,7 +4216,8 @@ $('newsPill').onclick = openNews;
   m.addEventListener('toggle', () => { if (m.open) track('menu_open'); });
   m.addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; if (a.dataset.hm === 'showWelcome') { e.preventDefault(); showGettingStarted(); } else if (a.dataset.hm) { e.preventDefault(); $(a.dataset.hm).click(); } m.open = false; });
   document.addEventListener('click', e => { if (m.open && !m.contains(e.target)) m.open = false; });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && m.open) { m.open = false; m.querySelector('summary').focus(); } }); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && m.open) { m.open = false; m.querySelector('summary').focus(); } });
+  menuNewBadges(m); }
 $('newsClose').onclick = () => $('newsDlg').close();
 $('newsDlg').addEventListener('click', e => { if (e.target === $('newsDlg')) $('newsDlg').close(); });
 // The pill shows to returning visitors when there's a release they haven't seen. First-time visitors get Getting started instead.

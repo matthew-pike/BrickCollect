@@ -55,6 +55,7 @@ button,input,select{font:inherit;color:inherit}
 .hmenu nav hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
 .hmenu nav [hidden]{display:none}
 .hmenu .unew{margin-left:6px;font-size:11px;font-weight:600;color:#fff;background:var(--coral);border-radius:999px;padding:1px 6px}
+.hmenu .mnew{display:inline-block;margin-left:7px;padding:1px 5px;border-radius:5px;border:1px solid var(--coral);font-size:9.5px;font-weight:600;letter-spacing:.1em;line-height:1.3;color:var(--coral);background:color-mix(in srgb,var(--coral) 15%,transparent);vertical-align:1px}
 @media (max-width:640px){
   .search{order:3;flex-basis:100%;max-width:none}.top-actions{margin-left:auto}
   .brand .tag{display:none}.hmenu summary{width:32px;height:32px}
