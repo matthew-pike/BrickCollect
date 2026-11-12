@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Sale or trade list · BrickCollect</title>
 <meta name="description" content="Sets and minifigures a collector is selling or trading, shared from BrickCollect, the free collection tracker for LEGO and other brick brands.">
-<!-- Personal lists with contact details: kept out of search engines. -->
-<meta name="robots" content="noindex">
+<!-- Personal lists with contact details: kept out of search engines unless the seller turns on
+     "Let Google and other search engines find my page" (idx); the script removes this then. -->
+<meta name="robots" content="noindex" id="robotsMeta">
 <meta property="og:site_name" content="BrickCollect">
 <meta property="og:title" content="Sale or trade list on BrickCollect">
 <meta property="og:description" content="Sets and minifigures a collector is selling or trading. LEGO and other brick brands.">
@@ -125,6 +126,8 @@ footer.bot .grow{flex:1}
   .lrow .btn{grid-column:2 / 4;justify-self:start}
   .linfo .desc{font-size:12px}
 }
+.minebar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:18px 0 0;padding:10px 12px 10px 16px;border:1px solid var(--accent);border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,var(--panel));font-size:14px}
+.minebar b{font-weight:500}
 </style>
 </head>
 <body>
@@ -177,6 +180,9 @@ footer.bot .grow{flex:1}
   const track = (name, p = {}) => { try { if (typeof window.gtag === 'function') window.gtag('event', name, p); } catch { /* ignore */ } };
   const toast = msg => { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 3200); };
   const COND = { new: 'New', used: 'Used', 'used-inc': 'Used, incomplete' };
+  // ?mine=1 (from /selling): show the owner bar, then tidy the address so a copied link doesn't carry it.
+  const MINE = new URLSearchParams(location.search).has('mine');
+  if (MINE) { const u = new URLSearchParams(location.search); u.delete('mine'); history.replaceState(null, '', location.pathname + (u.toString() ? `?${u}` : '')); }
   const id = (location.pathname.match(/^\/sale\/([a-z0-9]{6,24})\/?$/) || [])[1] || new URLSearchParams(location.search).get('id') || '';
   let shop = null, brand = '', sort = 'brand';
   // Cards or List: ?view=list in the link wins, else this browser's last choice.
@@ -186,7 +192,7 @@ footer.bot .grow{flex:1}
     e.preventDefault();
     location.href = `mailto:brickcollectapp@gmail.com?subject=${encodeURIComponent('Report a sale or trade list: ' + (id || location.pathname))}&body=${encodeURIComponent('Page: ' + location.href + '\n\nWhat’s wrong with it:\n')}`;
   };
-  ['ctaTop', 'ctaBottom'].forEach(k => $(k).addEventListener('click', () => track('sale_cta', { where: k === 'ctaTop' ? 'top' : 'bottom' })));
+  ['ctaTop', 'ctaBottom'].forEach(k => $(k)?.addEventListener('click', () => track('sale_cta', { where: k === 'ctaTop' ? 'top' : 'bottom' })));
 
   function showState(title, text) {
     $('list').hidden = true;
@@ -268,6 +274,9 @@ footer.bot .grow{flex:1}
     const brands = [...new Set(items.map(x => x.b).filter(Boolean))].sort((a, b) => (a === 'LEGO' ? -1 : b === 'LEGO' ? 1 : a.localeCompare(b)));
     $('brands').innerHTML = brands.length > 1 ? [`<button class="chip" type="button" data-b="" aria-pressed="true">All brands</button>`, ...brands.map(b => `<button class="chip" type="button" data-b="${esc(b)}" aria-pressed="false">${esc(b)}</button>`)].join('') : '';
     $('state').hidden = true; $('list').hidden = false;
+    if (shop.idx) $('robotsMeta')?.remove();
+    // From My sale or trade list (/selling): this is your own page, as buyers see it.
+    if (MINE && !$('mineBar')) { const b = document.createElement('div'); b.id = 'mineBar'; b.className = 'minebar'; b.innerHTML = '<span><b>This is your sale or trade list</b>, as buyers see it.</span><a class="btn" href="/collection#sell">Edit in My collection</a>'; $('main').prepend(b); }
     if (!items.length) { $('grid').innerHTML = ''; $('none').hidden = false; $('none').textContent = 'Nothing listed right now. Check back later.'; $('q').parentElement.hidden = true; return; }
     paintGrid();
   }

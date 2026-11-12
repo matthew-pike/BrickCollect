@@ -308,7 +308,7 @@ write('./index.html', shell({
   body: `<section class="hero"><div><h1>Your brick collection, all in one place</h1>
 <p class="lead">The free collection tracker for LEGO and other brick brands. Select “I own it” to add sets to your collection, keep a Wanted list, see what your collection is worth, and share or sell it.</p>
 <div class="row"><a class="btn primary" href="/collection#signin" id="heroBtn" data-cta="hero">Sign in to view your collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
-${section('Popular sets: select “I own it” to add to your collection', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
+${section('Popular sets', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
 ${section('Retiring soon', '<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon →</a>', retiring)}
 ${section(`New in ${thisYear}`, '', newest)}
 <section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes →</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>
@@ -367,6 +367,59 @@ for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.
        .replace('</body>', `<script src="/pages.js?v=${JS_V}"></script>\n</body>`);
   writeFileSync(f, a);
 }
+
+/* ---------- sale pages (/sale/<id>): the site's header and footer too ---------- */
+{
+  const css = readFileSync(new URL('pages.css', PUB), 'utf8'), chrome = css.slice(0, css.indexOf('/* ===== page content'));
+  const CHROME_V = createHash('sha1').update(chrome).digest('hex').slice(0, 10);
+  const f = new URL('sale.html', OUT);
+  let a = readFileSync(f, 'utf8');
+  const hs = a.indexOf('<header class="top">'), he = a.indexOf('</header>', hs);
+  const fs = a.indexOf('<footer class="bot">'), fe = a.indexOf('</footer>', fs);
+  if (hs < 0 || he < 0 || fs < 0 || fe < 0) throw new Error('Sale page header/footer not found; update build-pages.mjs');
+  const report = '<p class="report"><a href="#" id="report">Report this list</a></p>';
+  a = a.slice(0, hs) + HEADER + a.slice(he + 9, fs) + `<div class="wrap">${FOOTER}</div>` + a.slice(fe + 9);
+  a = a.replace('</main>', `${report}\n</main>`)
+       .replace('<style>', `<link rel="stylesheet" href="/chrome.css?v=${CHROME_V}">\n<style>`)
+       .replace(/^header\.top[^\n]*\n/gm, '').replace(/^\.brand[^\n]*\n/gm, '').replace(/^\.top \.cta[^\n]*\n/gm, '')
+       .replace('.wrap{max-width:1180px;margin:0 auto;padding:0 20px}', '.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1320px;margin:0 auto}\n.report{margin:24px 0 0;font-size:13px}')
+       .replace('</body>', `<script src="/pages.js?v=${JS_V}"></script>\n</body>`);
+  writeFileSync(f, a);
+}
+
+/* ---------- signed-in pages: /selling (your sale or trade list) and /account ---------- */
+const FB = ['app', 'auth', 'firestore'].map(m => `<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-${m}-compat.js"></script>`).join('\n') + '\n<script src="/config.js"></script>\n<script src="/backend-firebase.js"></script>\n';
+const userPage = (path, title, h1, crumb, body, script) => write(`.${path}.html`, shell({ path, title, desc: '', h1, crumbs: [[crumb, path]], robots: 'noindex', notice: false, head: FB,
+  body: `<div class="prose" id="pg"><section class="box" id="pgWait"><p>Loading…</p></section>${body}</div>\n<script>\n(async () => {\n  const $ = id => document.getElementById(id);\n  const show = id => { document.querySelectorAll('#pg > .box').forEach(b => { b.hidden = !b.matches(id); }); };\n  const BC = window.BC || {}; const uid = BC.user ? await BC.user.id() : null;\n  if (!uid) { show('.out'); return; }\n${script}\n})();\n</script>` }));
+
+userPage('/selling', 'My sale or trade list · BrickCollect', 'My sale or trade list', 'My sale or trade list',
+  `<section class="box out" hidden><h2>Sign in to see your sale or trade list</h2><p>Your sale or trade list is the page buyers see when you share it: everything you’re letting go, with pictures, condition and prices, from any brand.</p><p><a class="btn primary" href="/collection#signin">Sign in</a></p></section>
+<section class="box none" hidden><h2>You haven’t shared a sale or trade list yet</h2><p>Post your whole list in one go: one link instead of a post for every set.</p><ol><li>In My collection, open <b>Sell or trade</b> and mark the copies you’re letting go.</li><li>Choose <b>Share your list</b>, say how buyers can reach you, and create your link.</li><li>Share the link or Copy a post into Facebook groups. Buyers message you directly.</li></ol><p><a class="btn primary" href="/collection#sell">Open Sell or trade</a></p></section>`,
+  `  try { const s = await BC.db.doc('data/users/' + uid + '/share').get(); const v = s.exists ? s.data() : null; if (v && v.on && v.id) { location.replace('/sale/' + v.id + '?mine=1'); return; } } catch (e) { console.warn(e); }
+  show('.none');`);
+
+userPage('/account', 'My account · BrickCollect', 'My account', 'My account',
+  `<section class="box out" hidden><h2>Sign in to your account</h2><p>Save your collection to a free account and see it on your phone and computer.</p><p><a class="btn primary" href="/collection#signin">Sign in</a></p></section>
+<section class="box in" hidden><h2>Your account</h2><dl class="kv"><dt>Email</dt><dd id="aEmail">—</dd><dt>Member since</dt><dd id="aSince">—</dd><dt>Signed in with</dt><dd id="aHow">—</dd></dl></section>
+<section class="box in" hidden><h2>Your collection</h2><dl class="kv"><dt>Sets</dt><dd id="aSets">—</dd><dt>Minifigures</dt><dd id="aFigs">—</dd><dt>Wanted</dt><dd id="aWant">—</dd><dt>For sale or trade</dt><dd id="aSale">—</dd></dl><p class="row"><a class="btn primary" href="/collection">Open My collection</a><a class="btn" href="/collection#export">Export</a></p></section>
+<section class="box in" hidden><h2>Your sale or trade list</h2><p id="aShare">—</p><p class="row"><a class="btn" href="/selling">My sale or trade list</a></p></section>
+<section class="box in" hidden><h2>Sign out or delete</h2><p>Signing out keeps your collection safe in your account. Deleting your account removes your collection, your shared list and your sign-in for good.</p><p class="row"><button class="btn" type="button" id="aOut">Sign out</button><a class="btn" href="/collection#account">Delete my account…</a></p></section>`,
+  `  show('.in');
+  const fmt = n => Number(n || 0).toLocaleString();
+  const u = window.firebase && firebase.auth().currentUser;
+  $('aEmail').textContent = (u && u.email) || (await BC.user.email()) || '—';
+  if (u && u.metadata && u.metadata.creationTime) $('aSince').textContent = new Date(u.metadata.creationTime).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+  const how = u && (u.providerData || []).map(p => p.providerId === 'google.com' ? 'Google' : p.providerId === 'password' || p.providerId === 'emailLink' ? 'Email link' : p.providerId).join(', ');
+  $('aHow').textContent = how || 'Email link';
+  try {
+    const c = await BC.db.doc('data/users/' + uid + '/collection').get(); const it = (c.exists && c.data().items) || {};
+    let sets = 0, figs = 0, want = 0, sale = 0;
+    for (const [n, v] of Object.entries(it)) { if (!v) continue; if (v.owned) { if (n.startsWith('fig-')) figs++; else sets++; } if (v.wanted) want++; for (const q of Object.values(v.sale || {})) sale += Number(q) || 0; }
+    $('aSets').textContent = fmt(sets); $('aFigs').textContent = fmt(figs); $('aWant').textContent = fmt(want); $('aSale').textContent = fmt(sale);
+  } catch (e) { console.warn(e); }
+  try { const s = await BC.db.doc('data/users/' + uid + '/share').get(); const v = s.exists ? s.data() : null;
+    $('aShare').innerHTML = v && v.on && v.id ? 'Shared at <a href="/sale/' + v.id + '">brickcollect.app/sale/' + v.id + '</a>' + (v.idx ? ' · search engines can find it' : ' · hidden from search engines') + '.' : 'Not shared yet.'; } catch (e) { console.warn(e); }
+  $('aOut').onclick = async () => { try { await BC.auth.signOut(); } catch {} try { localStorage.removeItem('bc-acct'); localStorage.removeItem('bc-admin'); } catch {} location.href = '/'; };`);
 
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;

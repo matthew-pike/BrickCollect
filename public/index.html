@@ -560,7 +560,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 /* The footer's full-width band and line reach past the page edges: never let that scroll sideways */
 html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 /* White band the full width of the screen, like the header */
-.foot-site{position:relative;border-top:0!important;background:var(--panel);box-shadow:0 0 0 100vmax var(--panel);clip-path:inset(-1px -100vmax 0)}
+.foot-site{position:relative;border-top:0!important;background:var(--panel);box-shadow:0 0 0 100vmax var(--panel);clip-path:inset(-1px -100vmax -100vmax)}
 .foot-site::before{content:"";position:absolute;top:-1px;left:calc(50% - 50vw);width:100vw;border-top:1px solid var(--line)}
 .foot-row{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap}
 .foot-brand b{color:var(--fg);font-weight:700}
@@ -874,7 +874,7 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
       <button class="icon-btn" id="themeBtn" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
       <button class="icon-btn" id="showWelcome" hidden title="Getting started" aria-label="Getting started"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
       <details class="hmenu" id="hMenu"><summary class="icon-btn" title="Menu" aria-label="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
-        <nav aria-label="Menu"><a href="/">Home</a><a href="/collection">My collection</a><a href="/sets">All sets</a><a href="#" data-hm="showWelcome">Getting started</a><hr><a href="/about">About BrickCollect</a><a href="/privacy">Privacy</a><a href="/whats-new">What’s new</a><hr class="hm-admin" hidden><a href="/admin" class="hm-admin" id="hmAdmin" hidden>Admin <span class="unew" id="hmAdminNew" hidden></span></a></nav></details>
+        <nav aria-label="Menu"><a href="/">Home</a><a href="/collection">My collection</a><a href="/selling">My sale or trade list</a><a href="/sets">All sets</a><a href="#" data-hm="showWelcome">Getting started</a><hr><a href="/about">About BrickCollect</a><a href="/privacy">Privacy</a><a href="/whats-new">What’s new</a><hr><a href="/account">My account</a><a href="/admin" class="hm-admin" id="hmAdmin" hidden>Admin <span class="unew" id="hmAdminNew" hidden></span></a></nav></details>
     </div>
   </div>
 </header>
@@ -1163,7 +1163,8 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
       <label>Instagram <input class="inp" id="shIg" maxlength="31" placeholder="@yourname" autocapitalize="off" spellcheck="false"></label>
       <label>Other way to reach you <input class="inp" id="shContact" maxlength="200" placeholder="e.g. a Facebook profile link, or an email you’re happy to show"></label>
     </div>
-    <p class="fine shnote">Everything above is shown on the page. Your email address, private notes and stockroom choices never are.</p>
+      <label class="cdchk shidx"><input type="checkbox" id="shIdx"> Let Google and other search engines find my page</label>
+    <p class="fine shnote">Off unless you turn it on: then people searching for a set can find your list. Everything above is shown on the page. Your email address, private notes and stockroom choices never are.</p>
     <div class="acct-actions"><button class="btn primary" type="button" id="shGo">Create my link</button></div>
     <p class="shstop" id="shStopP" hidden><button class="linkbtn" type="button" id="shStop">Stop sharing</button> <span class="fine">takes the page down; sharing again gives you a new link</span></p>
   </div>
@@ -3324,7 +3325,7 @@ function shareItems() {
 async function sharePublish(force) {
   if (!share?.on || !share.id || !db || !uid || saveMode !== 'cloud') return;
   if (!CAT) { clearTimeout(shareT); shareT = setTimeout(() => sharePublish(force).catch(e => console.warn('share', e)), 2000); return; }
-  const body = { owner: uid, v: 1, name: share.name || '', place: share.place || '', ig: share.ig || '', contact: share.contact || '', cur: cur(), items: shareItems() };
+  const body = { owner: uid, v: 1, name: share.name || '', place: share.place || '', ig: share.ig || '', contact: share.contact || '', cur: cur(), idx: !!share.idx, items: shareItems() };
   const sig = JSON.stringify(body);
   if (!force && sig === shareLast) return;
   await db.doc(`shops/${share.id}`).set({ ...body, updatedAt: Date.now() });
@@ -3347,7 +3348,7 @@ function shOpen() {
 }
 function shPaint(fill) {
   const on = !!(share?.on && share.id);
-  if (fill) { $('shName').value = share?.name || ''; $('shPlace').value = share?.place || ''; $('shIg').value = share?.ig ? '@' + share.ig : ''; $('shContact').value = share?.contact || ''; }
+  if (fill) { $('shName').value = share?.name || ''; $('shPlace').value = share?.place || ''; $('shIg').value = share?.ig ? '@' + share.ig : ''; $('shContact').value = share?.contact || ''; $('shIdx').checked = !!share?.idx; }
   $('shLinkBox').hidden = !on; $('shStopP').hidden = !on;
   $('shGo').textContent = on ? 'Save changes' : 'Create my link';
   if (!on) return;
@@ -3357,7 +3358,7 @@ function shPaint(fill) {
 }
 function shRead() {
   const t = (id, max) => $(id).value.replace(/\s+/g, ' ').trim().slice(0, max);
-  return { name: t('shName', 40), place: t('shPlace', 60), ig: t('shIg', 60).replace(/^.*instagram\.com\//i, '').replace(/^@+/, '').replace(/[^A-Za-z0-9._]/g, '').slice(0, 30), contact: t('shContact', 200) };
+  return { name: t('shName', 40), place: t('shPlace', 60), ig: t('shIg', 60).replace(/^.*instagram\.com\//i, '').replace(/^@+/, '').replace(/[^A-Za-z0-9._]/g, '').slice(0, 30), contact: t('shContact', 200), idx: $('shIdx').checked };
 }
 $('shGo').onclick = async () => {
   const f = shRead();
@@ -3368,7 +3369,7 @@ $('shGo').onclick = async () => {
     await db.doc(`data/users/${uid}/share`).set(next);
     share = next; await sharePublish(true); shPaint(true);
     toast(first ? 'Your link is ready: copy it and share it anywhere' : 'Saved');
-    track('share_sale', { action: first ? 'create' : 'save', copies: saleCopies(), ig: !!f.ig, contact: !!f.contact });
+    track('share_sale', { action: first ? 'create' : 'save', copies: saleCopies(), ig: !!f.ig, contact: !!f.contact, search: !!f.idx });
   } catch (e) { console.warn('share', e); toast('Couldn’t save that. Try again.'); }
   finally { $('shGo').disabled = false; }
 };
@@ -3376,7 +3377,7 @@ $('shStop').onclick = async () => {
   if (!share?.on || !share.id) return;
   try {
     await db.doc(`shops/${share.id}`).delete();
-    share = { name: share.name || '', place: share.place || '', ig: share.ig || '', contact: share.contact || '', on: false };
+    share = { name: share.name || '', place: share.place || '', ig: share.ig || '', contact: share.contact || '', idx: !!share.idx, on: false };
     await db.doc(`data/users/${uid}/share`).set(share);
     shareLast = ''; shPaint(); toast('Sharing stopped. That link no longer works.'); track('share_sale', { action: 'stop' });
   } catch (e) { console.warn('share stop', e); toast('Couldn’t stop sharing. Try again.'); }
@@ -4265,6 +4266,11 @@ function linkAction() {
   // From the header search on the other pages (/collection?q=…), and their About / Sign in buttons.
   if (q.get('q') && !n) { $('q').value = q.get('q'); q.delete('q'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); track('search_from_page'); }
   if (['S', 'R'].includes(q.get('ret')) && !n) { fi.ret.value = q.get('ret'); fi.ret.classList.add('set-on'); q.delete('ret'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); }
+  // /collection#sell (from My sale or trade list): open Sell or trade and scroll to it.
+  if (location.hash === '#sell') { history.replaceState(null, '', location.pathname + location.search); prefs.sellOpen = true; savePrefs(); paintSell(); setTimeout(() => { const b = $('sellToggle').closest('section') || $('sellToggle'), h = document.querySelector('header.top'), off = h && getComputedStyle(h).position !== 'static' ? h.offsetHeight : 0; scrollTo({ top: Math.max(0, b.getBoundingClientRect().top + scrollY - off - 12), behavior: 'smooth' }); }, 300); }
+  // From /account: Export, and the account panel (sign out, delete).
+  if (location.hash === '#export') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => $('exportBtn').click(), 600); }
+  if (location.hash === '#account') { history.replaceState(null, '', location.pathname + location.search); setTimeout(openAuth, 1500); }
   if (location.hash === '#news') { history.replaceState(null, '', location.pathname + location.search); setTimeout(openNews, 300); }
   if (location.hash === '#about') { history.replaceState(null, '', location.pathname + location.search); setTimeout(showGettingStarted, 50); }
   if (location.hash === '#signin') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => { if (saveMode !== 'cloud') $('acctBtn').click(); }, 1500); }

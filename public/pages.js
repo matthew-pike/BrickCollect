@@ -33,7 +33,7 @@
 
   /* account button: your initial once you've signed in on this browser (saved by the app), else Sign in */
   const acct = lsGet('bc-acct'), ab = $('acctBtn');
-  if (ab && acct && acct.n) { ab.classList.add('in'); ab.innerHTML = `<span class="full"></span><span class="short" aria-hidden="true"></span>`; ab.querySelector('.full').textContent = acct.n.slice(0, 14); ab.querySelector('.short').textContent = acct.n.slice(0, 1).toUpperCase(); ab.title = 'Your account · My collection'; ab.href = '/collection'; }
+  if (ab && acct && acct.n) { ab.classList.add('in'); ab.innerHTML = `<span class="full"></span><span class="short" aria-hidden="true"></span>`; ab.querySelector('.full').textContent = acct.n.slice(0, 14); ab.querySelector('.short').textContent = acct.n.slice(0, 1).toUpperCase(); ab.title = 'My account'; ab.href = '/account'; }
 
   /* home: the main button opens My collection once you're signed in */
   const hb = $('heroBtn'); if (hb && acct) { hb.textContent = 'Open My collection'; hb.href = '/collection'; }

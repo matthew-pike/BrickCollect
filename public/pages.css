@@ -64,7 +64,7 @@ button,input,select{font:inherit;color:inherit}
 /* The footer's full-width band and line reach past the page edges: never let that scroll sideways */
 html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 .foot-site{margin-top:40px;border-top:1px solid var(--line);padding-block:20px 28px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--muted)}
-.foot-site{position:relative;border-top:0!important;background:var(--panel);box-shadow:0 0 0 100vmax var(--panel);clip-path:inset(-1px -100vmax 0)}
+.foot-site{position:relative;border-top:0!important;background:var(--panel);box-shadow:0 0 0 100vmax var(--panel);clip-path:inset(-1px -100vmax -100vmax)}
 .foot-site::before{content:"";position:absolute;top:-1px;left:calc(50% - 50vw);width:100vw;border-top:1px solid var(--line)}
 .foot-row{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap}
 .foot-brand b{color:var(--fg);font-weight:700}
@@ -190,3 +190,5 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .zoombody img{max-width:100%;max-height:72vh;object-fit:contain}
 @media (max-width:640px){.zoomdlg{width:100vw}}
 @media (max-width:640px){.hhead{flex-wrap:wrap;row-gap:8px}.hhead a{white-space:normal}}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;margin:8px 0 0}.kv dt{color:var(--muted)}.kv dd{margin:0}
+.prose ol{max-width:860px;color:var(--muted)}.prose ol li{margin:6px 0}
