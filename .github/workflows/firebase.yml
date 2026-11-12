@@ -89,6 +89,12 @@ jobs:
         with: { node-version: 22 }
       - run: ./report.sh "npm install" npm install --no-audit --no-fund
       - run: ./report.sh "Build site" node build-hosting.mjs
+      - name: Build the set, theme and brand pages (reads other brands and retired status from Firestore)
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Set pages" node build-pages.mjs
+          rm -f "$RUNNER_TEMP/sa.json"
       - name: Publish the site (main -> brickcollect.app, preview -> preview channel)
         env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}', BRANCH: '${{ github.ref_name }}' }
         run: |
