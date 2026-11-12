@@ -46,6 +46,9 @@
     m.addEventListener('toggle', () => { if (m.open) track('menu_open'); });
   }
 
+  /* What's new page: counts as seen, like opening it in the app */
+  { const w = document.querySelector('[data-seen]'); if (w) lsSet('bc-seen-version', w.dataset.seen); }
+
   /* clicks worth counting */
   document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[data-cta]'); if (a) track('set_page_cta', { cta: a.dataset.cta, page: location.pathname }); });
 

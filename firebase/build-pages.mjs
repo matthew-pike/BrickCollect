@@ -44,7 +44,7 @@ const MENU = (() => {
 const FOOTER = (() => {
   const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<footer class="foot-site">[\s\S]*?<\/footer>/);
   if (!m) throw new Error('Footer not found in index.html; update build-pages.mjs');
-  return m[0].replace(/\s*<a href="#" id="installLink"[^>]*>[\s\S]*?<\/a>/, '').replace('<a href="#" id="newsLink">', '<a href="/collection#news">').replace(/<span id="ratesNote"><\/span>/, '');
+  return m[0].replace(/\s*<a href="#" id="installLink"[^>]*>[\s\S]*?<\/a>/, '').replace('<a href="#" id="newsLink">', '<a href="/whats-new">').replace(/<span id="ratesNote"><\/span>/, '');
 })();
 const CURS = ['AUD', 'USD', 'EUR', 'GBP', 'CAD', 'NZD', 'JPY', 'CHF'];
 const HEADER = `<header class="top"><div class="wrap">
@@ -331,9 +331,19 @@ for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.
   write(`.${path}.html`, shell({ path, title, desc, h1, crumbs: [[crumb, path]], body }));
 }
 
+/* ---------- What's new: the app's own release notes (RELEASES in index.html) ---------- */
+{
+  const src = readFileSync(new URL('index.html', PUB), 'utf8');
+  const a = src.indexOf('const RELEASES = ['), b = src.indexOf('\n];', a);
+  if (a < 0 || b < 0) throw new Error('RELEASES not found in index.html; update build-pages.mjs');
+  const rel = vm.runInNewContext(`(${src.slice(a + 'const RELEASES = '.length, b + 2)})`);
+  const body = `<div class="prose" data-seen="${esc(rel[0].v)}">${rel.map(r => `<section class="box rel"><h2><span class="v">v${esc(r.v)}</span> ${esc(r.title)} <span class="d">${esc(r.date)}</span></h2><ul>${r.items.map(([t, d]) => `<li><b>${esc(t)}</b>: ${esc(d)}</li>`).join('')}</ul></section>`).join('\n')}</div>`;
+  write('./whats-new.html', shell({ path: '/whats-new', title: 'What’s new · BrickCollect', desc: 'New features and improvements in BrickCollect, the free collection tracker for LEGO and other brick brands.', h1: 'What’s new', crumbs: [['What’s new', '/whats-new']], body }));
+}
+
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
-write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/privacy', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
+write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/privacy', '/whats-new', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
 write('./sitemap-sets.xml', urlset(sets.map(x => x.path)));
 const day = now.toISOString().slice(0, 10);
 write('./sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${SITE}/sitemap-pages.xml</loc><lastmod>${day}</lastmod></sitemap>\n  <sitemap><loc>${SITE}/sitemap-sets.xml</loc><lastmod>${day}</lastmod></sitemap>\n</sitemapindex>\n`);
