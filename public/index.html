@@ -283,6 +283,10 @@ button.hitile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .btn.clearf:disabled:hover{border-color:var(--line-2)}
 .btn.clearf.on{color:var(--accent);border-color:var(--accent);background:transparent}
 .btn.clearf.on:hover{background:var(--accent);color:var(--accent-ink)}
+/* Sticky copy of Clear filters: only in the stuck list header, once the filter row has scrolled away */
+#fiClearS{display:none;padding:5px 10px;font-size:12.5px;gap:5px}
+.board-head.stuck #fiClearS:not([hidden]){display:inline-flex}
+@media (max-width:640px){#fiClearS{padding:5px 8px}#fiClearS .lg{display:none}.board-head.stuck:has(#fiClearS:not([hidden])) #importBtn{display:none}}
 .filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr)) auto auto auto;gap:12px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
 .field label{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500}
@@ -971,6 +975,7 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
         <button class="pill" data-view="owned" aria-pressed="false">Owned <b id="cOwned">0</b></button>
         <button class="pill" data-view="wanted" aria-pressed="false">Wanted <b id="cWanted">0</b></button>
       </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
+      <button class="btn clearf on" id="fiClearS" type="button" hidden title="Clear all filters and search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Clear<span class="lg"> filters</span></button>
       <label class="phone-sort"><span class="sr">Sort</span><select id="sortSel" aria-label="Sort by">
         <option value="year:desc">Newest first</option><option value="year:asc">Oldest first</option><option value="name:asc">Name A–Z</option>
         <option value="n:asc">Set number</option><option value="new:desc">New price, highest</option><option value="used:desc">Used price, highest</option><option value="pieces:desc">Most pieces</option>
@@ -2055,7 +2060,7 @@ function render() {
   $('regionLabel').textContent = LOCS[priceRegion()].replace(' (EU)', '').replace('United States', 'US').replace('United Kingdom', 'UK');
   document.querySelectorAll('[data-loc]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.loc === priceRegion())));
   { const n = [fi.brand, fi.theme, fi.sub, fi.film, fi.year, fi.ret].filter(f => f.value).length + (fi.set.value !== 'all' ? 1 : 0); $('filtLabel').textContent = n ? `Filters · ${n}` : 'Filters';
-    const any = n > 0 || !!$('q').value.trim() || !!focus || !!tlFilter; const r = $('fiReset'); r.disabled = !any; r.classList.toggle('on', any); $('fiClearM').hidden = !any; }
+    const any = n > 0 || !!$('q').value.trim() || !!focus || !!tlFilter; const r = $('fiReset'); r.disabled = !any; r.classList.toggle('on', any); $('fiClearM').hidden = $('fiClearS').hidden = !any; }
   const list = kind === 'sets' ? CAT.sets : CAT.figs;
   const isScoped = scoped();
   const scope = isScoped ? list.filter(inScope) : list.filter(has);
@@ -2443,7 +2448,9 @@ let qT, qTrackT; $('q').addEventListener('input', () => { clearTimeout(qT); qT =
   clearTimeout(qTrackT); qTrackT = setTimeout(() => { const q = $('q').value.trim(); if (q.length >= 2) track('search', { search_term: q.slice(0, 60), results: $('rows') ? $('rows').rows.length : undefined }); }, 1500); });
 $('more').onclick = () => { limit += PAGE; render(); };
 $('moreAll').onclick = () => { limit = SHOW_ALL_MAX; render(); };
-$('fiReset').onclick = $('fiClearM').onclick = () => { focus = null; tlFilter = null; leaveSale(); Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render(); };
+$('fiReset').onclick = $('fiClearM').onclick = $('fiClearS').onclick = () => { const stuck = $('boardHead').classList.contains('stuck'); focus = null; tlFilter = null; leaveSale(); Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render();
+  // From the sticky header: go back to the top of the list, which is now a different (longer) list
+  if (stuck) { const top = document.querySelector('.top'), off = getComputedStyle(top).position === 'sticky' ? top.offsetHeight : 0; scrollTo({ top: Math.max(0, $('boardHead').closest('.board').getBoundingClientRect().top + scrollY - off - 8), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 // BrickLink outage notice (Nov 2026). Hidden once dismissed; remove this block when BrickLink is back.
 (() => {
