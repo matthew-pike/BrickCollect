@@ -862,9 +862,9 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <a href="#" class="brandmark home" data-home title="Back to home" aria-hidden="true" tabindex="-1"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle class="bg" cx="32.0" cy="32.0" r="32.0" fill="#6b7888"/><circle class="ring" cx="32.0" cy="32.0" r="29.4" fill="none" stroke="#ffffff" stroke-opacity=".7" stroke-width="1.6"/><g class="bc" fill="#ffffff"><path transform="translate(12.868 42.325) scale(0.02950 -0.02950)" d="M352 382Q361 385 370 388Q416 406 442.0 441.0Q468 476 468 525Q468 585 442.0 623.5Q416 662 369.5 681.0Q323 700 260 700H80V0H270Q338 0 391.5 22.5Q445 45 476.5 90.5Q508 136 508 205Q508 253 490.0 288.0Q472 323 439.5 345.5Q407 368 364 379Q358 381 352 382ZM165 343H270Q304 343 332.0 334.5Q360 326 380.5 309.0Q401 292 412.0 267.0Q423 242 423 210Q423 167 403.5 137.0Q384 107 349.5 91.0Q315 75 270 75H165ZM165 417V625H260Q313 625 348.0 597.5Q383 570 383 520Q383 487 367.0 464.0Q351 441 323.0 429.0Q295 417 260 417Z"/><path transform="translate(30.629 42.325) scale(0.02950 -0.02950)" d="M130 350Q130 432 166.5 493.5Q203 555 262.0 590.0Q321 625 390 625Q440 625 481.5 612.0Q523 599 557.0 575.5Q591 552 615 521V633Q571 672 519.0 691.0Q467 710 390 710Q317 710 253.5 683.5Q190 657 142.0 608.5Q94 560 67.0 494.0Q40 428 40 350Q40 272 67.0 206.0Q94 140 142.0 91.5Q190 43 253.5 16.5Q317 -10 390 -10Q467 -10 519.0 9.0Q571 28 615 67V179Q591 148 557.0 124.5Q523 101 481.5 88.0Q440 75 390 75Q321 75 262.0 110.0Q203 145 166.5 207.0Q130 269 130 350Z"/></g></svg></a>
+      <a href="/" class="brandmark home" title="Home" aria-hidden="true" tabindex="-1"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle class="bg" cx="32.0" cy="32.0" r="32.0" fill="#6b7888"/><circle class="ring" cx="32.0" cy="32.0" r="29.4" fill="none" stroke="#ffffff" stroke-opacity=".7" stroke-width="1.6"/><g class="bc" fill="#ffffff"><path transform="translate(12.868 42.325) scale(0.02950 -0.02950)" d="M352 382Q361 385 370 388Q416 406 442.0 441.0Q468 476 468 525Q468 585 442.0 623.5Q416 662 369.5 681.0Q323 700 260 700H80V0H270Q338 0 391.5 22.5Q445 45 476.5 90.5Q508 136 508 205Q508 253 490.0 288.0Q472 323 439.5 345.5Q407 368 364 379Q358 381 352 382ZM165 343H270Q304 343 332.0 334.5Q360 326 380.5 309.0Q401 292 412.0 267.0Q423 242 423 210Q423 167 403.5 137.0Q384 107 349.5 91.0Q315 75 270 75H165ZM165 417V625H260Q313 625 348.0 597.5Q383 570 383 520Q383 487 367.0 464.0Q351 441 323.0 429.0Q295 417 260 417Z"/><path transform="translate(30.629 42.325) scale(0.02950 -0.02950)" d="M130 350Q130 432 166.5 493.5Q203 555 262.0 590.0Q321 625 390 625Q440 625 481.5 612.0Q523 599 557.0 575.5Q591 552 615 521V633Q571 672 519.0 691.0Q467 710 390 710Q317 710 253.5 683.5Q190 657 142.0 608.5Q94 560 67.0 494.0Q40 428 40 350Q40 272 67.0 206.0Q94 140 142.0 91.5Q190 43 253.5 16.5Q317 -10 390 -10Q467 -10 519.0 9.0Q571 28 615 67V179Q591 148 557.0 124.5Q523 101 481.5 88.0Q440 75 390 75Q321 75 262.0 110.0Q203 145 166.5 207.0Q130 269 130 350Z"/></g></svg></a>
       <div>
-        <h1><a href="#" class="home" id="homeLink" title="Back to home">BrickCollect</a> <span class="beta">BETA</span> <button class="newpill" id="newsPill" type="button" hidden title="See what’s new in BrickCollect">What’s new</button> <span class="beta preview" id="previewBadge" hidden title="You’re on the preview site: changes here aren’t live yet">PREVIEW</span></h1>
+        <h1><a href="/" class="home" id="homeLink" title="Home">BrickCollect</a> <span class="beta">BETA</span> <button class="newpill" id="newsPill" type="button" hidden title="See what’s new in BrickCollect">What’s new</button> <span class="beta preview" id="previewBadge" hidden title="You’re on the preview site: changes here aren’t live yet">PREVIEW</span></h1>
         <p>Collect. Track. Value. Export. In one place.</p>
       </div>
     </div>
@@ -2702,16 +2702,7 @@ function bulkOwn(on) {
 
 $('unselAll').onclick = () => bulkOwn(false);
 
-function goHome(e) {
-  e.preventDefault();
-  Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); });
-  $('q').value = ''; focus = null; kind = 'sets'; listView = 'all'; limit = PAGE; editing = null;
-  $('bulkbar').hidden = true;
-  if (CAT) { themeOptions(); subOptions(''); filmOptions(''); }
-  savePrefs(); render(); scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-}
-$('homeLink').onclick = goHome;
-document.querySelector('.brandmark').onclick = goHome;
+// The logo and BrickCollect go to Home (/), like on every other page.
 $('footHome').onclick = e => { e.preventDefault(); scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
 
 /* ---------- back to top ---------- */
