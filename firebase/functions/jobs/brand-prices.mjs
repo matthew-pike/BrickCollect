@@ -188,8 +188,12 @@ export async function updateBrand({ brand, shop, series = [], numRe, themeOf, cu
   const items = { ...(cat.items || {}) };
   const updates = new Map(), now = new Date().toISOString();
   let added = 0, priced = 0, linked = 0, themed = 0, pictured = 0;
+  // Sets whose number was corrected on the site (catalog moved: old -> new): the store's number maps to the right set,
+  // so the old one isn't added back.
+  const moved = cat.moved || {};
+  const follow = n => { for (let i = 0; i < 10 && n && moved[n] && moved[n] !== n; i++) n = moved[n]; return n; };
   for (const p of products) {
-    const num = numFor(p, numRe);
+    const num = follow(numFor(p, numRe));
     if (!num) continue;
     const prices = (p.variants || []).map(v => Number(v.price)).filter(v => v > 0);
     if (!items[num]) { items[num] = { name: cleanName(p.title, num), theme: 'Unsorted', sub: '', year: null, pieces: null, img: '' }; added++; }

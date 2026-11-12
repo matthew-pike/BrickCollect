@@ -82,6 +82,7 @@ for (const [fn, name, , si] of raw.figs) for (const i of si) if (lego[i]) lego[i
 
 const shared = new Map();   // n -> { ret, exit, bl, used, new, loc, pricedAt, priceSource, manualPrice }
 const extras = [];
+const movedPages = []; // [brand doc id, old number, new number]: sets whose number was corrected on the site
 const subOv = new Map();   // n -> subtheme
 let mostOwned = {};       // n -> how many collectors own it (Admin page numbers)
 if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
@@ -97,6 +98,7 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     for (const d of info.docs) for (const [n, v] of Object.entries((d.data() || {}).items || {})) shared.set(n, { ret: v.ret, exit: v.exit, bl: v.bl, used: v.used, new: v.new, loc: v.loc, pricedAt: v.pricedAt, priceSource: v.priceSource, manualPrice: v.manualPrice });
     for (const d of cat.docs) {
       const v = d.data() || {};
+      for (const [from, to] of Object.entries(v.moved || {})) if (typeof to === 'string' && from !== to) movedPages.push([d.id, from, to]);
       for (const [num, it] of Object.entries(v.items || {})) extras.push({ n: `${d.id}:${num}`, disp: num, name: it.name || num, year: it.year ?? null, pieces: it.pieces ?? null, img: it.img || '', url: it.url || '', theme: it.theme || 'Unsorted', sub: it.sub || '', brand: v.brand || d.id, figs: [] });
     }
     console.log(`Firestore: ${shared.size} item records, ${subOv.size} subthemes, ${extras.length} sets of other brands`);
@@ -520,6 +522,22 @@ const LOST = (() => {
 write('./404.html', shell({ path: '/404', title: 'Page not found · BrickCollect', desc: '', h1: 'Page not found', crumbs: [['Page not found', '/404']], robots: 'noindex', notice: false,
   body: `<div class="prose"><section class="box lostbox">${LOST}<div><h2>This brick’s gone missing</h2><p>That page doesn’t exist, or the link was copied only in part. Try searching above, or:</p><p class="row"><a class="btn primary" href="/">Home</a><a class="btn" href="/collection">My collection</a><a class="btn" href="/sets">All sets</a></p></div></section></div>` }));
 
+
+/* ---------- old addresses of sets whose number was corrected: send them on to the set's page ---------- */
+{
+  const byN = new Map(extras.map(x => [x.n, x]));
+  const moved = new Map(movedPages.map(([id, a, b]) => [`${id}:${a}`, `${id}:${b}`]));
+  const follow = n => { for (let i = 0; i < 10 && moved.has(n); i++) n = moved.get(n); return n; };
+  let made = 0;
+  for (const [id, from] of movedPages) {
+    const x = byN.get(follow(`${id}:${from}`)); if (!x?.path) continue;
+    const old = `/set/${slug(x.brand)}-${slug(from)}`;
+    if (used.has(old.slice(5)) || old === x.path) continue; // another set has that address now
+    write(`.${old}.html`, `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(x.name)} · BrickCollect</title><meta name="robots" content="noindex"><link rel="canonical" href="${SITE}${x.path}"><meta http-equiv="refresh" content="0; url=${esc(x.path)}"></head><body><p>This set’s number was corrected. <a href="${esc(x.path)}">Go to ${esc(x.brand)} ${esc(x.disp)} ${esc(x.name)}</a>.</p></body></html>\n`);
+    made++;
+  }
+  if (made) console.log(`${made} old set addresses sent on to the corrected set numbers`);
+}
 
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;

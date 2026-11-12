@@ -1042,7 +1042,7 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
       <button class="btn mini ghost" type="button" id="mytagCancel">Close</button>
     </form>
     <form class="addpanel" id="addPanel" hidden autocomplete="off">
-      <div class="addhead"><b id="addTitle">Add a set</b><span class="muted">Shows for everyone. Use this for brands Rebrickable doesn’t cover.</span></div>
+      <div class="addhead"><b id="addTitle">Add a set</b><span class="muted" id="addHint">Shows for everyone. Use this for brands Rebrickable doesn’t cover.</span></div>
       <div class="addgrid">
         <div class="field"><label for="aBrand">Brand</label><input class="inp" id="aBrand" list="brandNames" required placeholder="LumiBricks"></div>
         <div class="field"><label for="aNum">Set #</label><input class="inp mono" id="aNum" required placeholder="15010"></div>
@@ -1377,7 +1377,7 @@ function buildCatalog(raw) {
      Saved to their private space data/users/<id>/collection when they can save there,
      otherwise in this browser only.
    Shared (curated by the site owner): prices, BrickLink #s, subthemes, films, other brands, rates. */
-let fsIdx = null, fsOnly = !!prefs.fsOnly; // for sale by collectors (see below)
+let fsRaw = null, fsIdx = null, fsOnly = !!prefs.fsOnly; // for sale by collectors (see below)
 let uid = null, isOwner = false, role = 'user', perms = {}, saveMode = 'loading'; // 'cloud' | 'local' | 'loading'
 const shared = new Map(); // n -> { used, new, bl, pricedAt, priceSource }
 const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice', 'loc', 'ret', 'exit', 'manualRet'];
@@ -1434,7 +1434,7 @@ function retBadge(x) {
 }
 const hasMineData = v => v && (v.owned || v.wanted || (v.mytags && v.mytags.length) || SHARED_KEYS.some(k => v[k] != null));
 const personalObj = () => { const o = {}; for (const [k, v] of mine) if (hasMineData(v)) o[k] = v; return o; };
-function loadPersonal(items) { mine.clear(); for (const [k, v] of Object.entries(items || {})) if (v && typeof v === 'object') mine.set(k, v); if (CAT && typeof filmOptions === 'function') filmOptions(); }
+function loadPersonal(items) { mine.clear(); for (const [k, v] of Object.entries(items || {})) if (v && typeof v === 'object') mine.set(k, v); if (typeof remapMoved === 'function') remapMoved(); if (CAT && typeof filmOptions === 'function') filmOptions(); }
 /* ---------- your own tags (private: saved with your collection, never shared) ---------- */
 const MY_TAG_MAX = 20, MY_TAG_LEN = 30;
 const MY_TAG_SUGGEST = ['On display', 'In storage', 'Built', 'Still boxed', 'Childhood', 'Gift', 'To sell'];
@@ -2612,10 +2612,10 @@ const slug = t => (THEME_DOC[t] || t || 'Other').replace(/[^A-Za-z0-9]+/g, '-').
 function applyOverrides() {
   if (!CAT) return;
   const ov = new Map();
-  for (const d of subDocs.values()) { for (const [k, v] of Object.entries(d.brickset || {})) ov.set(k, v); for (const [k, v] of Object.entries(d.manual || {})) ov.set(k, v); }
+  for (const d of subDocs.values()) { for (const [k, v] of Object.entries(d.brickset || {})) ov.set(fwd(k), v); for (const [k, v] of Object.entries(d.manual || {})) ov.set(fwd(k), v); }
   // Tags: any number per set. The older single Film / Series value counts as a tag too.
   const tags = new Map(), add = (k, v) => { if (!v) return; if (!tags.has(k)) tags.set(k, []); if (!tags.get(k).includes(v)) tags.get(k).push(v); };
-  for (const d of subDocs.values()) { for (const [k, v] of Object.entries(d.films || {})) add(k, v); for (const [k, v] of Object.entries(d.tags || {})) (Array.isArray(v) ? v : []).forEach(t => add(k, t)); }
+  for (const d of subDocs.values()) { for (const [k, v] of Object.entries(d.films || {})) add(fwd(k), v); for (const [k, v] of Object.entries(d.tags || {})) (Array.isArray(v) ? v : []).forEach(t => add(fwd(k), t)); }
   for (const x of CAT.sets) { x.sub = ov.has(x.n) ? ov.get(x.n) : x.rbSub; x.tags = tags.get(x.n) || []; x.film = x.tags[0] || ''; }
   // Minifigures: their own collection tags first, then the tags of the sets they come in.
   for (const f of CAT.figs) { f.subs = [...new Set(f.so.map(x => x.sub).filter(Boolean))]; f.sub = f.subs[0] || ''; f.ctags = tags.get(f.n) || []; f.tags = [...new Set([...f.ctags, ...f.so.flatMap(x => x.tags)])]; f.films = f.tags; }
@@ -2784,14 +2784,37 @@ try {
 } catch {}
 
 /* ---------- other brands (added by the owner, shared with everyone) ---------- */
-const catDocs = new Map(); // brandSlug -> { brand, items: { num: {...} } }
+const catDocs = new Map(); // brandSlug -> { brand, items: { num: {...} }, moved: { oldNum: newNum } }
+// Renamed sets: a set's number is its key everywhere (collections, prices, tags, sale lists), so when an admin
+// corrects a number the brand's catalog doc remembers old -> new (moved), and everything keyed by the old number
+// follows it here. Each person's own collection is rewritten under the new number the next time they open the site.
+const MOVED = new Map(); // 'slug:old' -> 'slug:new'
+const fwd = n => { for (let i = 0; i < 10 && MOVED.has(n); i++) n = MOVED.get(n); return n; };
+function buildMoved() {
+  MOVED.clear();
+  for (const [slugId, d] of catDocs) for (const [a, b] of Object.entries(d.moved || {})) if (a !== b && typeof b === 'string') MOVED.set(`${slugId}:${a}`, `${slugId}:${b}`);
+}
+// Moves entries of a Map from old numbers to new ones (an entry already under the new number wins). Returns true if any moved.
+function followMoved(map, keep = v => true) {
+  if (!MOVED.size) return false;
+  let ch = false;
+  for (const [k, v] of [...map]) { const t = fwd(k); if (t === k) continue; if (!map.has(t) || !keep(map.get(t))) map.set(t, v); map.delete(k); ch = true; }
+  return ch;
+}
+function remapMoved() {
+  followMoved(shared);
+  fsIdx = fsMap(fsRaw);
+  if (followMoved(mine, hasMineData) && (saveMode === 'cloud' || saveMode === 'local')) savePersonal();
+}
 const brandSlug = b => (b || 'Other').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'Other';
 function applyExtras() {
   if (!CAT) return;
   const extras = [];
+  const olds = new Map(); // new n -> its earlier numbers (still found by search and import)
+  for (const [a, b] of MOVED) { const t = fwd(b), num = a.slice(a.indexOf(':') + 1); if (!olds.has(t)) olds.set(t, []); olds.get(t).push(num); }
   for (const [slugId, d] of catDocs) for (const [num, v] of Object.entries(d.items || {})) {
-    const n = `${slugId}:${num}`;
-    extras.push({ n, disp: num, name: v.name || num, year: v.year ?? null, pieces: v.pieces ?? null, img: v.img || '', url: v.url || '', theme: v.theme || 'Unsorted', sub: v.sub || '', rbSub: v.sub || '', brand: d.brand, k: 's', extra: true, key: (num + ' ' + (v.name || '') + (d.brand === 'LumiBricks' ? ' funwhole' : '')).toLowerCase() });
+    const n = `${slugId}:${num}`, was = olds.get(n) || [];
+    extras.push({ n, disp: num, was, name: v.name || num, year: v.year ?? null, pieces: v.pieces ?? null, img: v.img || '', url: v.url || '', theme: v.theme || 'Unsorted', sub: v.sub || '', rbSub: v.sub || '', brand: d.brand, k: 's', extra: true, key: ([num, ...was].join(' ') + ' ' + (v.name || '') + (d.brand === 'LumiBricks' ? ' funwhole' : '')).toLowerCase() });
   }
   CAT.sets = CAT.lego.concat(extras);
   applyOverrides(); themeOptions();
@@ -2809,11 +2832,13 @@ function openAdd(x) {
   $('addTitle').textContent = x ? `Edit ${x.disp}` : 'Add a set';
   $('aSave').textContent = x ? 'Save changes' : 'Add set';
   $('aDelete').hidden = !x;
+  $('addHint').textContent = x ? 'Shows for everyone. A corrected set # moves the set: collections, wanted lists, prices and tags follow it.' : 'Shows for everyone. Use this for brands Rebrickable doesn’t cover.';
   $('aBrand').value = x ? x.brand : (fi.brand.value && fi.brand.value !== 'LEGO' ? fi.brand.value : '');
   $('aNum').value = x ? x.disp : ''; $('aName').value = x ? x.name : '';
   $('aTheme').value = x ? x.theme : (fi.theme.value || ''); $('aSub').value = x ? x.rbSub : '';
   $('aYear').value = x?.year ?? ''; $('aPieces').value = x?.pieces ?? ''; $('aImg').value = x?.img || '';
-  $('aBrand').disabled = $('aNum').disabled = !!x;
+  // The brand stays fixed when editing; the number can be corrected (saving moves the set, see renameSet).
+  $('aBrand').disabled = !!x; $('aNum').disabled = false;
   $('addPanel').hidden = false; (x ? $('aName') : $('aBrand')).focus();
 }
 let catQueue = Promise.resolve();
@@ -2822,7 +2847,7 @@ function saveCat(slugId) {
   catQueue = catQueue.then(async () => {
     try {
       const ref = db.collection('catalog').doc(slugId);
-      if (d && Object.keys(d.items || {}).length) await ref.set({ brand: d.brand, items: d.items, updatedAt: Date.now() }); else await ref.delete();
+      if (d && (Object.keys(d.items || {}).length || Object.keys(d.moved || {}).length)) await ref.set({ brand: d.brand, items: d.items || {}, ...(Object.keys(d.moved || {}).length ? { moved: d.moved } : {}), updatedAt: Date.now() }); else await ref.delete();
     } catch (e) { console.warn('catalog', e); toast(e?.code === 'quota_exceeded' ? 'Storage is full, so the set wasn’t saved.' : 'Couldn’t save the set. Try again.'); }
   });
 }
@@ -2834,18 +2859,42 @@ $('addPanel').addEventListener('submit', e => {
   if (!brand || !num || !name) return;
   if (brand.toLowerCase() === 'lego') { toast('LEGO sets come from Rebrickable, so they’re already here.'); return; }
   if (!/^[A-Za-z0-9._~@+-]+$/.test(num)) { toast('Use letters, numbers and dashes for the set number.'); return; }
-  const id = brandSlug(brand), d = catDocs.get(id) || { brand, items: {} };
-  if (!editingSet && d.items[num]) { toast(`${brand} ${num} is already listed.`); return; }
+  // Editing: the set's own brand document (its id can differ from brandSlug, e.g. sets added by the store job).
+  const id = editingSet ? editingSet.n.slice(0, editingSet.n.indexOf(':')) : brandSlug(brand), d = catDocs.get(id) || { brand, items: {} };
+  const oldNum = editingSet ? editingSet.disp : null, renaming = !!editingSet && num !== oldNum;
+  if ((!editingSet || renaming) && d.items[num]) { toast(`${d.brand || brand} ${num} is already listed.`); return; }
+  if (renaming) renameSet(id, d, oldNum, num);
   const num_ = v => v === '' ? null : Number(v);
   const prev = d.items[num] || {}, theme = $('aTheme').value.trim() || 'Unsorted';
   // Keep fields the daily store job saves (product address); a theme you change by hand is yours from then on.
   d.items = { ...d.items, [num]: { ...prev, themeAuto: !!prev.themeAuto && theme === prev.theme, name, theme, sub: $('aSub').value.trim(), year: num_($('aYear').value), pieces: num_($('aPieces').value), img: /^https:\/\//.test($('aImg').value.trim()) ? $('aImg').value.trim() : '' } };
   d.items[num].imgAuto = !!prev.imgAuto && d.items[num].img === prev.img;
   catDocs.set(id, { ...d, brand: d.brand || brand }); applyExtras(); render(); saveCat(id);
-  toast(editingSet ? 'Saved' : `Added ${name}`);
+  toast(renaming ? `Saved: ${oldNum} is now ${num}` : editingSet ? 'Saved' : `Added ${name}`);
   if (editingSet) $('addPanel').hidden = true; else { $('aNum').value = ''; $('aName').value = ''; $('aPieces').value = ''; $('aImg').value = ''; $('aNum').focus(); }
-  editingSet = null; $('aBrand').disabled = $('aNum').disabled = false; $('aSave').textContent = 'Add set'; $('aDelete').hidden = true; $('addTitle').textContent = 'Add a set';
+  editingSet = null; $('aBrand').disabled = false; $('aSave').textContent = 'Add set'; $('aDelete').hidden = true; $('addTitle').textContent = 'Add a set';
 });
+// Correcting a set's number: move the catalog entry, remember old -> new (so everyone's collections, wanted lists,
+// sale lists and the old set page follow it), and move the shared prices, subthemes and tags kept under the old number.
+function renameSet(id, d, oldNum, newNum) {
+  const from = `${id}:${oldNum}`, to = `${id}:${newNum}`;
+  const items = { ...d.items }; items[newNum] = items[oldNum] || {}; delete items[oldNum];
+  const moved = { ...(d.moved || {}) };
+  for (const k of Object.keys(moved)) if (moved[k] === oldNum) moved[k] = newNum; // earlier renames follow too
+  delete moved[newNum];                                                          // renaming back to an earlier number
+  moved[oldNum] = newNum;
+  d.items = items; d.moved = moved; catDocs.set(id, d);
+  // Shared prices, BrickLink #, retired status (iteminfo).
+  if (shared.has(from) && can('items')) { if (!shared.has(to)) shared.set(to, shared.get(from)); shared.delete(from); saveShared(from); saveShared(to); }
+  // Hand-set subthemes, Film / Series and tags, in whichever theme document holds them.
+  if (can('subthemes')) for (const [sid, sd] of subDocs) {
+    let ch = false;
+    for (const f of ['manual', 'films', 'tags']) if (sd[f] && from in sd[f]) { sd[f] = { ...sd[f] }; if (!(to in sd[f])) sd[f][to] = sd[f][from]; delete sd[f][from]; ch = true; }
+    if (ch) saveSubDoc(sd.theme || sid);
+  }
+  buildMoved(); remapMoved(); // your own collection now; everyone else's the next time they open the site
+  track('set_renamed', { brand: d.brand || id });
+}
 $('aDelete').onclick = () => {
   if (!editingSet || !can('sets')) return;
   const btn = $('aDelete');
@@ -3444,6 +3493,13 @@ function shCtyFill(v) {
 // Where you are, to put sellers in your country first: your own sale list's country, else where your prices come from.
 const myCty = () => share?.cty && share.cty !== 'ZZ' ? share.cty : CTY_FOR_LOC[priceRegion()] || (priceRegion() === 'EU' ? 'EU' : '');
 const nearMe = c => { const m = myCty(); return !!c && !!m && (c === m || (m === 'EU' && EU_CTY.has(c))); };
+// The hourly index still uses a renamed set's old number until its seller next opens the site: count it under the new one.
+function fsMap(r) {
+  if (!r?.i || !MOVED.size) return r;
+  const i = {};
+  for (const [k, v] of Object.entries(r.i)) { const t = fwd(k); i[t] = { ...(i[t] || {}), ...v }; }
+  return { ...r, i };
+}
 const fsShops = x => fsIdx?.i?.[x.n] ? Object.keys(fsIdx.i[x.n]).filter(id => id !== share?.id) : [];
 const fsCount = x => fsShops(x).reduce((t, id) => t + (Number(fsIdx.i[x.n][id]) || 1), 0);
 const fsWant = x => wanted(x) && !has(x) && fsCount(x) > 0;
@@ -3776,11 +3832,11 @@ function impCsv(text) {
   return rows.filter(r => r.some(v => v.trim()));
 }
 async function impIndex(onProg = () => {}) {
-  if (impIdx && impIdx.size === CAT.sets.length) return impIdx;
+  if (impIdx && impIdx.size === CAT.sets.length && impIdx.mv === MOVED.size) return impIdx;
   const by = new Map(), ext = new Map(), bl = new Map();
   for (const x of CAT.lego) { const k = x.n.toLowerCase(); by.set(k, x); const m = k.match(/^(.+)-1$/); if (m && !by.has(m[1])) by.set(m[1], x); }
   for (const x of CAT.figs) by.set(x.n.toLowerCase(), x);
-  for (const x of CAT.sets) if (x.extra) { const k = String(x.disp).toLowerCase(); if (!ext.has(k)) ext.set(k, []); ext.get(k).push(x); }
+  for (const x of CAT.sets) if (x.extra) for (const num of [x.disp, ...(x.was || [])]) { const k = String(num).toLowerCase(); if (!ext.has(k)) ext.set(k, []); if (!ext.get(k).includes(x)) ext.get(k).push(x); }
   try {
     const res = await fetch('/bl-numbers.json'), total = Number(res.headers.get('content-length')) || 0;
     let j;
@@ -3793,7 +3849,7 @@ async function impIndex(onProg = () => {}) {
     for (const [rb, b] of Object.entries(j.figs || {})) bl.set('m:' + String(b).toLowerCase(), rb);
     for (const [rb, b] of Object.entries(j.sets || {})) bl.set('s:' + String(b).toLowerCase(), rb); } catch (e) { console.warn('bl-numbers', e); }
   for (const [n, v] of shared) if (v.bl) bl.set((n.startsWith('fig-') ? 'm:' : 's:') + String(v.bl).toLowerCase(), n);
-  return impIdx = { by, ext, bl, size: CAT.sets.length };
+  return impIdx = { by, ext, bl, size: CAT.sets.length, mv: MOVED.size };
 }
 // A number from any site -> the BrickCollect item (or null). kind: 's', 'm' or '' when unknown.
 function impFind(raw, kind = '', brand = '') {
@@ -4524,15 +4580,15 @@ fetch('/catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return 
     if (dirtyBuckets.size || sWriting) return;
     shared.clear();
     for (const d of snap.docs) for (const [n, v] of Object.entries((d.data() || {}).items || {})) shared.set(n, v);
-    render();
+    followMoved(shared); render();
   }, err => console.warn('iteminfo', err));
   db.collection('catalog').onSnapshot(snap => {
     catDocs.clear();
-    for (const d of snap.docs) { const v = d.data() || {}; catDocs.set(d.id, { brand: v.brand || d.id, items: v.items || {} }); }
-    applyExtras(); render();
+    for (const d of snap.docs) { const v = d.data() || {}; catDocs.set(d.id, { brand: v.brand || d.id, items: v.items || {}, moved: v.moved || {} }); }
+    buildMoved(); applyExtras(); remapMoved(); render();
   }, err => console.warn('catalog', err));
   db.doc('meta/forsale').onSnapshot(snap => {
-    fsIdx = snap.exists ? (snap.data() || null) : null; render(); fsNotice();
+    fsRaw = snap.exists ? (snap.data() || null) : null; fsIdx = fsMap(fsRaw); render(); fsNotice();
   }, err => console.warn('for sale', err));
   db.doc('meta/rates').onSnapshot(snap => {
     if (snap.exists) { const v = snap.data(); if (v?.rates) { rates = { ...v, rates: { ...BASE_RATES.rates, ...v.rates } }; fmtCache.clear(); paintCurrency(); render(); } }
