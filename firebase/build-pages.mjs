@@ -213,7 +213,7 @@ function priceBox(x, blNum) {
   const has = rows.some(([, f]) => p[f] != null);
   const cell = f => p[f] != null ? aud(p[f]) : '—';
   return `<div class="pricebox" id="priceBox" data-n="${esc(x.n)}" data-brand="${esc(x.brand)}" data-fb="${esc(FB_KEY)}"${blNum ? ` data-bl="${esc(blNum)}"` : ''}>
-<div class="phead"><b>${store ? 'Price' : 'What it’s worth'}</b><span class="cur-note muted" id="priceCur"></span></div>
+<div class="phead"><b>${store ? 'Price' : 'Value'}</b><span class="cur-note muted" id="priceCur"></span></div>
 <div class="pvals">${rows.map(([k, f]) => `<div class="pv"><span class="pk">${k}</span><span class="pn" data-f="${f}">${cell(f)}</span></div>`).join('')}</div>
 <p class="fine" id="priceNote">${has ? esc(priceNote(p, x.brand)) : 'No price yet.'}</p>
 </div>`;
