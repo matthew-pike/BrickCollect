@@ -138,5 +138,7 @@ test('sale lists: anyone with the link reads one, only its owner writes it', asy
   await assertFails(setDoc(doc(alice(), 'shops/abc123'), shop('alice', { email: 'a@b.c' })));
   await assertFails(setDoc(doc(alice(), 'shops/abc123'), shop('alice', { name: 'x'.repeat(41) })));
   await assertSucceeds(setDoc(doc(alice(), 'shops/abc123'), shop('alice', { items: [] })));
+  await assertSucceeds(setDoc(doc(alice(), 'shops/abc123'), shop('alice', { idx: true })));
+  await assertFails(setDoc(doc(alice(), 'shops/abc123'), shop('alice', { idx: 'yes' })));
   await assertSucceeds(deleteDoc(doc(alice(), 'shops/abc123')));
 });
