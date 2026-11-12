@@ -38,8 +38,10 @@ if (!MARK) throw new Error('Logo not found in index.html; update build-pages.mjs
 const MENU = (() => {
   const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<details class="hmenu"[\s\S]*?<nav aria-label="Menu">([\s\S]*?)<\/nav><\/details>/);
   if (!m) throw new Error('Menu not found in index.html; update build-pages.mjs');
-  return m[1];
+  return m[1].replace('<a href="#" data-hm="showWelcome">', '<a href="/collection#about">');
 })();
+// The notice bar under the header (e.g. BrickLink is offline) comes from the app too, shown by pages.js.
+const NOTICE = (readFileSync(new URL('index.html', PUB), 'utf8').match(/<section class="notice" id="blNotice"[\s\S]*?<\/section>/) || [''])[0];
 // The app's footer is the template too. What's new opens in My collection; Install app only works inside the app.
 const FOOTER = (() => {
   const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<footer class="foot-site">[\s\S]*?<\/footer>/);
@@ -54,7 +56,6 @@ const HEADER = `<header class="top"><div class="wrap">
 <a class="btn acct" id="acctBtn" href="/collection#signin" title="Sign in to save your collection to a free account">Sign in</a>
 <select id="curSel" class="cur" aria-label="Currency" title="Currency">${CURS.map(c => `<option>${c}</option>`).join('')}</select>
 <button class="icon-btn" id="themeBtn" type="button" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
-<a class="icon-btn" id="showWelcome" href="/about" title="About BrickCollect" aria-label="About BrickCollect"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></a>
 <details class="hmenu"><summary class="icon-btn" title="Menu" aria-label="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
 <nav aria-label="Menu">${MENU}</nav></details>
 </div>
@@ -160,6 +161,7 @@ ${head}<link rel="stylesheet" href="/pages.css?v=${CSS_V}">
 <body>
 ${HEADER}
 <main class="wrap">
+${NOTICE}
 ${crumbs.length ? `<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span class="sep">›</span>${crumbs.map((c, i) => i === crumbs.length - 1 ? `<span>${esc(c[0])}</span>` : `<a href="${esc(c[1])}">${esc(c[0])}</a>`).join('<span class="sep">›</span>')}</nav>` : ''}
 ${h1 ? `<h1>${h1}</h1>\n` : ''}${body}
 </main>

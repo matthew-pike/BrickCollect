@@ -107,7 +107,7 @@ button,input,select{font:inherit;color:inherit}
 .hmenu nav a{padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none;font-weight:500;font-size:14px}
 .hmenu nav a:hover{background:var(--panel-2);color:var(--accent)}
 .hmenu nav hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
-@media (max-width:640px){#showWelcome{display:none}.hmenu summary{width:32px;height:32px}}
+@media (max-width:640px){.hmenu summary{width:32px;height:32px}}
 .icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--line-2);background:var(--panel-2);cursor:pointer;color:var(--muted)}
 .icon-btn:hover{color:var(--fg);border-color:var(--accent)}
 @media (max-width:640px){.search{order:3;flex-basis:100%;max-width:none}.top-actions{margin-left:auto}}
@@ -866,16 +866,16 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
       <button class="btn acct" id="acctBtn" type="button">Sign in</button>
       <select id="curSel" class="cur" aria-label="Currency" title="Currency"></select>
       <button class="icon-btn" id="themeBtn" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
-      <button class="icon-btn" id="showWelcome" title="About BrickCollect" aria-label="About BrickCollect"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
+      <button class="icon-btn" id="showWelcome" hidden title="Getting started" aria-label="Getting started"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
       <details class="hmenu" id="hMenu"><summary class="icon-btn" title="Menu" aria-label="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
-        <nav aria-label="Menu"><a href="/">Home</a><a href="/collection">My collection</a><a href="/sets">All sets</a><hr><a href="/about">About BrickCollect</a><a href="/privacy">Privacy</a><a href="/whats-new">What’s new</a></nav></details>
+        <nav aria-label="Menu"><a href="/">Home</a><a href="/collection">My collection</a><a href="/sets">All sets</a><a href="#" data-hm="showWelcome">Getting started</a><hr><a href="/about">About BrickCollect</a><a href="/privacy">Privacy</a><a href="/whats-new">What’s new</a></nav></details>
     </div>
   </div>
 </header>
 
 <div class="wrap">
 <main>
-  <section class="notice" id="blNotice" role="status" hidden>
+  <section class="notice" id="blNotice" role="status" data-key="bc-notice-blout1" data-back="2026-11-11T17:00:00Z" hidden>
     <span class="ni" aria-hidden="true">!</span>
     <p><b>BrickLink is offline</b> until<span class="nmore"> at least</span> <span id="blBack">Wed 11 Nov, 6pm CET</span>.<span class="nmore"> BrickLink prices here are from before the outage.</span></p>
     <button class="icon-btn x" type="button" id="hideBlNotice" aria-label="Hide this notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -2434,11 +2434,12 @@ $('fiReset').onclick = $('fiClearM').onclick = () => { focus = null; tlFilter = 
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
 // BrickLink outage notice (Nov 2026). Hidden once dismissed; remove this block when BrickLink is back.
 (() => {
-  const KEY = 'bc-notice-blout1';
+  // The other pages copy this notice (firebase/build-pages.mjs) and show it the same way (pages.js): change it here only.
+  const KEY = $('blNotice').dataset.key;
   let gone = false; try { gone = !!localStorage.getItem(KEY); } catch {}
   if (gone) return;
   try {
-    const back = new Date('2026-11-11T17:00:00Z');
+    const back = new Date($('blNotice').dataset.back);
     $('blBack').textContent = back.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', ...(back.getMinutes() ? { minute: '2-digit' } : {}) }).replace(/,(?= \d+ )/, '');
   } catch {}
   $('blNotice').hidden = false;
