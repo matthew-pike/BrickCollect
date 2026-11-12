@@ -309,7 +309,10 @@ for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.
   const desc = (src.match(/<meta name="description" content="([^"]*)"/) || [])[1] || '';
   const h1 = (main.match(/<h1>([\s\S]*?)<\/h1>/) || [])[1] || crumb;
   const scripts = [...src.slice(src.indexOf('</main>')).matchAll(/<script>[\s\S]*?<\/script>/g)].map(m => m[0]).join('\n');
-  const body = `<div class="prose">${main.replace(/<a class="back"[^>]*>[\s\S]*?<\/a>/, '').replace(/<h1>[\s\S]*?<\/h1>/, '')}</div>\n${scripts}`;
+  // Each part (the intro, then every heading and its text) in its own white box, like the app.
+  const inner = main.replace(/<a class="back"[^>]*>[\s\S]*?<\/a>/, '').replace(/<h1>[\s\S]*?<\/h1>/, '');
+  const parts = inner.split(/(?=<h2>)/).map(x => x.trim()).filter(Boolean);
+  const body = `<div class="prose">${parts.map(x => `<section class="box">${x}</section>`).join('\n')}</div>\n${scripts}`;
   write(`.${path}.html`, shell({ path, title, desc, h1, crumbs: [[crumb, path]], body }));
 }
 
