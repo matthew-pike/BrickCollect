@@ -15,12 +15,25 @@ body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "Roboto",system
 a{color:var(--accent)}
 .muted{color:var(--muted)}
 .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
-header.top{border-bottom:1px solid var(--line);background:var(--panel)}
-header.top .wrap{display:flex;align-items:center;gap:16px;height:60px}
-.brand{display:flex;align-items:center;gap:10px;color:var(--fg);text-decoration:none;font-size:20px;font-weight:500}
-.hlink{color:var(--muted);text-decoration:none;font-weight:500}.hlink:hover{color:var(--accent)}
-.top .cta{margin-left:auto}
-.cta .short{display:none}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:16px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brandmark{flex:none;display:block;width:46px;height:46px;border-radius:50%;overflow:hidden}
+.brandmark svg{width:100%;height:100%;display:block}
+.brandmark .ring,.brandmark .bc{transition:stroke .2s,stroke-opacity .2s,fill .2s}
+.brandmark:hover .ring{stroke:#7fdcff;stroke-opacity:1}.brandmark:hover .bc{fill:#7fdcff}
+.brand .name{margin:0;font-weight:700;font-size:20px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;line-height:1.2}
+.brand .name a{color:var(--fg);text-decoration:none}
+.brand .tag{white-space:nowrap;margin:2px 0 0;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.beta{display:inline-flex;align-items:center;line-height:1;font-size:10px;font-weight:500;letter-spacing:.16em;padding:5px 6px 4px 8px;border-radius:5px;background:color-mix(in srgb,var(--coral) 18%,transparent);color:var(--coral)}
+.menu{margin-left:auto;position:relative}
+.menu summary{list-style:none;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:10px;background:var(--panel-2);color:var(--fg)}
+.menu summary::-webkit-details-marker{display:none}
+.menu summary:hover,.menu[open] summary{border-color:var(--accent);color:var(--accent)}
+.menu nav{position:absolute;right:0;top:calc(100% + 8px);min-width:220px;display:flex;flex-direction:column;padding:6px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);box-shadow:0 12px 32px rgb(0 0 0/.25)}
+.menu nav a{padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none;font-weight:500}
+.menu nav a:hover{background:var(--panel-2);color:var(--accent)}
+.menu nav a:first-child{color:var(--accent)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg);border-radius:8px;padding:9px 16px;font:inherit;font-weight:500;text-decoration:none;white-space:nowrap}
 .btn:hover{border-color:var(--accent);color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -62,7 +75,7 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
   .setgrid{grid-template-columns:1fr}
   .pic{min-height:200px}
   h1{font-size:24px}
-  header.top .wrap{gap:10px;height:54px}.brand{font-size:17px}.brand img{width:30px;height:30px}.hlink{display:none}
-  .top .cta{padding:5px 11px;font-size:13px;border-radius:7px}
+  .top .wrap{gap:8px}.brand{gap:8px}.brand .name{font-size:18px;gap:6px}.brand .beta{font-size:9px;padding:4px 5px 3px 6px}.brandmark{width:32px;height:32px}.menu summary{width:36px;height:36px}
 }
-@media (max-width:420px){.cta .long{display:none}.cta .short{display:inline}}
+@media (max-width:460px){.brand .tag{display:none}}
+@media (max-width:420px){.brand .beta{display:none}}

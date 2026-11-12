@@ -27,6 +27,9 @@ const write = (path, html) => { const u = new URL(path, OUT); mkdirSync(new URL(
 // Buy links, the same ones the app uses (config.js).
 const cfg = (() => { const sb = { window: {} }; vm.runInNewContext(readFileSync(new URL('config.js', PUB), 'utf8'), sb); return sb.window.BC_CONFIG || {}; })();
 const BUY = cfg.buyLinks || {};
+// The app's logo, taken from index.html so the pages keep matching it.
+const MARK = (readFileSync(new URL('index.html', PUB), 'utf8').match(/class="brandmark[^>]*>(<svg[\s\S]*?<\/svg>)<\/a>/) || [])[1] || '';
+if (!MARK) throw new Error('Logo not found in index.html; update build-pages.mjs');
 
 /* ---------- data ---------- */
 const raw = JSON.parse(readFileSync(new URL('catalog.json', PUB), 'utf8'));
@@ -124,7 +127,11 @@ ${robots ? `<meta name="robots" content="${robots}">\n` : ''}<link rel="canonica
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
-<header class="top"><div class="wrap"><a class="brand" href="/"><img src="/logo.svg" alt="" width="34" height="34">BrickCollect</a><a class="hlink" href="/sets">All sets</a><a class="btn primary cta" href="/" data-cta="header"><span class="long">Track your sets free</span><span class="short">Track free</span></a></div></header>
+<header class="top"><div class="wrap">
+<div class="brand"><a href="/" class="brandmark" aria-hidden="true" tabindex="-1">${MARK}</a><div><p class="name"><a href="/">BrickCollect</a> <span class="beta">BETA</span></p><p class="tag">Collect. Track. Value. Export. In one place.</p></div></div>
+<details class="menu"><summary aria-label="Menu" title="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+<nav aria-label="Menu"><a href="/" data-cta="menu">Track your sets free</a><a href="/sets">All sets</a><a href="/theme/star-wars">LEGO Star Wars</a><a href="/sets#brands">Other brands</a><a href="https://www.instagram.com/brickcollect.app/" target="_blank" rel="noopener">Instagram</a><a href="/privacy">Privacy</a></nav></details>
+</div></header>
 <main class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb">${crumbs.map((c, i) => i === crumbs.length - 1 ? `<span>${esc(c[0])}</span>` : `<a href="${esc(c[1])}">${esc(c[0])}</a>`).join('<span class="sep">›</span>')}</nav>
 <h1>${h1}</h1>
@@ -135,6 +142,7 @@ ${body}
 <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © <a href="https://rebrickable.com/" rel="noopener">Rebrickable</a>, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Some store links are affiliate links: if you buy through them, The Art of Bricks may earn a small commission at no extra cost to you. <a href="/privacy">Privacy</a></p>
 </div></footer>
 <script>
+document.addEventListener('click',e=>{const m=document.querySelector('details.menu');if(m&&m.open&&!m.contains(e.target))m.open=false});
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-cta]');if(a&&window.gtag)gtag('event','set_page_cta',{cta:a.dataset.cta,page:location.pathname})});
 // LEGO.com in the visitor's own country.
 (()=>{const m={AU:'en-au',GB:'en-gb',CA:'en-ca',NZ:'en-nz',IE:'en-ie'};const c=(navigator.language||'').split('-')[1];const l=m[(c||'').toUpperCase()];if(l)document.querySelectorAll('a[href*="lego.com/en-us/"]').forEach(a=>a.href=a.href.replace('/en-us/','/'+l+'/'))})();
@@ -209,7 +217,6 @@ function listPage(path, name, list, by, crumbName, intro) {
   const ret = list.filter(x => (retState(x) || {}).s === 'S');
   const years = list.map(x => x.year).filter(Boolean);
   const body = `<p class="sub">${fmt(list.length)} set${list.length === 1 ? '' : 's'}${years.length ? ` · ${Math.min(...years)}–${Math.max(...years)}` : ''}${ret.length ? ` · <span class="pill soon">${ret.length} retiring soon</span>` : ''}</p>
-<div class="track wide"><b>${esc(intro)}</b><span class="muted">Tick the ones you own in BrickCollect and see how close you are to the full set. Free, no password needed.</span><div class="row"><a class="btn primary" href="/" data-cta="list">Start tracking</a></div></div>
 ${order.length > 1 ? `<nav class="jump">${order.map(k => `<a href="#${slug(k || 'other')}">${esc(k || 'Other')} <span class="muted">${groups.get(k).length}</span></a>`).join('')}</nav>` : ''}
 ${order.map(k => `${order.length > 1 ? `<h2 id="${slug(k || 'other')}">${esc(k || 'Other')}</h2>` : ''}<div class="cards">${groups.get(k).sort(byNewest).map(card).join('')}</div>`).join('\n')}`;
   write(`.${path}.html`, shell({
@@ -233,7 +240,7 @@ write('./sets.html', shell({
   desc: `Browse ${fmt(sets.length)} sets from LEGO${brands.size ? `, ${[...brands.keys()].join(', ')}` : ''} by theme, with pieces, minifigures and retired status. Track your collection free.`,
   h1: 'All sets', crumbs: [['All sets', '/sets']],
   body: `<p class="sub">${fmt(sets.length)} sets from ${brands.size + 1} brand${brands.size ? 's' : ''}</p>
-${brands.size ? `<h2>Brands</h2><div class="tiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(([b, l]) => tile(brandPath(b), b, l.length)).join('')}</div>` : ''}
+${brands.size ? `<h2 id="brands">Brands</h2><div class="tiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(([b, l]) => tile(brandPath(b), b, l.length)).join('')}</div>` : ''}
 <h2>LEGO themes</h2><div class="tiles">${[...legoThemes].sort((a, b) => a[0].localeCompare(b[0])).map(([t, l]) => tile(themePath(t), t, l.length)).join('')}</div>`,
 }));
 
