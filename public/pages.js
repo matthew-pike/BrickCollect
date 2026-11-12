@@ -52,10 +52,10 @@
   /* clicks worth counting */
   document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[data-cta]'); if (a) track('set_page_cta', { cta: a.dataset.cta, page: location.pathname }); });
 
-  /* pop-up windows (minifigures): open from any [data-open], close with ×, Esc or a click outside */
+  /* larger picture (set picture, minifigures): click to open, close with ×, Esc or a click outside */
   document.addEventListener('click', e => {
-    const o = e.target.closest && e.target.closest('[data-open]');
-    if (o) { const d = $(o.dataset.open); if (d && d.showModal) { d.showModal(); track('set_page_figs', { page: location.pathname }); } return; }
+    const z = e.target.closest && e.target.closest('[data-zoom]');
+    if (z) { const d = $('zoomDlg'); if (d && d.showModal) { $('zoomImg').src = z.dataset.zoom; $('zoomImg').alt = z.dataset.cap || ''; $('zoomCap').textContent = z.dataset.cap || ''; $('zoomMeta').textContent = z.dataset.meta || ''; d.showModal(); track('set_page_zoom', { what: z.classList.contains('fig') ? 'minifigure' : 'set' }); } return; }
     const d = e.target.closest && e.target.closest('dialog');
     if (d && (e.target === d || e.target.closest('[data-close]'))) d.close();
   });

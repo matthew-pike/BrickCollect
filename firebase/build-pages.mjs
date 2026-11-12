@@ -189,7 +189,7 @@ for (const x of sets) {
     x.year ? ['Released', String(x.year)] : null,
     x.pieces ? ['Pieces', fmt(x.pieces)] : null,
     ['Theme', `<a href="${esc(groupPath(x))}">${esc(x.theme)}</a>${x.sub ? ` › ${esc(x.sub)}` : ''}`],
-    figs.length ? ['Minifigures', `<button type="button" class="linkbtn" data-open="figDlg">${figs.length} · See them</button>`] : null,
+    figs.length ? ['Minifigures', `<a href="#minifigures">${figs.length}</a>`] : null,
     statusTxt ? ['Status', `<span class="pill${ret.s === 'S' ? ' soon' : ''}">${esc(statusTxt)}</span>`] : null,
   ].filter(Boolean);
   const app = `/collection?set=${encodeURIComponent(x.n)}`;
@@ -197,7 +197,6 @@ for (const x of sets) {
   const i = Math.max(0, related.findIndex(y => (y.year || 0) <= (x.year || 0)));
   const near = related.slice(Math.max(0, i - 4), Math.max(0, i - 4) + 8);
   const links = [
-    figs.length ? `<button type="button" class="btn" data-open="figDlg">Minifigures (${figs.length})</button>` : '',
     buy && !(ret && ret.s === 'R' && x.brand === 'LEGO') ? `<a class="btn" href="${esc(buy)}" target="_blank" rel="sponsored noopener" data-cta="buy">${esc((BUY[x.brand] || {}).title || 'Buy')} ↗</a>` : '',
     blNum ? `<a class="btn" href="https://www.bricklink.com/v2/catalog/catalogitem.page?S=${encodeURIComponent(blNum)}" target="_blank" rel="noopener" data-cta="bricklink">BrickLink ↗</a>` : '',
     x.brand === 'LEGO' ? `<a class="btn" href="https://rebrickable.com/sets/${encodeURIComponent(x.n)}/" target="_blank" rel="noopener" data-cta="rebrickable">Parts on Rebrickable ↗</a>` : '',
@@ -206,7 +205,7 @@ for (const x of sets) {
   const desc = `${label} ${x.name}${x.year ? ` (${x.year})` : ''}: ${x.pieces ? `${fmt(x.pieces)} pieces` : 'set details'}${figs.length ? `, ${figs.length} minifigure${figs.length === 1 ? '' : 's'}` : ''}${statusTxt ? `. ${statusTxt.replace(/:.*/, '')}` : ''}. Track it free in BrickCollect, the collection tracker for LEGO and other brick brands.`;
   const body = `<p class="sub">${esc(x.brand)} ${esc(num)}${x.year ? ` · ${x.year}` : ''}${x.pieces ? ` · ${fmt(x.pieces)} pieces` : ''}${statusTxt ? ` · <span class="pill${ret.s === 'S' ? ' soon' : ''}">${esc(ret.s === 'S' ? 'Retiring soon' : 'Retired')}</span>` : ''}</p>
 <div class="setgrid">
-<div class="pic">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="${esc(`${x.brand} ${num} ${x.name}`)}">` : '<span class="noimg big"></span>'}</div>
+<div class="pic">${imgUrl(x) ? `<button type="button" class="picbtn" data-zoom="${esc(imgUrl(x))}" data-cap="${esc(x.name)}" data-meta="${esc(`${x.brand} ${num}${x.year ? ` · ${x.year}` : ''}`)}" title="See a larger picture"><img src="${esc(imgUrl(x))}" alt="${esc(`${x.brand} ${num} ${x.name}`)}"></button>` : '<span class="noimg big"></span>'}</div>
 <div class="side">
 <div class="track"><b>Got this set?</b><span class="muted">Tick it in BrickCollect to keep count of your sets, pieces and minifigures. It’s free.</span>
 <div class="row"><a class="btn primary" href="${esc(app)}&amp;add=own" rel="nofollow" data-cta="own">✓ I own it</a><a class="btn" href="${esc(app)}&amp;add=want" rel="nofollow" data-cta="want">☆ I want it</a></div></div>
@@ -214,8 +213,9 @@ for (const x of sets) {
 ${links ? `<div class="row links">${links}</div>` : ''}
 </div>
 </div>
-${figs.length ? `<dialog class="dlg" id="figDlg" aria-labelledby="figDlgT"><div class="dhead"><h2 id="figDlgT">Minifigures in ${esc(x.name)} (${figs.length})</h2><button type="button" class="icon-btn" data-close aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-<div class="figs">${figs.map(f => `<div class="fig"><img src="${esc(figImg(f))}" alt="${esc(f.name)}" loading="lazy" width="160" height="160"><span class="cn">${esc(f.name)}</span><span class="cm">${esc(bl.figs[f.n] || f.n)}</span></div>`).join('')}</div></dialog>` : ''}
+${figs.length ? `<h2 id="minifigures">Minifigures in this set (${figs.length})</h2>
+<div class="figs">${figs.map(f => `<button type="button" class="fig" data-zoom="${esc(figImg(f))}" data-cap="${esc(f.name)}" data-meta="${esc(bl.figs[f.n] || f.n)}" title="See a larger picture"><img src="${esc(figImg(f))}" alt="" loading="lazy" width="160" height="160"><span class="cn">${esc(f.name)}</span><span class="cm">${esc(bl.figs[f.n] || f.n)}</span></button>`).join('')}</div>` : ''}
+<dialog class="dlg zoomdlg" id="zoomDlg" aria-label="Larger picture"><div class="dhead"><div><b id="zoomCap"></b><span id="zoomMeta" class="cm"></span></div><button type="button" class="icon-btn" data-close aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="zoombody"><img id="zoomImg" alt=""></div></dialog>
 ${near.length ? `<h2>More ${esc(x.sub || x.theme)} sets</h2>
 <div class="cards">${near.map(card).join('')}</div>
 <p><a href="${esc(groupPath(x))}">All ${esc(groupName(x))} sets →</a></p>` : ''}`;
