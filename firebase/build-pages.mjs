@@ -209,7 +209,7 @@ for (const x of sets) {
 <div class="setgrid">
 <div class="pic">${imgUrl(x) ? `<button type="button" class="picbtn" data-zoom="${esc(imgUrl(x))}" data-cap="${esc(x.name)}" data-meta="${esc(`${x.brand} ${num}${x.year ? ` · ${x.year}` : ''}`)}" title="See a larger picture"><img src="${esc(imgUrl(x))}" alt="${esc(`${x.brand} ${num} ${x.name}`)}"></button>` : '<span class="noimg big"></span>'}</div>
 <div class="side">
-<div class="track"><b>Got this set?</b><span class="muted">Tick it in BrickCollect to keep count of your sets, pieces and minifigures. It’s free.</span>
+<div class="track"><b>Got this set?</b><span class="muted">Select “I own it” to add it to your collection and keep count of your sets, pieces and minifigures. It’s free.</span>
 <div class="row"><a class="btn primary" href="${esc(app)}&amp;add=own" rel="nofollow" data-cta="own">✓ I own it</a><a class="btn" href="${esc(app)}&amp;add=want" rel="nofollow" data-cta="want">☆ I want it</a></div></div>
 <dl class="facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
 ${links ? `<div class="row links">${links}</div>` : ''}
@@ -241,7 +241,7 @@ ${order.length > 1 ? `<nav class="jump">${order.map(k => `<a href="#${slug(k || 
 ${order.map(k => `${order.length > 1 ? `<h2 id="${slug(k || 'other')}">${esc(k || 'Other')}</h2>` : ''}<div class="cards">${groups.get(k).sort(byNewest).map(card).join('')}</div>`).join('\n')}`;
   write(`.${path}.html`, shell({
     path, title: `${crumbName} sets: all ${fmt(list.length)}, with pieces and minifigures | BrickCollect`,
-    desc: `Every ${crumbName} set (${fmt(list.length)}) with year, pieces, minifigures and retired status. Tick the ones you own and track your collection free in BrickCollect.`,
+    desc: `Every ${crumbName} set (${fmt(list.length)}) with year, pieces, minifigures and retired status. Select “I own it” to add them to your collection, free in BrickCollect.`,
     h1: `${esc(crumbName)} sets`, crumbs: [['All sets', '/sets'], [crumbName, path]], body,
   }));
 }
@@ -303,17 +303,17 @@ if(go||(has&&!same&&!qs.has('home')))location.replace('/collection'+location.sea
 write('./index.html', shell({
   path: '/', head: REDIRECT,
   title: 'BrickCollect: the free collection tracker for LEGO and other brick brands',
-  desc: `Track your LEGO collection free: tick the sets you own, see pieces, minifigures and what it's worth, keep a Wanted list and see what's retiring soon. ${fmt(sets.length)} sets from LEGO${brands.size ? `, ${[...brands.keys()].join(', ')}` : ''}.`,
+  desc: `Track your LEGO collection free: select “I own it” to add sets to your collection, see pieces, minifigures and what it's worth, keep a Wanted list and see what's retiring soon. ${fmt(sets.length)} sets from LEGO${brands.size ? `, ${[...brands.keys()].join(', ')}` : ''}.`,
   h1: '', crumbs: [],
   body: `<section class="hero"><div><h1>Your brick collection, all in one place</h1>
-<p class="lead">The free collection tracker for LEGO and other brick brands. Tick the sets you own, keep a Wanted list, see what your collection is worth, and share or sell it.</p>
+<p class="lead">The free collection tracker for LEGO and other brick brands. Select “I own it” to add sets to your collection, keep a Wanted list, see what your collection is worth, and share or sell it.</p>
 <div class="row"><a class="btn primary" href="/collection#signin" id="heroBtn" data-cta="hero">Sign in to view your collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
-${section('Popular sets: tick the ones you own', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
+${section('Popular sets: select “I own it” to add to your collection', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
 ${section('Retiring soon', '<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon →</a>', retiring)}
 ${section(`New in ${thisYear}`, '', newest)}
 <section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes →</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>
 ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><a href="/sets#brands">All brands →</a></div><div class="ttiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(brandTile).join('')}</div></section>` : ''}
-<div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> ticked, saved in this browser</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection →</a></div>`,
+<div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> added to your collection</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection →</a></div>`,
 }));
 
 /* ---------- About and Privacy: their text from public/about.html and public/privacy.html, in the site's page ---------- */

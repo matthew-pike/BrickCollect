@@ -898,7 +898,7 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
     </div>
     <ol class="steps">
       <li><b>Pick a brand or theme</b><span>Tap a theme at the top, use the filters below, or search by name, set number, subtheme or tag.</span></li>
-      <li><b>Tick what you own</b><span>Tick the box beside a set. Tap its condition to set new, used or incomplete and how many copies.</span></li>
+      <li><b>Select “I own it”</b><span>Select “I own it” (the box beside a set) to add it to your collection. Tap its condition to set new, used or incomplete and how many copies.</span></li>
       <li><b>Star what you want</b><span>Starred sets go on your Wanted list with prices and Buy buttons. Export any list as a spreadsheet.</span></li>
     </ol>
     <div class="welcome-foot"><span class="hint">Open the Timeline tab to see sets from your favourite films and shows in story order. Selling? “Sell or trade” shows what your collection is worth and keeps your sale or trade list. Already tracking your sets somewhere else? <button class="linkbtn" type="button" data-import>Import them</button>.</span><button class="btn primary" type="button" id="gotIt">Got it</button></div>
@@ -1723,7 +1723,7 @@ function tickTip() {
   const box = document.querySelector('#rows .chk:not([disabled])'); if (!box) return;
   const cell = box.closest('td'); cell.style.position = 'relative';
   const tip = document.createElement('div'); tip.id = 'tickTip'; tip.className = 'ticktip'; tip.setAttribute('role', 'note');
-  tip.innerHTML = '<b>Tick the sets you own</b><span>· star the ones you want</span><button type="button" aria-label="Hide tip">×</button>';
+  tip.innerHTML = '<b>Select “I own it” to add to your collection</b><span>· star the ones you want</span><button type="button" aria-label="Hide tip">×</button>';
   tip.querySelector('button').onclick = () => { lsSet('bc-tick-tip', 1); tip.remove(); };
   cell.append(tip);
 }
@@ -2234,10 +2234,10 @@ function render() {
     const pop = ['Star Wars', 'Technic', 'Harry Potter', 'Icons', 'Ideas', 'Ninjago'].filter(t => [...fi.theme.options].some(o => o.value === t));
     const otherBrands = [...new Set(CAT.sets.filter(x => x.extra).map(x => x.brand))].sort();
     // Start screen: one clear first step (tick a popular set), then themes, brands and import.
-    empty.innerHTML = `<h3 class="start-h">Tick the sets you own</h3><p>Start with a popular set below, or pick a theme or search above. BrickCollect keeps count of your sets, pieces and minifigures across ${CAT.sets.length.toLocaleString()} sets from ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}.</p>${popularHtml()}<h4 class="start-sub">Or jump to a theme</h4><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>${mine.size < 20 ? '<p class="imp-hint">Already tracking your sets on Rebrickable, Brickset, BrickLink or a spreadsheet? <button class="linkbtn" type="button" data-import>Import them</button></p>' : ''}`;
+    empty.innerHTML = `<h3 class="start-h">Select “I own it” to add to your collection</h3><p>Start with a popular set below, or pick a theme or search above. BrickCollect keeps count of your sets, pieces and minifigures across ${CAT.sets.length.toLocaleString()} sets from ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}.</p>${popularHtml()}<h4 class="start-sub">Or jump to a theme</h4><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>${mine.size < 20 ? '<p class="imp-hint">Already tracking your sets on Rebrickable, Brickset, BrickLink or a spreadsheet? <button class="linkbtn" type="button" data-import>Import them</button></p>' : ''}`;
   } else if (!rows.length && listView === 'sale') { empty.hidden = false; empty.innerHTML = '<h3>Nothing marked for sale or trade</h3><p>Click a set’s condition chip and use the Sale or trade column to choose which copies you’re letting go.</p>'; }
   else if (!rows.length && listView === 'wanted') { empty.hidden = false; empty.innerHTML = '<h3>Your wanted list is empty</h3><p>Tap the star next to any set or minifigure to add it here.</p>'; }
-  else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Tick the sets and minifigures you own and they’ll show here.</p>'; }
+  else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Select “I own it” on your sets and minifigures to add them to your collection, and they’ll show here.</p>'; }
   else if (!rows.length) { empty.hidden = false; empty.innerHTML = '<h3>Nothing matches</h3><p>Try a different search, or reset the filters.</p>'; }
   else empty.hidden = true;
   $('foot').hidden = !page.length || tlOpen;
@@ -2999,7 +2999,7 @@ $('exportBtn').onclick = async () => { track('export', { list: 'collection' });
   if (!CAT) return;
   // Everything you own, sets then minifigures, whatever the filters are.
   const rows = [...CAT.sets.filter(owned), ...CAT.figs.filter(owned)];
-  if (!rows.length) { toast('Tick the sets and minifigures you own first, then export.'); return; }
+  if (!rows.length) { toast('Select “I own it” on your sets and minifigures first, then export.'); return; }
   const pct = Number(prefs.sellPct), withPct = prefs.sellPct != null && prefs.sellPct !== '' && pct > 0;
   const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', 'Condition', 'Copies', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : []), 'My tags'];
   const at = v => v == null ? '' : Math.round(v * pct) / 100;
@@ -3543,7 +3543,7 @@ const cardEv = action => { const o = cardOpts(); track('share_card', { action, s
 function cardOpen(from) {
   if (!CAT) return;
   setExportMenu(false);
-  if (!CAT.sets.some(owned)) { toast('Tick the sets you own first, then share your collection.'); return; }
+  if (!CAT.sets.some(owned)) { toast('Select “I own it” on your sets first, then share your collection.'); return; }
   $('cdName').value = cardOpts().name;
   let canFiles = false; try { canFiles = !!navigator.canShare?.({ files: [new File([new Blob(['x'])], 'x.png', { type: 'image/png' })] }); } catch { /* no file sharing */ }
   $('cdShare').hidden = !canFiles;
