@@ -43,7 +43,7 @@
   if (nb && nb.dataset.key) {
     let gone = false; try { gone = !!localStorage.getItem(nb.dataset.key); } catch {}
     if (!gone) {
-      try { const back = new Date(nb.dataset.back); const t = $('blBack'); if (t && !isNaN(back)) t.textContent = back.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', ...(back.getMinutes() ? { minute: '2-digit' } : {}) }).replace(/,(?= \d+ )/, ''); } catch {}
+      if (nb.dataset.back) try { const back = new Date(nb.dataset.back); const t = $('blBack'); if (t && !isNaN(back)) t.textContent = back.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', ...(back.getMinutes() ? { minute: '2-digit' } : {}) }).replace(/,(?= \d+ )/, ''); } catch {}
       nb.hidden = false;
       const x = $('hideBlNotice'); if (x) x.onclick = () => { nb.hidden = true; lsSet(nb.dataset.key, 1); track('notice_hide', { id: nb.dataset.key }); };
     }

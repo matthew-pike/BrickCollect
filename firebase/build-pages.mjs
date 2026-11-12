@@ -131,7 +131,7 @@ const groupPath = x => x.brand === 'LEGO' ? themePath(x.theme) : brandPath(x.bra
 const groupName = x => x.brand === 'LEGO' ? `LEGO ${x.theme}` : x.brand;
 
 /* ---------- page shell ---------- */
-function shell({ path, title, desc, img, h1, crumbs, body, robots, head = '' }) {
+function shell({ path, title, desc, img, h1, crumbs, body, robots, head = '', notice = true }) {
   const url = SITE + path;
   const ld = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [['Home', '/'], ...crumbs].map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: SITE + c[1] })) };
   return `<!doctype html>
@@ -161,7 +161,7 @@ ${head}<link rel="stylesheet" href="/pages.css?v=${CSS_V}">
 <body>
 ${HEADER}
 <main class="wrap">
-${NOTICE}
+${notice ? NOTICE : ''}
 ${crumbs.length ? `<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span class="sep">›</span>${crumbs.map((c, i) => i === crumbs.length - 1 ? `<span>${esc(c[0])}</span>` : `<a href="${esc(c[1])}">${esc(c[0])}</a>`).join('<span class="sep">›</span>')}</nav>` : ''}
 ${h1 ? `<h1>${h1}</h1>\n` : ''}${body}
 </main>
@@ -330,7 +330,7 @@ for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.
   const inner = main.replace(/<a class="back"[^>]*>[\s\S]*?<\/a>/, '').replace(/<h1>[\s\S]*?<\/h1>/, '');
   const parts = inner.split(/(?=<h2>)/).map(x => x.trim()).filter(Boolean);
   const body = `<div class="prose">${parts.map(x => `<section class="box">${x}</section>`).join('\n')}</div>\n${scripts}`;
-  write(`.${path}.html`, shell({ path, title, desc, h1, crumbs: [[crumb, path]], body }));
+  write(`.${path}.html`, shell({ path, title, desc, h1, crumbs: [[crumb, path]], body, notice: false }));
 }
 
 /* ---------- What's new: the app's own release notes (RELEASES in index.html) ---------- */
@@ -340,7 +340,7 @@ for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.
   if (a < 0 || b < 0) throw new Error('RELEASES not found in index.html; update build-pages.mjs');
   const rel = vm.runInNewContext(`(${src.slice(a + 'const RELEASES = '.length, b + 2)})`);
   const body = `<div class="prose" data-seen="${esc(rel[0].v)}">${rel.map(r => `<section class="box rel"><h2><span class="v">v${esc(r.v)}</span> ${esc(r.title)} <span class="d">${esc(r.date)}</span></h2><ul>${r.items.map(([t, d]) => `<li><b>${esc(t)}</b>: ${esc(d)}</li>`).join('')}</ul></section>`).join('\n')}</div>`;
-  write('./whats-new.html', shell({ path: '/whats-new', title: 'What’s new · BrickCollect', desc: 'New features and improvements in BrickCollect, the free collection tracker for LEGO and other brick brands.', h1: 'What’s new', crumbs: [['What’s new', '/whats-new']], body }));
+  write('./whats-new.html', shell({ path: '/whats-new', title: 'What’s new · BrickCollect', desc: 'New features and improvements in BrickCollect, the free collection tracker for LEGO and other brick brands.', h1: 'What’s new', crumbs: [['What’s new', '/whats-new']], body, notice: false }));
 }
 
 /* ---------- sitemaps ---------- */

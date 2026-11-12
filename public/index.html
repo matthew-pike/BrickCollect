@@ -880,9 +880,9 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 
 <div class="wrap">
 <main>
-  <section class="notice" id="blNotice" role="status" data-key="bc-notice-blout1" data-back="2026-11-11T17:00:00Z" hidden>
+  <section class="notice" id="blNotice" role="status" data-key="bc-notice-blout1" hidden>
     <span class="ni" aria-hidden="true">!</span>
-    <p><b>BrickLink is offline</b> until<span class="nmore"> at least</span> <span id="blBack">Wed 11 Nov, 6pm CET</span>.<span class="nmore"> BrickLink prices here are from before the outage.</span></p>
+    <p><b>BrickLink is offline</b>, with no date yet for when it’s back.<span class="nmore"> BrickLink prices here are from before the outage.</span></p>
     <button class="icon-btn x" type="button" id="hideBlNotice" aria-label="Hide this notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </section>
   <div class="themewrap arrowwrap" id="themeWrap" hidden>
@@ -2443,7 +2443,8 @@ $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start',
   const KEY = $('blNotice').dataset.key;
   let gone = false; try { gone = !!localStorage.getItem(KEY); } catch {}
   if (gone) return;
-  try {
+  // data-back on the notice: the date BrickLink says it's back, shown in the visitor's time (leave it out when there's no date).
+  if ($('blNotice').dataset.back && $('blBack')) try {
     const back = new Date($('blNotice').dataset.back);
     $('blBack').textContent = back.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', ...(back.getMinutes() ? { minute: '2-digit' } : {}) }).replace(/,(?= \d+ )/, '');
   } catch {}
