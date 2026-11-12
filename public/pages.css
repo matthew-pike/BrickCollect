@@ -19,6 +19,8 @@ a{color:var(--accent)}
 /* Jumps to a heading (theme page chips, #minifigures, #brands) stop below the sticky header */
 html{scroll-padding-top:88px}
 @media (max-width:640px){html{scroll-padding-top:130px}}
+/* /sets: room for the sticky A–Z bar too */
+.has-az{scroll-padding-top:136px}@media (max-width:640px){.has-az{scroll-padding-top:130px}}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;gap:16px;padding-block:12px;flex-wrap:wrap}
 button,input,select{font:inherit;color:inherit}
@@ -210,3 +212,10 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .lostbox{display:flex;align-items:center;gap:32px}
 .lost{width:220px;flex:none}
 @media (max-width:640px){.lostbox{flex-direction:column;align-items:flex-start;gap:16px}.lost{width:170px}}
+.az{position:sticky;top:72px;z-index:3;display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px;padding:8px 0;background:var(--bg)}
+.az a,.az span{min-width:30px;height:30px;display:grid;place-items:center;border-radius:7px;font-size:13.5px;font-weight:500}
+.az a{border:1px solid var(--line-2);background:var(--panel);color:var(--fg);text-decoration:none}.az a:hover{border-color:var(--accent);color:var(--accent)}
+.az span{color:var(--faint);opacity:.55}
+.azh{margin:22px 0 10px;font-size:16px;font-weight:600;color:var(--accent)}
+@media (max-width:640px){.az{position:static;gap:3px}.az a,.az span{min-width:26px;height:28px;font-size:12.5px}}
+@media (max-width:640px){.tiles{grid-template-columns:1fr 1fr;gap:8px}.tile{padding:10px 12px}}

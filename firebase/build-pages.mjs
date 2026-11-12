@@ -255,14 +255,25 @@ for (const [t, list] of legoThemes) listPage(themePath(t), t, list, 'sub', `LEGO
 for (const [b, list] of brands) listPage(brandPath(b), b, list, 'theme', b, `Collect ${b}?`);
 
 /* ---------- directory ---------- */
-const tile = (path, name, n) => `<a class="tile" href="${esc(path)}"><span class="cn">${esc(name)}</span><span class="cm">${fmt(n)} sets</span></a>`;
+const tile = (path, name, n) => `<a class="tile" href="${esc(path)}"><span class="cn">${esc(name)}</span><span class="cm">${fmt(n)} set${n === 1 ? '' : 's'}</span></a>`;
+// LEGO themes A–Z: a letter bar (letters with no themes greyed) and one group per letter.
+function azThemes() {
+  const groups = new Map();
+  for (const [t, l] of [...legoThemes].sort((a, b) => a[0].localeCompare(b[0]))) {
+    const c = t.normalize('NFKD')[0].toUpperCase(), k = /[A-Z]/.test(c) ? c : '#';
+    if (!groups.has(k)) groups.set(k, []); groups.get(k).push([t, l]);
+  }
+  const letters = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].filter(k => k !== '#' || groups.has('#'));
+  const bar = `<nav class="az" aria-label="Themes by letter">${letters.map(k => groups.has(k) ? `<a href="#${k === '#' ? 'num' : k}">${k}</a>` : `<span aria-hidden="true">${k}</span>`).join('')}</nav>`;
+  return bar + [...groups].map(([k, list]) => `<h3 class="azh" id="${k === '#' ? 'num' : k}">${k}</h3><div class="tiles">${list.map(([t, l]) => tile(themePath(t), t, l.length)).join('')}</div>`).join('\n');
+}
 write('./sets.html', shell({
   path: '/sets', title: 'All LEGO and brick sets by theme and brand | BrickCollect',
   desc: `Browse ${fmt(sets.length)} sets from LEGO${brands.size ? `, ${[...brands.keys()].join(', ')}` : ''} by theme, with pieces, minifigures and retired status. Track your collection free.`,
   h1: 'All sets', crumbs: [['All sets', '/sets']],
   body: `<p class="sub">${fmt(sets.length)} sets from ${brands.size + 1} brand${brands.size ? 's' : ''}</p>
 ${brands.size ? `<h2 id="brands">Brands</h2><div class="tiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(([b, l]) => tile(brandPath(b), b, l.length)).join('')}</div>` : ''}
-<h2>LEGO themes</h2><div class="tiles">${[...legoThemes].sort((a, b) => a[0].localeCompare(b[0])).map(([t, l]) => tile(themePath(t), t, l.length)).join('')}</div>`,
+<h2>LEGO themes</h2>${azThemes()}`,
 }));
 
 /* ---------- home page (/) ---------- */
@@ -293,8 +304,8 @@ const popular = (() => {
 const thisYear = now.getFullYear();
 const retiring = sets.filter(x => (retState(x) || {}).s === 'S').sort((a, b) => (Date.parse((shared.get(a.n) || {}).exit || '9999') - Date.parse((shared.get(b.n) || {}).exit || '9999')) || (b.pieces || 0) - (a.pieces || 0)).slice(0, 12);
 const newest = sets.filter(x => x.brand === 'LEGO' && x.year >= thisYear).sort((a, b) => (b.pieces || 0) - (a.pieces || 0)).slice(0, 12);
-const themeTile = t => { const pic = byN.get(t.pic) || t.list.slice().sort((a, b) => (b.pieces || 0) - (a.pieces || 0))[0]; return `<a class="ttile" href="${esc(themePath(t.theme))}">${pic ? `<img src="${esc(imgUrl(pic))}" alt="" loading="lazy" width="120" height="80">` : ''}<span class="cn">${esc(t.label)}</span><span class="cm">${fmt(t.list.length)} sets</span></a>`; };
-const brandTile = ([b, l]) => { const pic = l.find(x => x.img); return `<a class="ttile" href="${esc(brandPath(b))}">${pic ? `<img src="${esc(pic.img)}" alt="" loading="lazy" width="120" height="80">` : ''}<span class="cn">${esc(b)}</span><span class="cm">${fmt(l.length)} sets</span></a>`; };
+const themeTile = t => { const pic = byN.get(t.pic) || t.list.slice().sort((a, b) => (b.pieces || 0) - (a.pieces || 0))[0]; return `<a class="ttile" href="${esc(themePath(t.theme))}">${pic ? `<img src="${esc(imgUrl(pic))}" alt="" loading="lazy" width="120" height="80">` : ''}<span class="cn">${esc(t.label)}</span><span class="cm">${fmt(t.list.length)} set${t.list.length === 1 ? '' : 's'}</span></a>`; };
+const brandTile = ([b, l]) => { const pic = l.find(x => x.img); return `<a class="ttile" href="${esc(brandPath(b))}">${pic ? `<img src="${esc(pic.img)}" alt="" loading="lazy" width="120" height="80">` : ''}<span class="cn">${esc(b)}</span><span class="cm">${fmt(l.length)} set${l.length === 1 ? '' : 's'}</span></a>`; };
 const section = (title, more, list) => list.length ? `<section class="hsec"><div class="hhead"><h2>${title}</h2>${more || ''}</div><div class="tcards">${list.map(tcard).join('')}</div></section>` : '';
 const REDIRECT = `<script>/* Collectors who already have sets (or are signed in) go straight to My collection, and old links like /?set=… keep working. Coming from another BrickCollect page (Home in the menu) stays here. */
 (()=>{try{const qs=new URLSearchParams(location.search),r=document.referrer,same=!!r&&new URL(r).origin===location.origin;

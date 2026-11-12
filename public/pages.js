@@ -64,6 +64,8 @@
   /* What's new page: counts as seen, like opening it in the app */
   { const w = document.querySelector('[data-seen]'); if (w) lsSet('bc-seen-version', w.dataset.seen); }
 
+  if (document.querySelector('.az')) document.documentElement.classList.add('has-az'); // /sets: jumps leave room for the A–Z bar
+
   /* clicks worth counting */
   document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[data-cta]'); if (a) track('set_page_cta', { cta: a.dataset.cta, page: location.pathname }); });
 
