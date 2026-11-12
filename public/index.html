@@ -864,7 +864,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
 <main>
   <section class="notice" id="blNotice" role="status" hidden>
     <span class="ni" aria-hidden="true">!</span>
-    <p><b>BrickLink is offline</b> until<span class="nmore"> at least</span> <span id="blBack">Wed 11 Nov, 6pm CET</span>.<span class="nmore"> BrickLink prices here are from before the outage.</span></p>
+    <p><b>BrickLink is offline</b>, with no date yet for when it’s back.<span class="nmore"> BrickLink prices here are from before the outage.</span></p>
     <button class="icon-btn x" type="button" id="hideBlNotice" aria-label="Hide this notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </section>
   <div class="themewrap arrowwrap" id="themeWrap" hidden>
@@ -2417,10 +2417,6 @@ $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start',
   const KEY = 'bc-notice-blout1';
   let gone = false; try { gone = !!localStorage.getItem(KEY); } catch {}
   if (gone) return;
-  try {
-    const back = new Date('2026-11-11T17:00:00Z');
-    $('blBack').textContent = back.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', ...(back.getMinutes() ? { minute: '2-digit' } : {}) }).replace(/,(?= \d+ )/, '');
-  } catch {}
   $('blNotice').hidden = false;
   $('hideBlNotice').onclick = () => { $('blNotice').hidden = true; lsSet(KEY, 1); track('notice_hide', { id: 'bl_outage' }); };
 })();
