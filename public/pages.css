@@ -192,3 +192,5 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 @media (max-width:640px){.hhead{flex-wrap:wrap;row-gap:8px}.hhead a{white-space:normal}}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;margin:8px 0 0}.kv dt{color:var(--muted)}.kv dd{margin:0}
 .prose ol{max-width:860px;color:var(--muted)}.prose ol li{margin:6px 0}
+.box.danger{border-color:color-mix(in srgb,var(--coral) 45%,var(--line))}.box.danger h2{color:var(--coral)}
+.btn.warn{color:var(--coral);border-color:color-mix(in srgb,var(--coral) 55%,var(--line-2))}.btn.warn:hover{color:#fff;background:var(--coral);border-color:var(--coral)}

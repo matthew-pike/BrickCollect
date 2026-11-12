@@ -403,7 +403,8 @@ userPage('/account', 'My account · BrickCollect', 'My account', 'My account',
 <section class="box in" hidden><h2>Your account</h2><dl class="kv"><dt>Email</dt><dd id="aEmail">—</dd><dt>Member since</dt><dd id="aSince">—</dd><dt>Signed in with</dt><dd id="aHow">—</dd></dl></section>
 <section class="box in" hidden><h2>Your collection</h2><dl class="kv"><dt>Sets</dt><dd id="aSets">—</dd><dt>Minifigures</dt><dd id="aFigs">—</dd><dt>Wanted</dt><dd id="aWant">—</dd><dt>For sale or trade</dt><dd id="aSale">—</dd></dl><p class="row"><a class="btn primary" href="/collection">Open My collection</a><a class="btn" href="/collection#export">Export</a></p></section>
 <section class="box in" hidden><h2>Your sale or trade list</h2><p id="aShare">—</p><p class="row"><a class="btn" href="/selling">My sale or trade list</a></p></section>
-<section class="box in" hidden><h2>Sign out or delete</h2><p>Signing out keeps your collection safe in your account. Deleting your account removes your collection, your shared list and your sign-in for good.</p><p class="row"><button class="btn" type="button" id="aOut">Sign out</button><a class="btn" href="/collection#account">Delete my account…</a></p></section>`,
+<section class="box in" hidden><h2>Sign out</h2><p>Your collection stays safe in your account. Sign in again any time to see it.</p><p class="row"><button class="btn" type="button" id="aOut">Sign out</button></p></section>
+<section class="box in danger" hidden><h2>Delete your account</h2><p>This removes your collection, your shared sale or trade list and your sign-in for good. It can’t be undone, so export your collection first if you might want it later.</p><p class="row"><a class="btn" href="/collection#export">Export first</a><a class="btn warn" href="/collection#account">Delete my account…</a></p></section>`,
   `  show('.in');
   const fmt = n => Number(n || 0).toLocaleString();
   const u = window.firebase && firebase.auth().currentUser;
