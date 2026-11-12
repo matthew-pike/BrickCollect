@@ -202,7 +202,7 @@ for (const x of sets) {
 <div class="setgrid">
 <div class="pic">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="${esc(`${x.brand} ${num} ${x.name}`)}">` : '<span class="noimg big"></span>'}</div>
 <div>
-<div class="track"><b>Got this set?</b><span class="muted">Tick it in BrickCollect to keep count of your sets, pieces and minifigures. Free, no password needed.</span>
+<div class="track"><b>Got this set?</b><span class="muted">Tick it in BrickCollect to keep count of your sets, pieces and minifigures. It’s free.</span>
 <div class="row"><a class="btn primary" href="${esc(app)}&amp;add=own" rel="nofollow" data-cta="own">✓ I own it</a><a class="btn" href="${esc(app)}&amp;add=want" rel="nofollow" data-cta="want">☆ I want it</a></div></div>
 <dl class="facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
 ${links ? `<div class="row links">${links}</div>` : ''}
@@ -290,7 +290,7 @@ write('./index.html', shell({
   desc: `Track your LEGO collection free: tick the sets you own, see pieces, minifigures and what it's worth, keep a Wanted list and see what's retiring soon. ${fmt(sets.length)} sets from LEGO${brands.size ? `, ${[...brands.keys()].join(', ')}` : ''}.`,
   h1: '', crumbs: [],
   body: `<section class="hero"><div><h1>Your brick collection, all in one place</h1>
-<p class="lead">The free collection tracker for LEGO and other brick brands. Tick the sets you own, keep a Wanted list, see what your collection is worth, and share or sell it. No password needed.</p>
+<p class="lead">The free collection tracker for LEGO and other brick brands. Tick the sets you own, keep a Wanted list, see what your collection is worth, and share or sell it.</p>
 <div class="row"><a class="btn primary" href="/collection" data-cta="hero">Open My collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
 ${section('Tick the sets you own', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
 ${section('Retiring soon', '<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon →</a>', retiring)}
