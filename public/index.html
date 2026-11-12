@@ -490,6 +490,11 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
   #rows .c-new{order:8}
   #rows .c-used::before{content:"Used ";color:var(--faint);font-size:11px}
   #rows .c-new::before{content:"New ";color:var(--faint);font-size:11px}
+  #rows .c-my{order:8;flex-basis:100%;margin-top:2px}
+  #rows .c-my .myp{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:6px 10px}
+  #rows .c-my::before{content:"Your price";color:var(--faint);font-size:11px;margin-right:8px;white-space:nowrap;flex-shrink:0}
+  #rows .c-my{display:flex;align-items:center}
+  #rows .myin{font-size:16px;width:96px;padding:3px 6px} /* 16px: iPhone doesn't zoom in on the box */
   #rows .c-sub{order:10;font-size:12px}
   #rows .c-sub:empty{display:none}
   #rows .c-links{order:11;margin-left:auto}
@@ -654,6 +659,13 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 .soldbtn:hover{background:color-mix(in srgb,var(--violet) 10%,transparent)}
 .soldbtn.confirm{background:var(--violet);color:#fff}
 .soldbtn:focus-visible{outline:2px solid var(--accent)}
+.myp{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.mypr{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.myin{width:80px;text-align:right;padding:4px 6px;font-size:12.5px;-moz-appearance:textfield}
+.myin::-webkit-inner-spin-button,.myin::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.mypr .code{font-family:var(--font-mono);font-size:11px;color:var(--faint)}
+.myin::placeholder{color:var(--faint)}
+.mymix{font-size:12px;padding:3px 8px;color:var(--accent)}
 .lstbtn{all:unset;cursor:pointer;margin-top:4px;text-align:center;font-size:12.5px;font-weight:500;padding:7px 10px;border-radius:8px;border:1px solid var(--line-2);color:var(--accent)}
 .lstbtn:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
 .lstbtn:focus-visible{outline:2px solid var(--accent)}
@@ -1787,6 +1799,7 @@ function menuNewBadges(root) {
   });
 }
 const NEW_TIPS = [
+  { id: 'myprice', at: '2026-11-13T12:00:00+11:00', sel: '#rows .myin', title: 'Your price, right in the list', text: 'Type a price in the Your price column to change it. It’s saved straight away and goes on your shared page and BrickLink upload.' },
   { id: 'menu', at: '2026-11-13T06:00:00+11:00', sel: '#hMenu summary', title: 'Everything in the menu', text: 'Your account, your sale or trade list, every set by theme, Getting started and What’s new are now in the ☰ menu, on every page.' },
   { id: 'unlisted', at: '2026-11-11T07:30:00+11:00', sel: '#shareOpen2', title: 'Listed or unlisted', text: 'Reserved something? In a copy’s Listing details, set Shared page to Unlisted: it stays on your Sale or trade list but leaves your shared page.' },
   { id: 'shareCard', at: '2026-11-10T19:30:00+11:00', sel: '#insToggle', title: 'Share your collection', text: 'Open Collection insights and tap Share to make a picture of your collection for Instagram, Facebook or anywhere.' },
@@ -2090,12 +2103,14 @@ const COLS = () => [
   { key: 'pieces', label: 'Pieces', cls: 'num' },
   { key: 'used', label: `Used ${cur()}`, cls: 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
   { key: 'new', label: `New ${cur()}`, cls: 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or the brand’s own store price for the other brands (LumiBricks, Pantasy, Reobrix and more). In your currency.` },
+  ...(listView === 'sale' ? [{ key: 'myprice', label: `Your price ${cur()}`, cls: 'num', tip: `What you’re asking for each copy, in ${cur()}. Type to change it: it’s saved straight away and used on your shared page, Copy a post and the BrickLink upload. Left empty, the BrickLink price at your Sell or trade percentage is used (shown greyed). Copies with different prices: click Mixed to set each one in Listing details.` }] : []),
   { label: 'Links ↗', cls: 'num', tip: 'Each button opens a new tab. The coloured button opens the set at the brand’s own store (some are affiliate links that support BrickCollect). BL opens it on BrickLink.' },
 ];
-const val = (x, k) => k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
+const val = (x, k) => k === 'myprice' ? myPriceSort(x) : k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
 
 function paintSortSel() { const sel = $('sortSel'); if (!sel) return; const v = `${sort.key}:${sort.dir}`; [...sel.options].filter(x => x.dataset.extra).forEach(x => x.remove()); if (![...sel.options].some(o => o.value === v)) { const o = new Option('Column order', v); o.dataset.extra = 1; sel.add(o); } sel.value = v; }
 function render() {
+  if (sort.key === 'myprice' && listView !== 'sale') sort = { key: 'year', dir: 'desc' }; // Your price is only a column in the Sale or trade list
   paintSortSel();
   if (!CAT) return;
   $('tabSets').setAttribute('aria-selected', !tlOpen && kind === 'sets');
@@ -2280,7 +2295,7 @@ function render() {
       <td class="muted c-yr">${x.year ?? ''}${retBadge(x)}</td>
       <td class="num c-pcs">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
       <td class="num c-used">${price(x, 'used')}</td>
-      <td class="num c-new">${price(x, 'new')}</td>
+      <td class="num c-new">${price(x, 'new')}</td>${listView === 'sale' ? `<td class="num c-my">${myPriceCell(x)}</td>` : ''}
       <td class="c-links"><div class="links">${buyLink(x)}${x.extra ? (can('sets') ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
   tickTip(); setTimeout(newTips, 0);
@@ -2422,7 +2437,8 @@ document.addEventListener('click', e => {
   const tr = e.target.closest('tr[data-row]');
   if (tr && !e.target.closest('button,a,input,label')) { focus = focus === tr.dataset.row ? null : tr.dataset.row; savePrefs(); render(); return; }
   const t = e.target.closest('button,[data-sort]'); if (!t) return;
-  if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
+  if (t.dataset.mymix) { openListing(t.dataset.mymix); return; }
+  if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new', 'myprice'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
   if (t.id === 'filtToggle') { const o = !$('filters').classList.contains('open'); $('filters').classList.toggle('open', o); t.setAttribute('aria-expanded', o); return; }
   if (t.dataset.need) { prefs.needMode = t.dataset.need; savePrefs(); render(); return; }
   if (t.dataset.tl) { tlOpen = true; tlFollowTheme(); savePrefs(); render(); track('open_timeline'); return; }
@@ -2471,6 +2487,7 @@ document.addEventListener('keydown', e => {
   const el = e.target;
   if (el.dataset?.sort && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); el.click(); }
   if (el.id === 'edit-price') { if (e.key === 'Enter') el.blur(); if (e.key === 'Escape') { editing = null; render(); } }
+  if (el.dataset?.myprice && e.key === 'Enter') { e.preventDefault(); el.blur(); }
 });
 document.addEventListener('focusout', e => {
   const el = e.target; if (el.id !== 'edit-price' || !editing) return;
@@ -2484,6 +2501,7 @@ document.addEventListener('focusout', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
+  if (el.dataset?.myprice) { saveMyPrice(el); return; }
   if (el.id === 'selAll') { bulkOwn(el.checked); return; }
   if (el.dataset?.cond) { setInfo(el.dataset.cond, { cond: el.value }); return; }
   if (el.dataset?.own) { change(el.dataset.own, { owned: el.checked }); return; }
@@ -3134,6 +3152,36 @@ function lstSuggest(x, c) {
   return Math.round(toLocal(p) * pct) / 100;
 }
 const lstPct = () => Number(prefs.sellPct) > 0 ? Number(prefs.sellPct) : 100;
+/* Quick price edit: a Your price column in the Sale or trade list. One box per condition marked for sale or trade;
+   typing sets the price of every copy in that condition (same as Listing details, which stays the place for
+   different prices per copy: those show Mixed and open it). Saved quietly so Tab moves on to the next box. */
+function myPriceCell(x) {
+  const L = listingsOf(x), conds = CONDS.filter(c => L.some(l => l.c === c)), ab = { new: 'N', used: 'UC', 'used-inc': 'UI' };
+  return `<div class="myp">${conds.map(c => {
+    const ls = L.filter(l => l.c === c), ps = ls.map(l => lstPrice(l.d)), same = ps.every(v => v === ps[0]);
+    const lab = conds.length > 1 || ls.length > 1 ? `<span class="code" title="${esc(COND[c])}${ls.length > 1 ? `, ${ls.length} copies` : ''}">${ab[c]}${ls.length > 1 ? ` ×${ls.length}` : ''}</span>` : '';
+    if (!same) return `<span class="mypr">${lab}<button class="btn ghost mymix" type="button" data-mymix="${esc(x.n)}" title="These copies have different prices. Click to set each one in Listing details">Mixed</button></span>`;
+    const sug = lstSuggest(x, c);
+    return `<span class="mypr">${lab}<input class="inp mono myin" type="number" min="0" step="0.01" inputmode="decimal" data-myprice="${esc(x.n)}" data-mc="${c}" value="${ps[0] == null ? '' : ps[0].toFixed(2)}" placeholder="${sug == null ? '—' : sug.toFixed(2)}" aria-label="Your price in ${cur()} for ${esc(x.name)}, ${esc(COND[c])}${ls.length > 1 ? `, each of ${ls.length} copies` : ''}" title="${sug == null ? 'No BrickLink price yet. Type your price' : `Empty: ${sug.toFixed(2)} (BrickLink at ${lstPct()}%) is used. Type your own price`}"></span>`;
+  }).join('')}</div>`;
+}
+// Sort key: the highest price you're asking for one copy (your own, else the suggested one).
+function myPriceSort(x) {
+  let hi = null; for (const { c, d } of listingsOf(x)) { const v = lstPrice(d) ?? lstSuggest(x, c); if (v != null && (hi == null || v > hi)) hi = v; }
+  return hi;
+}
+function saveMyPrice(el) {
+  const n = el.dataset.myprice, c = el.dataset.mc, x = findItem(n); if (!x) return;
+  const sq = saleOf(x), si = JSON.parse(JSON.stringify((mine.get(n) || {}).saleInfo || {}));
+  si[c] = (si[c] || []).slice(0, sq[c]); while (si[c].length < sq[c]) si[c].push({});
+  const v = parseFloat(el.value), before = si[c].map(d => lstPrice(d));
+  const want = v > 0 ? Math.round(v * 100) / 100 : null;
+  if (before.every(b => b === want)) return;
+  for (const d of si[c]) { if (want != null) d.price = { p: want, c: cur() }; else delete d.price; }
+  setInfo(n, { saleInfo: si }, { quiet: true });
+  el.value = want == null ? '' : want.toFixed(2);
+  track('sale_price_quick', { cleared: want == null, copies: sq[c] });
+}
 // What buyers read on BrickLink (the lot's Description).
 function lstDesc(x, c, d) {
   const b = [];
@@ -4105,6 +4153,10 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.33', date: '13 November 2026', title: 'Change prices in the list', items: [
+    ['Your price, right in the list', 'on your Sale or trade list there’s now a Your price column. Type a price and it’s saved straight away, for your shared page, Copy a post and the BrickLink upload. Leave it empty to use the BrickLink price at your percentage.'],
+    ['Several copies', 'one price covers all your copies in the same condition. Want different prices for each? Click Mixed, or use Listing details.'],
+  ] },
   { v: '0.32', date: '13 November 2026', title: 'What a set is worth', items: [
     ['Prices on every set page', 'see what a set sells for, new and used, right on its page: the average of the last 6 months’ sales on BrickLink, from sellers in your country when there are any. Other brands show the price on their own store.'],
     ['In your currency', 'pick a currency at the top of any page and the price changes to match, the same as in My collection.'],
