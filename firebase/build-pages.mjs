@@ -218,9 +218,8 @@ ${links ? `<div class="row links">${links}</div>` : ''}
 ${figs.length ? `<h2 id="minifigures">Minifigures in this set (${figs.length})</h2>
 <div class="figs">${figs.map(f => `<button type="button" class="fig" data-zoom="${esc(figImg(f))}" data-cap="${esc(f.name)}" data-meta="${esc(bl.figs[f.n] || f.n)}" title="See a larger picture"><img src="${esc(figImg(f))}" alt="" loading="lazy" width="160" height="160"><span class="cn">${esc(f.name)}</span><span class="cm">${esc(bl.figs[f.n] || f.n)}</span></button>`).join('')}</div>` : ''}
 <dialog class="dlg zoomdlg" id="zoomDlg" aria-label="Larger picture"><div class="dhead"><div><b id="zoomCap"></b><span id="zoomMeta" class="cm"></span></div><button type="button" class="icon-btn" data-close aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="zoombody"><img id="zoomImg" alt=""></div></dialog>
-${near.length ? `<h2>More ${esc(x.sub || x.theme)} sets</h2>
-<div class="cards">${near.map(card).join('')}</div>
-<p><a href="${esc(groupPath(x))}">All ${esc(groupName(x))} sets →</a></p>` : ''}`;
+${near.length ? `<section class="hsec"><div class="hhead"><h2>More ${esc(x.sub || x.theme)} sets</h2><a href="${esc(groupPath(x))}">All ${esc(groupName(x))} sets →</a></div>
+<div class="cards">${near.map(card).join('')}</div></section>` : ''}`;
   write(`.${x.path}.html`, shell({
     path: x.path, img: imgUrl(x),
     title: `${label} ${x.name}${x.year ? ` (${x.year})` : ''} | BrickCollect`,
