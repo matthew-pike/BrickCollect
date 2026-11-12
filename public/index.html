@@ -1737,6 +1737,7 @@ function tickTip() {
    one per visit, only to people who were already using BrickCollect before the feature came out, and for 30 days.
    Add an entry here with each new feature (newest first). sel = the first visible match on screen gets the note. */
 const NEW_TIPS = [
+  { id: 'menu', at: '2026-11-13T06:00:00+11:00', sel: '#hMenu summary', title: 'Everything in the menu', text: 'Your account, your sale or trade list, every set by theme, Getting started and What’s new are now in the ☰ menu, on every page.' },
   { id: 'unlisted', at: '2026-11-11T07:30:00+11:00', sel: '#shareOpen2', title: 'Listed or unlisted', text: 'Reserved something? In a copy’s Listing details, set Shared page to Unlisted: it stays on your Sale or trade list but leaves your shared page.' },
   { id: 'shareCard', at: '2026-11-10T19:30:00+11:00', sel: '#insToggle', title: 'Share your collection', text: 'Open Collection insights and tap Share to make a picture of your collection for Instagram, Facebook or anywhere.' },
   { id: 'shareSale', at: '2026-11-09T20:45:00+11:00', sel: '#exportMenuBtn', title: 'Share your sale or trade list', text: 'Export → Share your sale or trade list gives you a link to a page of everything you’re letting go, any brand, to post in Facebook groups or on Instagram.' },
@@ -1760,7 +1761,7 @@ function newTips() {
   for (const t of NEW_TIPS) {
     const at = Date.parse(t.at);
     if (seen[t.id] || firstSeen > at || now - at > 30 * 864e5) continue;
-    const el = [...document.querySelectorAll(t.sel)].find(e => { if (!e.offsetParent) return false; const r = e.getBoundingClientRect(); return r.top > 60 && r.bottom < vh - 120; });
+    const el = [...document.querySelectorAll(t.sel)].find(e => { if (!e.offsetParent) return false; const r = e.getBoundingClientRect(); return (r.top > 60 || e.closest('header')) && r.bottom < vh - 120; }); // header buttons (☰) are always on screen
     if (!el) continue;
     newTipShown = t.id;
     const phone = !matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -3981,6 +3982,13 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.30', date: '13 November 2026', title: 'A home for your collection', items: [
+    ['A new home page', 'see popular sets, what’s retiring soon and what’s new this year, jump to a theme or brand, and select “I own it” right there. Your collection now lives in My collection.'],
+    ['A page for every set', 'pictures, pieces, minifigures and whether it’s retiring, with I own it and I want it buttons. Tap the page icon beside a set in My collection to open it, or browse All sets by theme and brand.'],
+    ['The ☰ menu', 'on every page: My collection, My sale or trade list, All sets, Getting started, What’s new, My account and Sign out.'],
+    ['My account', 'your account details and collection totals, with Export, Sign out and Delete in one place.'],
+    ['Your sale or trade list', 'My sale or trade list in the menu opens your page as buyers see it. It stays hidden from Google unless you turn on “Let Google and other search engines find my page” in the share box.'],
+  ] },
   { v: '0.21', date: '11 November 2026', title: 'Listed or unlisted', items: [
     ['Listed or unlisted', 'keep a copy on your Sale or trade list but off your shared page, for example when it’s reserved for someone. Click the set’s condition chip, then Listing details, and set Shared page to Unlisted. Set it back to Listed any time.'],
   ] },
