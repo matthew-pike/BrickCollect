@@ -38,7 +38,7 @@ if (!MARK) throw new Error('Logo not found in index.html; update build-pages.mjs
 const MENU = (() => {
   const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<details class="hmenu"[\s\S]*?<nav aria-label="Menu">([\s\S]*?)<\/nav><\/details>/);
   if (!m) throw new Error('Menu not found in index.html; update build-pages.mjs');
-  return m[1].replace('<a href="#" data-hm="showWelcome">', '<a href="/collection#about">').replace('<a href="#" data-hm="signOutBtn"', '<a href="/collection#signout"');
+  return m[1].replace('<a href="#" data-hm="signOutBtn"', '<a href="/collection#signout"');
 })();
 // The notice bar under the header (e.g. BrickLink is offline) comes from the app too, shown by pages.js.
 const NOTICE = (readFileSync(new URL('index.html', PUB), 'utf8').match(/<section class="notice" id="blNotice"[\s\S]*?<\/section>/) || [''])[0];
@@ -318,7 +318,7 @@ ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><
 }));
 
 /* ---------- About and Privacy: their text from public/about.html and public/privacy.html, in the site's page ---------- */
-for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.html', '/privacy', 'Privacy']]) {
+for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.html', '/privacy', 'Privacy'], ['getting-started.html', '/getting-started', 'Getting started']]) {
   const src = readFileSync(new URL(file, PUB), 'utf8');
   const main = (src.match(/<main>([\s\S]*?)<\/main>/) || [])[1];
   if (!main) throw new Error(`No <main> in ${file}; update build-pages.mjs`);
@@ -431,7 +431,7 @@ write('./404.html', shell({ path: '/404', title: 'Page not found · BrickCollect
 
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
-write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/privacy', '/whats-new', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
+write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/getting-started', '/privacy', '/whats-new', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
 write('./sitemap-sets.xml', urlset(sets.map(x => x.path)));
 const day = now.toISOString().slice(0, 10);
 write('./sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${SITE}/sitemap-pages.xml</loc><lastmod>${day}</lastmod></sitemap>\n  <sitemap><loc>${SITE}/sitemap-sets.xml</loc><lastmod>${day}</lastmod></sitemap>\n</sitemapindex>\n`);
