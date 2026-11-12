@@ -3,7 +3,7 @@
   "name": "BrickCollect",
   "short_name": "BrickCollect",
   "description": "The simple, free LEGO and brick collection tracker. Tick what you own, keep a wanted list, see what it's worth and export anytime.",
-  "start_url": "/?source=app",
+  "start_url": "/collection?source=app",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

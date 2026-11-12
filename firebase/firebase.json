@@ -50,6 +50,24 @@
         ]
       },
       {
+        "source": "/@(collection|sets)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/@(set|theme|brand)/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=300, must-revalidate"
+          }
+        ]
+      },
+      {
         "source": "/catalog.json",
         "headers": [
           {

@@ -4,7 +4,7 @@
    - Sign-in, the database and Sync Prices are never cached (Firebase keeps its own offline copy of your collection). */
 const VERSION = 'v1';
 const PAGES = `bc-pages-${VERSION}`;
-const SHELL = ['/', '/config.js', '/backend-firebase.js', '/analytics.js', '/pwa.js', '/catalog.json', '/favicon.svg', '/icon-192.png'];
+const SHELL = ['/', '/collection', '/config.js', '/backend-firebase.js', '/analytics.js', '/pwa.js', '/catalog.json', '/favicon.svg', '/icon-192.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(PAGES).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))).then(() => self.skipWaiting()));

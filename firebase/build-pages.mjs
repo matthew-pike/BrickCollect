@@ -30,12 +30,25 @@ const BUY = cfg.buyLinks || {};
 // The app's logo, taken from index.html so the pages keep matching it.
 const MARK = (readFileSync(new URL('index.html', PUB), 'utf8').match(/class="brandmark[^>]*>(<svg[\s\S]*?<\/svg>)<\/a>/) || [])[1] || '';
 if (!MARK) throw new Error('Logo not found in index.html; update build-pages.mjs');
-// The app's ☰ menu is the template: same links, minus the ones that only work inside the app (data-hm), plus Home.
+// The app's ☰ menu is the template: same links; About opens it in My collection.
 const MENU = (() => {
   const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<details class="hmenu"[\s\S]*?<nav aria-label="Menu">([\s\S]*?)<\/nav><\/details>/);
   if (!m) throw new Error('Menu not found in index.html; update build-pages.mjs');
-  return '<a href="/" data-cta="menu">Home</a>' + m[1].replace(/<a [^>]*data-hm=[^>]*>[\s\S]*?<\/a>/g, '');
+  return m[1].replace(/<a href="#" data-hm="showWelcome">/, '<a href="/collection#about">');
 })();
+const CURS = ['AUD', 'USD', 'EUR', 'GBP', 'CAD', 'NZD', 'JPY', 'CHF'];
+const HEADER = `<header class="top"><div class="wrap">
+<div class="brand"><a href="/" class="brandmark" aria-hidden="true" tabindex="-1">${MARK}</a><div><p class="bname"><a href="/">BrickCollect</a> <span class="beta">BETA</span></p><p class="tag">Collect. Track. Value. Export. In one place.</p></div></div>
+<form class="search" action="/collection" role="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input name="q" type="search" placeholder="Search name, set #, subtheme or tag…" autocomplete="off" aria-label="Search by set name, number, subtheme or tag"></form>
+<div class="top-actions">
+<a class="btn acct" id="acctBtn" href="/collection#signin" title="Sign in to save your collection to a free account">Sign in</a>
+<select id="curSel" class="cur" aria-label="Currency" title="Currency">${CURS.map(c => `<option>${c}</option>`).join('')}</select>
+<button class="icon-btn" id="themeBtn" type="button" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
+<a class="icon-btn" id="showWelcome" href="/collection#about" title="About BrickCollect" aria-label="About BrickCollect"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></a>
+<details class="hmenu"><summary class="icon-btn" title="Menu" aria-label="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+<nav aria-label="Menu">${MENU}</nav></details>
+</div>
+</div></header>`;
 
 /* ---------- data ---------- */
 const raw = JSON.parse(readFileSync(new URL('catalog.json', PUB), 'utf8'));
@@ -105,9 +118,9 @@ const groupPath = x => x.brand === 'LEGO' ? themePath(x.theme) : brandPath(x.bra
 const groupName = x => x.brand === 'LEGO' ? `LEGO ${x.theme}` : x.brand;
 
 /* ---------- page shell ---------- */
-function shell({ path, title, desc, img, h1, crumbs, body, robots }) {
+function shell({ path, title, desc, img, h1, crumbs, body, robots, head = '' }) {
   const url = SITE + path;
-  const ld = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: SITE + c[1] })) };
+  const ld = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [['Home', '/'], ...crumbs].map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: SITE + c[1] })) };
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -129,30 +142,20 @@ ${robots ? `<meta name="robots" content="${robots}">\n` : ''}<link rel="canonica
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script>try{const t=(JSON.parse(localStorage.getItem('bc-prefs')||'{}')||{}).theme;if(t==='dark'||t==='mid'||t==='light')document.documentElement.dataset.theme=t}catch{}</script>
 <script src="/analytics.js"></script>
-<link rel="stylesheet" href="/pages.css">
+${head}<link rel="stylesheet" href="/pages.css">
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
-<header class="top"><div class="wrap">
-<div class="brand"><a href="/" class="brandmark" aria-hidden="true" tabindex="-1">${MARK}</a><div><p class="name"><a href="/">BrickCollect</a> <span class="beta">BETA</span></p><p class="tag">Collect. Track. Value. Export. In one place.</p></div></div>
-<details class="hmenu"><summary class="icon-btn" aria-label="Menu" title="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
-<nav aria-label="Menu">${MENU}</nav></details>
-</div></header>
+${HEADER}
 <main class="wrap">
-<nav class="crumbs" aria-label="Breadcrumb">${crumbs.map((c, i) => i === crumbs.length - 1 ? `<span>${esc(c[0])}</span>` : `<a href="${esc(c[1])}">${esc(c[0])}</a>`).join('<span class="sep">›</span>')}</nav>
-<h1>${h1}</h1>
-${body}
+${crumbs.length ? `<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span class="sep">›</span>${crumbs.map((c, i) => i === crumbs.length - 1 ? `<span>${esc(c[0])}</span>` : `<a href="${esc(c[1])}">${esc(c[0])}</a>`).join('<span class="sep">›</span>')}</nav>` : ''}
+${h1 ? `<h1>${h1}</h1>\n` : ''}${body}
 </main>
 <footer class="foot"><div class="wrap">
-<div class="promo"><b>BrickCollect</b> is the free collection tracker for LEGO and other brick brands. Tick the sets you own, keep a Wanted list, see what your collection is worth, and share or sell it. <a href="/" data-cta="footer">Start tracking</a></div>
+<div class="promo"><b>BrickCollect</b> is the free collection tracker for LEGO and other brick brands. Tick the sets you own, keep a Wanted list, see what your collection is worth, and share or sell it. <a href="/collection" data-cta="footer">Open My collection</a></div>
 <p class="fine">LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or endorse this site. LEGO set and minifigure data © <a href="https://rebrickable.com/" rel="noopener">Rebrickable</a>, used under their terms. Other brands are listed by hand from public set information, and their names and trademarks belong to their owners. Some store links are affiliate links: if you buy through them, The Art of Bricks may earn a small commission at no extra cost to you. <a href="/privacy">Privacy</a></p>
 </div></footer>
-<script>
-document.addEventListener('click',e=>{const m=document.querySelector('details.hmenu');if(m&&m.open&&!m.contains(e.target))m.open=false});
-document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-cta]');if(a&&window.gtag)gtag('event','set_page_cta',{cta:a.dataset.cta,page:location.pathname})});
-// LEGO.com in the visitor's own country.
-(()=>{const m={AU:'en-au',GB:'en-gb',CA:'en-ca',NZ:'en-nz',IE:'en-ie'};const c=(navigator.language||'').split('-')[1];const l=m[(c||'').toUpperCase()];if(l)document.querySelectorAll('a[href*="lego.com/en-us/"]').forEach(a=>a.href=a.href.replace('/en-us/','/'+l+'/'))})();
-</script>
+<script src="/pages.js"></script>
 </body>
 </html>
 `;
@@ -180,7 +183,7 @@ for (const x of sets) {
     figs.length ? ['Minifigures', String(figs.length)] : null,
     statusTxt ? ['Status', `<span class="pill${ret.s === 'S' ? ' soon' : ''}">${esc(statusTxt)}</span>`] : null,
   ].filter(Boolean);
-  const app = `/?set=${encodeURIComponent(x.n)}`;
+  const app = `/collection?set=${encodeURIComponent(x.n)}`;
   const related = (byGroup.get(`${x.brand}|${x.theme}|${x.sub}`) || []).filter(y => y !== x);
   const i = Math.max(0, related.findIndex(y => (y.year || 0) <= (x.year || 0)));
   const near = related.slice(Math.max(0, i - 4), Math.max(0, i - 4) + 8);
@@ -250,11 +253,54 @@ ${brands.size ? `<h2 id="brands">Brands</h2><div class="tiles">${[...brands].sor
 <h2>LEGO themes</h2><div class="tiles">${[...legoThemes].sort((a, b) => a[0].localeCompare(b[0])).map(([t, l]) => tile(themePath(t), t, l.length)).join('')}</div>`,
 }));
 
+/* ---------- home page (/) ---------- */
+// The app moves to /collection (My collection); / becomes a page of sets you can tick straight away.
+{
+  const app = new URL('index.html', OUT);
+  let a = readFileSync(app, 'utf8');
+  a = a.replace('<link rel="canonical" href="https://brickcollect.app/">', '<link rel="canonical" href="https://brickcollect.app/collection">')
+       .replace('<meta property="og:url" content="https://brickcollect.app/">', '<meta property="og:url" content="https://brickcollect.app/collection">');
+  writeFileSync(new URL('collection.html', OUT), a);
+}
+const POPULAR = (() => { const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/const POPULAR = \[([^\]]*)\]/); return m ? [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]) : []; })();
+const byN = new Map(sets.map(x => [x.n, x]));
+const tcard = x => `<div class="tcard"><a href="${esc(x.path)}" class="tpic">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="" loading="lazy" width="96" height="72">` : '<span class="noimg"></span>'}</a><div class="cb"><a class="cn" href="${esc(x.path)}">${esc(x.name)}</a><span class="cm">${esc(x.brand === 'LEGO' ? shownNum(x) : `${x.brand} ${shownNum(x)}`)}${x.year ? ` · ${x.year}` : ''}</span><label class="tick"><input type="checkbox" data-own="${esc(x.n)}"> I own it</label></div></div>`;
+const popular = POPULAR.map(n => byN.get(n)).filter(Boolean);
+const thisYear = now.getFullYear();
+const retiring = sets.filter(x => (retState(x) || {}).s === 'S').sort((a, b) => (Date.parse((shared.get(a.n) || {}).exit || '9999') - Date.parse((shared.get(b.n) || {}).exit || '9999')) || (b.pieces || 0) - (a.pieces || 0)).slice(0, 12);
+const newest = sets.filter(x => x.brand === 'LEGO' && x.year >= thisYear).sort((a, b) => (b.pieces || 0) - (a.pieces || 0)).slice(0, 12);
+// Same themes and pictures as the theme row in My collection.
+const THEME_TILES = (() => { const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/const THEME_TILES = \[([\s\S]*?)\];/); return m ? [...m[1].matchAll(/\['([^']+)', '([^']+)', '([^']+)'\]/g)].map(x => ({ label: x[1], theme: x[2], pic: x[3] })) : []; })();
+const bigTheme = THEME_TILES.filter(t => legoThemes.has(t.theme)).map(t => ({ ...t, list: legoThemes.get(t.theme) }));
+const themeTile = t => { const pic = byN.get(t.pic) || t.list.slice().sort((a, b) => (b.pieces || 0) - (a.pieces || 0))[0]; return `<a class="ttile" href="${esc(themePath(t.theme))}">${pic ? `<img src="${esc(imgUrl(pic))}" alt="" loading="lazy" width="120" height="80">` : ''}<span class="cn">${esc(t.label)}</span><span class="cm">${fmt(t.list.length)} sets</span></a>`; };
+const brandTile = ([b, l]) => { const pic = l.find(x => x.img); return `<a class="ttile" href="${esc(brandPath(b))}">${pic ? `<img src="${esc(pic.img)}" alt="" loading="lazy" width="120" height="80">` : ''}<span class="cn">${esc(b)}</span><span class="cm">${fmt(l.length)} sets</span></a>`; };
+const section = (title, more, list) => list.length ? `<section class="hsec"><div class="hhead"><h2>${title}</h2>${more || ''}</div><div class="tcards">${list.map(tcard).join('')}</div></section>` : '';
+const REDIRECT = `<script>/* Collectors who already have sets (or are signed in) go straight to My collection, and old links like /?set=… keep working. Coming from another BrickCollect page (Home in the menu) stays here. */
+(()=>{try{const qs=new URLSearchParams(location.search),r=document.referrer,same=!!r&&new URL(r).origin===location.origin;
+const go=['set','carry','apiKey','oobCode','mode','q','source'].some(k=>qs.has(k))||location.hash==='#about'||location.hash==='#signin';
+const has=!!localStorage.getItem('bc-acct')||Object.keys(JSON.parse(localStorage.getItem('bc-collection')||'{}')||{}).length>0;
+if(go||(has&&!same&&!qs.has('home')))location.replace('/collection'+location.search+location.hash)}catch{}})();</script>\n`;
+write('./index.html', shell({
+  path: '/', head: REDIRECT,
+  title: 'BrickCollect: the free collection tracker for LEGO and other brick brands',
+  desc: `Track your LEGO collection free: tick the sets you own, see pieces, minifigures and what it's worth, keep a Wanted list and see what's retiring soon. ${fmt(sets.length)} sets from LEGO${brands.size ? `, ${[...brands.keys()].join(', ')}` : ''}.`,
+  h1: '', crumbs: [],
+  body: `<section class="hero"><div><h1>Your brick collection, all in one place</h1>
+<p class="lead">The free collection tracker for LEGO and other brick brands. Tick the sets you own, keep a Wanted list, see what your collection is worth, and share or sell it. No password needed.</p>
+<div class="row"><a class="btn primary" href="/collection" data-cta="hero">Open My collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
+${section('Tick the sets you own', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
+${section('Retiring soon', '<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon →</a>', retiring)}
+${section(`New in ${thisYear}`, '', newest)}
+<section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes →</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>
+${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><a href="/sets#brands">All brands →</a></div><div class="ttiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(brandTile).join('')}</div></section>` : ''}
+<div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> ticked, saved in this browser</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection →</a></div>`,
+}));
+
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
-write('./sitemap-pages.xml', urlset(['/', '/sets', '/privacy', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
+write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/privacy', ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
 write('./sitemap-sets.xml', urlset(sets.map(x => x.path)));
 const day = now.toISOString().slice(0, 10);
 write('./sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${SITE}/sitemap-pages.xml</loc><lastmod>${day}</lastmod></sitemap>\n  <sitemap><loc>${SITE}/sitemap-sets.xml</loc><lastmod>${day}</lastmod></sitemap>\n</sitemapindex>\n`);
 
-console.log(`Built ${fmt(sets.length)} set pages, ${legoThemes.size} theme pages, ${brands.size} brand pages, /sets and the sitemaps`);
+console.log(`Built the home page (app moved to /collection), ${fmt(sets.length)} set pages, ${legoThemes.size} theme pages, ${brands.size} brand pages, /sets and the sitemaps`);

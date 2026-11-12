@@ -106,7 +106,7 @@ button,input,select{font:inherit;color:inherit}
 .hmenu nav{position:absolute;right:0;top:calc(100% + 8px);z-index:30;min-width:210px;display:flex;flex-direction:column;padding:6px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);box-shadow:0 12px 32px rgb(0 0 0/.25)}
 .hmenu nav a{padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none;font-weight:500;font-size:14px}
 .hmenu nav a:hover{background:var(--panel-2);color:var(--accent)}
-.hmenu nav a[hidden]{display:none}
+.hmenu nav hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
 @media (max-width:640px){#showWelcome{display:none}.hmenu summary{width:32px;height:32px}}
 .icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--line-2);background:var(--panel-2);cursor:pointer;color:var(--muted)}
 .icon-btn:hover{color:var(--fg);border-color:var(--accent)}
@@ -865,7 +865,7 @@ button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
       <button class="icon-btn" id="themeBtn" title="Switch between dark, mid and light" aria-label="Switch theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg></button>
       <button class="icon-btn" id="showWelcome" title="About BrickCollect" aria-label="About BrickCollect"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
       <details class="hmenu" id="hMenu"><summary class="icon-btn" title="Menu" aria-label="Menu"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
-        <nav aria-label="Menu"><a href="/sets">All sets</a><a href="/sets#brands">Other brands</a><a href="#" data-hm="newsLink">What’s new</a><a href="#" data-hm="installLink" id="hmInstall" hidden>Install app</a><a href="#" data-hm="showWelcome">About BrickCollect</a><a href="https://www.instagram.com/brickcollect.app/" target="_blank" rel="noopener">Instagram</a><a href="/privacy">Privacy</a></nav></details>
+        <nav aria-label="Menu"><a href="/">Home</a><a href="/collection">My collection</a><a href="/sets">All sets</a><hr><a href="#" data-hm="showWelcome">About BrickCollect</a><a href="/privacy">Privacy</a></nav></details>
     </div>
   </div>
 </header>
@@ -4056,9 +4056,9 @@ function openNews() {
 }
 $('newsPill').onclick = openNews;
 $('newsLink').onclick = e => { e.preventDefault(); openNews(); };
-// Menu (☰): links, plus the footer's What's new / Install app and the About button.
+// Menu (☰): Home, My collection, All sets, then About (opens Getting started) and Privacy.
 { const m = $('hMenu');
-  m.addEventListener('toggle', () => { if (m.open) { $('hmInstall').hidden = $('installLink').hidden; track('menu_open'); } });
+  m.addEventListener('toggle', () => { if (m.open) track('menu_open'); });
   m.addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; if (a.dataset.hm) { e.preventDefault(); $(a.dataset.hm).click(); } m.open = false; });
   document.addEventListener('click', e => { if (m.open && !m.contains(e.target)) m.open = false; });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && m.open) { m.open = false; m.querySelector('summary').focus(); } }); }
@@ -4098,6 +4098,7 @@ async function paintAccount() {
   $('acctBtn').innerHTML = email ? `<span class="full">${esc(nm.slice(0, 14))}</span><span class="short" aria-hidden="true">${esc(nm.slice(0, 1).toUpperCase())}</span>` : 'Sign in';
   $('acctBtn').title = email ? `Signed in as ${email}` : 'Sign in to save your collection to a free account';
   $('acctBtn').classList.toggle('in', !!email);
+  try { if (email) localStorage.setItem('bc-acct', JSON.stringify({ n: nm })); else if (window.BC?.auth?.available) localStorage.removeItem('bc-acct'); } catch {}
   $('acctEmail').textContent = email || '';
   $('acctBtn').hidden = !window.BC?.auth?.available;
   $('usageLink').hidden = !can('usage');
@@ -4242,11 +4243,17 @@ matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', paintTh
 $('themeBtn').onclick = () => { prefs.theme = THEMES[(THEMES.indexOf(curTheme()) + 1) % THEMES.length]; track('theme_mode', { mode: prefs.theme }); document.documentElement.setAttribute('data-theme', prefs.theme); paintThemeBtn(); savePrefs(); };
 
 /* ---------- links from the set pages (brickcollect.app/set/…) ----------
-   ?set=<number> shows that set; &add=own ticks it, &add=want adds it to your Wanted list.
+   Now at /collection (My collection). ?set=<number> shows that set; &add=own ticks it, &add=want adds it to your Wanted list.
    Waits until the set is in the catalog (other brands load later) and your collection has loaded,
    so the copy in your account can't overwrite the tick. */
 function linkAction() {
-  const q = new URLSearchParams(location.search), n = q.get('set'); if (!n) return;
+  const q = new URLSearchParams(location.search), n = q.get('set');
+  // From the header search on the other pages (/collection?q=…), and their About / Sign in buttons.
+  if (q.get('q') && !n) { $('q').value = q.get('q'); q.delete('q'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); track('search_from_page'); }
+  if (['S', 'R'].includes(q.get('ret')) && !n) { fi.ret.value = q.get('ret'); fi.ret.classList.add('set-on'); q.delete('ret'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); }
+  if (location.hash === '#about') { $('welcome').hidden = false; history.replaceState(null, '', location.pathname + location.search); $('welcome').scrollIntoView({ block: 'start' }); }
+  if (location.hash === '#signin') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => { if (saveMode !== 'cloud') $('acctBtn').click(); }, 1500); }
+  if (!n) return;
   const add = q.get('add'); let tries = 0;
   const go = () => {
     const x = CAT && CAT.sets.find(s => s.n === n);
