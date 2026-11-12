@@ -278,6 +278,9 @@ footer.bot .grow{flex:1}
     // From My sale or trade list (/selling): this is your own page, as buyers see it.
     if (MINE && !$('mineBar')) { const b = document.createElement('div'); b.id = 'mineBar'; b.className = 'minebar'; b.innerHTML = '<span><b>This is your sale or trade list</b>, as buyers see it.</span><a class="btn" href="/collection#sell">Edit in My collection</a>'; $('main').prepend(b); }
     if (!items.length) { $('grid').innerHTML = ''; $('none').hidden = false; $('none').textContent = 'Nothing listed right now. Check back later.'; $('q').parentElement.hidden = true; return; }
+    // ?q=75192 (from "For sale by collectors" in someone's Wanted list) opens the list searched for that set.
+    const q0 = new URLSearchParams(location.search).get('q');
+    if (q0 && !$('q').dataset.q0) { $('q').value = q0.slice(0, 60); $('q').dataset.q0 = '1'; }
     paintGrid();
   }
 

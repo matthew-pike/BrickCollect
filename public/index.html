@@ -696,6 +696,30 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 .blrow{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0;font-size:13px;color:var(--muted)}
 .blrow span{flex:1 1 260px}
 .shx{width:min(480px,calc(100vw - 32px))}
+/* For sale by collectors: badge on Wanted sets, the Wanted view's For sale switch, and the sellers pop-up */
+.fsb{display:inline-flex;align-items:center;margin-left:6px;vertical-align:1px;padding:1px 7px;border:1px solid var(--accent);border-radius:999px;background:transparent;color:var(--accent);font:inherit;font-size:11px;font-weight:600;line-height:16px;white-space:nowrap;cursor:pointer}
+.fsb:hover,.fsb.near{background:var(--accent);color:var(--accent-ink)}
+.fsb.near:hover{filter:brightness(1.08)}
+.fsonly{margin-left:6px;border:1px solid var(--accent);background:transparent;color:var(--accent);font:inherit;font-size:13px;font-weight:500;padding:5px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.fsonly b{font-family:var(--font-mono);font-weight:500;margin-left:3px}
+.fsonly[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.fsx{width:min(520px,calc(100vw - 32px))}
+.fsx .fsitem{display:flex;flex-direction:column;gap:2px;margin:0 0 14px}
+.fsx .fsitem span{color:var(--muted);font-size:13px}
+.fsx .fsshop{padding:12px;border:1px solid var(--line-2);border-radius:10px;background:var(--bg);margin-bottom:10px}
+.fsx .fsshop.near{border-color:var(--accent)}
+.fsx .fssel{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-bottom:6px}
+.fsx .fssel span{color:var(--muted);font-size:13px}
+.fsx ul{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.fsx li{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:baseline;font-size:13.5px}
+.fsx .fscond{font-weight:600}
+.fsx .fsd{color:var(--muted);font-size:12.5px}
+.fsx .fsp{grid-column:3;font-family:var(--font-mono);text-align:right;white-space:nowrap}
+.fsx .fsp small{display:block;color:var(--faint);font-size:11px}
+.fsx .fsnote{margin:4px 0 0}
+/* Phones: in the Wanted view with sets for sale, the switch takes Import's spot (Import stays in the account box). */
+@media (max-width:480px){.toolbar:has(#fsOnlyBtn:not([hidden])) #importBtn{display:none}.fsonly{margin-left:4px;padding-inline:9px}}
+@media (max-width:520px){.fsx li{grid-template-columns:1fr auto}.fsx .fsd{grid-column:1/-1;grid-row:2}.fsx .fsp{grid-column:2;grid-row:1}}
 .shx .shfields{display:flex;flex-direction:column;gap:10px}
 .shx .shfields label{display:flex;flex-direction:column;gap:4px}
 .shx .shfields .inp,.shx .shlink .inp{font-size:14px;color:var(--fg)}
@@ -707,6 +731,7 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 .shx .shlinkbtns .btn{width:auto;flex:1 1 0;text-decoration:none}
 .shx .shstat{margin:8px 0 0;font-size:12px}
 .shx .shnote{margin:12px 0 0}
+.shx .shnote.shfnote{margin:4px 0 0}
 .shx .acct-actions{margin-top:14px}
 .shx .shstop{margin:12px 0 0;font-size:12px}
 .shx .shhow{margin:0 0 14px;border:1px solid var(--line-2);border-radius:10px;padding:8px 12px;font-size:13px}
@@ -975,6 +1000,7 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
         <button class="pill" data-view="owned" aria-pressed="false">Owned <b id="cOwned">0</b></button>
         <button class="pill" data-view="wanted" aria-pressed="false">Wanted <b id="cWanted">0</b></button>
       </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
+      <button class="fsonly" type="button" id="fsOnlyBtn" data-fsonly="1" hidden aria-pressed="false" title="Show only Wanted sets that collectors have for sale or trade">For sale <b id="cFs">0</b></button>
       <button class="btn clearf on" id="fiClearS" type="button" hidden title="Clear all filters and search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Clear<span class="lg"> filters</span></button>
       <label class="phone-sort"><span class="sr">Sort</span><select id="sortSel" aria-label="Sort by">
         <option value="year:desc">Newest first</option><option value="year:asc">Oldest first</option><option value="name:asc">Name A–Z</option>
@@ -1170,15 +1196,25 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
     <div class="shfields">
       <label>Name to show <input class="inp" id="shName" maxlength="40" placeholder="Optional, e.g. Matt"></label>
       <label>Where you are <input class="inp" id="shPlace" maxlength="60" placeholder="e.g. Sydney, Australia (helps with postage or pick-up)"></label>
+      <label>Country <select class="inp" id="shCty"></select></label>
       <label>Instagram <input class="inp" id="shIg" maxlength="31" placeholder="@yourname" autocapitalize="off" spellcheck="false"></label>
       <label>Other way to reach you <input class="inp" id="shContact" maxlength="200" placeholder="e.g. a Facebook profile link, or an email you’re happy to show"></label>
     </div>
+      <label class="cdchk shidx"><input type="checkbox" id="shFind"> Let collectors who want these sets find my list</label>
+    <p class="fine shnote shfnote">When a BrickCollect collector has one of your sets on their Wanted list, they see “for sale” beside it, with your condition, price and country, and a link to your page.</p>
       <label class="cdchk shidx"><input type="checkbox" id="shIdx"> Let Google and other search engines find my page</label>
-    <p class="fine shnote">Off unless you turn it on: then people searching for a set can find your list. Everything above is shown on the page. Your email address, private notes and stockroom choices never are.</p>
+    <p class="fine shnote">Both are off unless you turn them on. Everything above is shown on the page. Your email address, private notes and stockroom choices never are.</p>
     <div class="acct-actions"><button class="btn primary" type="button" id="shGo">Create my link</button></div>
     <p class="shstop" id="shStopP" hidden><button class="linkbtn" type="button" id="shStop">Stop sharing</button> <span class="fine">takes the page down; sharing again gives you a new link</span></p>
   </div>
   <button class="icon-btn dlg-x" type="button" id="shClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+</dialog>
+<dialog class="dlg fsx" id="fsDlg" aria-labelledby="fsH">
+  <h2 id="fsH">For sale by collectors</h2>
+  <p class="fsitem" id="fsItem"></p>
+  <div id="fsList"></div>
+  <p class="fine fsnote">From collectors who share their sale or trade list on BrickCollect. Message the seller to buy or swap, and agree payment and postage between you: BrickCollect isn’t part of the sale.</p>
+  <button class="icon-btn dlg-x" type="button" id="fsClose" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
 </dialog>
 <dialog class="dlg cdx" id="cardDlg" aria-labelledby="cardH">
   <h2 id="cardH">Share your collection</h2>
@@ -1333,6 +1369,7 @@ function buildCatalog(raw) {
      Saved to their private space data/users/<id>/collection when they can save there,
      otherwise in this browser only.
    Shared (curated by the site owner): prices, BrickLink #s, subthemes, films, other brands, rates. */
+let fsIdx = null, fsOnly = !!prefs.fsOnly; // for sale by collectors (see below)
 let uid = null, isOwner = false, role = 'user', perms = {}, saveMode = 'loading'; // 'cloud' | 'local' | 'loading'
 const shared = new Map(); // n -> { used, new, bl, pricedAt, priceSource }
 const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice', 'loc', 'ret', 'exit', 'manualRet'];
@@ -1681,7 +1718,7 @@ function valueOne(i, c) {
 //   items = shared prices, BrickLink numbers, retired status · subthemes = subthemes, tags, Film / Series
 //   sets = other brands' sets · sync = Sync Prices · usage = Admin page
 const can = p => !!db && !!uid && (role === 'super' || perms?.[role]?.[p] === true);
-function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond: prefs.lastCond, incPct: prefs.incPct, currency: prefs.currency, sellPct: prefs.sellPct, sellOpen: prefs.sellOpen, insOpen: prefs.insOpen, insMetric: prefs.insMetric, needMode: prefs.needMode, region: prefs.region, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value, ret: fi.ret.value } }); }
+function savePrefs() { lsSet('bc-prefs', { kind, sort, focus, listView, lastCond: prefs.lastCond, incPct: prefs.incPct, currency: prefs.currency, sellPct: prefs.sellPct, sellOpen: prefs.sellOpen, insOpen: prefs.insOpen, insMetric: prefs.insMetric, needMode: prefs.needMode, region: prefs.region, fsOnly: prefs.fsOnly, theme: prefs.theme, hideWelcome: $('welcome').hidden, filters: { brand: fi.brand.value, theme: fi.theme.value, sub: fi.sub.value, film: fi.film.value, set: fi.set.value, year: fi.year.value, ret: fi.ret.value } }); }
 
 /* ---------- buy links (affiliate links when set up) ----------
    Each brand has a link template; {num} is the set number (75192 for LEGO 75192-1) and {name} the set name.
@@ -2138,6 +2175,9 @@ function render() {
     : fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope;
   $('cOwned').textContent = list.filter(has).length.toLocaleString();
   $('cWanted').textContent = list.filter(wanted).length.toLocaleString();
+  { const nFs = listView === 'wanted' && fsIdx ? base.filter(fsWant).length : 0, b = $('fsOnlyBtn');
+    b.hidden = !nFs; $('cFs').textContent = nFs.toLocaleString(); b.setAttribute('aria-pressed', String(!!(nFs && fsOnly)));
+    if (nFs && fsOnly && !figFocus) rows = rows.filter(fsWant); }
   $('cSale').textContent = list.filter(x => saleCount(x) > 0).length.toLocaleString();
   document.querySelectorAll('.pill').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === listView)));
   rows = rows.slice().sort((a, b) => {
@@ -2224,7 +2264,7 @@ function render() {
     <tr class="${owned(x) ? 'owned' : fromSet(x) ? 'fromset' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
       <td class="c-own"><div class="ownc"><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${has(x) ? 'checked' : ''} ${fromSet(x) ? 'disabled title="Comes with a set you own"' : ''} aria-label="I own ${esc(x.name)}">${has(x) ? '' : `<button class="star" data-want="${esc(x.n)}" aria-pressed="${wanted(x)}" title="${wanted(x) ? 'Remove from wanted' : 'Add to wanted'}" aria-label="${wanted(x) ? 'Remove' : 'Add'} ${esc(x.name)} ${wanted(x) ? 'from' : 'to'} wanted"><svg width="16" height="16" viewBox="0 0 24 24" fill="${wanted(x) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg></button>`}</div></td>
       <td class="c-img">${thumb(x)}</td>
-      <td class="nm c-nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>${setPageLink(x)}` : esc(x.name)}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
+      <td class="nm c-nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>${setPageLink(x)}` : esc(x.name)}${fsIdx ? fsBadge(x) : ''}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
       <td class="c-cond">${condCell(x)}</td>
       ${fi.brand.value || x.k === 'm' ? '' : `<td class="muted c-brand">${x.brand}</td>`}
       <td class="sub c-sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}${tagCell(x)}</td>
@@ -2410,6 +2450,8 @@ document.addEventListener('click', e => {
   if (t.dataset.want) { setInfo(t.dataset.want, { wanted: !wanted({ n: t.dataset.want }) }); return; }
   if (t.dataset.salemode) { const want = t.dataset.salemode === 'sale' ? 'sale' : (listView === 'sale' ? 'all' : listView); if (want !== listView) { listView = want; limit = PAGE; savePrefs(); render(); } return; }
   if (t.dataset.view) { listView = t.dataset.view; limit = PAGE; savePrefs(); render(); return; }
+  if (t.dataset.fs) { fsOpen(t.dataset.fs); return; }
+  if (t.dataset.fsonly) { fsOnly = !fsOnly; prefs.fsOnly = fsOnly; limit = PAGE; savePrefs(); render(); track('fs_only', { on: fsOnly }); return; }
   if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
   if (t.dataset.focus) { focus = focus === t.dataset.focus ? null : t.dataset.focus; savePrefs(); render(); return; }
   if (t.dataset.clearfocus) { focus = null; limit = PAGE; savePrefs(); render(); return; }
@@ -3319,7 +3361,7 @@ function shareItems() {
     for (const { c, d } of listingsOf(x)) {
       if (d.pub === false) continue; // Unlisted: on your Sale or trade list, not on the shared page
       let p = lstPrice(d); if (p == null) p = lstSuggest(x, c);
-      const it = { n: shownNum(x), k: x.k, b: x.brand || '', nm: x.name || '', y: x.year || 0, pc: x.pieces || 0, th: x.theme || '', im: imgUrl(x) || '', c, p: p > 0 ? p : 0, d: ((x.k === 's' && c === 'new' && d.sealed !== false ? 'Sealed. ' : '') + lstDesc(x, c, d)).trim() };
+      const it = { n: shownNum(x), x: x.n, k: x.k, b: x.brand || '', nm: x.name || '', y: x.year || 0, pc: x.pieces || 0, th: x.theme || '', im: imgUrl(x) || '', c, p: p > 0 ? p : 0, d: ((x.k === 's' && c === 'new' && d.sealed !== false ? 'Sealed. ' : '') + lstDesc(x, c, d)).trim() };
       const key = JSON.stringify(it);
       if (out.has(key)) out.get(key).q++; else out.set(key, { ...it, q: 1 });
     }
@@ -3338,9 +3380,89 @@ async function sharePublish(force) {
 function shareQueue() { if (!share?.on) return; clearTimeout(shareT); shareT = setTimeout(() => sharePublish().catch(e => console.warn('share', e)), 1500); }
 async function shareLoad() {
   try { const s = await db.doc(`data/users/${uid}/share`).get(); share = s.exists ? (s.data() || null) : null; } catch (e) { console.warn('share settings', e); }
+  shareLoad.done = true;
   // Once per visit, after prices and rates have had time to arrive.
   if (share?.on) { clearTimeout(shareT); shareT = setTimeout(() => sharePublish(true).catch(e => console.warn('share', e)), 8000); }
 }
+/* ---------- for sale by collectors: Wanted sets on other collectors' shared sale or trade lists ----------
+   meta/forsale is rebuilt every hour by a job (firebase/functions/jobs/for-sale.mjs) from the lists whose sellers
+   ticked "Let collectors who want these sets find my list": { s: { shopId: country }, i: { item n: { shopId: copies } } }.
+   Wanted sets you don't own get an "N for sale" button; it opens the sellers' live lists (so a copy sold since the
+   last hourly run doesn't show). The Wanted view gets a "For sale" switch, and a notice says when something new
+   you want comes up. Your own list is left out. */
+const CTY_LIST = ['AU', 'NZ', 'US', 'CA', 'GB', 'IE', 'DE', 'NL', 'BE', 'FR', 'ES', 'IT', 'PT', 'AT', 'CH', 'DK', 'SE', 'NO', 'FI', 'PL', 'CZ', 'HU', 'SG', 'MY', 'HK', 'TW', 'JP', 'KR', 'PH', 'TH', 'ID', 'IN', 'AE', 'ZA', 'BR', 'MX'];
+const EU_CTY = new Set(['IE', 'DE', 'NL', 'BE', 'FR', 'ES', 'IT', 'PT', 'AT', 'DK', 'SE', 'FI', 'PL', 'CZ', 'HU']);
+const CTY_FOR_LOC = { AU: 'AU', US: 'US', CA: 'CA', UK: 'GB' };
+const ctyName = (() => { let dn = null; try { dn = new Intl.DisplayNames(['en'], { type: 'region' }); } catch {} return c => c ? (dn?.of(c) || c) : ''; })();
+function shCtyFill(v) {
+  const opts = CTY_LIST.map(c => [c, ctyName(c)]).sort((a, b) => a[1].localeCompare(b[1]));
+  $('shCty').innerHTML = `<option value="">Choose your country</option>${opts.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join('')}<option value="ZZ">Somewhere else</option>`;
+  $('shCty').value = CTY_LIST.includes(v) || v === 'ZZ' ? v : '';
+}
+// Where you are, to put sellers in your country first: your own sale list's country, else where your prices come from.
+const myCty = () => share?.cty && share.cty !== 'ZZ' ? share.cty : CTY_FOR_LOC[priceRegion()] || (priceRegion() === 'EU' ? 'EU' : '');
+const nearMe = c => { const m = myCty(); return !!c && !!m && (c === m || (m === 'EU' && EU_CTY.has(c))); };
+const fsShops = x => fsIdx?.i?.[x.n] ? Object.keys(fsIdx.i[x.n]).filter(id => id !== share?.id) : [];
+const fsCount = x => fsShops(x).reduce((t, id) => t + (Number(fsIdx.i[x.n][id]) || 1), 0);
+const fsWant = x => wanted(x) && !has(x) && fsCount(x) > 0;
+function fsBadge(x) {
+  if (!wanted(x) || has(x)) return '';
+  const n = fsCount(x); if (!n) return '';
+  const near = fsShops(x).filter(id => nearMe(fsIdx.s?.[id])).reduce((t, id) => t + (Number(fsIdx.i[x.n][id]) || 1), 0);
+  const where = myCty() ? (near ? ` (${near === n ? 'all' : near} in ${myCty() === 'EU' ? 'the EU' : ctyName(myCty())})` : `, none in ${myCty() === 'EU' ? 'the EU' : ctyName(myCty())}`) : '';
+  const title = `${n} ${n === 1 ? 'copy' : 'copies'} for sale or trade by collectors${where}. Tap to see them`;
+  return ` <button type="button" class="fsb${near ? ' near' : ''}" data-fs="${esc(x.n)}" title="${esc(title)}" aria-label="${esc(`${x.name}: ${title}`)}">${n} for sale</button>`;
+}
+const fsMoney = (p, c) => { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: c || 'AUD' }).format(p); } catch { return `${c || ''} ${p.toFixed(2)}`; } };
+const fsDlg = $('fsDlg');
+async function fsOpen(n) {
+  const x = findItem(n); if (!x) return;
+  const ids = fsShops(x);
+  $('fsItem').innerHTML = `<b>${esc(x.name)}</b><span>${esc([x.brand, shownNum(x), x.year].filter(Boolean).join(' · '))}</span>`;
+  $('fsList').innerHTML = '<p class="fine">Loading…</p>';
+  if (!fsDlg.open) fsDlg.showModal();
+  track('fs_open', { item_type: x.k === 's' ? 'set' : 'minifig', lists: ids.length });
+  const COND_W = { new: 'New', used: 'Used', 'used-inc': 'Used, incomplete' };
+  const shops = (await Promise.all(ids.map(async id => {
+    try { const d = await db.doc(`shops/${id}`).get(); return d.exists ? { id, ...d.data() } : null; } catch { return null; }
+  }))).filter(Boolean).map(sh => ({ ...sh, its: (sh.items || []).filter(it => (it.x || (it.b === 'LEGO' && it.k === 's' && !/-\d+$/.test(it.n) ? it.n + '-1' : '')) === x.n) })).filter(sh => sh.its.length);
+  if (!fsDlg.open) return;
+  if (!shops.length) { $('fsList').innerHTML = '<p>Those copies have just been sold or taken off their lists. We’ll show any new ones here.</p>'; return; }
+  const cty = sh => fsIdx?.s?.[sh.id] || '';
+  const low = sh => Math.min(...sh.its.map(it => it.p > 0 ? it.p / (rates.rates[sh.cur] || 1) : Infinity));
+  shops.sort((a, b) => (nearMe(cty(b)) - nearMe(cty(a))) || (low(a) - low(b)));
+  $('fsList').innerHTML = shops.map(sh => {
+    const where = [sh.place, cty(sh) && cty(sh) !== 'ZZ' && !(sh.place || '').toLowerCase().includes(ctyName(cty(sh)).toLowerCase()) ? ctyName(cty(sh)) : ''].filter(Boolean).join(', ');
+    const rowsH = sh.its.map(it => {
+      const conv = it.p > 0 && sh.cur && sh.cur !== cur() && rates.rates[sh.cur] ? ` <small>≈ ${money(it.p / rates.rates[sh.cur])}</small>` : '';
+      return `<li><span class="fscond">${esc(COND_W[it.c] || it.c || '')}${it.q > 1 ? ` ×${it.q}` : ''}</span>${it.d ? `<span class="fsd">${esc(it.d)}</span>` : ''}<span class="fsp">${it.p > 0 ? esc(fsMoney(it.p, sh.cur)) + conv : 'Ask for price'}</span></li>`;
+    }).join('');
+    return `<div class="fsshop${nearMe(cty(sh)) ? ' near' : ''}"><div class="fssel"><b>${esc(sh.name || 'A collector')}</b>${where ? `<span>${esc(where)}</span>` : ''}</div><ul>${rowsH}</ul><a class="btn mini" href="/sale/${esc(sh.id)}?q=${encodeURIComponent(shownNum(x))}" target="_blank" rel="noopener" data-fsgo="1">See their list and message them ↗</a></div>`;
+  }).join('');
+}
+$('fsList').addEventListener('click', e => { if (e.target.closest('[data-fsgo]')) track('fs_seller_open'); });
+$('fsClose').onclick = () => fsDlg.close();
+fsDlg.addEventListener('click', e => { if (e.target === fsDlg) fsDlg.close(); });
+// A notice when something on your Wanted list comes up for sale (remembered per browser, so each shows once).
+function fsNotice() {
+  // Wait for the catalog, your collection and (signed in) your own share settings, so your own list isn't news.
+  if (!fsIdx || !CAT || (saveMode !== 'cloud' && saveMode !== 'local') || (saveMode === 'cloud' && !shareLoad.done)) return;
+  const now = []; for (const x of [...CAT.sets, ...CAT.figs]) if (wanted(x) && !has(x)) for (const id of fsShops(x)) now.push(`${x.n}|${id}`);
+  const seen = lsGet('bc-fs-seen'); lsSet('bc-fs-seen', now.slice(0, 3000));
+  if (!Array.isArray(seen)) return; // first visit with this: just remember what's there
+  const old = new Set(seen), fresh = [...new Set(now.filter(k => !old.has(k)).map(k => k.split('|')[0]))];
+  if (!fresh.length) return;
+  const x = findItem(fresh[0]), t = $('toast');
+  t.innerHTML = `<b>${fresh.length === 1 ? `${esc(x.name)} is for sale by a collector` : `${fresh.length} things on your Wanted list just came up for sale`}</b><span class="tms"><button type="button" class="tbtn" data-fsshow="1">Show me</button></span>`;
+  t.classList.add('tally'); t.hidden = false; clearTimeout(toast.t);
+  toast.t = setTimeout(() => { t.hidden = true; t.classList.remove('tally'); }, 9000);
+  track('fs_notice', { items: fresh.length });
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest?.('[data-fsshow]')) return;
+  $('toast').hidden = true; tlOpen = false; listView = 'wanted'; fsOnly = true; prefs.fsOnly = true; limit = PAGE; savePrefs(); render();
+  $('boardHead').scrollIntoView({ behavior: 'smooth' }); track('fs_only', { on: true, from: 'notice' });
+});
 const shDlg = $('shDlg');
 function shOpen() {
   setExportMenu(false);
@@ -3352,7 +3474,7 @@ function shOpen() {
 }
 function shPaint(fill) {
   const on = !!(share?.on && share.id);
-  if (fill) { $('shName').value = share?.name || ''; $('shPlace').value = share?.place || ''; $('shIg').value = share?.ig ? '@' + share.ig : ''; $('shContact').value = share?.contact || ''; $('shIdx').checked = !!share?.idx; }
+  if (fill) { $('shName').value = share?.name || ''; $('shPlace').value = share?.place || ''; $('shIg').value = share?.ig ? '@' + share.ig : ''; $('shContact').value = share?.contact || ''; $('shIdx').checked = !!share?.idx; $('shFind').checked = !!share?.find; shCtyFill(share?.cty ?? CTY_FOR_LOC[priceRegion()] ?? ''); }
   $('shLinkBox').hidden = !on; $('shStopP').hidden = !on;
   $('shGo').textContent = on ? 'Save changes' : 'Create my link';
   if (!on) return;
@@ -3362,7 +3484,7 @@ function shPaint(fill) {
 }
 function shRead() {
   const t = (id, max) => $(id).value.replace(/\s+/g, ' ').trim().slice(0, max);
-  return { name: t('shName', 40), place: t('shPlace', 60), ig: t('shIg', 60).replace(/^.*instagram\.com\//i, '').replace(/^@+/, '').replace(/[^A-Za-z0-9._]/g, '').slice(0, 30), contact: t('shContact', 200), idx: $('shIdx').checked };
+  return { name: t('shName', 40), place: t('shPlace', 60), ig: t('shIg', 60).replace(/^.*instagram\.com\//i, '').replace(/^@+/, '').replace(/[^A-Za-z0-9._]/g, '').slice(0, 30), contact: t('shContact', 200), idx: $('shIdx').checked, find: $('shFind').checked, cty: $('shCty').value };
 }
 $('shGo').onclick = async () => {
   const f = shRead();
@@ -3373,7 +3495,7 @@ $('shGo').onclick = async () => {
     await db.doc(`data/users/${uid}/share`).set(next);
     share = next; await sharePublish(true); shPaint(true);
     toast(first ? 'Your link is ready: copy it and share it anywhere' : 'Saved');
-    track('share_sale', { action: first ? 'create' : 'save', copies: saleCopies(), ig: !!f.ig, contact: !!f.contact, search: !!f.idx });
+    track('share_sale', { action: first ? 'create' : 'save', copies: saleCopies(), ig: !!f.ig, contact: !!f.contact, search: !!f.idx, find: !!f.find, cty: f.cty || 'none' });
   } catch (e) { console.warn('share', e); toast('Couldn’t save that. Try again.'); }
   finally { $('shGo').disabled = false; }
 };
@@ -3381,7 +3503,7 @@ $('shStop').onclick = async () => {
   if (!share?.on || !share.id) return;
   try {
     await db.doc(`shops/${share.id}`).delete();
-    share = { name: share.name || '', place: share.place || '', ig: share.ig || '', contact: share.contact || '', idx: !!share.idx, on: false };
+    share = { name: share.name || '', place: share.place || '', ig: share.ig || '', contact: share.contact || '', idx: !!share.idx, find: !!share.find, cty: share.cty || '', on: false };
     await db.doc(`data/users/${uid}/share`).set(share);
     shareLast = ''; shPaint(); toast('Sharing stopped. That link no longer works.'); track('share_sale', { action: 'stop' });
   } catch (e) { console.warn('share stop', e); toast('Couldn’t stop sharing. Try again.'); }
@@ -3989,6 +4111,11 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.31', date: '13 November 2026', title: 'Find the sets you want', items: [
+    ['For sale by collectors', 'when another collector has a set from your Wanted list on their shared sale or trade list, you’ll see “for sale” beside it. Tap it for the condition, price and where they are, then open their list to message them. Sellers in your country come first.'],
+    ['For sale switch', 'on your Wanted list, tap For sale to see only what collectors have for sale or trade. We’ll also let you know when something you want comes up.'],
+    ['Let collectors find your list', 'selling or trading? In the share box, pick your country and turn on “Let collectors who want these sets find my list”. Off unless you turn it on.'],
+  ] },
   { v: '0.30', date: '13 November 2026', title: 'A home for your collection', items: [
     ['A new home page', 'see popular sets, what’s retiring soon and what’s new this year, jump to a theme or brand, and select “I own it” right there. Your collection now lives in My collection.'],
     ['A page for every set', 'pictures, pieces, minifigures and whether it’s retiring, with I own it and I want it buttons. Tap the page icon beside a set in My collection to open it, or browse All sets by theme and brand.'],
@@ -4319,6 +4446,7 @@ fetch('/catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return 
   Object.values(fi).forEach(s => s.classList.toggle('set-on', s.value !== '' && s.value !== 'all'));
   render();
   linkAction();
+  fsNotice();
 }).catch(err => { console.warn(err); $('empty').innerHTML = '<h3>The catalog didn’t load</h3><p>Reload the page to try again.</p>'; });
 
 (async () => {
@@ -4352,6 +4480,9 @@ fetch('/catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return 
     for (const d of snap.docs) { const v = d.data() || {}; catDocs.set(d.id, { brand: v.brand || d.id, items: v.items || {} }); }
     applyExtras(); render();
   }, err => console.warn('catalog', err));
+  db.doc('meta/forsale').onSnapshot(snap => {
+    fsIdx = snap.exists ? (snap.data() || null) : null; render(); fsNotice();
+  }, err => console.warn('for sale', err));
   db.doc('meta/rates').onSnapshot(snap => {
     if (snap.exists) { const v = snap.data(); if (v?.rates) { rates = { ...v, rates: { ...BASE_RATES.rates, ...v.rates } }; fmtCache.clear(); paintCurrency(); render(); } }
     refreshRates();
@@ -4367,7 +4498,7 @@ fetch('/catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return 
       if (snap.exists) loadPersonal(snap.data().items);
       else { const local = lsGet('bc-collection'); if (local && Object.keys(local).length) { loadPersonal(local); savePersonal(); toast('Moved the collection saved in this browser to your account'); } }
       impFinishPending();
-      shareLoad();
+      shareLoad().then(() => { render(); fsNotice(); });
       render(); return;
     }
     if (snap.metadata.hasPendingWrites || pWriting || pDirty) return;
