@@ -426,8 +426,24 @@ userPage('/account', 'My account · BrickCollect', 'My account', 'My account',
   $('aOut').onclick = async () => { try { await BC.auth.signOut(); } catch {} try { localStorage.removeItem('bc-acct'); localStorage.removeItem('bc-admin'); } catch {} location.href = '/'; };`);
 
 /* ---------- 404: unknown addresses get the site's page with a way back ---------- */
-write('./404.html', shell({ path: '/404', title: 'Page not found · BrickCollect', desc: '', h1: 'Page not found', crumbs: [], robots: 'noindex', notice: false,
-  body: `<div class="prose"><section class="box"><p>That page doesn’t exist, or the link was copied only in part. Try searching above, or:</p><p class="row"><a class="btn primary" href="/">Home</a><a class="btn" href="/collection">My collection</a><a class="btn" href="/sets">All sets</a></p></section></div>` }));
+// A wall of bricks with one missing (drawn here, brand colours).
+const LOST = (() => {
+  const W = 52, H = 26, cols = ['#1fb3e5', '#5fcff2', '#9fb4c8', '#ff6b57', '#7c8fa6', '#2bbdeb'];
+  let r = '', k = 0;
+  for (let row = 0; row < 4; row++) for (let c = 0; c < 4; c++) {
+    const x = c * W + (row % 2 ? W / 2 : 0) - (row % 2 ? W / 2 : 0) * (c === 0 ? 0 : 0), y = 30 + row * H, gone = row === 1 && c === 2;
+    const xx = c * W + (row % 2 ? 26 : 0);
+    if (gone) { r += `<rect x="${xx + 2}" y="${y + 2}" width="${W - 4}" height="${H - 4}" rx="4" fill="none" stroke="var(--line-2)" stroke-width="2" stroke-dasharray="5 4"/>`; continue; }
+    const col = cols[k++ % cols.length];
+    r += `<rect x="${xx + 2}" y="${y + 2}" width="${W - 4}" height="${H - 4}" rx="4" fill="${col}"/>` + [0, 1].map(s => `<rect x="${xx + 10 + s * 20}" y="${y - 3}" width="12" height="6" rx="2" fill="${col}"/>`).join('');
+  }
+  // the missing brick, fallen to the floor
+  r += `<g transform="translate(190 150) rotate(-14)"><rect x="0" y="0" width="48" height="22" rx="4" fill="#ff6b57"/><rect x="8" y="-5" width="12" height="6" rx="2" fill="#ff6b57"/><rect x="28" y="-5" width="12" height="6" rx="2" fill="#ff6b57"/></g>`;
+  return `<svg class="lost" viewBox="0 0 250 185" role="img" aria-label="A wall of bricks with one missing">${r}<line x1="0" y1="181" x2="250" y2="181" stroke="var(--line-2)" stroke-width="2"/></svg>`;
+})();
+write('./404.html', shell({ path: '/404', title: 'Page not found · BrickCollect', desc: '', h1: 'Page not found', crumbs: [['Page not found', '/404']], robots: 'noindex', notice: false,
+  body: `<div class="prose"><section class="box lostbox">${LOST}<div><h2>This brick’s gone missing</h2><p>That page doesn’t exist, or the link was copied only in part. Try searching above, or:</p><p class="row"><a class="btn primary" href="/">Home</a><a class="btn" href="/collection">My collection</a><a class="btn" href="/sets">All sets</a></p></div></section></div>` }));
+
 
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
