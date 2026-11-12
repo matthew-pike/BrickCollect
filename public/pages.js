@@ -51,6 +51,7 @@
 
   /* Admin in the menu, for accounts that can open it (remembered by the app) */
   if (lsGet('bc-admin')) document.querySelectorAll('.hm-admin').forEach(x => { x.hidden = false; });
+  if (acct) document.querySelectorAll('.hm-in').forEach(x => { x.hidden = false; }); // Sign out, when signed in on this browser
 
   /* ☰ menu */
   const m = document.querySelector('details.hmenu');

@@ -38,7 +38,7 @@ if (!MARK) throw new Error('Logo not found in index.html; update build-pages.mjs
 const MENU = (() => {
   const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<details class="hmenu"[\s\S]*?<nav aria-label="Menu">([\s\S]*?)<\/nav><\/details>/);
   if (!m) throw new Error('Menu not found in index.html; update build-pages.mjs');
-  return m[1].replace('<a href="#" data-hm="showWelcome">', '<a href="/collection#about">');
+  return m[1].replace('<a href="#" data-hm="showWelcome">', '<a href="/collection#about">').replace('<a href="#" data-hm="signOutBtn"', '<a href="/collection#signout"');
 })();
 // The notice bar under the header (e.g. BrickLink is offline) comes from the app too, shown by pages.js.
 const NOTICE = (readFileSync(new URL('index.html', PUB), 'utf8').match(/<section class="notice" id="blNotice"[\s\S]*?<\/section>/) || [''])[0];
@@ -110,6 +110,7 @@ for (const x of sets) {
   if (used.has(p)) { let i = 2; while (used.has(`${p}-${i}`)) i++; p = `${p}-${i}`; }
   used.add(p); x.path = `/set/${p}`;
 }
+{ const dup = sets.filter(x => /-\d+$/.test(x.path) && x.brand !== 'LEGO' && !x.path.endsWith(slug(x.disp))); if (dup.length) console.warn(`::warning title=Set pages::${dup.length} other-brand sets share an address with another set and got a -2 ending; My collection's link for them goes to the first one: ${dup.slice(0, 5).map(x => x.n).join(', ')}`); }
 const shownNum = x => x.disp || (x.brand === 'LEGO' ? x.n.replace(/-1$/, '') : x.n);
 const imgUrl = x => x.img || (x.brand === 'LEGO' ? `https://cdn.rebrickable.com/media/sets/${encodeURIComponent(x.n.toLowerCase())}.jpg` : '');
 const figImg = f => `https://cdn.rebrickable.com/media/sets/${encodeURIComponent(f.n.toLowerCase())}.jpg`;
@@ -423,6 +424,10 @@ userPage('/account', 'My account · BrickCollect', 'My account', 'My account',
   try { const s = await BC.db.doc('data/users/' + uid + '/share').get(); const v = s.exists ? s.data() : null;
     $('aShare').innerHTML = v && v.on && v.id ? 'Shared at <a href="/sale/' + v.id + '">brickcollect.app/sale/' + v.id + '</a>' + (v.idx ? ' · search engines can find it' : ' · hidden from search engines') + '.' : 'Not shared yet.'; } catch (e) { console.warn(e); }
   $('aOut').onclick = async () => { try { await BC.auth.signOut(); } catch {} try { localStorage.removeItem('bc-acct'); localStorage.removeItem('bc-admin'); } catch {} location.href = '/'; };`);
+
+/* ---------- 404: unknown addresses get the site's page with a way back ---------- */
+write('./404.html', shell({ path: '/404', title: 'Page not found · BrickCollect', desc: '', h1: 'Page not found', crumbs: [], robots: 'noindex', notice: false,
+  body: `<div class="prose"><section class="box"><p>That page doesn’t exist, or the link was copied only in part. Try searching above, or:</p><p class="row"><a class="btn primary" href="/">Home</a><a class="btn" href="/collection">My collection</a><a class="btn" href="/sets">All sets</a></p></section></div>` }));
 
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
