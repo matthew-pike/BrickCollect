@@ -357,6 +357,13 @@ const tagList = (tags, max = 99) => (tags || []).length ? `<p class="post-tags">
 const newsImg = s => s.img || (byNum.get(s.n) && imgUrl(byNum.get(s.n))) || `https://cdn.rebrickable.com/media/sets/${encodeURIComponent(s.n.toLowerCase())}.jpg`;
 const NOIMG = `onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'noimg',title:'No picture yet'}))"`;
 const leadImg = a => (a.sets || []).length ? newsImg(a.sets[0]) : '';
+// Article page picture: one set → a single picture; several sets → a slideshow of every set's picture
+// (swipe on phones, ‹ › buttons and dots elsewhere; a picture that fails to load drops out of the show).
+const articlePics = a => { const sets = a.sets || []; if (!sets.length) return '';
+  if (sets.length === 1) return `<div class="article-pic"><img src="${esc(newsImg(sets[0]))}" alt="${esc(sets[0].name)}" width="640" height="480" onerror="this.parentNode.remove()"></div>`;
+  return `<div class="slides" data-slides aria-roledescription="carousel" aria-label="Pictures of the sets"><div class="slides-track" tabindex="0">${sets.map((x, i) => `<figure class="slide" data-cap="${esc(`${x.name} (${x.n.replace(/-1$/, '')})`)}"><img src="${esc(newsImg(x))}" alt="${esc(x.name)}" width="640" height="480"${i ? ' loading="lazy"' : ''} onerror="var s=this.closest('.slide'),w=s.closest('[data-slides]');s.remove();w&&w.dispatchEvent(new Event('slideschange'))"></figure>`).join('')}</div>
+<button type="button" class="slides-btn prev" aria-label="Previous picture">‹</button><button type="button" class="slides-btn next" aria-label="Next picture">›</button>
+<p class="slides-cap"><span class="slides-name"></span><span class="slides-dots"></span></p></div>`; };
 const newsCard = a => { const pic = leadImg(a);
   return `<article class="post${pic ? '' : ' nopic'}">${pic ? `<a class="post-pic" href="${esc(a.path)}" tabindex="-1" aria-hidden="true"><img src="${esc(pic)}" alt="" loading="lazy" width="360" height="270" ${NOIMG}></a>` : ''}
 <div class="post-body"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><h2><a href="${esc(a.path)}">${esc(a.title)}</a></h2><p class="post-intro">${esc(a.intro.replace(/\.$/, ''))}</p>${tagList(a.tags, 6)}
@@ -435,7 +442,7 @@ if (UPDATES.length) {
     const lead = leadImg(a);
     write(`.${a.path}.html`, shell({ path: a.path, title: `${a.title} | BrickCollect`, h1: esc(a.title), img: lead, crumbs: [['Blog', '/blog'], [a.title, a.path]],
       desc: a.intro,
-      body: `<article class="post-page"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro.replace(/\.$/, ''))}</p><div class="article-row">${lead ? `<div class="article-pic"><img src="${esc(lead)}" alt="${esc(a.sets[0].name)}" width="640" height="480" onerror="this.parentNode.remove()"></div>` : ''}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div></div>
+      body: `<article class="post-page"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro.replace(/\.$/, ''))}</p><div class="article-row">${articlePics(a)}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div></div>
 ${(a.sets || []).length ? `<section class="hsec"><div class="hhead"><h2>The sets</h2>${a.theme ? `<a href="${esc(themePath(a.theme))}">All LEGO ${esc(a.theme)} sets →</a>` : ''}</div><div class="cards">${a.sets.map(newsSet).join('')}</div></section>` : ''}
 ${tagList(a.tags)}
 ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join(', ')}</p>` : ''}</article>` }));

@@ -247,3 +247,27 @@
   addEventListener('pageshow', paint);
   paint();
 })();
+
+// Article slideshow (/news/<slug>): ‹ › buttons, dots and the caption follow the picture in view; swipe works natively.
+document.querySelectorAll('[data-slides]').forEach(w => {
+  const track = w.querySelector('.slides-track'), name = w.querySelector('.slides-name'), dots = w.querySelector('.slides-dots');
+  const prev = w.querySelector('.prev'), next = w.querySelector('.next');
+  const slides = () => [...track.querySelectorAll('.slide')];
+  const cur = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+  const go = i => { const l = slides(); i = Math.max(0, Math.min(l.length - 1, i)); track.scrollTo({ left: i * track.clientWidth }); };
+  const paint = () => { const l = slides(), i = Math.min(cur(), l.length - 1);
+    if (!l.length) { w.remove(); return; }
+    w.classList.toggle('one', l.length < 2);
+    name.textContent = l[i] ? l[i].dataset.cap : '';
+    if (dots.children.length !== l.length) dots.innerHTML = l.map((_, k) => `<button type="button" aria-label="Picture ${k + 1} of ${l.length}"></button>`).join('');
+    [...dots.children].forEach((d, k) => d.setAttribute('aria-current', k === i ? 'true' : 'false'));
+    prev.disabled = i <= 0; next.disabled = i >= l.length - 1; };
+  prev.addEventListener('click', () => go(cur() - 1));
+  next.addEventListener('click', () => go(cur() + 1));
+  dots.addEventListener('click', e => { const b = e.target.closest('button'); if (b) go([...dots.children].indexOf(b)); });
+  track.addEventListener('keydown', e => { if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur() - 1); } if (e.key === 'ArrowRight') { e.preventDefault(); go(cur() + 1); } });
+  let t; track.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(paint, 60); }, { passive: true });
+  w.addEventListener('slideschange', paint);
+  addEventListener('resize', paint);
+  paint();
+});
