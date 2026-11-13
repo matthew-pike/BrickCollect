@@ -352,6 +352,11 @@ select.set-on{border-color:var(--accent)}
 .table-scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:1000px}
 th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:left;padding:10px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+/* Column widths: Set name and Subtheme share the spare room 3:2; every other column is only as wide as its content. */
+th{width:1%}
+th.w-name{width:30%}
+th.w-sub{width:20%}
+td.c-own,td.c-img,td.c-cond,td.c-brand,td.c-num,td.c-bl,td.c-yr,td.c-pcs,td.c-used,td.c-new,td.c-my,td.c-links{white-space:nowrap}
 th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{color:var(--fg)}
 th .arr{color:var(--accent)}
@@ -386,7 +391,7 @@ tr.fromset .nm::after{white-space:nowrap;display:inline-block;content:"IN YOUR S
 .num{text-align:right}
 .mono{font-family:var(--font-mono);font-size:12.5px}
 .muted{color:var(--muted)}
-.nm{font-weight:500;min-width:220px}
+.nm{font-weight:500;min-width:200px;overflow-wrap:anywhere}
 .nm small{display:block;font-weight:400;color:var(--faint);font-size:11.5px}
 .retb{display:inline-grid;place-items:center;vertical-align:1px;margin-left:5px;min-width:16px;height:16px;padding:0 2px;box-sizing:border-box;font-family:var(--font-mono);font-size:10px;font-weight:700;line-height:1;padding-top:1px;border-radius:4px;border:1px solid var(--faint);color:var(--muted);white-space:nowrap;cursor:pointer}
 .retb:hover{border-color:var(--accent);color:var(--accent)}
@@ -395,9 +400,9 @@ tr.fromset .nm::after{white-space:nowrap;display:inline-block;content:"IN YOUR S
 #rows .c-yr,#rows .c-num{white-space:nowrap}
 .retb.soon{border-color:var(--coral);color:var(--coral)}
 .sub{color:var(--accent);font-weight:500}
-td.sub{min-width:150px}
+td.sub{min-width:150px;overflow-wrap:anywhere}
 .sub small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
-.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;max-width:260px}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;max-width:100%}
 .tagchip{display:inline-flex;align-items:center;border:1px solid var(--line-2);background:var(--panel-2);border-radius:999px;font-size:11px;line-height:1;overflow:hidden}
 .tagbtn{all:unset;cursor:pointer;padding:3px 8px;color:var(--muted);max-width:16ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tagbtn:hover{color:var(--accent)}
@@ -2217,8 +2222,9 @@ function render() {
   if (fi.ret.value === 'S' && kind === 'sets') { const ex = x => Date.parse((shared.get(x.n) || {}).exit || '') || Infinity; rows.sort((a, b) => ex(a) - ex(b)); }
 
   const tipOf = c => c.tip ? `<button type="button" class="tip" data-tip="${esc(c.tip)}" aria-label="What is this?">i</button>` : '';
+  const wOf = c => c.key === 'name' ? ' w-name' : c.key === 'sub' ? ' w-sub' : '';
   $('headRow').innerHTML = COLS().map(c => !c.key ? `<th class="${c.cls || ''}">${c.label}${tipOf(c)}</th>`
-    : `<th class="sortable ${c.cls || ''}" data-sort="${c.key}" tabindex="0" aria-sort="${sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${c.label} ${sort.key === c.key ? `<span class="arr">${sort.dir === 'asc' ? '▲' : '▼'}</span>` : ''}${tipOf(c)}</th>`).join('');
+    : `<th class="sortable ${c.cls || ''}${wOf(c)}" data-sort="${c.key}" tabindex="0" aria-sort="${sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${c.label} ${sort.key === c.key ? `<span class="arr">${sort.dir === 'asc' ? '▲' : '▼'}</span>` : ''}${tipOf(c)}</th>`).join('');
 
   const sa = $('selAll');
   if (sa) {
