@@ -228,7 +228,7 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .azh{margin:22px 0 10px;font-size:16px;font-weight:600;color:var(--accent)}
 @media (max-width:640px){.az{position:static;gap:3px}.az a,.az span{min-width:26px;height:28px;font-size:12.5px}}
 @media (max-width:640px){.tiles{grid-template-columns:1fr 1fr;gap:8px}.tile{padding:10px 12px}}
-/* Brick updates in blog style: one post per weekly update */
+/* Blog: weekly updates and news: one post per weekly update */
 .posts{display:flex;flex-direction:column;gap:20px;max-width:960px}
 .post{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:24px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
 .post-pic{display:grid;place-items:center;aspect-ratio:4/3;background:#fff;border-radius:10px;overflow:hidden}

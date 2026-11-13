@@ -336,7 +336,7 @@ const updCard = u => { const lead = u.list[0], pic = imgUrl(lead), more = u.list
 <div class="post-body"><p class="post-date">${esc(u.day)}</p><h2><a href="${esc(u.path)}">${esc(updHead(u))}</a></h2><p class="post-intro">${updIntro(u)}</p>
 ${more.length ? `<div class="post-thumbs">${more.map(x => `<a href="${esc(x.path)}" title="${esc(`${shownNum(x)} ${x.name}`)}">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="${esc(x.name)}" loading="lazy" width="64" height="48">` : `<span class="noimg"></span>`}</a>`).join('')}</div>` : ''}
 <a class="post-more" href="${esc(u.path)}">Read more${u.list.length > 1 ? `: all ${u.list.length} sets` : ''} →</a></div></article>`; };
-// Written news posts (public/news.json): shown with the weekly updates on /updates, newest first, each with its own page at /news/<slug>.
+// Written news posts (public/news.json): shown with the weekly updates on /blog, newest first, each with its own page at /news/<slug>.
 const NEWS = (() => { try { return JSON.parse(readFileSync(new URL('news.json', PUB), 'utf8')); } catch { return []; } })()
   .map(a => { const d = new Date(a.date + 'T00:00:00Z'); return { ...a, day: d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }), path: `/news/${a.slug}`, inCat: (a.sets || []).map(s => byNum.get(s.n)).filter(Boolean) }; })
   .sort((a, b) => b.date.localeCompare(a.date));
@@ -393,19 +393,19 @@ write('./index.html', shell({
 <div class="row"><a class="btn primary" href="/collection#signin" id="heroBtn" data-cta="hero">Sign in to view your collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
 ${section('Popular sets', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
 ${section('Retiring soon', '<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon →</a>', retiring)}
-${latestUpdate ? section(`Latest brick updates: ${esc(latestUpdate.title)}`, `<a href="/updates" data-cta="more_updates">All brick updates →</a>`, latestUpdate.list.slice(0, 12)) : section(`New in ${thisYear}`, '', newest)}
+${latestUpdate ? section(`From the blog: ${esc(latestUpdate.title)}`, `<a href="/blog" data-cta="more_updates">Read the blog →</a>`, latestUpdate.list.slice(0, 12)) : section(`New in ${thisYear}`, '', newest)}
 <section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes →</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>
 ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><a href="/sets#brands">All brands →</a></div><div class="ttiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(brandTile).join('')}</div></section>` : ''}
 <div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> added to your collection</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection →</a></div>`,
 }));
 
 if (UPDATES.length) {
-  write('./updates.html', shell({ path: '/updates', title: 'Brick updates: new LEGO sets | BrickCollect', h1: 'Brick updates', crumbs: [['Brick updates', '/updates']],
-    desc: `New LEGO sets as they arrive in BrickCollect, every week. Latest: ${latestUpdate.title}.`,
+  write('./blog.html', shell({ path: '/blog', title: 'Blog: LEGO and Brick news | BrickCollect', h1: 'Blog', crumbs: [['Blog', '/blog']],
+    desc: `LEGO and brick news, and the new sets that arrive in BrickCollect every week. Latest: ${latestUpdate.title}.`,
     body: `<p class="sub">LEGO and Brick news</p><div class="posts">${[...UPDATES.map(u => [u.date, updCard(u)]), ...NEWS.map(a => [a.date, newsCard(a)])].sort((a, b) => b[0].localeCompare(a[0])).map(x => x[1]).join('\n')}</div>` }));
   for (const a of NEWS) {
     const lead = a.inCat.find(imgUrl);
-    write(`.${a.path}.html`, shell({ path: a.path, title: `${a.title} | BrickCollect`, h1: esc(a.title), img: lead ? imgUrl(lead) : '', crumbs: [['Brick updates', '/updates'], [a.title, a.path]],
+    write(`.${a.path}.html`, shell({ path: a.path, title: `${a.title} | BrickCollect`, h1: esc(a.title), img: lead ? imgUrl(lead) : '', crumbs: [['Blog', '/blog'], [a.title, a.path]],
       desc: a.intro,
       body: `<p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro)}</p><div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div>
 ${(a.sets || []).length ? `<section class="hsec"><div class="hhead"><h2>The sets</h2>${a.theme ? `<a href="${esc(themePath(a.theme))}">All LEGO ${esc(a.theme)} sets →</a>` : ''}</div><div class="cards">${a.sets.map(newsSet).join('')}</div></section>` : ''}
@@ -413,7 +413,7 @@ ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(
   }
   for (const u of UPDATES) {
     const groups = new Map(); for (const x of u.list) { const k = x.theme; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
-    write(`.${u.path}.html`, shell({ path: u.path, title: `${u.title}: new LEGO sets | BrickCollect`, h1: esc(updHead(u)), crumbs: [['Brick updates', '/updates'], [u.day, u.path]],
+    write(`.${u.path}.html`, shell({ path: u.path, title: `${u.title}: new LEGO sets | BrickCollect`, h1: esc(updHead(u)), crumbs: [['Blog', '/blog'], [u.day, u.path]],
       desc: `New LEGO sets in BrickCollect on ${u.day}: ${u.list.slice(0, 6).map(x => `${shownNum(x)} ${x.name}`).join(', ')}${u.list.length > 6 ? ' and more' : ''}.`,
       body: `<p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)} Select “I own it” or “I want it” on any set page.</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}` }));
   }
@@ -565,7 +565,7 @@ write('./404.html', shell({ path: '/404', title: 'Page not found · BrickCollect
 
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
-write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/getting-started', '/privacy', '/whats-new', ...(UPDATES.length ? ['/updates', ...UPDATES.map(u => u.path), ...NEWS.map(a => a.path)] : []), ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
+write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/getting-started', '/privacy', '/whats-new', ...(UPDATES.length ? ['/blog', ...UPDATES.map(u => u.path), ...NEWS.map(a => a.path)] : []), ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
 write('./sitemap-sets.xml', urlset(sets.map(x => x.path)));
 const day = now.toISOString().slice(0, 10);
 write('./sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${SITE}/sitemap-pages.xml</loc><lastmod>${day}</lastmod></sitemap>\n  <sitemap><loc>${SITE}/sitemap-sets.xml</loc><lastmod>${day}</lastmod></sitemap>\n</sitemapindex>\n`);
