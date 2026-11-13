@@ -418,7 +418,7 @@ if (UPDATES.length) {
     const lead = leadImg(a);
     write(`.${a.path}.html`, shell({ path: a.path, title: `${a.title} | BrickCollect`, h1: esc(a.title), img: lead, crumbs: [['Blog', '/blog'], [a.title, a.path]],
       desc: a.intro,
-      body: `<article class="post-page"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro.replace(/\.$/, ''))}</p>${lead ? `<div class="article-pic"><img src="${esc(lead)}" alt="${esc(a.sets[0].name)}" width="640" height="480" onerror="this.parentNode.remove()"></div>` : ''}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div>
+      body: `<article class="post-page"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro.replace(/\.$/, ''))}</p><div class="article-row">${lead ? `<div class="article-pic"><img src="${esc(lead)}" alt="${esc(a.sets[0].name)}" width="640" height="480" onerror="this.parentNode.remove()"></div>` : ''}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div></div>
 ${(a.sets || []).length ? `<section class="hsec"><div class="hhead"><h2>The sets</h2>${a.theme ? `<a href="${esc(themePath(a.theme))}">All LEGO ${esc(a.theme)} sets →</a>` : ''}</div><div class="cards">${a.sets.map(newsSet).join('')}</div></section>` : ''}
 ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join(', ')}</p>` : ''}</article>` }));
   }
