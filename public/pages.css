@@ -84,7 +84,7 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 .foot-label{color:var(--fg);font-weight:500}
 .foot-site a{color:var(--accent);text-decoration:none}
 .foot-site a:hover{text-decoration:underline;text-underline-offset:3px}
-.foot-src{margin:0;display:flex;gap:6px 18px;flex-wrap:wrap;font-size:12.5px;padding-top:12px;border-top:1px solid var(--line)}
+.foot-src{margin:12px 0 4px;display:flex;gap:6px 18px;flex-wrap:wrap;font-size:12.5px;padding-top:22px;border-top:1px solid var(--line)}
 .foot-src span:empty{display:none}
 .fine{margin:0;font-size:11.5px;color:var(--faint);max-width:none}
 .notice{display:flex;align-items:center;gap:10px;margin-top:16px;padding:7px 40px 7px 10px;border-radius:10px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 12%,var(--panel));position:relative}
