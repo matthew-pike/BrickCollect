@@ -329,7 +329,9 @@ const UPDATES = (() => { try { return JSON.parse(readFileSync(new URL('updates.j
     const d = new Date(u.date + 'T00:00:00Z'), day = d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
     const themesIn = [...new Set(list.map(x => x.theme))];
     const title = `${list.length} new set${list.length === 1 ? '' : 's'} · ${d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', timeZone: 'UTC' })}`;
-    return { ...u, list, day, title, themesIn, path: `/update/${u.date}` };
+    const c = new Map(); for (const x of list) c.set(x.theme, (c.get(x.theme) || 0) + 1);
+    const tags = ['New sets', ...[...c].sort((a, b) => b[1] - a[1]).map(([t]) => t)];
+    return { ...u, list, day, title, themesIn, tags, path: `/update/${u.date}` };
   }).filter(u => u.list.length).sort((a, b) => b.date.localeCompare(a.date));
 const latestUpdate = UPDATES[0] || null;
 // Blog style: each weekly update is a post with a date, a headline, a short intro, a lead picture and thumbnails.
@@ -339,13 +341,17 @@ const updHead = u => { const t = updThemes(u); return `New sets: ${t.slice(0, 4)
 const updIntro = u => `${u.list.length === 1 ? 'One new set' : `${u.list.length} new sets`} arrived in BrickCollect this week. The biggest is <a href="${esc(u.list[0].path)}">${esc(shownNum(u.list[0]))} ${esc(u.list[0].name)}</a>${u.list[0].pieces ? ` (${fmt(u.list[0].pieces)} pieces)` : ''}`;
 const updCard = u => { const lead = u.list[0], pic = imgUrl(lead), more = u.list.slice(1, 11);
   return `<article class="post"><a class="post-pic" href="${esc(u.path)}" tabindex="-1" aria-hidden="true">${pic ? `<img src="${esc(pic)}" alt="" loading="lazy" width="360" height="270">` : '<span class="noimg"></span>'}</a>
-<div class="post-body"><p class="post-date">${esc(u.day)}</p><h2><a href="${esc(u.path)}">${esc(updHead(u))}</a></h2><p class="post-intro">${updIntro(u)}</p>
+<div class="post-body"><p class="post-date">${esc(u.day)}</p><h2><a href="${esc(u.path)}">${esc(updHead(u))}</a></h2><p class="post-intro">${updIntro(u)}</p>${tagList(u.tags, 6)}
 ${more.length ? `<div class="post-thumbs">${more.map(x => `<a href="${esc(x.path)}" title="${esc(`${shownNum(x)} ${x.name}`)}">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="${esc(x.name)}" loading="lazy" width="64" height="48">` : `<span class="noimg"></span>`}</a>`).join('')}</div>` : ''}
 <a class="btn post-more" href="${esc(u.path)}">Read more${u.list.length > 1 ? `: all ${u.list.length} sets` : ''} →</a></div></article>`; };
 // Written news posts (public/news.json): shown with the weekly updates on /blog, newest first, each with its own page at /news/<slug>.
 const NEWS = (() => { try { return JSON.parse(readFileSync(new URL('news.json', PUB), 'utf8')); } catch { return []; } })()
-  .map(a => { const d = new Date(a.date + 'T00:00:00Z'); return { ...a, day: d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }), path: `/news/${a.slug}`, inCat: (a.sets || []).map(s => byNum.get(s.n)).filter(Boolean) }; })
+  .map(a => { const d = new Date(a.date + 'T00:00:00Z'); return { ...a, day: d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }), path: `/news/${a.slug}`, tags: [...new Set(a.tags || [])], inCat: (a.sets || []).map(s => byNum.get(s.n)).filter(Boolean) }; })
   .sort((a, b) => b.date.localeCompare(a.date));
+// Tags: weekly updates get "New sets" plus each theme in them (most sets first); news posts list theirs in news.json ("tags").
+// Every tag has its own page at /blog/tag/<tag>, listing the posts with that tag, newest first.
+const tagPath = t => `/blog/tag/${slug(t)}`;
+const tagList = (tags, max = 99) => (tags || []).length ? `<p class="post-tags">${tags.slice(0, max).map(t => `<a class="tag" href="${esc(tagPath(t))}">${esc(t)}</a>`).join('')}${tags.length > max ? `<span class="tag more">+${tags.length - max}</span>` : ''}</p>` : '';
 // News set pictures: the set's own "img" in news.json, else its catalog picture, else Rebrickable's picture address,
 // which starts working as soon as Rebrickable adds the set (before our weekly catalog refresh). A missing picture falls back quietly.
 const newsImg = s => s.img || (byNum.get(s.n) && imgUrl(byNum.get(s.n))) || `https://cdn.rebrickable.com/media/sets/${encodeURIComponent(s.n.toLowerCase())}.jpg`;
@@ -353,7 +359,7 @@ const NOIMG = `onerror="this.replaceWith(Object.assign(document.createElement('s
 const leadImg = a => (a.sets || []).length ? newsImg(a.sets[0]) : '';
 const newsCard = a => { const pic = leadImg(a);
   return `<article class="post${pic ? '' : ' nopic'}">${pic ? `<a class="post-pic" href="${esc(a.path)}" tabindex="-1" aria-hidden="true"><img src="${esc(pic)}" alt="" loading="lazy" width="360" height="270" ${NOIMG}></a>` : ''}
-<div class="post-body"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><h2><a href="${esc(a.path)}">${esc(a.title)}</a></h2><p class="post-intro">${esc(a.intro.replace(/\.$/, ''))}</p>
+<div class="post-body"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><h2><a href="${esc(a.path)}">${esc(a.title)}</a></h2><p class="post-intro">${esc(a.intro.replace(/\.$/, ''))}</p>${tagList(a.tags, 6)}
 ${(a.sets || []).length > 1 ? `<div class="post-thumbs">${a.sets.slice(1, 11).map(x => `<a href="${esc(a.path)}" title="${esc(`${x.n.replace(/-1$/, '')} ${x.name}`)}"><img src="${esc(newsImg(x))}" alt="${esc(x.name)}" loading="lazy" width="64" height="48" ${NOIMG}></a>`).join('')}</div>` : ''}
 <a class="btn post-more" href="${esc(a.path)}">Read more →</a></div></article>`; };
 const newsSet = s => { const x = byNum.get(s.n); const num = s.n.replace(/-1$/, ''), pic = `<img src="${esc(newsImg(s))}" alt="" loading="lazy" width="72" height="54" ${NOIMG}>`, text = `<span class="cb"><span class="cn">${esc(s.name)}</span><span class="cm">${esc(num)} · ${fmt(s.pieces)} pcs · out ${esc(s.out)}</span></span>`;
@@ -410,23 +416,35 @@ ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><
 <div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> added to your collection</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection →</a></div>`,
 }));
 
+// Every post on /blog (weekly updates and news), newest first, and the tags they use.
+const ALL_POSTS = [...UPDATES.map(u => ({ date: u.date, title: updHead(u), tags: u.tags, html: updCard(u) })), ...NEWS.map(a => ({ date: a.date, title: a.title, tags: a.tags, html: newsCard(a) }))].sort((a, b) => b.date.localeCompare(a.date));
+const TAGS = new Map();
+for (const p of ALL_POSTS) for (const t of p.tags || []) { const k = slug(t); if (!TAGS.has(k)) TAGS.set(k, { name: t, posts: [] }); TAGS.get(k).posts.push(p); }
+// The tag bar on /blog and the tag pages: every tag, most posts first (the current one highlighted).
+const tagBar = cur => TAGS.size ? `<nav class="tagbar" aria-label="Tags">${[...TAGS].sort((a, b) => b[1].posts.length - a[1].posts.length || a[1].name.localeCompare(b[1].name)).map(([k, { name, posts }]) => `<a class="tag${k === cur ? ' on' : ''}" href="${esc(tagPath(name))}"${k === cur ? ' aria-current="page"' : ''}>${esc(name)} <span>${posts.length}</span></a>`).join('')}</nav>` : '';
 if (UPDATES.length) {
   write('./blog.html', shell({ path: '/blog', title: 'Blog: LEGO and Brick news | BrickCollect', h1: 'Blog', crumbs: [['Blog', '/blog']],
     desc: `LEGO and brick news, and the new sets that arrive in BrickCollect every week. Latest: ${latestUpdate.title}.`,
-    body: `<div class="posts">${[...UPDATES.map(u => [u.date, updCard(u)]), ...NEWS.map(a => [a.date, newsCard(a)])].sort((a, b) => b[0].localeCompare(a[0])).map(x => x[1]).join('\n')}</div>` }));
+    body: `${tagBar()}<div class="posts">${ALL_POSTS.map(p => p.html).join('\n')}</div>` }));
+  for (const [k, { name, posts }] of TAGS) {
+    write(`.${tagPath(name)}.html`, shell({ path: tagPath(name), title: `${name}: BrickCollect blog`, h1: esc(name), crumbs: [['Blog', '/blog'], [name, tagPath(name)]],
+      desc: `BrickCollect blog posts tagged ${name}: ${posts.slice(0, 3).map(p => p.title).join('; ')}.`,
+      body: `<p class="sub">${posts.length} post${posts.length === 1 ? '' : 's'} · <a href="/blog">All posts</a></p>${tagBar(k)}<div class="posts">${posts.map(p => p.html).join('\n')}</div>` }));
+  }
   for (const a of NEWS) {
     const lead = leadImg(a);
     write(`.${a.path}.html`, shell({ path: a.path, title: `${a.title} | BrickCollect`, h1: esc(a.title), img: lead, crumbs: [['Blog', '/blog'], [a.title, a.path]],
       desc: a.intro,
       body: `<article class="post-page"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro.replace(/\.$/, ''))}</p><div class="article-row">${lead ? `<div class="article-pic"><img src="${esc(lead)}" alt="${esc(a.sets[0].name)}" width="640" height="480" onerror="this.parentNode.remove()"></div>` : ''}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div></div>
 ${(a.sets || []).length ? `<section class="hsec"><div class="hhead"><h2>The sets</h2>${a.theme ? `<a href="${esc(themePath(a.theme))}">All LEGO ${esc(a.theme)} sets →</a>` : ''}</div><div class="cards">${a.sets.map(newsSet).join('')}</div></section>` : ''}
+${tagList(a.tags)}
 ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join(', ')}</p>` : ''}</article>` }));
   }
   for (const u of UPDATES) {
     const groups = new Map(); for (const x of u.list) { const k = x.theme; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
     write(`.${u.path}.html`, shell({ path: u.path, title: `${u.title}: new LEGO sets | BrickCollect`, h1: esc(updHead(u)), crumbs: [['Blog', '/blog'], [u.day, u.path]],
       desc: `New LEGO sets in BrickCollect on ${u.day}: ${u.list.slice(0, 6).map(x => `${shownNum(x)} ${x.name}`).join(', ')}${u.list.length > 6 ? ' and more' : ''}.`,
-      body: `<article class="post-page"><p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)}. Select “I own it” or “I want it” on any set page</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}</article>` }));
+      body: `<article class="post-page"><p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)}. Select “I own it” or “I want it” on any set page</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}${tagList(u.tags)}</article>` }));
   }
 }
 
@@ -576,7 +594,7 @@ write('./404.html', shell({ path: '/404', title: 'Page not found · BrickCollect
 
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
-write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/getting-started', '/privacy', '/whats-new', ...(UPDATES.length ? ['/blog', ...UPDATES.map(u => u.path), ...NEWS.map(a => a.path)] : []), ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
+write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/getting-started', '/privacy', '/whats-new', ...(UPDATES.length ? ['/blog', ...UPDATES.map(u => u.path), ...NEWS.map(a => a.path), ...[...TAGS.values()].map(t => tagPath(t.name))] : []), ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
 write('./sitemap-sets.xml', urlset(sets.map(x => x.path)));
 const day = now.toISOString().slice(0, 10);
 write('./sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${SITE}/sitemap-pages.xml</loc><lastmod>${day}</lastmod></sitemap>\n  <sitemap><loc>${SITE}/sitemap-sets.xml</loc><lastmod>${day}</lastmod></sitemap>\n</sitemapindex>\n`);

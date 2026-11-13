@@ -251,6 +251,15 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .post-more{font-weight:500;margin-top:auto;align-self:flex-end;padding-top:6px}
 .post.nopic{grid-template-columns:1fr}
 .post-kicker{color:var(--coral)}
+/* Tags: on each post, on the post pages and as a bar at the top of /blog and the tag pages */
+.post-tags,.tagbar{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.tagbar{margin:16px 0 0}
+.post-page .post-tags{margin-top:18px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;line-height:1;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--fg);text-decoration:none;white-space:nowrap}
+a.tag:hover{border-color:var(--accent);color:var(--accent)}
+.tag span{color:var(--muted);font-size:11.5px}
+.tag.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.tag.on span{color:inherit;opacity:.8}
+.tag.more{color:var(--muted)}
 .article{max-width:68ch;margin:0 0 8px;min-width:0}.article p{margin:0 0 14px;line-height:1.65}
 .post-src{margin-top:18px}
 .post-page{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 28px;margin-top:16px}
