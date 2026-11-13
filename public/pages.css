@@ -229,15 +229,15 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 @media (max-width:640px){.az{position:static;gap:3px}.az a,.az span{min-width:26px;height:28px;font-size:12.5px}}
 @media (max-width:640px){.tiles{grid-template-columns:1fr 1fr;gap:8px}.tile{padding:10px 12px}}
 /* Blog: weekly updates and news: one post per weekly update */
-.posts{display:flex;flex-direction:column;gap:20px;max-width:960px}
-.post{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:24px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.posts{display:flex;flex-direction:column;gap:20px}
+.post{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:24px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
 .post-pic{display:grid;place-items:center;aspect-ratio:4/3;background:#fff;border-radius:10px;overflow:hidden}
 .post-pic img{width:100%;height:100%;object-fit:contain}
 .post-body{display:flex;flex-direction:column;gap:10px;min-width:0}
 .post-date{margin:0;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .post h2{margin:0;font-size:22px;line-height:1.25;font-weight:600}
 .post h2 a{color:var(--fg);text-decoration:none}.post h2 a:hover{color:var(--accent)}
-.post-intro,.post-lede{margin:0;color:var(--muted);line-height:1.55;max-width:68ch}
+.post-intro,.post-lede{margin:0;color:var(--muted);line-height:1.55;max-width:90ch}
 .post-lede{margin:0 0 20px;font-size:16px}
 .post-thumbs{display:flex;flex-wrap:wrap;gap:8px}
 .post-thumbs a{width:64px;height:48px;display:grid;place-items:center;background:#fff;border-radius:7px;overflow:hidden;border:1px solid var(--line)}
