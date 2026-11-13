@@ -226,7 +226,8 @@
   const boxes = [...document.querySelectorAll('input[data-own]')];
   if (!boxes.length) return;
   const FREE = 10;
-  const col = () => lsGet('bc-collection') || {};
+  // Signed in: the collection lives in the account, so leftover ticks saved in this browser (from before signing in) aren't shown here.
+  const col = () => (acct ? null : lsGet('bc-collection')) || {};
   const owned = () => Object.entries(col()).filter(([, v]) => v && v.owned);
   const bar = $('tickBar');
   const paint = () => {
