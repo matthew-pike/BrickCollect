@@ -52,7 +52,7 @@ const FOOTER = (() => {
 })();
 const CURS = ['AUD', 'USD', 'EUR', 'GBP', 'CAD', 'NZD', 'JPY', 'CHF'];
 const HEADER = `<header class="top"><div class="wrap">
-<div class="brand"><a href="/" class="brandmark" aria-hidden="true" tabindex="-1">${MARK}</a><div><p class="bname"><a href="/">BrickCollect</a> <span class="beta">BETA</span></p><p class="tag">Collect. Track. Value. Export. In one place.</p></div></div>
+<div class="brand"><a href="/" class="brandmark" aria-hidden="true" tabindex="-1">${MARK}</a><div><p class="bname"><a href="/">BrickCollect</a> <span class="beta">BETA</span></p><p class="tagline">Collect. Track. Value. Export. In one place.</p></div></div>
 <form class="search" action="/collection" role="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input name="q" type="search" placeholder="Search name, set #, subtheme or tag…" autocomplete="off" aria-label="Search by set name, number, subtheme or tag"></form>
 <div class="top-actions">
 <a class="btn acct" id="acctBtn" href="#signin" title="Sign in to save your collection to a free account">Sign in</a>
