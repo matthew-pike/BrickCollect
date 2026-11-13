@@ -329,8 +329,10 @@ const UPDATES = (() => { try { return JSON.parse(readFileSync(new URL('updates.j
   }).filter(u => u.list.length).sort((a, b) => b.date.localeCompare(a.date));
 const latestUpdate = UPDATES[0] || null;
 // Blog style: each weekly update is a post with a date, a headline, a short intro, a lead picture and thumbnails.
-const updHead = u => `${u.list.length} new set${u.list.length === 1 ? '' : 's'}${u.list.length > 1 ? `, led by ${u.list[0].name}` : `: ${u.list[0].name}`}`;
-const updIntro = u => `${u.list.length === 1 ? 'One new set' : `${u.list.length} new sets`} arrived in BrickCollect this week${u.themesIn.length ? `, from ${u.themesIn.slice(0, 5).map(t => `<a href="${esc(themePath(t))}">${esc(t)}</a>`).join(', ')}${u.themesIn.length > 5 ? ' and more' : ''}` : ''}. The biggest is <a href="${esc(u.list[0].path)}">${esc(shownNum(u.list[0]))} ${esc(u.list[0].name)}</a>${u.list[0].pieces ? ` (${fmt(u.list[0].pieces)} pieces)` : ''}.`;
+// Headline: "New sets: Star Wars, Technic, Ninjago and more" (themes with the most new sets first).
+const updThemes = u => { const c = new Map(); for (const x of u.list) c.set(x.theme, (c.get(x.theme) || 0) + 1); return [...c].sort((a, b) => b[1] - a[1]).map(([t]) => t); };
+const updHead = u => { const t = updThemes(u); return `New sets: ${t.slice(0, 4).join(', ')}${t.length > 4 ? ' and more' : ''}`; };
+const updIntro = u => `${u.list.length === 1 ? 'One new set' : `${u.list.length} new sets`} arrived in BrickCollect this week. The biggest is <a href="${esc(u.list[0].path)}">${esc(shownNum(u.list[0]))} ${esc(u.list[0].name)}</a>${u.list[0].pieces ? ` (${fmt(u.list[0].pieces)} pieces)` : ''}.`;
 const updCard = u => { const lead = u.list[0], pic = imgUrl(lead), more = u.list.slice(1, 11);
   return `<article class="post"><a class="post-pic" href="${esc(u.path)}" tabindex="-1" aria-hidden="true">${pic ? `<img src="${esc(pic)}" alt="" loading="lazy" width="360" height="270">` : '<span class="noimg"></span>'}</a>
 <div class="post-body"><p class="post-date">${esc(u.day)}</p><h2><a href="${esc(u.path)}">${esc(updHead(u))}</a></h2><p class="post-intro">${updIntro(u)}</p>
