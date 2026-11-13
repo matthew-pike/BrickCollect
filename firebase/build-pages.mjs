@@ -332,12 +332,12 @@ const latestUpdate = UPDATES[0] || null;
 // Headline: "New sets: Star Wars, Technic, Ninjago and more" (themes with the most new sets first).
 const updThemes = u => { const c = new Map(); for (const x of u.list) c.set(x.theme, (c.get(x.theme) || 0) + 1); return [...c].sort((a, b) => b[1] - a[1]).map(([t]) => t); };
 const updHead = u => { const t = updThemes(u); return `New sets: ${t.slice(0, 4).join(', ')}${t.length > 4 ? ' and more' : ''}`; };
-const updIntro = u => `${u.list.length === 1 ? 'One new set' : `${u.list.length} new sets`} arrived in BrickCollect this week. The biggest is <a href="${esc(u.list[0].path)}">${esc(shownNum(u.list[0]))} ${esc(u.list[0].name)}</a>${u.list[0].pieces ? ` (${fmt(u.list[0].pieces)} pieces)` : ''}.`;
+const updIntro = u => `${u.list.length === 1 ? 'One new set' : `${u.list.length} new sets`} arrived in BrickCollect this week. The biggest is <a href="${esc(u.list[0].path)}">${esc(shownNum(u.list[0]))} ${esc(u.list[0].name)}</a>${u.list[0].pieces ? ` (${fmt(u.list[0].pieces)} pieces)` : ''}`;
 const updCard = u => { const lead = u.list[0], pic = imgUrl(lead), more = u.list.slice(1, 11);
   return `<article class="post"><a class="post-pic" href="${esc(u.path)}" tabindex="-1" aria-hidden="true">${pic ? `<img src="${esc(pic)}" alt="" loading="lazy" width="360" height="270">` : '<span class="noimg"></span>'}</a>
 <div class="post-body"><p class="post-date">${esc(u.day)}</p><h2><a href="${esc(u.path)}">${esc(updHead(u))}</a></h2><p class="post-intro">${updIntro(u)}</p>
 ${more.length ? `<div class="post-thumbs">${more.map(x => `<a href="${esc(x.path)}" title="${esc(`${shownNum(x)} ${x.name}`)}">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="${esc(x.name)}" loading="lazy" width="64" height="48">` : `<span class="noimg"></span>`}</a>`).join('')}</div>` : ''}
-<a class="post-more" href="${esc(u.path)}">Read more${u.list.length > 1 ? `: all ${u.list.length} sets` : ''} →</a></div></article>`; };
+<a class="btn post-more" href="${esc(u.path)}">Read more${u.list.length > 1 ? `: all ${u.list.length} sets` : ''} →</a></div></article>`; };
 // Written news posts (public/news.json): shown with the weekly updates on /blog, newest first, each with its own page at /news/<slug>.
 const NEWS = (() => { try { return JSON.parse(readFileSync(new URL('news.json', PUB), 'utf8')); } catch { return []; } })()
   .map(a => { const d = new Date(a.date + 'T00:00:00Z'); return { ...a, day: d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }), path: `/news/${a.slug}`, inCat: (a.sets || []).map(s => byNum.get(s.n)).filter(Boolean) }; })
@@ -349,9 +349,9 @@ const NOIMG = `onerror="this.replaceWith(Object.assign(document.createElement('s
 const leadImg = a => (a.sets || []).length ? newsImg(a.sets[0]) : '';
 const newsCard = a => { const pic = leadImg(a);
   return `<article class="post${pic ? '' : ' nopic'}">${pic ? `<a class="post-pic" href="${esc(a.path)}" tabindex="-1" aria-hidden="true"><img src="${esc(pic)}" alt="" loading="lazy" width="360" height="270" ${NOIMG}></a>` : ''}
-<div class="post-body"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><h2><a href="${esc(a.path)}">${esc(a.title)}</a></h2><p class="post-intro">${esc(a.intro)}</p>
+<div class="post-body"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><h2><a href="${esc(a.path)}">${esc(a.title)}</a></h2><p class="post-intro">${esc(a.intro.replace(/\.$/, ''))}</p>
 ${(a.sets || []).length > 1 ? `<div class="post-thumbs">${a.sets.slice(1, 11).map(x => `<a href="${esc(a.path)}" title="${esc(`${x.n.replace(/-1$/, '')} ${x.name}`)}"><img src="${esc(newsImg(x))}" alt="${esc(x.name)}" loading="lazy" width="64" height="48" ${NOIMG}></a>`).join('')}</div>` : ''}
-<a class="post-more" href="${esc(a.path)}">Read more →</a></div></article>`; };
+<a class="btn post-more" href="${esc(a.path)}">Read more →</a></div></article>`; };
 const newsSet = s => { const x = byNum.get(s.n); const num = s.n.replace(/-1$/, ''), pic = `<img src="${esc(newsImg(s))}" alt="" loading="lazy" width="72" height="54" ${NOIMG}>`, text = `<span class="cb"><span class="cn">${esc(s.name)}</span><span class="cm">${esc(num)} · ${fmt(s.pieces)} pcs · out ${esc(s.out)}</span></span>`;
   return x ? `<a class="card" href="${esc(x.path)}">${pic}${text}</a>` : `<div class="card">${pic}${text}</div>`; };
 /* ---------- home page (/) ---------- */
@@ -414,7 +414,7 @@ if (UPDATES.length) {
     const lead = leadImg(a);
     write(`.${a.path}.html`, shell({ path: a.path, title: `${a.title} | BrickCollect`, h1: esc(a.title), img: lead, crumbs: [['Blog', '/blog'], [a.title, a.path]],
       desc: a.intro,
-      body: `<article class="post-page"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro)}</p>${lead ? `<div class="article-pic"><img src="${esc(lead)}" alt="${esc(a.sets[0].name)}" width="640" height="480" onerror="this.parentNode.remove()"></div>` : ''}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div>
+      body: `<article class="post-page"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro.replace(/\.$/, ''))}</p>${lead ? `<div class="article-pic"><img src="${esc(lead)}" alt="${esc(a.sets[0].name)}" width="640" height="480" onerror="this.parentNode.remove()"></div>` : ''}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div>
 ${(a.sets || []).length ? `<section class="hsec"><div class="hhead"><h2>The sets</h2>${a.theme ? `<a href="${esc(themePath(a.theme))}">All LEGO ${esc(a.theme)} sets →</a>` : ''}</div><div class="cards">${a.sets.map(newsSet).join('')}</div></section>` : ''}
 ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join(', ')}</p>` : ''}</article>` }));
   }
@@ -422,7 +422,7 @@ ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(
     const groups = new Map(); for (const x of u.list) { const k = x.theme; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
     write(`.${u.path}.html`, shell({ path: u.path, title: `${u.title}: new LEGO sets | BrickCollect`, h1: esc(updHead(u)), crumbs: [['Blog', '/blog'], [u.day, u.path]],
       desc: `New LEGO sets in BrickCollect on ${u.day}: ${u.list.slice(0, 6).map(x => `${shownNum(x)} ${x.name}`).join(', ')}${u.list.length > 6 ? ' and more' : ''}.`,
-      body: `<article class="post-page"><p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)} Select “I own it” or “I want it” on any set page.</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}</article>` }));
+      body: `<article class="post-page"><p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)}. Select “I own it” or “I want it” on any set page</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}</article>` }));
   }
 }
 
