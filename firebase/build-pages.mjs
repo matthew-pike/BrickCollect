@@ -407,7 +407,7 @@ ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><
 if (UPDATES.length) {
   write('./blog.html', shell({ path: '/blog', title: 'Blog: LEGO and Brick news | BrickCollect', h1: 'Blog', crumbs: [['Blog', '/blog']],
     desc: `LEGO and brick news, and the new sets that arrive in BrickCollect every week. Latest: ${latestUpdate.title}.`,
-    body: `<p class="sub">LEGO and Brick news</p><div class="posts">${[...UPDATES.map(u => [u.date, updCard(u)]), ...NEWS.map(a => [a.date, newsCard(a)])].sort((a, b) => b[0].localeCompare(a[0])).map(x => x[1]).join('\n')}</div>` }));
+    body: `<div class="posts">${[...UPDATES.map(u => [u.date, updCard(u)]), ...NEWS.map(a => [a.date, newsCard(a)])].sort((a, b) => b[0].localeCompare(a[0])).map(x => x[1]).join('\n')}</div>` }));
   for (const a of NEWS) {
     const lead = leadImg(a);
     write(`.${a.path}.html`, shell({ path: a.path, title: `${a.title} | BrickCollect`, h1: esc(a.title), img: lead, crumbs: [['Blog', '/blog'], [a.title, a.path]],
