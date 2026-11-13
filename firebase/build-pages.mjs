@@ -414,15 +414,15 @@ if (UPDATES.length) {
     const lead = leadImg(a);
     write(`.${a.path}.html`, shell({ path: a.path, title: `${a.title} | BrickCollect`, h1: esc(a.title), img: lead, crumbs: [['Blog', '/blog'], [a.title, a.path]],
       desc: a.intro,
-      body: `<p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro)}</p>${lead ? `<div class="article-pic"><img src="${esc(lead)}" alt="${esc(a.sets[0].name)}" width="640" height="480" onerror="this.parentNode.remove()"></div>` : ''}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div>
+      body: `<article class="post-page"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro)}</p>${lead ? `<div class="article-pic"><img src="${esc(lead)}" alt="${esc(a.sets[0].name)}" width="640" height="480" onerror="this.parentNode.remove()"></div>` : ''}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div>
 ${(a.sets || []).length ? `<section class="hsec"><div class="hhead"><h2>The sets</h2>${a.theme ? `<a href="${esc(themePath(a.theme))}">All LEGO ${esc(a.theme)} sets →</a>` : ''}</div><div class="cards">${a.sets.map(newsSet).join('')}</div></section>` : ''}
-${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join(', ')}</p>` : ''}` }));
+${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join(', ')}</p>` : ''}</article>` }));
   }
   for (const u of UPDATES) {
     const groups = new Map(); for (const x of u.list) { const k = x.theme; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
     write(`.${u.path}.html`, shell({ path: u.path, title: `${u.title}: new LEGO sets | BrickCollect`, h1: esc(updHead(u)), crumbs: [['Blog', '/blog'], [u.day, u.path]],
       desc: `New LEGO sets in BrickCollect on ${u.day}: ${u.list.slice(0, 6).map(x => `${shownNum(x)} ${x.name}`).join(', ')}${u.list.length > 6 ? ' and more' : ''}.`,
-      body: `<p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)} Select “I own it” or “I want it” on any set page.</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}` }));
+      body: `<article class="post-page"><p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)} Select “I own it” or “I want it” on any set page.</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}</article>` }));
   }
 }
 
