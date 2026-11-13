@@ -369,7 +369,7 @@ const newsCard = a => { const pic = leadImg(a);
 <div class="post-body"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><h2><a href="${esc(a.path)}">${esc(a.title)}</a></h2><p class="post-intro">${esc(a.intro.replace(/\.$/, ''))}</p>${tagList(a.tags, 6)}
 ${(a.sets || []).length > 1 ? `<div class="post-thumbs">${a.sets.slice(1, 11).map(x => `<a href="${esc(a.path)}" title="${esc(`${x.n.replace(/-1$/, '')} ${x.name}`)}"><img src="${esc(newsImg(x))}" alt="${esc(x.name)}" loading="lazy" width="64" height="48" ${NOIMG}></a>`).join('')}</div>` : ''}
 <a class="btn post-more" href="${esc(a.path)}">Read more →</a></div></article>`; };
-const newsSet = s => { const x = byNum.get(s.n); const num = s.n.replace(/-1$/, ''), pic = `<img src="${esc(newsImg(s))}" alt="" loading="lazy" width="72" height="54" ${NOIMG}>`, text = `<span class="cb"><span class="cn">${esc(s.name)}</span><span class="cm">${esc(num)} · ${fmt(s.pieces)} pcs · out ${esc(s.out)}</span></span>`;
+const newsSet = s => { const x = byNum.get(s.n); const num = s.n.replace(/-1$/, ''), pic = `<img src="${esc(newsImg(s))}" alt="" loading="lazy" width="72" height="54" ${NOIMG}>`, text = `<span class="cb"><span class="cn">${esc(s.name)}</span><span class="cm">${esc(num)} · ${fmt(s.pieces)} pcs${s.price ? ` · ${esc(s.price)}` : ''} · out ${esc(s.out)}</span></span>`;
   return x ? `<a class="card" href="${esc(x.path)}">${pic}${text}</a>` : `<div class="card">${pic}${text}</div>`; };
 /* ---------- home page (/) ---------- */
 // The app moves to /collection (My collection); / becomes a page of sets you can tick straight away.

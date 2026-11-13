@@ -9,22 +9,79 @@
       "The wave mixes playsets with display pieces. The new Rebel Y-Wing Starfighter has an all-new cockpit and canopy, and two duel sets recreate famous fights: Luke and Vader in Cloud City, and Anakin and Obi-Wan on Mustafar.",
       "For display shelves there's a buildable Luke Skywalker over 26 cm tall, a Stormtrooper helmet based on the original concept art, a 2 in 1 Darth Vader wall art set, and the A New Hope Movie Poster.",
       "Four of the sets come with a new concept art minifigure, based on the earliest designs for the films: Luke in the Y-Wing, Darth Vader in Duel on Bespin, Han Solo in Mustafar Duel and Princess Leia with the Up-Scaled Luke. The sets also come in new boxes with a 50th anniversary logo.",
-      "Australian prices aren't out yet. The sets show up in BrickCollect as soon as the catalog has them, so you can add them to your Wanted list."
+      "Australian prices run from AU$59.99 for Mustafar Duel to AU$449.99 for the movie poster, with the Y-Wing, Duel on Bespin and the Stormtrooper helmet at AU$119.99 each. The sets show up in BrickCollect as soon as the catalog has them, so you can add them to your Wanted list."
     ],
     "sets": [
-      { "n": "75478-1", "name": "Rebel Y-Wing Starfighter", "pieces": 676, "out": "1 Jan 2027" },
-      { "n": "75480-1", "name": "Duel on Bespin", "pieces": 718, "out": "1 Jan 2027" },
-      { "n": "75470-1", "name": "Mustafar Duel", "pieces": 372, "out": "1 Jan 2027" },
-      { "n": "75482-1", "name": "Up-Scaled Luke Skywalker Minifigure", "pieces": 981, "out": "1 Jan 2027" },
-      { "n": "75495-1", "name": "Stormtrooper (Concept Art) Helmet", "pieces": 832, "out": "1 Jan 2027" },
-      { "n": "75466-1", "name": "Darth Vader 2 in 1 Wall Art", "pieces": 628, "out": "1 Jan 2027" },
-      { "n": "75467-1", "name": "A New Hope Movie Poster", "pieces": 3209, "out": "4 Jan 2027" }
+      {
+        "n": "75478-1",
+        "name": "Rebel Y-Wing Starfighter",
+        "pieces": 676,
+        "out": "1 Jan 2027",
+        "price": "AU$119.99"
+      },
+      {
+        "n": "75480-1",
+        "name": "Duel on Bespin",
+        "pieces": 718,
+        "out": "1 Jan 2027",
+        "price": "AU$119.99"
+      },
+      {
+        "n": "75470-1",
+        "name": "Mustafar Duel",
+        "pieces": 372,
+        "out": "1 Jan 2027",
+        "price": "AU$59.99"
+      },
+      {
+        "n": "75482-1",
+        "name": "Up-Scaled Luke Skywalker Minifigure",
+        "pieces": 981,
+        "out": "1 Jan 2027",
+        "price": "AU$149.99"
+      },
+      {
+        "n": "75495-1",
+        "name": "Stormtrooper (Concept Art) Helmet",
+        "pieces": 832,
+        "out": "1 Jan 2027",
+        "price": "AU$119.99"
+      },
+      {
+        "n": "75466-1",
+        "name": "Darth Vader 2 in 1 Wall Art",
+        "pieces": 628,
+        "out": "1 Jan 2027",
+        "price": "AU$109.99"
+      },
+      {
+        "n": "75467-1",
+        "name": "A New Hope Movie Poster",
+        "pieces": 3209,
+        "out": "4 Jan 2027",
+        "price": "AU$449.99"
+      }
     ],
     "theme": "Star Wars",
-    "tags": ["Star Wars", "New sets", "Star Wars 50th anniversary", "2027 sets"],
+    "tags": [
+      "Star Wars",
+      "New sets",
+      "Star Wars 50th anniversary",
+      "2027 sets"
+    ],
     "sources": [
-      { "title": "Brick Fanatics", "url": "https://www.brickfanatics.com/lego-star-wars-2027-50th-anniversary-sets-revealed" },
-      { "title": "Forbes", "url": "https://www.forbes.com/sites/mattgardner1/2026/11/12/lego-star-wars-reveals-7-new-sets-for-50th-anniversary-in-2027/" }
+      {
+        "title": "Brick Fanatics",
+        "url": "https://www.brickfanatics.com/lego-star-wars-2027-50th-anniversary-sets-revealed"
+      },
+      {
+        "title": "Forbes",
+        "url": "https://www.forbes.com/sites/mattgardner1/2026/11/12/lego-star-wars-reveals-7-new-sets-for-50th-anniversary-in-2027/"
+      },
+      {
+        "title": "The Rambling Brick",
+        "url": "https://ramblingbrick.com/2026/11/13/star-wars-50th-anniversary-first-sets-revealed/"
+      }
     ]
   }
 ]
