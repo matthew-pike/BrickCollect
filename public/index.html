@@ -106,7 +106,7 @@ button,input,select{font:inherit;color:inherit}
 .hmenu nav{position:absolute;right:0;top:calc(100% + 8px);z-index:30;min-width:210px;display:flex;flex-direction:column;padding:6px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);box-shadow:0 12px 32px rgb(0 0 0/.25)}
 .hmenu nav a{padding:10px 12px;border-radius:8px;color:var(--fg);text-decoration:none;font-weight:500;font-size:14px}
 .hmenu nav a:hover{background:var(--panel-2);color:var(--accent)}
-.hmenu nav a.hm-admin{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent)}.hmenu nav a.hm-admin:hover{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent)}
+.hmenu nav a.hm-admin,.hmenu nav a.hm-admin:hover{color:var(--accent)}
 .hmenu nav hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
 /* Page title, like the other pages */
 .pagehead .crumbs{font-size:13px;color:var(--muted)}.pagehead .crumbs a{color:var(--muted);text-decoration:none}.pagehead .crumbs a:hover{color:var(--accent)}.pagehead .sep{margin:0 6px;color:var(--faint)}
@@ -661,12 +661,16 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 .soldbtn.confirm{background:var(--violet);color:#fff}
 .soldbtn:focus-visible{outline:2px solid var(--accent)}
 .myp{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-.mypr{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.myin{width:80px;text-align:right;padding:4px 6px;font-size:12.5px;-moz-appearance:textfield}
+.mypr{position:relative;display:inline-flex;align-items:center;white-space:nowrap}
+th.myh{white-space:normal;line-height:1.35;min-width:72px}
+.mylab{position:absolute;left:7px;top:50%;transform:translateY(-50%);pointer-events:none;z-index:1}
+.mypr.lab .myin{padding-left:36px}
+.mypr.lab .mymix{padding-left:36px;text-align:right}
+.myin{width:84px;box-sizing:border-box;text-align:right;padding:4px 6px;font-size:12.5px;-moz-appearance:textfield}
 .myin::-webkit-inner-spin-button,.myin::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .mypr .code{font-family:var(--font-mono);font-size:11px;color:var(--faint)}
 .myin::placeholder{color:var(--faint)}
-.mymix{font-size:12px;padding:3px 8px;color:var(--accent)}
+.mymix{font-size:12px;padding:4px 8px;width:84px;box-sizing:border-box;color:var(--accent)}
 .lstbtn{all:unset;cursor:pointer;margin-top:4px;text-align:center;font-size:12.5px;font-weight:500;padding:7px 10px;border-radius:8px;border:1px solid var(--line-2);color:var(--accent)}
 .lstbtn:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
 .lstbtn:focus-visible{outline:2px solid var(--accent)}
@@ -2102,9 +2106,9 @@ const COLS = () => [
   ...(fi.brand.value || kind === 'figs' ? [] : [{ key: 'brand', label: 'Brand' }]), { key: 'sub', label: 'Subtheme' },
   { key: 'n', label: kind === 'sets' ? 'Set #' : 'RB #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BL #' }] : []), { key: 'year', label: 'Year' },
   { key: 'pieces', label: 'Pieces', cls: 'num' },
-  { key: 'used', label: `Used ${cur()}`, cls: 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
-  { key: 'new', label: `New ${cur()}`, cls: 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or the brand’s own store price for the other brands (LumiBricks, Pantasy, Reobrix and more). In your currency.` },
-  ...(listView === 'sale' ? [{ key: 'myprice', label: `Your price ${cur()}`, cls: 'num', tip: `What you’re asking for each copy, in ${cur()}. Type to change it: it’s saved straight away and used on your shared page, Copy a post and the BrickLink upload. Left empty, the BrickLink price at your Sell or trade percentage is used (shown greyed). Copies with different prices: click Mixed to set each one in Listing details.` }] : []),
+  { key: 'used', label: listView === 'sale' ? `Used<br>${cur()}` : `Used ${cur()}`, cls: listView === 'sale' ? 'num myh' : 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
+  { key: 'new', label: listView === 'sale' ? `New<br>${cur()}` : `New ${cur()}`, cls: listView === 'sale' ? 'num myh' : 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or the brand’s own store price for the other brands (LumiBricks, Pantasy, Reobrix and more). In your currency.` },
+  ...(listView === 'sale' ? [{ key: 'myprice', label: `Your price<br>${cur()}`, cls: 'num myh', tip: `What you’re asking for each copy, in ${cur()}. Type to change it: it’s saved straight away and used on your shared page, Copy a post and the BrickLink upload. Left empty, the BrickLink price at your Sell or trade percentage is used (shown greyed). Copies with different prices: click Mixed to set each one in Listing details.` }] : []),
   { label: 'Links ↗', cls: 'num', tip: 'Each button opens a new tab. The coloured button opens the set at the brand’s own store (some are affiliate links that support BrickCollect). BL opens it on BrickLink.' },
 ];
 const val = (x, k) => k === 'myprice' ? myPriceSort(x) : k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
@@ -3209,10 +3213,10 @@ function myPriceCell(x) {
   const L = listingsOf(x), conds = CONDS.filter(c => L.some(l => l.c === c)), ab = { new: 'N', used: 'UC', 'used-inc': 'UI' };
   return `<div class="myp">${conds.map(c => {
     const ls = L.filter(l => l.c === c), ps = ls.map(l => lstPrice(l.d)), same = ps.every(v => v === ps[0]);
-    const lab = conds.length > 1 || ls.length > 1 ? `<span class="code" title="${esc(COND[c])}${ls.length > 1 ? `, ${ls.length} copies` : ''}">${ab[c]}${ls.length > 1 ? ` ×${ls.length}` : ''}</span>` : '';
-    if (!same) return `<span class="mypr">${lab}<button class="btn ghost mymix" type="button" data-mymix="${esc(x.n)}" title="These copies have different prices. Click to set each one in Listing details">Mixed</button></span>`;
+    const lab = conds.length > 1 || ls.length > 1 ? `<span class="code mylab" title="${esc(COND[c])}${ls.length > 1 ? `, ${ls.length} copies` : ''}">${ab[c]}${ls.length > 1 ? ` ×${ls.length}` : ''}</span>` : '';
+    if (!same) return `<span class="mypr${lab ? ' lab' : ''}">${lab}<button class="btn ghost mymix" type="button" data-mymix="${esc(x.n)}" title="These copies have different prices. Click to set each one in Listing details">Mixed</button></span>`;
     const sug = lstSuggest(x, c);
-    return `<span class="mypr">${lab}<input class="inp mono myin" type="number" min="0" step="0.01" inputmode="decimal" data-myprice="${esc(x.n)}" data-mc="${c}" value="${ps[0] == null ? '' : ps[0].toFixed(2)}" placeholder="${sug == null ? '—' : sug.toFixed(2)}" aria-label="Your price in ${cur()} for ${esc(x.name)}, ${esc(COND[c])}${ls.length > 1 ? `, each of ${ls.length} copies` : ''}" title="${sug == null ? 'No BrickLink price yet. Type your price' : `Empty: ${sug.toFixed(2)} (BrickLink at ${lstPct()}%) is used. Type your own price`}"></span>`;
+    return `<span class="mypr${lab ? ' lab' : ''}">${lab}<input class="inp mono myin" type="number" min="0" step="0.01" inputmode="decimal" data-myprice="${esc(x.n)}" data-mc="${c}" value="${ps[0] == null ? '' : ps[0].toFixed(2)}" placeholder="${sug == null ? '—' : sug.toFixed(2)}" aria-label="Your price in ${cur()} for ${esc(x.name)}, ${esc(COND[c])}${ls.length > 1 ? `, each of ${ls.length} copies` : ''}" title="${sug == null ? 'No BrickLink price yet. Type your price' : `Empty: ${sug.toFixed(2)} (BrickLink at ${lstPct()}%) is used. Type your own price`}"></span>`;
   }).join('')}</div>`;
 }
 // Sort key: the highest price you're asking for one copy (your own, else the suggested one).
