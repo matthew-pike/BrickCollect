@@ -134,6 +134,30 @@
   /* What's new page: counts as seen, like opening it in the app */
   { const w = document.querySelector('[data-seen]'); if (w) lsSet('bc-seen-version', w.dataset.seen); }
 
+  /* theme and brand pages: Year filter. Hides other years' sets, empty groups and their chips; ?year= keeps it in the address. */
+  { const sel = $('yrSel');
+    if (sel) {
+      const chips = [...document.querySelectorAll('.jump a')].map(a => ({ a, n: a.querySelector('.muted'), id: decodeURIComponent(a.getAttribute('href').slice(1)) }));
+      const apply = (from) => {
+        const y = sel.value; let total = 0;
+        document.querySelectorAll('.cards').forEach(g => {
+          let n = 0; g.querySelectorAll('.card').forEach(c => { const on = !y || c.dataset.y === y; c.hidden = !on; if (on) n++; });
+          total += n; g.hidden = !n; const h = g.previousElementSibling; if (h && h.tagName === 'H2') h.hidden = !n;
+          const ch = h && chips.find(c => c.id === h.id); if (ch) { ch.a.hidden = !n; if (ch.n) ch.n.textContent = n; }
+        });
+        $('yrCount').textContent = y ? `${total.toLocaleString('en-AU')} set${total === 1 ? '' : 's'} from ${y}` : $('yrCount').dataset.all;
+        if ($('yrRange')) $('yrRange').hidden = !!y;
+        sel.classList.toggle('on', !!y);
+        const u = new URL(location.href); if (y) u.searchParams.set('year', y); else u.searchParams.delete('year'); history.replaceState(null, '', u);
+        if (from) track('theme_year', { year: y || 'all', page: location.pathname });
+      };
+      const want = new URLSearchParams(location.search).get('year');
+      if (want && [...sel.options].some(o => o.value === want)) sel.value = want;
+      sel.addEventListener('change', () => apply(true));
+      if (sel.value) apply(false);
+    }
+  }
+
   if (document.querySelector('.az')) document.documentElement.classList.add('has-az'); // /sets: jumps leave room for the A–Z bar
 
   /* Pictures that are missing or don't load (new sets often have none for a few days): a brick and "No picture yet" */

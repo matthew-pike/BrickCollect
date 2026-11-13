@@ -180,7 +180,7 @@ ${h1 ? `<h1>${h1}</h1>\n` : ''}${body}
 `;
 }
 
-const card = x => `<a class="card" href="${esc(x.path)}">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="" loading="lazy" width="72" height="54">` : '<span class="noimg" title="No picture yet"></span>'}<span class="cb"><span class="cn">${esc(x.name)}</span><span class="cm">${esc(shownNum(x))}${x.year ? ` · ${x.year}` : ''}${x.pieces ? ` · ${fmt(x.pieces)} pcs` : ''}</span></span></a>`;
+const card = x => `<a class="card" href="${esc(x.path)}"${x.year ? ` data-y="${x.year}"` : ''}>${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="" loading="lazy" width="72" height="54">` : '<span class="noimg" title="No picture yet"></span>'}<span class="cb"><span class="cn">${esc(x.name)}</span><span class="cm">${esc(shownNum(x))}${x.year ? ` · ${x.year}` : ''}${x.pieces ? ` · ${fmt(x.pieces)} pcs` : ''}</span></span></a>`;
 const byNewest = (a, b) => (b.year || 0) - (a.year || 0) || String(a.n).localeCompare(String(b.n), 'en', { numeric: true });
 
 /* ---------- set pages ---------- */
@@ -278,7 +278,11 @@ function listPage(path, name, list, by, crumbName, intro) {
   const order = [...groups.keys()].sort((a, b) => (a === '') - (b === '') || groups.get(b).length - groups.get(a).length || a.localeCompare(b));
   const ret = list.filter(x => (retState(x) || {}).s === 'S');
   const years = list.map(x => x.year).filter(Boolean);
-  const body = `<p class="sub">${fmt(list.length)} set${list.length === 1 ? '' : 's'}${years.length ? ` · ${Math.min(...years)}–${Math.max(...years)}` : ''}${ret.length ? ` · <span class="pill soon">${ret.length} retiring soon</span>` : ''}</p>
+  // Year filter (pages.js): one option per year with its set count, newest first; ?year= in the address.
+  const yc = new Map(); for (const y of years) yc.set(y, (yc.get(y) || 0) + 1);
+  const yearSel = yc.size > 1 ? `<div class="yrf"><label for="yrSel">Year</label><select id="yrSel" class="yrsel"><option value="">All years</option>${[...yc].sort((a, b) => b[0] - a[0]).map(([y, n]) => `<option value="${y}">${y} (${fmt(n)})</option>`).join('')}</select></div>` : '';
+  const body = `<p class="sub"><span id="yrCount" data-all="${fmt(list.length)} set${list.length === 1 ? '' : 's'}">${fmt(list.length)} set${list.length === 1 ? '' : 's'}</span>${years.length ? `<span id="yrRange"> · ${Math.min(...years)}–${Math.max(...years)}</span>` : ''}${ret.length ? ` · <span class="pill soon">${ret.length} retiring soon</span>` : ''}</p>
+${yearSel}
 ${order.length > 1 ? `<nav class="jump">${order.map(k => `<a href="#${slug(k || 'other')}">${esc(k || 'Other')} <span class="muted">${groups.get(k).length}</span></a>`).join('')}</nav>` : ''}
 ${order.map(k => `${order.length > 1 ? `<h2 id="${slug(k || 'other')}">${esc(k || 'Other')}</h2>` : ''}<div class="cards">${groups.get(k).sort(byNewest).map(card).join('')}</div>`).join('\n')}`;
   write(`.${path}.html`, shell({
