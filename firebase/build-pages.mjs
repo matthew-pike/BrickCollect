@@ -417,7 +417,7 @@ write('./index.html', shell({
 <div class="row"><a class="btn primary" href="/collection#signin" id="heroBtn" data-cta="hero">Sign in to view your collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
 ${section('Popular sets', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
 ${section('Retiring soon', '<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon →</a>', retiring)}
-${latestUpdate ? section(`Latest news`, `<a href="/blog" data-cta="more_updates">Read the blog →</a>`, latestUpdate.list.slice(0, 12)) : section(`New in ${thisYear}`, '', newest)}
+${latestUpdate ? section(`Recently added sets`, '', latestUpdate.list.slice(0, 12)) : section(`New in ${thisYear}`, '', newest)}
 <section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes →</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>
 ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><a href="/sets#brands">All brands →</a></div><div class="ttiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(brandTile).join('')}</div></section>` : ''}
 <div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> added to your collection</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection →</a></div>`,
