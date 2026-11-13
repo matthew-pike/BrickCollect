@@ -328,9 +328,14 @@ const UPDATES = (() => { try { return JSON.parse(readFileSync(new URL('updates.j
     return { ...u, list, day, title, themesIn, path: `/update/${u.date}` };
   }).filter(u => u.list.length).sort((a, b) => b.date.localeCompare(a.date));
 const latestUpdate = UPDATES[0] || null;
-const updCard = u => `<section class="box upd"><div class="hhead"><h2><a href="${esc(u.path)}">${esc(u.title)}</a></h2><a href="${esc(u.path)}">See this update →</a></div>
-<p class="muted">New in BrickCollect on ${esc(u.day)}${u.themesIn.length ? `, from ${u.themesIn.slice(0, 6).map(t => `<a href="${esc(themePath(t))}">${esc(t)}</a>`).join(', ')}${u.themesIn.length > 6 ? ' and more' : ''}` : ''}.</p>
-<div class="cards">${u.list.slice(0, 8).map(card).join('')}</div>${u.list.length > 8 ? `<p><a href="${esc(u.path)}">and ${u.list.length - 8} more →</a></p>` : ''}</section>`;
+// Blog style: each weekly update is a post with a date, a headline, a short intro, a lead picture and thumbnails.
+const updHead = u => `${u.list.length} new set${u.list.length === 1 ? '' : 's'}${u.list.length > 1 ? `, led by ${u.list[0].name}` : `: ${u.list[0].name}`}`;
+const updIntro = u => `${u.list.length === 1 ? 'One new set' : `${u.list.length} new sets`} arrived in BrickCollect this week${u.themesIn.length ? `, from ${u.themesIn.slice(0, 5).map(t => `<a href="${esc(themePath(t))}">${esc(t)}</a>`).join(', ')}${u.themesIn.length > 5 ? ' and more' : ''}` : ''}. The biggest is <a href="${esc(u.list[0].path)}">${esc(shownNum(u.list[0]))} ${esc(u.list[0].name)}</a>${u.list[0].pieces ? ` (${fmt(u.list[0].pieces)} pieces)` : ''}.`;
+const updCard = u => { const lead = u.list[0], pic = imgUrl(lead), more = u.list.slice(1, 7);
+  return `<article class="post"><a class="post-pic" href="${esc(u.path)}" tabindex="-1" aria-hidden="true">${pic ? `<img src="${esc(pic)}" alt="" loading="lazy" width="360" height="270">` : '<span class="noimg"></span>'}</a>
+<div class="post-body"><p class="post-date">${esc(u.day)}</p><h2><a href="${esc(u.path)}">${esc(updHead(u))}</a></h2><p class="post-intro">${updIntro(u)}</p>
+${more.length ? `<div class="post-thumbs">${more.map(x => `<a href="${esc(x.path)}" title="${esc(`${shownNum(x)} ${x.name}`)}">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="${esc(x.name)}" loading="lazy" width="64" height="48">` : `<span class="noimg"></span>`}</a>`).join('')}</div>` : ''}
+<a class="post-more" href="${esc(u.path)}">Read more${u.list.length > 1 ? `: all ${u.list.length} sets` : ''} →</a></div></article>`; };
 /* ---------- home page (/) ---------- */
 // The app moves to /collection (My collection); / becomes a page of sets you can tick straight away.
 {
@@ -386,12 +391,12 @@ ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><
 if (UPDATES.length) {
   write('./updates.html', shell({ path: '/updates', title: 'Brick updates: new LEGO sets | BrickCollect', h1: 'Brick updates', crumbs: [['Brick updates', '/updates']],
     desc: `New LEGO sets as they arrive in BrickCollect, every week. Latest: ${latestUpdate.title}.`,
-    body: `<p class="sub">New sets as they arrive in BrickCollect, every week. Select “I own it” or “I want it” on any set page.</p><div class="prose">${UPDATES.map(updCard).join('\n')}</div>` }));
+    body: `<p class="sub">LEGO and Brick news</p><div class="posts">${UPDATES.map(updCard).join('\n')}</div>` }));
   for (const u of UPDATES) {
     const groups = new Map(); for (const x of u.list) { const k = x.theme; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
-    write(`.${u.path}.html`, shell({ path: u.path, title: `${u.title}: new LEGO sets | BrickCollect`, h1: esc(u.title), crumbs: [['Brick updates', '/updates'], [u.day, u.path]],
+    write(`.${u.path}.html`, shell({ path: u.path, title: `${u.title}: new LEGO sets | BrickCollect`, h1: esc(updHead(u)), crumbs: [['Brick updates', '/updates'], [u.day, u.path]],
       desc: `New LEGO sets in BrickCollect on ${u.day}: ${u.list.slice(0, 6).map(x => `${shownNum(x)} ${x.name}`).join(', ')}${u.list.length > 6 ? ' and more' : ''}.`,
-      body: `<p class="sub">New in BrickCollect on ${esc(u.day)}. Select “I own it” or “I want it” on any set page.</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}` }));
+      body: `<p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)} Select “I own it” or “I want it” on any set page.</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}` }));
   }
 }
 
