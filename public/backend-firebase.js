@@ -50,8 +50,9 @@
     }
     catch (e) { console.warn('Email link sign-in failed:', e.code || e.message); }
     store.set(EMAIL_KEY, null);
-    // Remove the one-time sign-in code from the address bar.
-    history.replaceState(null, '', location.origin + location.pathname + location.hash);
+    // Remove the one-time sign-in code from the address bar. A delete-confirmation link (?del=1) opens Delete again.
+    const del = new URLSearchParams(location.search).get('del') === '1';
+    history.replaceState(null, '', location.origin + location.pathname + (del ? '#delete' : location.hash));
   }
   let current = null;
   // Coming back from a Google redirect sign-in (phones that block popups).
@@ -151,13 +152,25 @@
     async deleteAccount() {
       const u = fauth.currentUser;
       if (!u) throw err('signed_out', 'You’re not signed in.');
-      const fresh = Date.now() - Date.parse(u.metadata.lastSignInTime || 0) < 4 * 60 * 1000;
+      // How long since the last sign-in, by Firebase's own clock (the token's auth_time and issue time), not this device's.
+      let fresh = false;
+      try { const t = await u.getIdTokenResult(true); fresh = Date.parse(t.issuedAtTime) - Date.parse(t.authTime) < 4 * 60 * 1000; } catch { /* treat as not fresh */ }
       if (!fresh) {
         if (u.providerData.some(p => p.providerId === 'google.com')) {
           const p = new fb.auth.GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account', login_hint: u.email || '' });
           try { await u.reauthenticateWithPopup(p); }
-          catch (e) { if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') throw err('cancelled', 'Account not deleted.'); throw e; }
-        } else throw err('recent_login', 'For your security, sign out, sign in again with a new email link, then delete your account within a few minutes.');
+          catch (e) {
+            if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') throw err('cancelled', 'Account not deleted.');
+            if (e.code === 'auth/popup-blocked') throw err('popup_blocked', 'Allow pop-ups for BrickCollect so Google can confirm it’s you, then try again.');
+            throw e;
+          }
+        } else {
+          // Email-link accounts: email a confirmation link that signs in again and comes straight back to Delete.
+          if (!u.email) throw err('recent_login', 'Sign out, sign in again, then delete your account within a few minutes.');
+          await fauth.sendSignInLinkToEmail(u.email, { url: location.origin + '/collection?del=1', handleCodeInApp: true });
+          store.set(EMAIL_KEY, u.email);
+          throw err('link_sent', `To confirm it’s you, we’ve emailed a link to ${u.email}. Open it on this device, then press Delete permanently.`);
+        }
       }
       // A shared sale or trade list (public page) goes too, then its settings.
       try {

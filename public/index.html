@@ -1336,7 +1336,7 @@ function paintCurrency() {
   const note = $('ratesNote'); if (note) note.textContent = c === 'AUD' ? '' : `Prices converted from AUD at ${rates.date} rates`;
 }
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const toast = msg => { const t = $('toast'); t.classList.remove('tally'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2600); };
+const toast = (msg, ms = 2600) => { const t = $('toast'); t.classList.remove('tally'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, ms); };
 // Anonymous usage counts for Google Analytics on the website (no-op elsewhere): what people do, never who they are or what's in their collection.
 const track = (name, params = {}) => { try { if (typeof window.gtag === 'function') window.gtag('event', name, params); } catch { /* ignore */ } };
 let sizeT = null;
@@ -4490,7 +4490,7 @@ $('delGo').onclick = async () => {
     location.reload();
   } catch (e) {
     console.warn('delete account', e);
-    toast(e.message || 'Couldn’t delete your account. Try again.');
+    toast(e.message || 'Couldn’t delete your account. Try again.', e.code === 'link_sent' ? 9000 : undefined);
     btn.disabled = false; btn.textContent = 'Delete permanently';
   }
 };
@@ -4529,6 +4529,8 @@ function linkAction() {
   // From /account: Export, and the account panel (sign out, delete).
   if (location.hash === '#export') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => $('exportBtn').click(), 600); }
   if (location.hash === '#account') { history.replaceState(null, '', location.pathname + location.search); setTimeout(openAuth, 1500); }
+  // From /account's Delete button, or back from the delete-confirmation email link: the account panel with Delete already open.
+  if (location.hash === '#delete') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => { openAuth(); if (uid) { $('delStart').click(); $('delBox').scrollIntoView({ block: 'nearest' }); } }, 1500); }
   // Sign out from the menu on the other pages: sign out here, then back to Home.
   if (location.hash === '#signout') { history.replaceState(null, '', location.pathname + location.search); (async () => { try { await BC.auth.signOut(); } catch {} try { localStorage.removeItem('bc-acct'); localStorage.removeItem('bc-admin'); } catch {} location.replace('/?home'); })(); return; }
   if (location.hash === '#news') { history.replaceState(null, '', location.pathname + location.search); setTimeout(openNews, 300); }
