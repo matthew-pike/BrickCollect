@@ -218,12 +218,14 @@
     const curNow = () => (sel && sel.value) || prefs().currency || detect();
     const loadRates = () => ratesP || (ratesP = get('meta/rates', ['rates', 'date']).then(r => { rates = r; }).catch(() => {}));
     const fmtDay = d => { const t = Date.parse(d || ''); return isNaN(t) ? '' : new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); };
+    // Seller location for prices: the one picked in My collection, else the one for the currency, else worldwide.
+    const regionNow = () => { const want = curNow(), r = (rates && rates.rates) || {}, c = want === 'AUD' || r[want] ? want : 'AUD'; return prefs().region && (LOCS[prefs().region] || prefs().region === 'world') ? prefs().region : (LOC_FOR_CUR[c] || 'world'); };
     const paintPrice = () => {
       if (!item) return;
       const want = curNow(), r = (rates && rates.rates) || {}, c = want === 'AUD' || r[want] ? want : 'AUD', k = c === 'AUD' ? 1 : r[c];
       let f; try { f = new Intl.NumberFormat(undefined, { style: 'currency', currency: c, currencyDisplay: 'narrowSymbol' }); } catch { f = new Intl.NumberFormat(undefined, { style: 'currency', currency: c }); }
       const src = item.priceSource || 'BrickLink', bl = src === 'BrickLink' && !item.manualPrice;
-      const rg = prefs().region && (LOCS[prefs().region] || prefs().region === 'world') ? prefs().region : (LOC_FOR_CUR[c] || 'world');
+      const rg = regionNow();
       const lp = bl && rg !== 'world' ? (item.loc || {})[rg] : null, local = !!(lp && (lp.used != null || lp.new != null));
       const val = fld => local && lp[fld] != null ? lp[fld] : item[fld];
       // Minifigures: each one from sellers in your location when it has a local price, otherwise worldwide.
@@ -257,8 +259,8 @@
       $('priceNote').textContent = !any ? 'No price yet.' : item.manualPrice ? `Value set by BrickCollect${when}` : bl ? `Average of the last 6 months’ sales by sellers ${local ? 'in ' + LOCS[rg] : 'worldwide'} on BrickLink${when}` : `Price on the ${pb.dataset.brand} store${when}`;
       $('priceCur').textContent = c !== 'AUD' && rates && rates.date ? `${c}, converted from AUD at ${fmtDay(rates.date)} rates` : '';
     };
-    (async () => {
-      try {
+    const loadPrices = async () => {
+      {
         // One read per price bucket: this set plus its minifigures (each only its own entry).
         const keys = [n, ...figCards.map(c => c.dataset.n)], byB = new Map();
         for (const x of keys) { const bk = bucketOf(x); if (!byB.has(bk)) byB.set(bk, []); byB.get(bk).push(x); }
@@ -272,8 +274,46 @@
         // Minifigures only when every bucket came back, so the total never mixes old and new prices.
         figItems = figCards.every(c => readKeys.has(c.dataset.n)) ? all : null;
         paintPrice();
-      } catch (e) { console.warn('price', e); }
-    })();
+      }
+    };
+    loadPrices().catch(e => console.warn('price', e));
+
+    /* Sync prices (admins, LEGO sets): look up this set and its minifigures on BrickLink again now, even if checked today,
+       for your price location, then show the new prices. The function checks the account can sync. */
+    if (lsGet('bc-admin') && pb.dataset.brand === 'LEGO') {
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'btn syncbtn'; btn.id = 'syncSet'; btn.textContent = 'Sync prices';
+      btn.title = 'Admin: fetch the latest BrickLink prices for this set and its minifigures';
+      pb.querySelector('.phead').appendChild(btn);
+      const msg = document.createElement('p'); msg.className = 'fine syncmsg'; msg.id = 'syncMsg'; msg.hidden = true; pb.appendChild(msg);
+      const say = (t, bad) => { msg.hidden = false; msg.textContent = t; msg.classList.toggle('err', !!bad); };
+      btn.addEventListener('click', async () => {
+        if (btn.disabled) return;
+        btn.disabled = true; btn.textContent = 'Syncing…'; msg.hidden = true;
+        try {
+          const BC = await loadFB(); await BC.ready;
+          if (!BC.user || !(await BC.user.email())) { say('Sign in with your admin account to sync prices.', true); return; }
+          const rg = regionNow(), loc = rg === 'world' ? undefined : rg;
+          const figs = figCards.map(c => ({ n: c.dataset.n, bl: c.dataset.bl, name: c.dataset.cap }));
+          const noBl = figs.filter(x => !x.bl), withBl = figs.filter(x => x.bl);
+          const calls = [BC.syncPrices({ type: 'SET', items: [{ n, bl: pb.dataset.bl || n }], loc, force: true })];
+          for (let i = 0; i < withBl.length; i += 20) calls.push(BC.syncPrices({ type: 'MINIFIG', items: withBl.slice(i, i + 20).map(x => ({ n: x.n, bl: x.bl })), loc, force: true }));
+          const outs = await Promise.all(calls);
+          const res = outs.flatMap(o => o.results || []), ok = x => x.used != null || x.new != null;
+          const setRes = res.find(x => x.n === n), figOk = res.filter(x => x.n !== n && ok(x)).length;
+          const missed = res.filter(x => x.n !== n && !ok(x)).map(x => (figs.find(f => f.n === x.n) || {}).name || x.n);
+          await loadPrices();
+          const parts = [`Updated: set${setRes && ok(setRes) ? '' : ' (no BrickLink sales)'}`];
+          if (figs.length) parts.push(`${figOk} of ${figs.length} minifigures`);
+          let t = parts.join(' + ') + '.';
+          if (missed.length) t += ` No sales found for: ${missed.join('; ')}.`;
+          if (noBl.length) t += ` No BrickLink number yet: ${noBl.map(x => x.name).join('; ')}.`;
+          say(t);
+          track('set_page_sync', { set: n, figs: figOk });
+        } catch (e) { say((e && e.message) || 'Sync didn’t work. Please try again.', true); }
+        finally { btn.disabled = false; btn.textContent = 'Sync prices'; }
+      });
+    }
     if (sel) sel.addEventListener('change', () => { (sel.value !== 'AUD' ? loadRates() : Promise.resolve()).then(paintPrice); });
   }
 

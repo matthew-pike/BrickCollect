@@ -1,5 +1,5 @@
 // POST /api/sync-prices  — the Sync Prices button.
-// Body: { type: 'SET' | 'MINIFIG', items: [{ n, bl }], loc?: 'AU' | 'US' | 'CA' | 'UK' | 'EU' }   (at most 20 items per call)
+// Body: { type: 'SET' | 'MINIFIG', items: [{ n, bl }], loc?: 'AU' | 'US' | 'CA' | 'UK' | 'EU', force?: true }   (at most 20 items per call)
 // Signed-in people only. Prices checked in the last 24 hours come straight from the database;
 // anything older is looked up on BrickLink, saved for everyone, and counts against the
 // person's daily allowance (admins have no allowance).
@@ -24,6 +24,8 @@ export default async (req) => {
   if (!items.length) return json(400, { code: 'bad_request', message: 'Nothing to sync.' });
 
   const admin = await can(user.email, 'sync');
+  // force: true (admins only, e.g. the Sync prices button on set pages) looks everything up again, even if checked today.
+  const force = admin && body?.force === true;
   // Only super admins (and anyone given the Sync Prices permission) sync by hand; everyone else's prices come from the twice-daily refresh.
   if (!admin) return json(403, { code: 'admin_only', message: 'Prices refresh automatically twice a day.' });
   const buckets = await readBuckets([...new Set(items.map(x => bucketOf(x.n)))]);
@@ -37,7 +39,7 @@ export default async (req) => {
     const bl = type === 'SET' ? (entry?.bl || it.n) : (admin && valid(it.bl) ? it.bl : entry?.bl);
     if (!bl) { results.push({ n: it.n, error: 'no BrickLink number' }); continue; }
     // Prices the site owner typed in are kept; otherwise anything checked in the last day comes from the database.
-    if (entry?.manualPrice || (isFresh(entry, DAY) && (!loc || locFresh(entry, loc, DAY)))) { results.push({ n: it.n, used: entry.used ?? null, new: entry.new ?? null, loc: entry.loc, pricedAt: entry.pricedAt, cached: true }); continue; }
+    if (entry?.manualPrice || (!force && isFresh(entry, DAY) && (!loc || locFresh(entry, loc, DAY)))) { results.push({ n: it.n, used: entry.used ?? null, new: entry.new ?? null, loc: entry.loc, pricedAt: entry.pricedAt, cached: true }); continue; }
     stale.push({ n: it.n, bl });
   }
 
