@@ -99,8 +99,13 @@
       $('authSend').disabled = false; $('authSend').textContent = 'Email me a sign-in link';
     };
     $('authGoogle').onclick = async () => {
-      $('authErr').hidden = true;
-      try { const BC = await loadFB(); await BC.auth.signInWithGoogle(); if (await signedIn(BC, 'google')) { if (d.dataset.next) location.href = d.dataset.next; else location.reload(); } } catch (err) { fail(err); }
+      const b = $('authGoogle'); if (b.disabled) return;
+      $('authErr').hidden = true; b.disabled = true; b.textContent = 'Opening Google…';
+      // Phones and the installed app go to Google and come back here (to the page they were heading for, if any).
+      lsSet('bc-auth-next', d.dataset.next || '');
+      try { const BC = await loadFB(); await BC.auth.signInWithGoogle(); if (await signedIn(BC, 'google')) { lsSet('bc-auth-next', ''); if (d.dataset.next) location.href = d.dataset.next; else location.reload(); } }
+      catch (err) { fail(err); track('login_failed', { method: 'google', code: err.code || '', from: location.pathname }); }
+      setTimeout(() => { b.disabled = false; b.textContent = 'Continue with Google'; }, 400);
     };
     return d;
   }
@@ -110,8 +115,22 @@
   if (hb && !acct) hb.addEventListener('click', e => openSignIn(e, '/collection'));
   // Back from an email sign-in link (or a Google redirect on phones that block pop-ups): finish here.
   { const q = new URLSearchParams(location.search);
-    if ((q.get('mode') === 'signIn' && q.get('oobCode')) || sessionStorage.getItem('firebase:pendingRedirect') || /firebase:pendingRedirect/.test(Object.keys(sessionStorage).join(' '))) {
-      loadFB().then(async BC => { await BC.ready; if (await signedIn(BC, q.get('oobCode') ? 'email' : 'google')) location.replace(location.pathname + location.hash); }).catch(() => {});
+    let googleTry = false; try { googleTry = !!localStorage.getItem('bc.googleTry'); } catch { /* ignore */ }
+    if ((q.get('mode') === 'signIn' && q.get('oobCode')) || googleTry || /firebase:pendingRedirect/.test(Object.keys(sessionStorage).join(' '))) {
+      loadFB().then(async BC => {
+        await BC.ready; const r = BC.auth.result ? await BC.auth.result() : null;
+        if (await signedIn(BC, q.get('oobCode') ? 'email' : 'google')) {
+          const next = lsGet('bc-auth-next'); lsSet('bc-auth-next', '');
+          if (next && next !== location.pathname) location.replace(next); else location.replace(location.pathname + location.hash);
+          return;
+        }
+        // Back from Google but not signed in: say so in the sign-in box, so it doesn't just look like a loop.
+        if (r && !r.ok) {
+          const d = authDialog(); d.dataset.next = lsGet('bc-auth-next') || ''; d.showModal();
+          const el = $('authErr'); el.hidden = false; el.textContent = r.message;
+          track('login_failed', { method: 'google', code: r.code || 'no_user', from: location.pathname });
+        }
+      }).catch(() => {});
     } }
 
   /* ☰ menu */

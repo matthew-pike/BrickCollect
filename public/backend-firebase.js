@@ -11,7 +11,13 @@
   const fb = window.firebase;
   if (!fb || !cfg.firebase) { window.BC = { db: null, user: null, auth: { available: false }, syncPrices: null, ready: Promise.resolve() }; return; }
 
-  const app = fb.initializeApp(cfg.firebase);
+  // Google sign-in goes through Firebase's helper page (/__/auth/handler). Firebase Hosting serves it on every one of
+  // our own addresses, so use this site's address for it. With the default (brickcollect-app.firebaseapp.com) the
+  // helper is on another site, and phones, Safari and the installed app block what it hands back: you come back from
+  // Google still signed out (the sign-in loop, 14 Nov). Local testing keeps the default.
+  const h = location.hostname;
+  const ownHost = h === 'brickcollect.app' || h === 'www.brickcollect.app' || /\.(web\.app|firebaseapp\.com)$/.test(h);
+  const app = fb.initializeApp({ ...cfg.firebase, authDomain: ownHost ? location.host : cfg.firebase.authDomain });
   const fauth = app.auth();
   const fstore = app.firestore();
   // Keep a copy of your collection on this device, so the installed app opens with it even when offline.
@@ -55,11 +61,41 @@
     history.replaceState(null, '', location.origin + location.pathname + (del ? '#delete' : location.hash));
   }
   let current = null;
-  // Coming back from a Google redirect sign-in (phones that block popups).
-  const redirected = fauth.getRedirectResult().then(markNew).catch(() => {});
+  // Coming back from Google (phones and the installed app go to Google and back instead of a popup).
+  // A marker is saved just before leaving, so on return we know whether it worked, and can say so instead of
+  // quietly showing the sign-in box again.
+  const TRY_KEY = 'bc.googleTry';
+  let redirectErr = null, outcome = null;
+  const redirected = fauth.getRedirectResult().then(markNew).catch(e => { redirectErr = e; console.warn('Google sign-in failed:', e.code || e.message); });
   const ready = Promise.all([finishEmailLink(), redirected]).then(() => new Promise(res => {
-    const stop = fauth.onAuthStateChanged(u => { current = u; stop(); res(); });
+    const stop = fauth.onAuthStateChanged(u => {
+      current = u; stop();
+      const t = Number(store.get(TRY_KEY)) || 0;
+      if (t) {
+        store.set(TRY_KEY, null);
+        if (u) outcome = { ok: true, how: 'google' };
+        else if (redirectErr || Date.now() - t < 15 * 60 * 1000) outcome = { ok: false, how: 'google', code: redirectErr && redirectErr.code, message: friendly(redirectErr) };
+      }
+      res();
+    });
   }));
+  // Plain-English messages for the sign-in errors people can actually hit.
+  function friendly(e) {
+    const c = e && e.code;
+    if (c === 'auth/network-request-failed') return 'Google sign-in couldn’t connect. Check your internet connection and try again.';
+    if (c === 'auth/unauthorized-domain' || c === 'auth/invalid-auth-event' || c === 'auth/web-storage-unsupported')
+      return 'Google sign-in didn’t finish in this browser. Use the email link instead: it works everywhere.';
+    if (c === 'auth/user-disabled') return 'This account has been switched off. Email brickcollectapp@gmail.com for help.';
+    if (c === 'auth/account-exists-with-different-credential') return 'You already have an account with this email. Use the email link to sign in.';
+    if (c === 'auth/too-many-requests') return 'Too many tries. Wait a minute, then try again.';
+    return 'Google sign-in didn’t finish. Try once more, or use the email link instead.';
+  }
+  // Phones and the installed app: go to Google and come back (popups there open in a separate window that often
+  // can't report back). Computers: a popup, so the page stays as it is.
+  const useRedirect = () => {
+    const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+    return standalone || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent || ''));
+  };
 
   /* ---------- database: Firestore already speaks the page's document API ---------- */
   const translate = e => err(e && e.code === 'permission-denied' ? 'invalid_argument' : 'unavailable', e && e.message);
@@ -137,15 +173,21 @@
       const make = providers[name];
       if (!make) throw err('unsupported', `Sign-in with ${name} isn't set up.`);
       const p = make(); p.setCustomParameters({ prompt: 'select_account' });
+      const viaRedirect = () => { store.set(TRY_KEY, String(Date.now())); return fauth.signInWithRedirect(p); };
+      if (useRedirect()) return viaRedirect();
       try { markNew(await fauth.signInWithPopup(p)); }
       catch (e) {
-        // Popups blocked (some phones and in-app browsers): go to Google and come back instead.
-        if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') return fauth.signInWithRedirect(p);
+        // Popups blocked: go to Google and come back instead.
+        if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') return viaRedirect();
         if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') return;
-        throw e;
+        throw Object.assign(new Error(friendly(e)), { code: e.code });
       }
     },
     signInWithGoogle() { return this.signInWith('google'); },
+    // After coming back from Google: { ok: true } or { ok: false, message }, once; null if no Google sign-in was under way.
+    async result() { await ready; const o = outcome; outcome = null; return o; },
+    // True while coming back from Google (before `ready`), so a page can show "Signing you in…".
+    returning: () => !!store.get(TRY_KEY),
     async signOut() { await fauth.signOut(); },
     // Deletes the signed-in person's saved collection and their account. Firebase only allows this soon after
     // signing in, so Google users confirm with Google again; email-link users are asked to sign in again first.

@@ -843,6 +843,7 @@ th.myh{white-space:normal;line-height:1.35;min-width:72px}
 .dlg .or{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--faint);font-size:12px}
 .dlg .or::before,.dlg .or::after{content:"";flex:1;border-top:1px solid var(--line)}
 .dlg .fine{margin:14px 0 0}
+.auth-err{margin:14px 0 0;padding:10px 12px;border-radius:8px;background:color-mix(in srgb,#e5484d 12%,transparent);color:inherit;font-size:13.5px;line-height:1.45}
 .dlg .acct-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .dlg .linkbtn{all:unset;cursor:pointer;font-size:12.5px;text-decoration:underline;text-underline-offset:2px}
 .dlg .linkbtn.danger{color:var(--danger)}
@@ -1123,6 +1124,7 @@ th.myh{white-space:normal;line-height:1.35;min-width:72px}
     <div class="or"><span>or</span></div>
     <div class="socials" id="socialBtns"></div>
     <div class="inapp-note" id="inAppNote" hidden></div>
+    <p class="auth-err" id="authErr" role="alert" hidden></p>
     <p class="fine">Anything you’ve already ticked in this browser moves into your account. By signing in you agree to our <a href="/privacy">privacy policy</a>.</p>
   </div>
   <div id="authSent" hidden>
@@ -4347,7 +4349,7 @@ const dlg = $('authDlg');
 function openAuth() {
   if (!window.BC?.auth?.available) { toast('Sign-in isn’t set up yet.'); return; }
   $('authIn').hidden = !!uid; $('authOut').hidden = !uid; $('authSent').hidden = true;
-  $('authGate').hidden = true; $('authTitle').textContent = 'Sign in or create an account';
+  $('authGate').hidden = true; $('authTitle').textContent = 'Sign in or create an account'; authErr('');
   const NAMES = { google: 'Google', discord: 'Discord', facebook: 'Facebook', apple: 'Apple', twitter: 'X', github: 'GitHub', azure: 'Microsoft' };
   const list = (window.BC_CONFIG?.socialSignIn || (window.BC_CONFIG?.googleSignIn ? ['google'] : [])).filter(k => NAMES[k] && !(IN_APP && k === 'google')); // Google blocks sign-in inside app browsers
   $('socialBtns').innerHTML = list.map(k => `<button class="btn" type="button" data-provider="${k}">Continue with ${NAMES[k]}</button>`).join('');
@@ -4461,6 +4463,7 @@ function maybeNudge() {
   });
   document.body.append(el);
 }
+function authErr(msg) { $('authErr').textContent = msg || ''; $('authErr').hidden = !msg; }
 $('authClose').onclick = () => dlg.close();
 dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 $('saveMode').addEventListener('click', () => { if (saveMode === 'local') openAuth(); });
@@ -4472,10 +4475,19 @@ $('authForm').addEventListener('submit', async e => {
     const local = personalObj(); await BC.auth.signInWithEmail(email, Object.keys(local).length ? JSON.stringify(local) : '');
     try { localStorage.setItem('bc-login', 'email'); } catch {}
     $('authSentTo').textContent = email; $('authIn').hidden = true; $('authSent').hidden = false;
-  } catch (err) { toast(err.message || 'Couldn’t send the link. Check the address and try again.'); }
+  } catch (err) { authErr(err.code === 'auth/invalid-email' ? 'That email address doesn’t look right. Check it and try again.' : 'Couldn’t send the link. Check the address and try again.'); }
   finally { $('authSend').disabled = false; $('authSend').textContent = 'Email me a sign-in link'; }
 });
-$('socialBtns').addEventListener('click', async e => { const b = e.target.closest('[data-provider]'); if (!b) return; try { sessionStorage.setItem('bc-login', b.dataset.provider); } catch {} try { await BC.auth.signInWith(b.dataset.provider); } catch (err) { toast(err.message || 'That sign-in option isn’t available right now.'); } });
+// Google: a popup on computers; phones and the installed app go to Google and come back (see backend-firebase.js).
+$('socialBtns').addEventListener('click', async e => {
+  const b = e.target.closest('[data-provider]'); if (!b || b.disabled) return;
+  authErr(''); const label = b.textContent; b.disabled = true; b.textContent = 'Opening Google…';
+  try { localStorage.setItem('bc-login', b.dataset.provider); } catch {}
+  try { await BC.auth.signInWith(b.dataset.provider); }
+  catch (err) { authErr(err.message || 'That sign-in option isn’t available right now.'); track('login_failed', { method: b.dataset.provider, code: err.code || '' }); }
+  // Still here after a popup (closed it, or it failed): the button works again. A redirect has already left the page.
+  setTimeout(() => { b.disabled = false; b.textContent = label; }, 400);
+});
 $('signOutBtn').onclick = async () => { await BC.auth.signOut(); location.reload(); };
 // Delete my account: confirm in the dialog, optionally keep a copy here, then delete the saved collection and the account.
 $('delStart').onclick = () => { $('delBox').hidden = !BC.auth.deleteAccount; $('delStart').hidden = !!BC.auth.deleteAccount; if (!BC.auth.deleteAccount) toast('Email brickcollectapp@gmail.com to delete your account.'); };
@@ -4580,6 +4592,8 @@ fetch('/catalog.json').then(r => { if (!r.ok) throw new Error(r.status); return 
   if (db && uid && role !== 'super') db.doc('meta/permissions').onSnapshot(snap => { perms = (snap.exists && snap.data()) || {}; paintAccount(); watchUserCount(); render(); }, () => {});
   paintAccount();
   watchUserCount();
+  // Back from Google but not signed in: open the sign-in box again with what went wrong, instead of a silent loop.
+  api.auth?.result?.().then(r => { if (r && !r.ok && !uid) { openAuth(); authErr(r.message); track('login_failed', { method: r.how, code: r.code || 'no_user' }); } }).catch(() => {});
   if (!db || !uid) {
     loadPersonal(lsGet('bc-collection')); goLocal(); render();
   }
