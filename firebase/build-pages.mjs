@@ -536,7 +536,7 @@ for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.
 /* ---------- signed-in pages: /selling (your sale or trade list) and /account ---------- */
 const FB = ['app', 'auth', 'firestore'].map(m => `<script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-${m}-compat.js"></script>`).join('\n') + '\n<script src="/config.js"></script>\n<script src="/backend-firebase.js"></script>\n';
 const userPage = (path, title, h1, crumb, body, script) => write(`.${path}.html`, shell({ path, title, desc: '', h1, crumbs: [[crumb, path]], robots: 'noindex', notice: false, head: FB,
-  body: `<div class="prose" id="pg"><section class="box" id="pgWait"><p>Loading…</p></section>${body}</div>\n<script>\n(async () => {\n  const $ = id => document.getElementById(id);\n  const show = id => { document.querySelectorAll('#pg > .box').forEach(b => { b.hidden = !b.matches(id); }); };\n  const BC = window.BC || {}; const uid = BC.user ? await BC.user.id() : null;\n  if (!uid) { show('.out'); return; }\n${script}\n})();\n</script>` }));
+  body: `<div class="prose" id="pg"><section class="box" id="pgWait"><p>Loading…</p></section>${body}</div>\n<script>\n(async () => {\n  const $ = id => document.getElementById(id);\n  const show = id => { document.querySelectorAll('#pg > .box').forEach(b => { b.hidden = !b.matches(id); }); };\n  const BC = window.BC || {}; const uid = BC.user ? await BC.user.id() : null;\n  if (!uid) { if (location.hash === '#delete') history.replaceState(null, '', location.pathname + location.search); show('.out'); return; }\n${script}\n})();\n</script>` }));
 
 userPage('/selling', 'My sale or trade list · BrickCollect', 'My sale or trade list', 'My sale or trade list',
   `<section class="box out" hidden><h2>Sign in to see your sale or trade list</h2><p>Your sale or trade list is the page buyers see when you share it: everything you’re letting go, with pictures, condition and prices, from any brand.</p><p><a class="btn primary" href="/collection#signin">Sign in</a></p></section>
@@ -550,7 +550,8 @@ userPage('/account', 'My account · BrickCollect', 'My account', 'My account',
 <section class="box in" hidden><h2>Your collection</h2><div class="stats"><div class="stat"><div class="k">Sets</div><div class="v" id="aSets">—</div></div><div class="stat"><div class="k">Minifigures</div><div class="v" id="aFigs">—</div></div><div class="stat"><div class="k">Wanted</div><div class="v" id="aWant">—</div></div><div class="stat"><div class="k">For sale or trade</div><div class="v" id="aSale">—</div></div></div><p class="row"><a class="btn primary" href="/collection">Open My collection</a><a class="btn" href="/collection#export">Export</a></p></section>
 <section class="box in" hidden><h2>Your sale or trade list</h2><p id="aShare">—</p><p class="row"><a class="btn" href="/selling">My sale or trade list</a></p></section>
 <section class="box in" hidden><h2>Sign out</h2><p>Your collection stays safe in your account. Sign in again any time to see it.</p><p class="row"><button class="btn" type="button" id="aOut">Sign out</button></p></section>
-<section class="box in danger" hidden><h2>Delete your account</h2><p>This removes your collection, your shared sale or trade list and your sign-in for good. It can’t be undone, so export your collection first if you might want it later.</p><p class="row"><a class="btn" href="/collection#export">Export first</a><a class="btn warn" href="/collection#delete">Delete my account</a></p></section>`,
+<section class="box in danger" hidden><h2>Delete your account</h2><p>This removes your collection, your shared sale or trade list and your sign-in for good. It can’t be undone, so export your collection first if you might want it later.</p><p class="row"><a class="btn" href="/collection#export">Export first</a><button class="btn warn" type="button" id="delStart" aria-expanded="false" aria-controls="delMore">Delete my account</button></p>
+<div class="delmore" id="delMore" inert><div><div class="delin"><p><b>Are you sure?</b> Your account and the collection saved to it are deleted straight away.</p><label class="keepbox"><input type="checkbox" id="delKeep" checked><span>Keep a copy of my collection in this browser</span></label><p class="row"><button class="btn" type="button" id="delCancel">Cancel</button><button class="btn warn" type="button" id="delGo">Delete permanently</button></p><p class="delmsg" id="delMsg" role="status"></p></div></div></div></section>`,
   `  show('.in');
   const fmt = n => Number(n || 0).toLocaleString();
   const u = window.firebase && firebase.auth().currentUser;
@@ -568,7 +569,33 @@ userPage('/account', 'My account · BrickCollect', 'My account', 'My account',
   } catch (e) { console.warn(e); }
   try { const s = await BC.db.doc('data/users/' + uid + '/share').get(); const v = s.exists ? s.data() : null;
     $('aShare').innerHTML = v && v.on && v.id ? 'Shared at <a href="/sale/' + v.id + '">brickcollect.app/sale/' + v.id + '</a>' + (v.idx ? ' · search engines can find it' : ' · hidden from search engines') + '.' : 'Not shared yet.'; } catch (e) { console.warn(e); }
-  $('aOut').onclick = async () => { try { await BC.auth.signOut(); } catch {} try { localStorage.removeItem('bc-acct'); localStorage.removeItem('bc-admin'); } catch {} location.href = '/'; };`);
+  $('aOut').onclick = async () => { try { await BC.auth.signOut(); } catch {} try { localStorage.removeItem('bc-acct'); localStorage.removeItem('bc-admin'); } catch {} location.href = '/'; };
+  // Delete: the confirm step slides down inside the box (same steps as the account panel in My collection).
+  const more = $('delMore'), start = $('delStart'), msg = $('delMsg');
+  const openDel = on => {
+    more.classList.toggle('open', on); more.inert = !on; start.hidden = on; start.setAttribute('aria-expanded', on); msg.textContent = '';
+    if (on) setTimeout(() => { $('delGo').scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); $('delCancel').focus({ preventScroll: true }); }, 300);
+    else start.focus();
+  };
+  start.onclick = () => { if (!BC.auth || !BC.auth.deleteAccount) { msg.textContent = 'Email brickcollectapp@gmail.com to delete your account.'; return; } openDel(true); };
+  $('delCancel').onclick = () => openDel(false);
+  $('delGo').onclick = async () => {
+    const btn = $('delGo'); btn.disabled = true; btn.textContent = 'Deleting…'; msg.textContent = '';
+    try {
+      // Keep a copy: the saved collection goes into this browser, where My collection picks it up once signed out.
+      if ($('delKeep').checked) { const c = await BC.db.doc('data/users/' + uid + '/collection').get(); localStorage.setItem('bc-collection', JSON.stringify((c.exists && c.data().items) || {})); }
+      else localStorage.removeItem('bc-collection');
+      await BC.auth.deleteAccount();
+      try { localStorage.removeItem('bc-acct'); localStorage.removeItem('bc-admin'); localStorage.setItem('bc-deleted', JSON.stringify(Date.now())); } catch {}
+      location.href = '/collection';
+    } catch (e) {
+      console.warn('delete account', e);
+      msg.textContent = e.message || 'Couldn’t delete your account. Try again.';
+      btn.disabled = false; btn.textContent = 'Delete permanently';
+    }
+  };
+  // Back from the delete-confirmation email link (?del=1 → #delete): Delete already open.
+  if (location.hash === '#delete') { history.replaceState(null, '', location.pathname + location.search); openDel(true); }`);
 
 /* ---------- 404: unknown addresses get the site's page with a way back ---------- */
 // A wall of bricks with one missing (drawn here, brand colours).

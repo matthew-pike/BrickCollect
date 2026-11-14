@@ -209,7 +209,7 @@
         } else {
           // Email-link accounts: email a confirmation link that signs in again and comes straight back to Delete.
           if (!u.email) throw err('recent_login', 'Sign out, sign in again, then delete your account within a few minutes.');
-          await fauth.sendSignInLinkToEmail(u.email, { url: location.origin + '/collection?del=1', handleCodeInApp: true });
+          await fauth.sendSignInLinkToEmail(u.email, { url: location.origin + (location.pathname.startsWith('/account') ? '/account' : '/collection') + '?del=1', handleCodeInApp: true });
           store.set(EMAIL_KEY, u.email);
           throw err('link_sent', `To confirm it’s you, we’ve emailed a link to ${u.email}. Open it on this device, then press Delete permanently.`);
         }
