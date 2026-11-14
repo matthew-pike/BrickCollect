@@ -228,6 +228,21 @@ function priceBox(x, blNum) {
 </div>`;
 }
 
+// Minifigure values (BrickLink, same rule as the set: Australian sellers when known, else worldwide).
+// Minifigures are priced once someone owns or wants them, so some show "No price yet". pages.js updates them live.
+const figVal = f => {
+  const p = priceOf({ n: f.n, brand: 'LEGO' });
+  const cell = (k, fld) => `<span class="fvi"><i>${k}</i> <b data-f="${fld}">${p[fld] != null ? aud(p[fld]) : '—'}</b></span>`;
+  return `<span class="fv"${p.new == null && p.used == null ? ' data-none' : ''}>${cell('New', 'new')}${cell('Used', 'used')}</span>`;
+};
+function figTotal(figs) {
+  const ps = figs.map(f => priceOf({ n: f.n, brand: 'LEGO' }));
+  const sum = fld => ps.reduce((t, p) => t + (p[fld] || 0), 0);
+  const priced = ps.filter(p => p.new != null || p.used != null).length;
+  const line = priced ? `Together: <b data-t="new">${aud(sum('new'))}</b> new · <b data-t="used">${aud(sum('used'))}</b> used${priced < figs.length ? ` <span class="muted">(${priced} of ${figs.length} minifigures priced)</span>` : ''}` : 'No minifigure prices yet.';
+  return `<div class="figtotal" id="figTotal" data-count="${figs.length}"><p class="ftl" id="figTotalLine">${line}</p><p class="fine" id="figNote"><span id="figNoteWhere">Minifigure values: average of the last 6 months’ sales on BrickLink, from sellers in Australia where there are any, otherwise worldwide.</span><span id="figNoteMore"${priced < figs.length ? '' : ' hidden'}> Minifigures get a price once a collector owns or wants them.</span></p></div>`;
+}
+
 for (const x of sets) {
   const num = shownNum(x), ret = retState(x), buy = buyHref(x);
   const blNum = (shared.get(x.n) || {}).bl || (x.brand === 'LEGO' ? (bl.sets[x.n] || x.n) : '');
@@ -265,7 +280,8 @@ ${links ? `<div class="row links">${links}</div>` : ''}
 </div>
 </div>
 ${figs.length ? `<h2 id="minifigures">Minifigures in this set (${figs.length})</h2>
-<div class="figs">${figs.map(f => `<button type="button" class="fig" data-zoom="${esc(figImg(f))}" data-cap="${esc(f.name)}" data-meta="${esc(bl.figs[f.n] || f.n)}" title="See a larger picture"><img src="${esc(figImg(f))}" alt="" loading="lazy" width="160" height="160"><span class="cn">${esc(f.name)}</span><span class="cm">${esc(bl.figs[f.n] || f.n)}</span></button>`).join('')}</div>` : ''}
+${figTotal(figs)}
+<div class="figs" id="figVals">${figs.map(f => `<button type="button" class="fig" data-n="${esc(f.n)}" data-zoom="${esc(figImg(f))}" data-cap="${esc(f.name)}" data-meta="${esc(bl.figs[f.n] || f.n)}" title="See a larger picture"><img src="${esc(figImg(f))}" alt="" loading="lazy" width="160" height="160"><span class="cn">${esc(f.name)}</span><span class="cm">${esc(bl.figs[f.n] || f.n)}</span>${figVal(f)}</button>`).join('')}</div>` : ''}
 <dialog class="dlg zoomdlg" id="zoomDlg" aria-label="Larger picture"><div class="dhead"><div><b id="zoomCap"></b><span id="zoomMeta" class="cm"></span></div><button type="button" class="icon-btn" data-close aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="zoombody"><img id="zoomImg" alt=""></div></dialog>
 ${near.length ? `<section class="hsec"><div class="hhead"><h2>More ${esc(x.sub || x.theme)} sets</h2><a href="${esc(groupPath(x))}">All ${esc(groupName(x))} sets${ARR}</a></div>
 <div class="cards">${near.map(card).join('')}</div></section>` : ''}`;

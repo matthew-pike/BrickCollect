@@ -213,7 +213,8 @@
     const bucketOf = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return 'b' + (h % 16); };
     const LOCS = { AU: 'Australia', US: 'the United States', CA: 'Canada', EU: 'Europe (EU)', UK: 'the United Kingdom' };
     const LOC_FOR_CUR = { AUD: 'AU', USD: 'US', CAD: 'CA', EUR: 'EU', GBP: 'UK' };
-    let item = null, rates = null, ratesP = null;
+    let item = null, figItems = null, setRead = false, readKeys = new Set(), rates = null, ratesP = null;
+    const figCards = [...document.querySelectorAll('#figVals .fig[data-n]')];
     const curNow = () => (sel && sel.value) || prefs().currency || detect();
     const loadRates = () => ratesP || (ratesP = get('meta/rates', ['rates', 'date']).then(r => { rates = r; }).catch(() => {}));
     const fmtDay = d => { const t = Date.parse(d || ''); return isNaN(t) ? '' : new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }); };
@@ -225,6 +226,31 @@
       const rg = prefs().region && (LOCS[prefs().region] || prefs().region === 'world') ? prefs().region : (LOC_FOR_CUR[c] || 'world');
       const lp = bl && rg !== 'world' ? (item.loc || {})[rg] : null, local = !!(lp && (lp.used != null || lp.new != null));
       const val = fld => local && lp[fld] != null ? lp[fld] : item[fld];
+      // Minifigures: each one from sellers in your location when it has a local price, otherwise worldwide.
+      if (figItems && figCards.length) {
+        const tot = { new: 0, used: 0 }; let priced = 0;
+        figCards.forEach(card => {
+          const it = figItems[card.dataset.n] || {}, fl = rg !== 'world' && !it.manualPrice ? (it.loc || {})[rg] : null;
+          const fLocal = !!(fl && (fl.used != null || fl.new != null)), fv = fld => fLocal && fl[fld] != null ? fl[fld] : it[fld];
+          let has = false;
+          card.querySelectorAll('.fv [data-f]').forEach(el => { const v = fv(el.dataset.f); if (v != null) { has = true; tot[el.dataset.f] += v; } el.textContent = v != null ? f.format(v * k) : '—'; });
+          const box = card.querySelector('.fv'); if (box) box.toggleAttribute('data-none', !has);
+          if (has) priced++;
+        });
+        const line = $('figTotalLine');
+        if (line) {
+          line.textContent = '';
+          if (!priced) line.textContent = 'No minifigure prices yet.';
+          else {
+            const b = v => { const e = document.createElement('b'); e.textContent = f.format(v * k); return e; };
+            line.append('Together: ', b(tot.new), ' new · ', b(tot.used), ' used');
+            if (priced < figCards.length) { const m = document.createElement('span'); m.className = 'muted'; m.textContent = ` (${priced} of ${figCards.length} minifigures priced)`; line.append(' ', m); }
+          }
+        }
+        if ($('figNoteMore')) $('figNoteMore').hidden = priced >= figCards.length;
+        if ($('figNoteWhere')) $('figNoteWhere').textContent = `Minifigure values: average of the last 6 months’ sales on BrickLink, from sellers ${rg !== 'world' ? `in ${LOCS[rg]} where there are any, otherwise worldwide` : 'worldwide'}.`;
+      }
+      if (!setRead) return; // this set's bucket couldn't be read: keep the price the page was built with
       let any = false;
       pb.querySelectorAll('[data-f]').forEach(el => { const v = val(el.dataset.f); if (v != null) any = true; el.textContent = v != null ? f.format(v * k) : '—'; });
       const at = fmtDay(local && lp.at ? lp.at : item.pricedAt), when = at ? ` · ${at}` : '';
@@ -233,8 +259,18 @@
     };
     (async () => {
       try {
-        const [b] = await Promise.all([get(`iteminfo/${bucketOf(n)}`, ['items.`' + n.replace(/[`\\]/g, '\\$&') + '`']), curNow() !== 'AUD' ? loadRates() : null]);
-        item = (b.items || {})[n] || {};
+        // One read per price bucket: this set plus its minifigures (each only its own entry).
+        const keys = [n, ...figCards.map(c => c.dataset.n)], byB = new Map();
+        for (const x of keys) { const bk = bucketOf(x); if (!byB.has(bk)) byB.set(bk, []); byB.get(bk).push(x); }
+        const field = x => 'items.`' + x.replace(/[`\\]/g, '\\$&') + '`';
+        const [docs] = await Promise.all([Promise.all([...byB].map(([bk, xs]) => get(`iteminfo/${bk}`, xs.map(field)).catch(e => { console.warn('price', bk, e); return null; }))), curNow() !== 'AUD' ? loadRates() : null]);
+        const all = {}; let ok = false;
+        [...byB].forEach(([bk, xs], i) => { const d = docs[i]; if (!d) return; ok = true; Object.assign(all, d.items || {}); xs.forEach(x => readKeys.add(x)); });
+        setRead = readKeys.has(n);
+        if (!ok) throw new Error('no price buckets read');
+        item = all[n] || {};
+        // Minifigures only when every bucket came back, so the total never mixes old and new prices.
+        figItems = figCards.every(c => readKeys.has(c.dataset.n)) ? all : null;
         paintPrice();
       } catch (e) { console.warn('price', e); }
     })();
