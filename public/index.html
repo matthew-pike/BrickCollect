@@ -430,6 +430,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .zoomcap b{font-size:16px;color:var(--fg)}
 .zoomcap span{color:var(--muted);font-size:13px}
 .zoomcap .zoompage{font-size:13px;color:var(--accent);text-decoration:none;margin-top:2px}.zoomcap .zoompage:hover{text-decoration:underline}
+.arr{width:14px;height:14px;vertical-align:-2px;margin-left:4px;transition:transform .18s ease}a:hover > .arr{transform:translateX(3px)}
 .spage{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:4px;vertical-align:-3px;border-radius:5px;color:var(--faint)}
 .spage:hover{color:var(--accent);background:var(--panel-2)}
 .zoomx{position:absolute;top:10px;right:10px}
@@ -1104,7 +1105,7 @@ th.myh{white-space:normal;line-height:1.35;min-width:72px}
 <div class="zoomwrap" id="zoom" hidden role="dialog" aria-modal="true" aria-labelledby="zoomName">
   <div class="zoombox">
     <button class="icon-btn zoomx" id="zoomClose" aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-    <div class="zoomcap"><b id="zoomName"></b><span id="zoomMeta"></span><a id="zoomPage" class="zoompage" href="#" hidden>Open the set page →</a></div>
+    <div class="zoomcap"><b id="zoomName"></b><span id="zoomMeta"></span><a id="zoomPage" class="zoompage" href="#" hidden>Open the set page<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a></div>
     <img id="zoomImg" alt="">
   </div>
 </div>

@@ -20,6 +20,10 @@ const CUUSOO_SETS = new Set(['21100-1', '21101-1', '21102-1', '21103-1', '21104-
 const now = new Date();
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Link arrows (Matt, 14 Nov): ARR is the thin line arrow used after links; ARR_RING puts it in a thin ring (like the BC badge) for each blog card's Read more.
+const ARR_PATH = '<path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/>';
+const ARR = `<svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ARR_PATH}</svg>`;
+const ARR_RING = `<span class="arr-ring" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ARR_PATH}</svg></span>`;
 const slug = s => String(s).toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x';
 const fmt = n => Number(n).toLocaleString('en-US');
 const monthYear = d => { const t = Date.parse(d || ''); return Number.isFinite(t) ? new Date(t).toLocaleDateString('en-AU', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : ''; };
@@ -263,7 +267,7 @@ ${links ? `<div class="row links">${links}</div>` : ''}
 ${figs.length ? `<h2 id="minifigures">Minifigures in this set (${figs.length})</h2>
 <div class="figs">${figs.map(f => `<button type="button" class="fig" data-zoom="${esc(figImg(f))}" data-cap="${esc(f.name)}" data-meta="${esc(bl.figs[f.n] || f.n)}" title="See a larger picture"><img src="${esc(figImg(f))}" alt="" loading="lazy" width="160" height="160"><span class="cn">${esc(f.name)}</span><span class="cm">${esc(bl.figs[f.n] || f.n)}</span></button>`).join('')}</div>` : ''}
 <dialog class="dlg zoomdlg" id="zoomDlg" aria-label="Larger picture"><div class="dhead"><div><b id="zoomCap"></b><span id="zoomMeta" class="cm"></span></div><button type="button" class="icon-btn" data-close aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="zoombody"><img id="zoomImg" alt=""></div></dialog>
-${near.length ? `<section class="hsec"><div class="hhead"><h2>More ${esc(x.sub || x.theme)} sets</h2><a href="${esc(groupPath(x))}">All ${esc(groupName(x))} sets →</a></div>
+${near.length ? `<section class="hsec"><div class="hhead"><h2>More ${esc(x.sub || x.theme)} sets</h2><a href="${esc(groupPath(x))}">All ${esc(groupName(x))} sets${ARR}</a></div>
 <div class="cards">${near.map(card).join('')}</div></section>` : ''}`;
   write(`.${x.path}.html`, shell({
     path: x.path, img: imgUrl(x),
@@ -346,7 +350,7 @@ const updCard = u => { const lead = u.list[0], pic = imgUrl(lead), more = u.list
   return `<article class="post"><a class="post-pic" href="${esc(u.path)}" tabindex="-1" aria-hidden="true">${pic ? `<img src="${esc(pic)}" alt="" loading="lazy" width="360" height="270">` : '<span class="noimg"></span>'}</a>
 <div class="post-body"><p class="post-date">${esc(u.day)}</p><h2><a href="${esc(u.path)}">${esc(updHead(u))}</a></h2><p class="post-intro">${updIntro(u)}</p>${tagList(u.tags, 6)}
 ${more.length ? `<div class="post-thumbs">${more.map(x => `<a href="${esc(x.path)}" title="${esc(`${shownNum(x)} ${x.name}`)}">${imgUrl(x) ? `<img src="${esc(imgUrl(x))}" alt="${esc(x.name)}" loading="lazy" width="64" height="48">` : `<span class="noimg"></span>`}</a>`).join('')}</div>` : ''}
-<a class="btn post-more" href="${esc(u.path)}">Read more${u.list.length > 1 ? `: all ${u.list.length} sets` : ''} →</a></div></article>`; };
+<a class="btn post-more" href="${esc(u.path)}">Read more${u.list.length > 1 ? `: all ${u.list.length} sets` : ''}${ARR_RING}</a></div></article>`; };
 // Written news posts (public/news.json): shown with the weekly updates on /blog, newest first, each with its own page at /news/<slug>.
 const NEWS = (() => { try { return JSON.parse(readFileSync(new URL('news.json', PUB), 'utf8')); } catch { return []; } })()
   .map(a => { const d = new Date(a.date + 'T00:00:00Z'); return { ...a, day: d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }), path: `/news/${a.slug}`, tags: [...new Set(a.tags || [])], inCat: (a.sets || []).map(s => byNum.get(s.n)).filter(Boolean) }; })
@@ -371,7 +375,7 @@ const newsCard = a => { const pic = leadImg(a);
   return `<article class="post${pic ? '' : ' nopic'}">${pic ? `<a class="post-pic" href="${esc(a.path)}" tabindex="-1" aria-hidden="true"><img src="${esc(pic)}" alt="" loading="lazy" width="360" height="270" ${NOIMG}></a>` : ''}
 <div class="post-body"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><h2><a href="${esc(a.path)}">${esc(a.title)}</a></h2><p class="post-intro">${esc(a.intro.replace(/\.$/, ''))}</p>${tagList(a.tags, 6)}
 ${(a.sets || []).length > 1 ? `<div class="post-thumbs">${a.sets.slice(1, 11).map(x => `<a href="${esc(a.path)}" title="${esc(`${x.n.replace(/-1$/, '')} ${x.name}`)}"><img src="${esc(newsImg(x))}" alt="${esc(x.name)}" loading="lazy" width="64" height="48" ${NOIMG}></a>`).join('')}</div>` : ''}
-<a class="btn post-more" href="${esc(a.path)}">Read more →</a></div></article>`; };
+<a class="btn post-more" href="${esc(a.path)}">Read more${ARR_RING}</a></div></article>`; };
 const newsSet = s => { const x = byNum.get(s.n); const num = s.n.replace(/-1$/, ''), pic = `<img src="${esc(newsImg(s))}" alt="" loading="lazy" width="72" height="54" ${NOIMG}>`, text = `<span class="cb"><span class="cn">${esc(s.name)}</span><span class="cm">${esc(num)} · ${fmt(s.pieces)} pcs${s.price ? ` · ${esc(s.price)}` : ''} · out ${esc(s.out)}</span></span>`;
   return x ? `<a class="card" href="${esc(x.path)}">${pic}${text}</a>` : `<div class="card">${pic}${text}</div>`; };
 /* ---------- home page (/) ---------- */
@@ -418,12 +422,12 @@ write('./index.html', shell({
   body: `<section class="hero"><div><h1>Your brick collection, all in one place</h1>
 <p class="lead">The free collection tracker for LEGO and other brick brands. Select “I own it” to add sets to your collection, keep a Wanted list, see what your collection is worth, and share or sell it.</p>
 <div class="row"><a class="btn primary" href="/collection#signin" id="heroBtn" data-cta="hero">Sign in to view your collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
-${section('Popular sets', '<a href="/collection" data-cta="more_popular">Find more in My collection →</a>', popular)}
-${section('Retiring soon', '<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon →</a>', retiring)}
+${section('Popular sets', `<a href="/collection" data-cta="more_popular">Find more in My collection${ARR}</a>`, popular)}
+${section('Retiring soon', `<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon${ARR}</a>`, retiring)}
 ${latestUpdate ? section(`Recently added sets`, '', latestUpdate.list.slice(0, 12)) : section(`New in ${thisYear}`, '', newest)}
-<section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes →</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>
-${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><a href="/sets#brands">All brands →</a></div><div class="ttiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(brandTile).join('')}</div></section>` : ''}
-<div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> added to your collection</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection →</a></div>`,
+<section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes${ARR}</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>
+${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><a href="/sets#brands">All brands${ARR}</a></div><div class="ttiles">${[...brands].sort((a, b) => b[1].length - a[1].length).map(brandTile).join('')}</div></section>` : ''}
+<div class="tickbar" id="tickBar" hidden><span>✓ <b id="tickN"></b> added to your collection</span><a class="btn primary" href="/collection" data-cta="tickbar">Open My collection${ARR}</a></div>`,
 }));
 
 // Every post on /blog (weekly updates and news), newest first, and the tags they use.
@@ -446,7 +450,7 @@ if (UPDATES.length) {
     write(`.${a.path}.html`, shell({ path: a.path, title: `${a.title} | BrickCollect`, h1: esc(a.title), img: lead, crumbs: [['Blog', '/blog'], [a.title, a.path]],
       desc: a.intro,
       body: `<article class="post-page"><p class="post-date">${esc(a.day)}${a.kicker ? ` · <span class="post-kicker">${esc(a.kicker)}</span>` : ''}</p><p class="post-lede">${esc(a.intro.replace(/\.$/, ''))}</p><div class="article-row">${articlePics(a)}<div class="article">${(a.body || []).map(p => `<p>${esc(p)}</p>`).join('')}</div></div>
-${(a.sets || []).length ? `<section class="hsec"><div class="hhead"><h2>The sets</h2>${a.theme ? `<a href="${esc(themePath(a.theme))}">All LEGO ${esc(a.theme)} sets →</a>` : ''}</div><div class="cards">${a.sets.map(newsSet).join('')}</div></section>` : ''}
+${(a.sets || []).length ? `<section class="hsec"><div class="hhead"><h2>The sets</h2>${a.theme ? `<a href="${esc(themePath(a.theme))}">All LEGO ${esc(a.theme)} sets${ARR}</a>` : ''}</div><div class="cards">${a.sets.map(newsSet).join('')}</div></section>` : ''}
 ${tagList(a.tags)}
 ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join(', ')}</p>` : ''}</article>` }));
   }
@@ -454,7 +458,7 @@ ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(
     const groups = new Map(); for (const x of u.list) { const k = x.theme; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); }
     write(`.${u.path}.html`, shell({ path: u.path, title: `${u.title}: new LEGO sets | BrickCollect`, h1: esc(updHead(u)), crumbs: [['Blog', '/blog'], [u.day, u.path]],
       desc: `New LEGO sets in BrickCollect on ${u.day}: ${u.list.slice(0, 6).map(x => `${shownNum(x)} ${x.name}`).join(', ')}${u.list.length > 6 ? ' and more' : ''}.`,
-      body: `<article class="post-page"><p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)}. Select “I own it” or “I want it” on any set page</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets →</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}${tagList(u.tags)}</article>` }));
+      body: `<article class="post-page"><p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)}. Select “I own it” or “I want it” on any set page</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets${ARR}</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}${tagList(u.tags)}</article>` }));
   }
 }
 

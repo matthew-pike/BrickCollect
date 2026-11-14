@@ -249,6 +249,13 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .post-thumbs img{width:100%;height:100%;object-fit:contain}
 .post-pic .noimg,.post-thumbs .noimg{width:100%;height:100%;border-radius:0}
 .post-more{font-weight:500;margin-top:auto;align-self:flex-end;padding-top:6px}
+/* Link arrows (14 Nov): thin line arrow that slides a little on hover; on blog cards it sits in a thin ring that fills aqua on hover */
+.arr{width:15px;height:15px;flex:none;transition:transform .18s ease}
+a:hover > .arr{transform:translateX(3px)}
+.arr-ring{width:24px;height:24px;margin:-4px -8px -4px 2px;border:1.5px solid currentColor;border-radius:50%;display:inline-grid;place-items:center;flex:none;transition:background .18s ease,border-color .18s ease,color .18s ease}
+.arr-ring svg{width:13px;height:13px}
+a:hover > .arr-ring{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+@media (prefers-reduced-motion:reduce){.arr,.arr-ring{transition:none}a:hover > .arr{transform:none}}
 .post.nopic{grid-template-columns:1fr}
 .post-kicker{color:var(--coral)}
 /* Tags: on each post, on the post pages and as a bar at the top of /blog and the tag pages */
