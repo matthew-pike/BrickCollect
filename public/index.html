@@ -3701,13 +3701,12 @@ $('shClose').onclick = () => shDlg.close();
    Drawn on a canvas in the browser: nothing is uploaded. Follows the filters in view (pick a theme to share just that).
    Story 1080×1920 or Post 1080×1350, in the navy Instagram colours (see the BrickCollect brand doc). */
 const CARD_K = 'bc-card', CARD_W = 1080, CARD_H = { story: 1920, post: 1350 };
-// Three backgrounds from the Instagram post colours (BrickCollect brand doc). The badge stays moonstone on all of them.
+// Three backgrounds from the Instagram post colours (BrickCollect brand doc). `mark` = colour of the faint BC badge behind (white unless set).
 const CARD_COLS = {
   navy: { bg: '#0F192D', card: '#16233D', line: '#2E3B55', fg: '#FFFFFF', muted: '#A9B4C4', accent: '#1FB3E5', value: '#B9A8FF', themes: ['#1FB3E5', '#7FDCFF', '#B9A8FF', '#4A5A78'] },
   ocean: { bg: '#0A3550', card: '#0E4263', line: '#24557A', fg: '#FFFFFF', muted: '#A8C7DA', accent: '#4FCBF2', value: '#C4B5FF', themes: ['#4FCBF2', '#A8E6FA', '#C4B5FF', '#3A6A8C'] },
-  cloud: { bg: '#F2F4F7', card: '#FFFFFF', line: '#CBD3DE', fg: '#0F192D', muted: '#4A5566', accent: '#0A86B8', value: '#6D4FD8', themes: ['#0A86B8', '#4FCBF2', '#8B73E6', '#CBD3DE'] },
+  cloud: { bg: '#F2F4F7', card: '#FFFFFF', line: '#CBD3DE', fg: '#0F192D', muted: '#4A5566', accent: '#0A86B8', value: '#6D4FD8', themes: ['#0A86B8', '#4FCBF2', '#8B73E6', '#CBD3DE'], mark: '15,25,45' },
 };
-const CARD_BADGE = '#6B7888';
 let cardBlob = null, cardUrl = '', cardFonts = null, cardT = null;
 function cardFontLoad() {
   if (cardFonts) return cardFonts;
@@ -3754,16 +3753,16 @@ function cardDraw(cv, d, o, oy = 0) {
   };
   const rr = (x, y, w, h, r, col) => { g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); g.fill(); };
   g.fillStyle = CARD_C.bg; g.fillRect(0, 0, W, H);
-  // Header: BC badge, whose collection, date
-  const by = (story ? 170 : 136) + oy, br = 64;
-  g.fillStyle = CARD_BADGE; g.beginPath(); g.arc(P + br, by, br, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 3; g.beginPath(); g.arc(P + br, by, br - 6, 0, Math.PI * 2); g.stroke();
-  g.textBaseline = 'middle'; g.font = F(400, 50); g.fillStyle = '#fff'; g.textAlign = 'center'; sp(3); g.fillText('BC', P + br + 1.5, by + 3); sp(0);
-  // Line 1: your name or @handle as typed (or "My … collection"); line 2: the collection and the date.
-  const what = d.scopeName ? `${d.scopeName} collection` : 'collection', date = new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
-  const tx = P + br * 2 + 34, tmax = W - tx - P;
-  text(o.name || `My ${what}`, tx, by + 2, F(500, 56), CARD_C.fg, { max: tmax });
-  text(o.name ? `${what[0].toUpperCase()}${what.slice(1)} · ${date}` : date, tx, by + 52, F(400, 32), CARD_C.muted, { max: tmax });
+  // Background mark: a large BC badge, tilted and faint, top right (white on the dark colours, navy on Cloud so it still shows).
+  const by = (story ? 170 : 136) + oy, mk = CARD_C.mark || '255,255,255', mr = story ? 300 : 260;
+  g.save(); g.translate(W - 150, by + (story ? 150 : 120)); g.rotate(-18 * Math.PI / 180);
+  g.fillStyle = `rgba(${mk},.06)`; g.beginPath(); g.arc(0, 0, mr, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = `rgba(${mk},.16)`; g.lineWidth = 10; g.beginPath(); g.arc(0, 0, mr - 26, 0, Math.PI * 2); g.stroke();
+  g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = F(400, mr * 0.78); g.fillStyle = `rgba(${mk},.16)`; sp(mr * 0.05); g.fillText('BC', mr * 0.025, mr * 0.05); sp(0);
+  g.restore();
+  // Title only: your name or @handle as typed, or "My … collection".
+  const what = d.scopeName ? `${d.scopeName} collection` : 'collection';
+  text(o.name || `My ${what}`, P, by + 22, F(500, 64), CARD_C.fg, { max: W - P * 2 });
   // Big number
   let y = (story ? 520 : 420) + oy;
   text(d.sets.toLocaleString(), P - 6, y, F(500, story ? 230 : 190), CARD_C.fg);
