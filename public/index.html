@@ -3755,7 +3755,7 @@ function cardDraw(cv, d, o, oy = 0) {
   g.fillStyle = CARD_C.bg; g.fillRect(0, 0, W, H);
   // Background mark: a large BC outline (circle + letters, no fill, 80% transparent), tilted, top right (white on the dark colours, navy on Cloud so it still shows).
   const by = (story ? 170 : 120) + oy, mk = CARD_C.mark || '255,255,255', mr = story ? 340 : 290;
-  g.save(); g.translate(W - 160, by + (story ? 170 : 135)); g.rotate(-18 * Math.PI / 180);
+  g.save(); g.translate(W - 160, by + (story ? 150 : 105)); g.rotate(-18 * Math.PI / 180);
   g.strokeStyle = `rgba(${mk},.2)`; g.lineWidth = 12; g.beginPath(); g.arc(0, 0, mr, 0, Math.PI * 2); g.stroke();
   g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = F(400, mr); g.fillStyle = `rgba(${mk},.2)`; sp(mr * 0.04); g.fillText('BC', mr * 0.02, mr * 0.06); sp(0);
   g.restore();
@@ -3763,39 +3763,39 @@ function cardDraw(cv, d, o, oy = 0) {
   const what = d.scopeName ? `${d.scopeName} collection` : 'collection';
   text(o.name || `My ${what}`, P, by + 30, F(500, 88), CARD_C.fg, { max: W - P * 2 });
   // Big number
-  let y = (story ? 520 : 420) + oy;
+  let y = (story ? 540 : 420) + oy;
   text(d.sets.toLocaleString(), P - 6, y, F(500, story ? 230 : 190), CARD_C.fg);
   text(d.sets === 1 ? 'set' : 'sets', P, y + (story ? 70 : 62), F(400, 46), CARD_C.muted);
-  y += story ? 140 : 115;
+  y += story ? 160 : 115;
   // Tiles
   const tiles = [[cardNum(d.figs), d.figs === 1 ? 'minifigure' : 'minifigures', CARD_C.fg], [cardNum(d.pieces), 'pieces', CARD_C.fg]];
   if (o.value && d.priced) tiles.push([cardMoney(d.value), 'value', CARD_C.value]);
   tiles.push([d.retired.toLocaleString(), 'retired', CARD_C.fg]);
-  const gap = 24, tw = (W - P * 2 - gap) / 2, th = story ? 190 : 150;
+  const gap = story ? 28 : 24, tw = (W - P * 2 - gap) / 2, th = story ? 210 : 150;
   tiles.forEach(([v, k, col], i) => {
     const last = i === tiles.length - 1 && tiles.length % 2, x = P + (i % 2) * (tw + gap), ty = y + Math.floor(i / 2) * (th + gap), w = last ? W - P * 2 : tw;
     rr(x, ty, w, th, 22, CARD_C.card);
     text(v, x + 34, ty + th * 0.55, F(500, story ? 76 : 66), col, { max: w - 68 });
     text(k, x + 36, ty + th * 0.55 + (story ? 52 : 46), F(400, 30), CARD_C.muted);
   });
-  y += Math.ceil(tiles.length / 2) * (th + gap) + (story ? 50 : 30);
+  y += Math.ceil(tiles.length / 2) * (th + gap) + (story ? 60 : 30);
   // Top themes: a bar and up to three rows
   if (o.themes && d.themes.length && d.sets) {
     text((d.bySub ? 'Top subthemes' : 'Top themes').toUpperCase(), P, y + 20, F(500, 26), CARD_C.muted, { spacing: 4 });
-    y += 48;
+    y += story ? 56 : 48;
     const top = d.themes.slice(0, 3), rest = d.sets - top.reduce((t, x) => t + x.n, 0), parts = [...top.map((x, i) => [x, CARD_C.themes[i]]), ...(rest > 0 ? [[{ name: 'Other', n: rest }, CARD_C.themes[3]]] : [])];
     const bw = W - P * 2; let bx = P;
     g.save(); g.beginPath(); g.roundRect ? g.roundRect(P, y, bw, 22, 11) : g.rect(P, y, bw, 22); g.clip();
     for (const [x, col] of parts) { const w = x.n / d.sets * bw; g.fillStyle = col; g.fillRect(bx, y, w + 1, 22); bx += w; }
     g.restore();
-    y += 22 + (story ? 66 : 52);
+    y += 22 + (story ? 70 : 52);
     for (const [x, col] of top.map((x, i) => [x, CARD_C.themes[i]])) {
       g.fillStyle = col; g.beginPath(); g.arc(P + 12, y - 12, 12, 0, Math.PI * 2); g.fill();
       const pc = `${Math.round(x.n / d.sets * 100)}%`;
       g.font = F(500, 36); const pw = g.measureText(pc).width;
       text(x.name, P + 42, y, F(400, 36), CARD_C.fg, { max: W - P * 2 - 42 - pw - 30 });
       text(pc, W - P, y, F(500, 36), CARD_C.fg, { align: 'right' });
-      y += story ? 62 : 54;
+      y += story ? 66 : 54;
     }
   }
   const end = y;
