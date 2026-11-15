@@ -571,18 +571,18 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
 .themewrap.more-l::before,.themewrap.more-r::after{opacity:1}
 .themewrap::before{left:0;background:linear-gradient(to right,var(--bg),transparent)}
 .themewrap::after{right:0;background:linear-gradient(to left,var(--bg),transparent)}
-.ttile{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:6px;width:96px;padding:8px 6px 9px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;font:inherit}
+.ttile{flex:none;scroll-snap-align:start;display:flex;flex-direction:row;align-items:center;gap:8px;height:52px;box-sizing:border-box;padding:5px 12px 5px 5px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer;font:inherit}
 .ttile:hover{border-color:var(--accent)}
-.tsep{flex:none;width:1px;align-self:stretch;margin:10px 4px;background:var(--line-2)}
+.tsep{flex:none;width:1px;align-self:stretch;margin:6px 4px;background:var(--line-2)}
 .ttile.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--panel))}
-.ttile .tpic{width:76px;height:56px;box-sizing:border-box;padding:6px 7px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ttile .tpic{flex:none;width:48px;height:40px;box-sizing:border-box;padding:3px 4px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .ttile .tpic img{max-width:100%;max-height:100%;object-fit:contain}
-.ttile .tname{font-size:12px;font-weight:600;line-height:1.2;text-align:center}
-.ttile.tlead{justify-content:center;gap:4px;border-style:dashed;border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 10%,var(--panel));cursor:default}
-.ttile.tlead .tname{font-size:15px;font-weight:700;color:var(--accent);line-height:1.15}
-.ttile.tlead small{font-size:11px;color:var(--muted);text-align:center}
+.ttile .tname{font-size:12.5px;font-weight:600;line-height:1.2;text-align:left;max-width:104px}
+.ttile.tlead{flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:5px 12px;border-style:dashed;border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 10%,var(--panel));cursor:default}
+.ttile.tlead .tname{font-size:13.5px;font-weight:700;color:var(--accent);line-height:1.15}
+.ttile.tlead small{font-size:11px;color:var(--muted);text-align:left}
 button.ttile.tlead{cursor:pointer}button.ttile.tlead:hover{border-style:solid}
-@media (max-width:640px){.ttile{width:84px}.ttile .tpic{width:66px;height:48px;padding:5px 6px}}
+@media (max-width:640px){.ttile{height:46px;gap:7px;padding-right:10px}.ttile .tpic{width:40px;height:34px}.ttile .tname{font-size:12px;max-width:92px}}
 #tfoot td{padding:10px 12px;border-top:1px solid var(--line-2);font-size:12.5px;white-space:nowrap}
 #tfoot .totrow + .totrow td{border-top:1px dashed var(--line)}
 #tfoot td.num{font-weight:600;color:var(--fg)}
