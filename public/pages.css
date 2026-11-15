@@ -162,6 +162,7 @@ h2{margin:34px 0 12px;font-size:19px;font-weight:500}
 .hero{margin:28px 0 8px;padding:28px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
 .hero h1{font-size:32px;margin:0 0 8px}
 .lead{margin:0;color:var(--muted);max-width:720px;font-size:16px}
+.hero .lead{max-width:none}
 .hsec{margin-top:30px}
 .hhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.hhead h2{margin:0}
 .hhead > a{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:13.5px;font-weight:500;text-decoration:none;color:var(--fg);padding:7px 13px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel)}

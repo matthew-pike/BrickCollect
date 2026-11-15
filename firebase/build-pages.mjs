@@ -436,7 +436,7 @@ write('./index.html', shell({
   desc: `Track your LEGO collection free: select “I own it” to add sets to your collection, see pieces, minifigures and what it's worth, keep a Wanted list and see what's retiring soon. ${fmt(sets.length)} sets from LEGO${brands.size ? `, ${[...brands.keys()].join(', ')}` : ''}.`,
   h1: '', crumbs: [],
   body: `<section class="hero"><div><h1>Your brick collection, all in one place</h1>
-<p class="lead">The free collection tracker for LEGO and other brick brands. Select “I own it” to add sets to your collection, keep a Wanted list, see what your collection is worth, and share or sell it.</p>
+<p class="lead">The free collection tracker for LEGO and other brick brands. Search, <a href="/sets" data-cta="hero_lead_sets">browse all sets</a> to find sets to add to your collection, create a Wanted list for items in your wish list, check your collection’s value and share or sell it.</p>
 <div class="row"><a class="btn primary" href="/collection#signin" id="heroBtn" data-cta="hero">Sign in to view your collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
 ${section('Popular sets', `<a href="/collection" data-cta="more_popular">Find more in My collection${ARR}</a>`, popular)}
 ${section('Retiring soon', `<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon${ARR}</a>`, retiring)}
