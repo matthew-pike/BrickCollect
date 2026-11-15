@@ -3701,7 +3701,7 @@ $('shClose').onclick = () => shDlg.close();
    Drawn on a canvas in the browser: nothing is uploaded. Follows the filters in view (pick a theme to share just that).
    Story 1080×1920 or Post 1080×1350, in the navy Instagram colours (see the BrickCollect brand doc). */
 const CARD_K = 'bc-card', CARD_W = 1080, CARD_H = { story: 1920, post: 1350 };
-// Three backgrounds from the Instagram post colours (BrickCollect brand doc). `mark` = colour of the faint BC badge behind (white unless set).
+// Three backgrounds from the Instagram post colours (BrickCollect brand doc). `mark` = colour of the BC logo in the footer (white unless set).
 const CARD_COLS = {
   navy: { bg: '#0F192D', card: '#16233D', line: '#2E3B55', fg: '#FFFFFF', muted: '#A9B4C4', accent: '#1FB3E5', value: '#B9A8FF', themes: ['#1FB3E5', '#7FDCFF', '#B9A8FF', '#4A5A78'] },
   ocean: { bg: '#0A3550', card: '#0E4263', line: '#24557A', fg: '#FFFFFF', muted: '#A8C7DA', accent: '#4FCBF2', value: '#C4B5FF', themes: ['#4FCBF2', '#A8E6FA', '#C4B5FF', '#3A6A8C'] },
@@ -3753,12 +3753,7 @@ function cardDraw(cv, d, o, oy = 0) {
   };
   const rr = (x, y, w, h, r, col) => { g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); g.fill(); };
   g.fillStyle = CARD_C.bg; g.fillRect(0, 0, W, H);
-  // Background mark: a large BC outline (circle + letters, no fill, 80% transparent), tilted, top right (white on the dark colours, navy on Cloud so it still shows).
-  const by = (story ? 170 : 120) + oy, mk = CARD_C.mark || '255,255,255', mr = story ? 340 : 290;
-  g.save(); g.translate(W - 160, by + (story ? 150 : 105)); g.rotate(-18 * Math.PI / 180);
-  g.strokeStyle = `rgba(${mk},.2)`; g.lineWidth = 12; g.beginPath(); g.arc(0, 0, mr, 0, Math.PI * 2); g.stroke();
-  g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = F(400, mr); g.fillStyle = `rgba(${mk},.2)`; sp(mr * 0.04); g.fillText('BC', mr * 0.02, mr * 0.06); sp(0);
-  g.restore();
+  const by = (story ? 170 : 120) + oy, mk = CARD_C.mark || '255,255,255';
   // Title only: your name or @handle as typed, or "My … collection".
   const what = d.scopeName ? `${d.scopeName} collection` : 'collection';
   text(o.name || `My ${what}`, P, by + 30, F(500, 88), CARD_C.fg, { max: W - P * 2 });
@@ -3803,6 +3798,10 @@ function cardDraw(cv, d, o, oy = 0) {
   const fy = H - (story ? 150 : 100);
   g.fillStyle = CARD_C.line; g.fillRect(P, fy - 56, W - P * 2, 2);
   text('brickcollect.app', P, fy, F(500, 38), CARD_C.accent, { spacing: 3 });
+  // BC logo, bottom right: outline circle + letters, no fill (white; navy on Cloud so it shows).
+  const lr = 36, lx = W - P - lr, ly = fy - 12;
+  g.strokeStyle = `rgb(${mk})`; g.lineWidth = 3; g.beginPath(); g.arc(lx, ly, lr, 0, Math.PI * 2); g.stroke();
+  g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = F(400, 30); g.fillStyle = `rgb(${mk})`; sp(2); g.fillText('BC', lx + 1, ly + 2); sp(0);
   return end;
 }
 async function cardPaint() {
