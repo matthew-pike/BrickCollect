@@ -3799,9 +3799,9 @@ function cardDraw(cv, d, o, oy = 0) {
   g.fillStyle = CARD_C.line; g.fillRect(P, fy - 56, W - P * 2, 2);
   text('brickcollect.app', P, fy, F(500, 38), CARD_C.accent, { spacing: 3 });
   // BC logo, bottom right: outline circle + letters, no fill (white; navy on Cloud so it shows).
-  const lr = 36, lx = W - P - lr, ly = fy - 12;
+  const lr = 38, lx = W - P - lr, ly = fy - 10;
   g.strokeStyle = `rgb(${mk})`; g.lineWidth = 3; g.beginPath(); g.arc(lx, ly, lr, 0, Math.PI * 2); g.stroke();
-  g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = F(400, 30); g.fillStyle = `rgb(${mk})`; sp(2); g.fillText('BC', lx + 1, ly + 2); sp(0);
+  g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = F(400, 24); g.fillStyle = `rgb(${mk})`; sp(2); g.fillText('BC', lx + 1, ly + 2); sp(0);
   return end;
 }
 async function cardPaint() {
