@@ -1,0 +1,2 @@
+# Sets LEGO has retired that the 5-year rule doesn't catch yet (marked retired, overriding retiring soon). One set number per line.
+75393  # TIE Fighter & X-Wing Mash-up (Matt, 16 Nov 2026)

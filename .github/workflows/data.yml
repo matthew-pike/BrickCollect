@@ -1,4 +1,4 @@
-# Owner data changes from files in firebase/data (the retiring-soon list and the RRPs from saved LEGO.com pages).
+# Owner data changes from files in firebase/data (the retiring-soon and retired lists, and the RRPs from saved LEGO.com pages).
 # Runs when one of those files changes on preview or main, or by hand (Actions → Data → Run workflow).
 name: Data
 on:
@@ -21,6 +21,7 @@ jobs:
         run: |
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Mark retiring soon" node mark-retiring.mjs data/retiring-soon.txt none
+          if [ -f data/retired.txt ]; then GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Mark retired" node mark-retiring.mjs data/retired.txt retired; fi
           rm -f "$RUNNER_TEMP/sa.json"
   rrp:
     runs-on: ubuntu-latest

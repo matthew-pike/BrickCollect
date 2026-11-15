@@ -1,7 +1,9 @@
 // Owner data job: mark the sets listed in a file as "retiring soon" (same as Bulk edit → Mark retiring soon).
 // One set number per line (with or without -1); lines starting with # are notes.
 // Usage: node mark-retiring.mjs data/retiring-soon.txt [YYYY-MM-DD exit date | none]
-// Sets that already have a hand setting (retired, retiring soon, not retired) are left alone, so re-running is safe. Writes each bucket in a
+//        node mark-retiring.mjs data/retired.txt retired      (marks them retired instead)
+// Retiring soon: sets that already have a hand setting (retired, retiring soon, not retired) are left alone, so re-running is safe.
+// Retired: overrides retiring soon / not retired (a set LEGO has retired is retired); sets already retired are left alone. Writes each bucket in a
 // transaction (like the price jobs), so nothing they save at the same time is lost.
 import { readFileSync } from 'node:fs';
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
@@ -10,7 +12,8 @@ initializeApp({ credential: applicationDefault() });
 const fs = getFirestore();
 const bucketOf = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) >>> 0; return 'b' + (h % 16); };
 const [file, exitArg] = process.argv.slice(2);
-const exit = exitArg && exitArg !== 'none' ? exitArg : null;
+const retired = exitArg === 'retired';
+const exit = exitArg && exitArg !== 'none' && !retired ? exitArg : null;
 if (exit && !/^\d{4}-\d{2}-\d{2}$/.test(exit)) throw new Error('exit date must be YYYY-MM-DD');
 const lines = readFileSync(file, 'utf8').split('\n').map(l => l.replace(/#.*/, ''));
 const toks = lines.flatMap(l => l.split(/[\s,;]+/)).filter(Boolean);
@@ -27,12 +30,13 @@ for (const [b, list] of byBucket) {
     const items = { ...((snap.exists && snap.data().items) || {}) };
     for (const n of list) {
       const cur = { ...(items[n] || {}) };
-      if (cur.manualRet) { already++; continue; } // never override a hand setting (re-runs, or sets changed since)
-      cur.ret = 'S'; cur.manualRet = true;
+      if (retired ? cur.ret === 'R' && cur.manualRet : cur.manualRet) { already++; continue; } // never override a hand setting (re-runs, or sets changed since)
+      cur.ret = retired ? 'R' : 'S'; cur.manualRet = true;
       if (exit) cur.exit = exit; else delete cur.exit;
       items[n] = cur; marked++;
     }
     tx.set(ref, { items, updatedAt: Date.now() });
   });
 }
-console.log(`::notice title=Retiring soon::${nums.length} sets in ${file}: ${marked} marked retiring soon${exit ? ` (by ${exit})` : ' (no date)'}, ${already} skipped (already set by hand).`);
+console.log(retired ? `::notice title=Retired::${nums.length} sets in ${file}: ${marked} marked retired, ${already} already retired.`
+  : `::notice title=Retiring soon::${nums.length} sets in ${file}: ${marked} marked retiring soon${exit ? ` (by ${exit})` : ' (no date)'}, ${already} skipped (already set by hand).`);
