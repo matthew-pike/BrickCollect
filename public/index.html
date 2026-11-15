@@ -355,7 +355,7 @@ th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mu
 th{width:1%}
 th.w-name{width:30%}
 th.w-sub{width:20%}
-td.c-own,td.c-img,td.c-cond,td.c-brand,td.c-num,td.c-bl,td.c-yr,td.c-pcs,td.c-rrp,td.c-used,td.c-new,td.c-my,td.c-links{white-space:nowrap}
+td.c-own,td.c-img,td.c-cond,td.c-brand,td.c-num,td.c-bl,td.c-rrp,td.c-used,td.c-new,td.c-my,td.c-links{white-space:nowrap}
 th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{color:var(--fg)}
 th .arr{color:var(--accent)}
@@ -396,7 +396,9 @@ tr.fromset .nm::after{white-space:nowrap;display:inline-block;content:"IN YOUR S
 .retb:hover{border-color:var(--accent);color:var(--accent)}
 .retb.soon:hover{background:color-mix(in srgb,var(--coral) 14%,transparent)}
 .toast .tbtn{margin-left:10px;border:0;background:none;color:inherit;font:inherit;font-weight:600;text-decoration:underline;cursor:pointer;padding:0}
-#rows .c-yr,#rows .c-num{white-space:nowrap}
+#rows .c-num{white-space:nowrap}
+.numsub{display:flex;gap:6px;align-items:center;margin-top:2px;font-family:var(--font-body);font-size:11.5px;color:var(--muted)}
+.numsub span + span::before{content:"· ";color:var(--faint)}
 .retb.soon{border-color:var(--coral);color:var(--coral)}
 .sub{color:var(--accent);font-weight:500}
 td.sub{min-width:150px;overflow-wrap:anywhere}
@@ -459,7 +461,9 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
 @media (max-width:900px){.pop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:420px){.pop-grid{grid-template-columns:1fr}}
 /* ---------- Phones: each row becomes a compact card; slimmer sticky toolbar ---------- */
-.phone-sort{display:none}
+/* Sort menu: on every screen (Year and Pieces have no column headers to click). */
+.phone-sort{display:inline-flex}
+.phone-sort select{font-size:13px;padding:6px 8px;border-radius:7px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:640px){
   .top{position:static}
@@ -486,10 +490,8 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
   #rows .c-brand{display:none}
   #rows .c-num{order:2;font-size:12px}
   #rows .c-bl{order:3;font-size:12px}
-  #rows .c-yr{order:3;font-size:12px}
-  #rows .c-pcs{order:4;font-size:12px;color:var(--muted)}
-  #rows .c-yr:not(:empty)::before,#rows .c-pcs:not(:empty)::before{content:"· ";color:var(--faint)}
-  #rows .c-pcs:not(:empty)::after{content:" pcs"}
+  #rows .c-num .numsub{display:inline-flex;margin:0 0 0 5px;font-size:12px}
+  #rows .c-num .numsub::before{content:"· ";color:var(--faint)}
   #rows .c-cond{order:6}
   #rows .c-cond:empty{display:none}
   #rows .c-used,#rows .c-new{font-size:12.5px;white-space:nowrap}
@@ -1027,7 +1029,7 @@ th.myh{white-space:normal;line-height:1.35;min-width:72px}
       <button class="btn clearf on" id="fiClearS" type="button" hidden title="Clear all filters and search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Clear<span class="lg"> filters</span></button>
       <label class="phone-sort"><span class="sr">Sort</span><select id="sortSel" aria-label="Sort by">
         <option value="year:desc">Newest first</option><option value="year:asc">Oldest first</option><option value="name:asc">Name A–Z</option>
-        <option value="n:asc">Set number</option><option value="new:desc">New price, highest</option><option value="used:desc">Used price, highest</option><option value="pieces:desc">Most pieces</option>
+        <option value="n:asc">Set number</option><option value="rrp:desc">RRP, highest</option><option value="new:desc">New price, highest</option><option value="used:desc">Used price, highest</option><option value="pieces:desc">Most pieces</option>
       </select></label>
       <span class="spacer" id="tbSpacer"></span>
       <div class="menuwrap"><button class="btn" id="regionBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="regionMenu" title="Which BrickLink sellers the prices come from">Prices: <span id="regionLabel">Australia</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
@@ -1462,6 +1464,8 @@ function retBadge(x) {
   const title = st === 'S' ? `Retiring soon${when ? `: LEGO plans to retire it by ${when}` : ''}${src}` : `Retired${when ? ` in ${when}` : ''}${src}`;
   return ` <span class="retb${st === 'S' ? ' soon' : ''}" title="${esc(title)}" aria-label="${esc(title)}" role="button" tabindex="0">${st === 'S' ? 'RS' : 'R'}</span>`;
 }
+// Under the set number: year, piece count and the retired badge (they used to be their own columns).
+const numSub = x => { const bits = [x.year ?? '', x.pieces ? `${x.pieces.toLocaleString()} pcs` : ''].filter(Boolean); const rb = retBadge(x); return bits.length || rb ? `<small class="numsub">${bits.map(b => `<span>${esc(String(b))}</span>`).join('')}${rb}</small>` : ''; };
 const hasMineData = v => v && (v.owned || v.wanted || (v.mytags && v.mytags.length) || SHARED_KEYS.some(k => v[k] != null));
 const personalObj = () => { const o = {}; for (const [k, v] of mine) if (hasMineData(v)) o[k] = v; return o; };
 function loadPersonal(items) { mine.clear(); for (const [k, v] of Object.entries(items || {})) if (v && typeof v === 'object') mine.set(k, v); if (typeof remapMoved === 'function') remapMoved(); if (CAT && typeof filmOptions === 'function') filmOptions(); }
@@ -2137,8 +2141,7 @@ const COLS = () => [
   { label: '<input type="checkbox" class="chk" id="selAll" aria-label="Mark everything in view as owned">' }, { label: 'Image' },
   { key: 'name', label: kind === 'sets' ? 'Set name' : 'Minifigure' }, { key: 'cond', label: 'Condition', tip: 'N new, UC used complete, UI used incomplete, ST for sale or trade, each with how many copies. Click to change copies or mark some for sale or trade.' },
   ...(fi.brand.value || kind === 'figs' ? [] : [{ key: 'brand', label: 'Brand' }]), { key: 'sub', label: 'Subtheme' },
-  { key: 'n', label: kind === 'sets' ? 'Set #' : 'RB #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BL #' }] : []), { key: 'year', label: 'Year' },
-  { key: 'pieces', label: 'Pieces', cls: 'num' },
+  { key: 'n', label: kind === 'sets' ? 'Set #' : 'RB #', tip: kind === 'sets' ? 'Set number, with the year it came out and its piece count underneath (R retired, RS retiring soon). Sort by year or pieces with the Sort menu.' : 'Rebrickable number, with the year it first came out underneath. Sort by year with the Sort menu.' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BL #' }] : []),
   ...(kind === 'sets' ? [{ key: 'rrp', label: listView === 'sale' ? `RRP<br>${cur()}` : `RRP ${cur()}`, cls: listView === 'sale' ? 'num myh' : 'num', tip: `Recommended retail price: LEGO’s price on LEGO.com Australia, or the price on the brand’s own store for the other brands (LumiBricks, Pantasy, CaDA and more). In your currency. Where a set has no New price on BrickLink yet, its RRP counts towards your totals.` }] : []),
   { key: 'used', label: listView === 'sale' ? `Used<br>${cur()}` : `Used ${cur()}`, cls: listView === 'sale' ? 'num myh' : 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
   { key: 'new', label: listView === 'sale' ? `New<br>${cur()}` : `New ${cur()}`, cls: listView === 'sale' ? 'num myh' : 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, In your currency. The other brands aren’t sold on BrickLink: their store price is under RRP.` },
@@ -2342,9 +2345,7 @@ function render() {
       <td class="c-cond">${condCell(x)}</td>
       ${fi.brand.value || x.k === 'm' ? '' : `<td class="muted c-brand">${x.brand}</td>`}
       <td class="sub c-sub">${subCell(x)}${x.sub ? `<small>${esc(x.theme)}</small>` : ''}${tagCell(x)}</td>
-      <td class="mono c-num">${esc(shownNum(x))}</td>${x.k === 'm' ? `<td class="c-bl">${blCell(x)}</td>` : ''}
-      <td class="muted c-yr">${x.year ?? ''}${retBadge(x)}</td>
-      <td class="num c-pcs">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
+      <td class="mono c-num">${esc(shownNum(x))}${numSub(x)}</td>${x.k === 'm' ? `<td class="c-bl">${blCell(x)}</td>` : ''}
       ${x.k === 's' ? `<td class="num c-rrp">${rrpCell(x)}</td>` : ''}<td class="num c-used">${price(x, 'used')}</td>
       <td class="num c-new">${price(x, 'new')}</td>${listView === 'sale' ? `<td class="num c-my">${myPriceCell(x)}</td>` : ''}
       <td class="c-links"><div class="links">${buyLink(x)}${x.extra ? (can('sets') ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
