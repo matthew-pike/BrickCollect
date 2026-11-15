@@ -1,10 +1,10 @@
-# Owner data changes from files in firebase/data (e.g. the retiring-soon list from LEGO.com).
+# Owner data changes from files in firebase/data (the retiring-soon list and the RRPs from saved LEGO.com pages).
 # Runs when one of those files changes on preview or main, or by hand (Actions → Data → Run workflow).
 name: Data
 on:
   push:
     branches: [main, preview]
-    paths: ['firebase/data/**', 'firebase/mark-retiring.mjs']
+    paths: ['firebase/data/**', 'firebase/mark-retiring.mjs', 'firebase/set-rrp.mjs']
   workflow_dispatch:
 concurrency: data
 jobs:
@@ -21,4 +21,19 @@ jobs:
         run: |
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Mark retiring soon" node mark-retiring.mjs data/retiring-soon.txt none
+          rm -f "$RUNNER_TEMP/sa.json"
+  rrp:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firebase } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: ./report.sh "npm install" npm install --no-audit --no-fund
+      - name: Save LEGO RRPs (saved LEGO.com Australia pages)
+        if: hashFiles('firebase/data/lego-au-rrp.txt') != ''
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Save LEGO RRPs" node set-rrp.mjs data/lego-au-rrp.txt
           rm -f "$RUNNER_TEMP/sa.json"

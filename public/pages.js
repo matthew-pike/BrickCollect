@@ -224,10 +224,15 @@
       if (!item) return;
       const want = curNow(), r = (rates && rates.rates) || {}, c = want === 'AUD' || r[want] ? want : 'AUD', k = c === 'AUD' ? 1 : r[c];
       let f; try { f = new Intl.NumberFormat(undefined, { style: 'currency', currency: c, currencyDisplay: 'narrowSymbol' }); } catch { f = new Intl.NumberFormat(undefined, { style: 'currency', currency: c }); }
-      const src = item.priceSource || 'BrickLink', bl = src === 'BrickLink' && !item.manualPrice;
+      // RRP: LEGO.com Australia (rrpSource 'LEGO') or the brand's own store. Older entries kept the store price in
+      // `new` with priceSource = the brand: read as RRP (same rule as My collection).
+      const legacy = item.rrp == null && !!item.priceSource && item.priceSource !== 'BrickLink';
+      const rr = item.rrp != null ? { v: item.rrp, src: item.rrpSource || 'LEGO', at: item.rrpAt, manual: !!item.manualRrp }
+        : legacy && item.new != null ? { v: item.new, src: item.priceSource, at: item.pricedAt, manual: !!item.manualPrice } : null;
+      const store = pb.dataset.brand !== 'LEGO', bl = !legacy && !item.manualPrice;
       const rg = regionNow();
       const lp = bl && rg !== 'world' ? (item.loc || {})[rg] : null, local = !!(lp && (lp.used != null || lp.new != null));
-      const val = fld => local && lp[fld] != null ? lp[fld] : item[fld];
+      const val = fld => fld === 'rrp' ? (rr ? rr.v : null) : legacy ? null : local && lp[fld] != null ? lp[fld] : item[fld];
       // Minifigures: each one from sellers in your location when it has a local price, otherwise worldwide.
       if (figItems && figCards.length) {
         const tot = { new: 0, used: 0 }; let priced = 0;
@@ -254,9 +259,15 @@
       }
       if (!setRead) return; // this set's bucket couldn't be read: keep the price the page was built with
       let any = false;
-      pb.querySelectorAll('[data-f]').forEach(el => { const v = val(el.dataset.f); if (v != null) any = true; el.textContent = v != null ? f.format(v * k) : '—'; });
+      pb.querySelectorAll('[data-f]').forEach(el => { const v = val(el.dataset.f); if (v != null && el.dataset.f !== 'rrp') any = true; el.textContent = v != null ? f.format(v * k) : '—'; });
       const at = fmtDay(local && lp.at ? lp.at : item.pricedAt), when = at ? ` · ${at}` : '';
-      $('priceNote').textContent = !any ? 'No price yet.' : item.manualPrice ? `Value set by BrickCollect${when}` : bl ? `Average of the last 6 months’ sales by sellers ${local ? 'in ' + LOCS[rg] : 'worldwide'} on BrickLink${when}` : `Price on the ${pb.dataset.brand} store${when}`;
+      if (!store) $('priceNote').textContent = !any ? 'No price yet.' : item.manualPrice ? `Value set by BrickCollect${when}` : `Average of the last 6 months’ sales by sellers ${local ? 'in ' + LOCS[rg] : 'worldwide'} on BrickLink${when}`;
+      const rn = $('rrpNote');
+      if (rn) {
+        const rat = rr ? fmtDay(rr.at) : '', rwhen = rat ? ` · ${rat}` : '';
+        rn.textContent = !rr ? 'No price yet.' : rr.manual ? `RRP set by BrickCollect${rwhen}` : `RRP: price on ${rr.src === 'LEGO' ? 'LEGO.com Australia' : `the ${rr.src} store`}${rwhen}`;
+        rn.hidden = !rr && !store;
+      }
       $('priceCur').textContent = c !== 'AUD' && rates && rates.date ? `${c}, converted from AUD at ${fmtDay(rates.date)} rates` : '';
     };
     const loadPrices = async () => {

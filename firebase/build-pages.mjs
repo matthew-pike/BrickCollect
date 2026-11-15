@@ -84,7 +84,7 @@ const lego = raw.sets.map(([n, name, year, tid, pieces]) => {
 });
 for (const [fn, name, , si] of raw.figs) for (const i of si) if (lego[i]) lego[i].figs.push({ n: fn, name });
 
-const shared = new Map();   // n -> { ret, exit, bl, used, new, loc, pricedAt, priceSource, manualPrice }
+const shared = new Map();   // n -> { ret, exit, bl, used, new, loc, pricedAt, priceSource, manualPrice, rrp, rrpSource, rrpAt, manualRrp }
 const extras = [];
 const movedPages = []; // [brand doc id, old number, new number]: sets whose number was corrected on the site
 const subOv = new Map();   // n -> subtheme
@@ -99,7 +99,7 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     mostOwned = (usage.exists && usage.data().owned) || {};
     // Subthemes as the app shows them: the automatic layer, then the owner's hand edits.
     for (const d of subs.docs) { const v = d.data() || {}; for (const [k, sub] of Object.entries(v.brickset || {})) subOv.set(k, sub); for (const [k, sub] of Object.entries(v.manual || {})) subOv.set(k, sub); }
-    for (const d of info.docs) for (const [n, v] of Object.entries((d.data() || {}).items || {})) shared.set(n, { ret: v.ret, exit: v.exit, bl: v.bl, used: v.used, new: v.new, loc: v.loc, pricedAt: v.pricedAt, priceSource: v.priceSource, manualPrice: v.manualPrice });
+    for (const d of info.docs) for (const [n, v] of Object.entries((d.data() || {}).items || {})) shared.set(n, { ret: v.ret, exit: v.exit, bl: v.bl, used: v.used, new: v.new, loc: v.loc, pricedAt: v.pricedAt, priceSource: v.priceSource, manualPrice: v.manualPrice, rrp: v.rrp, rrpSource: v.rrpSource, rrpAt: v.rrpAt, manualRrp: v.manualRrp });
     for (const d of cat.docs) {
       const v = d.data() || {};
       for (const [from, to] of Object.entries(v.moved || {})) if (typeof to === 'string' && from !== to) movedPages.push([d.id, from, to]);
@@ -200,31 +200,47 @@ for (const a of byGroup.values()) a.sort(byNewest);
 // Australian sellers when known, else worldwide. Other brands: the price on the brand's own store.
 const aud = n => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(n).replace(/^\$/, 'A$');
 const dayMonth = d => { const t = Date.parse(d || ''); return Number.isFinite(t) ? new Date(t).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Australia/Sydney' }) : ''; };
+// RRP: LEGO's price on LEGO.com Australia (rrpSource 'LEGO'), or the price on the brand's own store. Older entries kept
+// the store price in `new` with priceSource = the brand: read as RRP (same rule as My collection's rrpOf).
+const legacyStore = sh => !!(sh && sh.rrp == null && sh.priceSource && sh.priceSource !== 'BrickLink');
+function rrpOf(sh) {
+  if (sh.rrp != null) return { rrp: sh.rrp, src: sh.rrpSource || 'LEGO', at: sh.rrpAt || null, manual: !!sh.manualRrp };
+  if (legacyStore(sh) && sh.new != null) return { rrp: sh.new, src: sh.priceSource, at: sh.pricedAt || null, manual: !!sh.manualPrice };
+  return { rrp: null };
+}
 function priceOf(x) {
-  const sh = shared.get(x.n) || {}, src = sh.priceSource || 'BrickLink';
-  if (src === 'BrickLink' && !sh.manualPrice) {
+  const sh = shared.get(x.n) || {}, r = rrpOf(sh);
+  const rrp = { rrp: r.rrp, rrpSrc: r.src, rrpAt: r.at, rrpManual: r.manual };
+  if (legacyStore(sh)) return { used: null, new: null, where: '', at: null, src: sh.priceSource, ...rrp };
+  if (!sh.manualPrice) {
     const au = (sh.loc || {}).AU || {};
     const pick = f => au[f] != null ? au[f] : sh[f];
-    return { used: pick('used'), new: pick('new'), where: au.used != null || au.new != null ? 'AU' : 'world', at: (au.used != null || au.new != null) && au.at ? au.at : sh.pricedAt, src };
+    return { used: pick('used'), new: pick('new'), where: au.used != null || au.new != null ? 'AU' : 'world', at: (au.used != null || au.new != null) && au.at ? au.at : sh.pricedAt, src: 'BrickLink', ...rrp };
   }
-  return { used: sh.used, new: sh.new, where: '', at: sh.pricedAt, src, manual: !!sh.manualPrice };
+  return { used: sh.used, new: sh.new, where: '', at: sh.pricedAt, src: 'BrickLink', manual: true, ...rrp };
 }
 const WHERE = { AU: 'sellers in Australia', US: 'sellers in the United States', CA: 'sellers in Canada', EU: 'sellers in Europe (EU)', UK: 'sellers in the United Kingdom', world: 'sellers worldwide' };
-function priceNote(p, brand) {
+function priceNote(p) {
   const when = dayMonth(p.at) ? ` · ${dayMonth(p.at)}` : '';
   if (p.manual) return `Value set by BrickCollect${when}`;
-  if (p.src === 'BrickLink') return `Average of the last 6 months’ sales by ${WHERE[p.where] || WHERE.world} on BrickLink${when}`;
-  return `Price on the ${brand} store${when}`;
+  return `Average of the last 6 months’ sales by ${WHERE[p.where] || WHERE.world} on BrickLink${when}`;
 }
+function rrpNote(p) {
+  const when = dayMonth(p.rrpAt) ? ` · ${dayMonth(p.rrpAt)}` : '';
+  if (p.rrpManual) return `RRP set by BrickCollect${when}`;
+  return `RRP: price on ${p.rrpSrc === 'LEGO' ? 'LEGO.com Australia' : `the ${p.rrpSrc} store`}${when}`;
+}
+// LEGO: New and Used (BrickLink), plus RRP when known. Other brands: the RRP (their store price) only.
 function priceBox(x, blNum) {
-  const p = priceOf(x), store = x.brand !== 'LEGO' && p.src !== 'BrickLink';
-  const rows = store ? [['Store price', 'new']] : [['New', 'new'], ['Used', 'used']];
-  const has = rows.some(([, f]) => p[f] != null);
+  const p = priceOf(x), store = x.brand !== 'LEGO';
+  const rows = store ? [['RRP', 'rrp']] : [['New', 'new'], ['Used', 'used'], ...(p.rrp != null ? [['RRP', 'rrp']] : [])];
+  const hasBL = !store && (p.new != null || p.used != null);
   const cell = f => p[f] != null ? aud(p[f]) : '—';
   return `<div class="pricebox" id="priceBox" data-n="${esc(x.n)}" data-brand="${esc(x.brand)}" data-fb="${esc(FB_KEY)}"${blNum ? ` data-bl="${esc(blNum)}"` : ''}>
 <div class="phead"><b>${store ? 'Price' : 'Value'}</b><span class="cur-note muted" id="priceCur"></span></div>
 <div class="pvals">${rows.map(([k, f]) => `<div class="pv"><span class="pk">${k}</span><span class="pn" data-f="${f}">${cell(f)}</span></div>`).join('')}</div>
-<p class="fine" id="priceNote">${has ? esc(priceNote(p, x.brand)) : 'No price yet.'}</p>
+<p class="fine" id="priceNote"${store ? ' hidden' : ''}>${hasBL ? esc(priceNote(p)) : 'No price yet.'}</p>
+<p class="fine" id="rrpNote"${p.rrp != null ? '' : store ? '' : ' hidden'}>${p.rrp != null ? esc(rrpNote(p)) : 'No price yet.'}</p>
 </div>`;
 }
 

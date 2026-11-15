@@ -355,7 +355,7 @@ th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mu
 th{width:1%}
 th.w-name{width:30%}
 th.w-sub{width:20%}
-td.c-own,td.c-img,td.c-cond,td.c-brand,td.c-num,td.c-bl,td.c-yr,td.c-pcs,td.c-used,td.c-new,td.c-my,td.c-links{white-space:nowrap}
+td.c-own,td.c-img,td.c-cond,td.c-brand,td.c-num,td.c-bl,td.c-yr,td.c-pcs,td.c-rrp,td.c-used,td.c-new,td.c-my,td.c-links{white-space:nowrap}
 th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{color:var(--fg)}
 th .arr{color:var(--accent)}
@@ -436,6 +436,7 @@ button.thumb:hover,button.thumb:focus-visible{border-color:var(--accent);outline
 .priced{display:block;font-size:10.5px;color:var(--faint);font-family:var(--font-body)}
 .price{font-family:var(--font-mono);font-size:12.5px;color:var(--faint);min-width:76px;justify-content:flex-end;padding:5px 8px}
 .price.has{color:var(--fg)}
+.rrpv{font-family:var(--font-mono);font-size:12.5px;padding:5px 8px}
 .chk{width:18px;height:18px;accent-color:var(--good);cursor:pointer}
 .links{display:flex;gap:6px;justify-content:flex-end}
 .mini{padding:5px 9px;font-size:12px}
@@ -492,6 +493,9 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
   #rows .c-cond{order:6}
   #rows .c-cond:empty{display:none}
   #rows .c-used,#rows .c-new{font-size:12.5px;white-space:nowrap}
+  #rows .c-rrp{order:9;font-size:12.5px;white-space:nowrap}
+  #rows .c-rrp:has(> .muted){display:none}
+  #rows .c-rrp::before{content:"RRP ";color:var(--faint);font-size:11px}
   #rows .c-used{order:7}
   #rows .c-new{order:8}
   #rows .c-used::before{content:"Used ";color:var(--faint);font-size:11px}
@@ -1392,8 +1396,21 @@ function buildCatalog(raw) {
 let fsRaw = null, fsIdx = null, fsOnly = !!prefs.fsOnly; // for sale by collectors (see below)
 let uid = null, isOwner = false, role = 'user', perms = {}, saveMode = 'loading'; // 'cloud' | 'local' | 'loading'
 const shared = new Map(); // n -> { used, new, bl, pricedAt, priceSource }
-const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice', 'loc', 'ret', 'exit', 'manualRet'];
-const OWNER_ONLY = new Set(['bl', 'manualPrice', 'ret', 'exit', 'manualRet']);
+const SHARED_KEYS = ['used', 'new', 'bl', 'pricedAt', 'priceSource', 'manualPrice', 'loc', 'ret', 'exit', 'manualRet', 'rrp', 'rrpSource', 'rrpAt', 'manualRrp'];
+const OWNER_ONLY = new Set(['bl', 'manualPrice', 'ret', 'exit', 'manualRet', 'rrp', 'rrpSource', 'rrpAt', 'manualRrp']);
+/* RRP (shared, AUD): LEGO's price on LEGO.com Australia (rrpSource 'LEGO', from saved LEGO.com pages), or the price on
+   the brand's own store for the other brands (rrpSource = the brand). Entries from before the RRP column kept the store
+   price in `new` with priceSource = the brand: those read as RRP (and New stays empty). */
+const legacyStore = sh => !!(sh && sh.rrp == null && sh.priceSource && sh.priceSource !== 'BrickLink');
+function rrpOf(sh) {
+  if (!sh) return null;
+  if (sh.rrp != null) return { rrp: sh.rrp, src: sh.rrpSource || 'LEGO', at: sh.rrpAt || null, manual: !!sh.manualRrp };
+  if (legacyStore(sh) && sh.new != null) return { rrp: sh.new, src: sh.priceSource, at: sh.pricedAt || null, manual: !!sh.manualPrice };
+  return null;
+}
+const rrpWhere = r => r.src === 'LEGO' ? 'LEGO.com Australia' : `the ${r.src} store`;
+// New price for totals and value: BrickLink's (or yours), else the RRP (new sets not on BrickLink yet, other brands).
+const newOr = i => i.new ?? i.rrp ?? null;
 // Where BrickLink prices come from: sellers in one location, or 'world'. Defaults to the location that matches your currency.
 const LOCS = { AU: 'Australia', US: 'United States', CA: 'Canada', EU: 'Europe (EU)', UK: 'United Kingdom', world: 'Worldwide' };
 const LOC_FOR_CUR = { AUD: 'AU', USD: 'US', CAD: 'CA', EUR: 'EU', GBP: 'UK' };
@@ -1401,6 +1418,7 @@ const priceRegion = () => (prefs.region && LOCS[prefs.region]) ? prefs.region : 
 function info(n) {
   const sh = shared.get(n) || {}, me = mine.get(n) || {};
   const out = { ...sh };
+  { const r = rrpOf(sh); if (legacyStore(sh)) { delete out.new; delete out.manualPrice; } if (r) { out.rrp = r.rrp; out.rrpSource = r.src; out.rrpAt = r.at; out.manualRrp = r.manual; } }
   // Australian sellers' price when chosen and known; otherwise the worldwide one (out.worldFor marks which fell back).
   const rg = priceRegion();
   if (rg !== 'world' && !sh.manualPrice && (sh.priceSource || 'BrickLink') === 'BrickLink' && (sh.used != null || sh.new != null)) {
@@ -1565,6 +1583,14 @@ function setInfo(n, patch, { quiet } = {}) {
       sharedPatch[k] = patch[k]; delete me[k];
       // A price you type stays put: the twice-daily refresh skips it until you clear it.
       if ((k === 'used' || k === 'new') && !('manualPrice' in patch)) sharedPatch.manualPrice = patch[k] != null ? true : null;
+      // An RRP you type stays put too (the store and LEGO.com imports skip it). Older store-price entries move to rrp.
+      if (k === 'rrp') {
+        const sh = shared.get(n) || {};
+        if (!('manualRrp' in patch)) sharedPatch.manualRrp = patch[k] != null ? true : null;
+        if (!sh.rrpSource) sharedPatch.rrpSource = legacyStore(sh) ? sh.priceSource : ((CAT && CAT.sets.find(s => s.n === n)?.brand) || 'LEGO');
+        sharedPatch.rrpAt = new Date().toISOString();
+        if (legacyStore(sh)) Object.assign(sharedPatch, { new: null, priceSource: null, pricedAt: null, manualPrice: null });
+      }
     }
     else if (OWNER_ONLY.has(k)) continue; // only the site owner sets BrickLink numbers and retired status
     else if (patch[k] == null) delete me[k]; else me[k] = patch[k];
@@ -1729,7 +1755,7 @@ function valueOf(x) {
   return priced ? v : null;
 }
 function valueOne(i, c) {
-  if (c === 'new') return i.new ?? null;
+  if (c === 'new') return newOr(i);
   if (i.used == null) return null;
   return i.used; // used and used incomplete both count at the used price
 }
@@ -2113,12 +2139,13 @@ const COLS = () => [
   ...(fi.brand.value || kind === 'figs' ? [] : [{ key: 'brand', label: 'Brand' }]), { key: 'sub', label: 'Subtheme' },
   { key: 'n', label: kind === 'sets' ? 'Set #' : 'RB #' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BL #' }] : []), { key: 'year', label: 'Year' },
   { key: 'pieces', label: 'Pieces', cls: 'num' },
+  ...(kind === 'sets' ? [{ key: 'rrp', label: listView === 'sale' ? `RRP<br>${cur()}` : `RRP ${cur()}`, cls: listView === 'sale' ? 'num myh' : 'num', tip: `Recommended retail price: LEGO’s price on LEGO.com Australia, or the price on the brand’s own store for the other brands (LumiBricks, Pantasy, CaDA and more). In your currency. Where a set has no New price on BrickLink yet, its RRP counts towards your totals.` }] : []),
   { key: 'used', label: listView === 'sale' ? `Used<br>${cur()}` : `Used ${cur()}`, cls: listView === 'sale' ? 'num myh' : 'num', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
-  { key: 'new', label: listView === 'sale' ? `New<br>${cur()}` : `New ${cur()}`, cls: listView === 'sale' ? 'num myh' : 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or the brand’s own store price for the other brands (LumiBricks, Pantasy, Reobrix and more). In your currency.` },
+  { key: 'new', label: listView === 'sale' ? `New<br>${cur()}` : `New ${cur()}`, cls: listView === 'sale' ? 'num myh' : 'num', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, In your currency. The other brands aren’t sold on BrickLink: their store price is under RRP.` },
   ...(listView === 'sale' ? [{ key: 'myprice', label: `Your price<br>${cur()}`, cls: 'num myh', tip: `What you’re asking for each copy, in ${cur()}. Type to change it: it’s saved straight away and used on your shared page, Copy a post and the BrickLink upload. Left empty, the BrickLink price at your Sell or trade percentage is used (shown greyed). Copies with different prices: click Mixed to set each one in Listing details.` }] : []),
   { label: 'Links ↗', cls: 'num', tip: 'Each button opens a new tab. The coloured button opens the set at the brand’s own store (some are affiliate links that support BrickCollect). BL opens it on BrickLink.' },
 ];
-const val = (x, k) => k === 'myprice' ? myPriceSort(x) : k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
+const val = (x, k) => k === 'myprice' ? myPriceSort(x) : k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl' || k === 'rrp') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
 
 function paintSortSel() { const sel = $('sortSel'); if (!sel) return; const v = `${sort.key}:${sort.dir}`; [...sel.options].filter(x => x.dataset.extra).forEach(x => x.remove()); if (![...sel.options].some(o => o.value === v)) { const o = new Option('Column order', v); o.dataset.extra = 1; sel.add(o); } sel.value = v; }
 function render() {
@@ -2153,7 +2180,7 @@ function render() {
     : `<span>Minifigures in <b>${esc(focusSet.name)}</b> <span class="mono muted">${esc(focusSet.n)}</span>. Other filters are paused while a set is selected.</span><span class="spacer"></span><button class="btn mini" data-kind="sets">Back to sets</button><button class="btn mini" data-clearfocus="1">Show all minifigures</button>`;
 
   // stats
-  const sum = (a, f) => a.reduce((s, x) => s + (Number(info(x.n)[f]) || 0), 0);
+  const sum = (a, f) => a.reduce((s, x) => { const i = info(x.n); return s + (Number(f === 'new' ? newOr(i) : i[f]) || 0); }, 0);
   const noun = kind === 'sets' ? 'sets' : 'minifigures';
   $('kOwned').textContent = kind === 'sets' ? 'Complete sets' : 'Minifigures owned';
   const pct = isScoped && scope.length ? Math.round(hasIn.length / scope.length * 1000) / 10 : 0;
@@ -2163,7 +2190,7 @@ function render() {
   const allWanted = list.filter(x => wanted(x) && !has(x));
   $('sRemain').textContent = (isScoped ? needed.length : allWanted.length).toLocaleString();
   $('sRemainS').textContent = isScoped ? 'Needed to reach 100%' : allWanted.length ? 'On your wanted list · pick a theme for its gap' : 'Pick a theme to see the gap';
-  const unU = needed.filter(x => info(x.n).used == null).length, unN = needed.filter(x => info(x.n).new == null).length;
+  const unU = needed.filter(x => info(x.n).used == null).length, unN = needed.filter(x => newOr(info(x.n)) == null).length;
   const nm = prefs.needMode === 'new' ? 'new' : 'used', unP = nm === 'new' ? unN : unU;
   document.querySelectorAll('[data-need]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.need === nm)));
   $('sNeed').innerHTML = isScoped || allWanted.length ? `${money(sum(isScoped ? needed : allWanted, nm))} <small>${cur()}</small>` : '—';
@@ -2248,13 +2275,24 @@ function render() {
   const price = (x, f) => {
     const v = info(x.n)[f];
     if (editing === x.n + '|' + f) return `<input class="inp mono" id="edit-price" style="width:92px;text-align:right" type="number" step="0.01" min="0" data-n="${esc(x.n)}" data-f="${f}" value="${toLocal(v) ?? ''}" aria-label="${f} price in ${cur()}">`;
-    const mineV = (mine.get(x.n) || {})[f], sh = shared.get(x.n) || {}, isMine = mineV != null && !can('items'), isManual = !isMine && can('items') && sh.manualPrice && sh[f] != null;
+    const mineV = (mine.get(x.n) || {})[f], sh = shared.get(x.n) || {}, isMine = mineV != null && !can('items'), isManual = !isMine && can('items') && sh.manualPrice && !legacyStore(sh) && sh[f] != null;
     const src = sh.priceSource && sh.priceSource !== 'BrickLink' ? sh.priceSource : 'BrickLink';
     const title = isMine ? `Your price, for you only.${sh[f] != null ? ` ${src}: ${money(sh[f])}.` : ''} Click and clear it to go back.`
       : isManual ? 'Set by you for everyone. The twice-daily refresh leaves it alone; clear it to go back to BrickLink.'
       : (info(x.n).worldFor || {})[f] ? `${(sh.loc || {})[priceRegion()] ? 'No recent sales from' : 'Not yet checked for'} sellers in ${LOCS[priceRegion()]}, so this is the worldwide average (W). It’s fetched in the next twice-daily refresh. Click to set your own ${f} price`
       : priceRegion() !== 'world' && v != null && (sh.priceSource || 'BrickLink') === 'BrickLink' ? `Average ${f} price from sellers in ${LOCS[priceRegion()]} on BrickLink. Click to set your own` : `Click to set your own ${f} price`;
     return `<button class="btn ghost price ${v != null ? 'has' : ''} ${isMine ? 'mine' : ''} ${isManual ? 'manual' : ''} ${!isMine && (info(x.n).worldFor || {})[f] ? 'world' : ''}" data-price="${f}" data-n="${esc(x.n)}" title="${esc(title)}" aria-label="${esc(title)}">${v != null ? money(v) : '—'}</button>`;
+  };
+  // RRP: shown to everyone; only those who can change shared prices can edit it (no personal RRPs).
+  const rrpCell = x => {
+    const i = info(x.n), v = i.rrp;
+    const r = v != null ? { src: i.rrpSource, at: i.rrpAt, manual: i.manualRrp } : null;
+    const when = r && r.at && !isNaN(Date.parse(r.at)) ? ` · ${new Date(r.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}` : '';
+    const what = !r ? 'No RRP yet' : r.manual ? `RRP set by BrickCollect${when}` : `Price on ${rrpWhere(r)}${when}`;
+    if (!can('items')) return v != null ? `<span class="rrpv" title="${esc(what)}">${money(v)}</span>` : '<span class="muted">—</span>';
+    if (editing === x.n + '|rrp') return `<input class="inp mono" id="edit-price" style="width:92px;text-align:right" type="number" step="0.01" min="0" data-n="${esc(x.n)}" data-f="rrp" value="${toLocal(v) ?? ''}" aria-label="RRP in ${cur()}">`;
+    const title = `${what}. Click to set the RRP for everyone${r && r.manual ? '; clear it to go back to the imported price' : ''}`;
+    return `<button class="btn ghost price ${v != null ? 'has' : ''} ${r && r.manual ? 'manual' : ''}" data-price="rrp" data-n="${esc(x.n)}" title="${esc(title)}" aria-label="${esc(title)}">${v != null ? money(v) : '—'}</button>`;
   };
   const blCell = x => {
     const v = info(x.n).bl;
@@ -2307,7 +2345,7 @@ function render() {
       <td class="mono c-num">${esc(shownNum(x))}</td>${x.k === 'm' ? `<td class="c-bl">${blCell(x)}</td>` : ''}
       <td class="muted c-yr">${x.year ?? ''}${retBadge(x)}</td>
       <td class="num c-pcs">${x.pieces ? x.pieces.toLocaleString() : ''}</td>
-      <td class="num c-used">${price(x, 'used')}</td>
+      ${x.k === 's' ? `<td class="num c-rrp">${rrpCell(x)}</td>` : ''}<td class="num c-used">${price(x, 'used')}</td>
       <td class="num c-new">${price(x, 'new')}</td>${listView === 'sale' ? `<td class="num c-my">${myPriceCell(x)}</td>` : ''}
       <td class="c-links"><div class="links">${buyLink(x)}${x.extra ? (can('sets') ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
@@ -2333,14 +2371,14 @@ function render() {
   $('timeline').hidden = !tlOpen; $('tableScroll').hidden = tlOpen; if (tlOpen) { empty.hidden = true; renderTimeline(); }
   $('footCount').textContent = `${page.length.toLocaleString()} of ${rows.length.toLocaleString()} shown`;
   // Totals of the Used and New columns for the whole list (not just the rows on screen), and for the ones you own.
-  { const cols = COLS(), iu = cols.findIndex(c => c.key === 'used'), tf = $('tfoot');
+  { const cols = COLS(), ir = cols.findIndex(c => c.key === 'rrp'), iu0 = cols.findIndex(c => c.key === 'used'), iu = ir >= 0 ? ir : iu0, tf = $('tfoot');
     if (!page.length || tlOpen || iu < 0) tf.innerHTML = '';
     else {
-      const tot = list => list.reduce((t, x) => { const i = info(x.n); if (i.used != null) t.u += i.used; if (i.new != null) t.n += i.new; if (i.used == null && i.new == null) t.miss++; return t; }, { u: 0, n: 0, miss: 0 });
+      const tot = list => list.reduce((t, x) => { const i = info(x.n); if (i.rrp != null) t.r += i.rrp; if (i.used != null) t.u += i.used; if (i.new != null) t.n += i.new; if (i.used == null && i.new == null && i.rrp == null) t.miss++; return t; }, { r: 0, u: 0, n: 0, miss: 0 });
       const noun = c => `${c.toLocaleString()} ${kind === 'sets' ? (c === 1 ? 'set' : 'sets') : (c === 1 ? 'minifigure' : 'minifigures')}`;
       // Same terms as the cards above: Yours (and its value by condition and copies, like Collection value),
       // Still to get (like To complete), then everything listed.
-      const line = (label, list, note = '') => { const t = tot(list); return `<tr class="totrow"><td colspan="${iu}"><b>${label}</b> <span class="muted">${noun(list.length)}${note}${t.miss ? ` · ${t.miss.toLocaleString()} without a price` : ''}</span></td><td class="num" data-l="Used">${money(t.u)}</td><td class="num" data-l="New">${money(t.n)}</td><td colspan="${cols.length - iu - 2}"></td></tr>`; };
+      const line = (label, list, note = '') => { const t = tot(list); return `<tr class="totrow"><td colspan="${iu}"><b>${label}</b> <span class="muted">${noun(list.length)}${note}${t.miss ? ` · ${t.miss.toLocaleString()} without a price` : ''}</span></td>${ir >= 0 ? `<td class="num" data-l="RRP">${money(t.r)}</td>` : ''}<td class="num" data-l="Used">${money(t.u)}</td><td class="num" data-l="New">${money(t.n)}</td><td colspan="${cols.length - iu - (ir >= 0 ? 3 : 2)}"></td></tr>`; };
       const mineRows = rows.filter(has), getRows = rows.filter(x => !has(x));
       const val = mineRows.reduce((t, x) => t + (valueOf(x) || 0), 0);
       tf.innerHTML = (mineRows.length ? line('Yours', mineRows, ` · worth ${money(val)} ${cur()} by condition`) : '')
@@ -3122,14 +3160,14 @@ $('exportBtn').onclick = async () => { track('export', { list: 'collection' });
   const rows = [...CAT.sets.filter(owned), ...CAT.figs.filter(owned)];
   if (!rows.length) { toast('Select “I own it” on your sets and minifigures first, then export.'); return; }
   const pct = Number(prefs.sellPct), withPct = prefs.sellPct != null && prefs.sellPct !== '' && pct > 0;
-  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', 'Condition', 'Copies', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : []), 'My tags'];
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', 'Condition', 'Copies', `RRP ${cur()}`, `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Value at ${pct}%`] : []), 'My tags'];
   const at = v => v == null ? '' : Math.round(v * pct) / 100;
   const body = rows.map(x => {
     const s = info(x.n), u = toLocal(s.used), nw = toLocal(s.new), v = toLocal(valueOf(x));
-    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, condLabel(x).long, copyCount(x), u, nw, v, ...(withPct ? [at(v)] : []), myTags(x).join('; ')];
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, condLabel(x).long, copyCount(x), toLocal(s.rrp), u, nw, v, ...(withPct ? [at(v)] : []), myTags(x).join('; ')];
   });
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
-  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), '', '', sumCol(13), ...(withPct ? [sumCol(14)] : []), ''];
+  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', '', sumCol(10), '', '', '', sumCol(14), ...(withPct ? [sumCol(15)] : []), ''];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-my-collection-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your collection: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
 };
@@ -3138,15 +3176,15 @@ $('exportSaleBtn').onclick = async () => { track('export', { list: 'sale_or_trad
   const rows = [...CAT.sets, ...CAT.figs].filter(x => saleCount(x) > 0);
   if (!rows.length) { toast('Mark copies for sale or trade first: click a set’s condition chip.'); return; }
   const pct = Number(prefs.sellPct), withPct = prefs.sellPct != null && prefs.sellPct !== '' && pct > 0 && pct !== 100;
-  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Year', 'Pieces', 'Condition', 'Copies', `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Price at ${pct}%`] : [])];
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Year', 'Pieces', 'Condition', 'Copies', `RRP ${cur()}`, `Used ${cur()}`, `New ${cur()}`, `Value ${cur()}`, ...(withPct ? [`Price at ${pct}%`] : [])];
   const body = rows.map(x => {
     const q = saleOf(x), i = info(x.n); let v = 0, priced = false;
     for (const c of CONDS) if (q[c]) { const p = valueOne(i, c); if (p != null) { v += p * q[c]; priced = true; } }
     const vl = priced ? toLocal(v) : null;
-    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.year, x.pieces, CONDS.filter(c => q[c]).map(c => `${q[c]} × ${COND[c]}`).join(', '), saleCount(x), toLocal(i.used), toLocal(i.new), vl, ...(withPct ? [vl == null ? '' : Math.round(vl * pct) / 100] : [])];
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.year, x.pieces, CONDS.filter(c => q[c]).map(c => `${q[c]} × ${COND[c]}`).join(', '), saleCount(x), toLocal(i.rrp), toLocal(i.used), toLocal(i.new), vl, ...(withPct ? [vl == null ? '' : Math.round(vl * pct) / 100] : [])];
   });
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
-  const total = ['Total', '', `${rows.length} item${rows.length === 1 ? '' : 's'}`, '', '', '', '', '', '', sumCol(9), '', '', sumCol(12), ...(withPct ? [sumCol(13)] : [])];
+  const total = ['Total', '', `${rows.length} item${rows.length === 1 ? '' : 's'}`, '', '', '', '', '', '', sumCol(9), '', '', '', sumCol(13), ...(withPct ? [sumCol(14)] : [])];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-sale-or-trade-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your sale or trade list: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
 };
@@ -3156,13 +3194,13 @@ $('exportWantBtn').onclick = async () => { track('export', { list: 'wanted' });
   const rows = [...CAT.sets, ...CAT.figs].filter(x => wanted(x) && !has(x));
   if (!rows.length) { toast('Star the sets and minifigures you want first, then export.'); return; }
   const blUrl = x => { const id = x.k === 's' ? (info(x.n).bl || x.n) : info(x.n).bl; return x.extra ? '' : id ? `https://www.bricklink.com/v2/catalog/catalogitem.page?${x.k === 's' ? 'S' : 'M'}=${encodeURIComponent(id)}` : ''; };
-  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', `Used ${cur()}`, `New ${cur()}`, 'Buy', 'BrickLink', 'My tags'];
+  const head = ['Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Tags', 'Year', 'Pieces', `RRP ${cur()}`, `Used ${cur()}`, `New ${cur()}`, 'Buy', 'BrickLink', 'My tags'];
   const body = rows.map(x => {
     const s = info(x.n);
-    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, toLocal(s.used), toLocal(s.new), buyHref(x), blUrl(x), myTags(x).join('; ')];
+    return [x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, (x.tags || []).join('; '), x.year, x.pieces, toLocal(s.rrp), toLocal(s.used), toLocal(s.new), buyHref(x), blUrl(x), myTags(x).join('; ')];
   });
   const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
-  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', sumCol(9), sumCol(10), '', '', ''];
+  const total = ['Total', '', `${rows.length} items`, '', '', '', '', '', sumCol(8) || '', sumCol(9), sumCol(10), sumCol(11), '', '', ''];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-wanted-list-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your wanted list: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
 };
@@ -4222,6 +4260,11 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.35', date: '16 November 2026', title: 'RRP prices', items: [
+    ['New RRP column', 'sets now show their recommended retail price beside the Used and New prices: LEGO’s price on LEGO.com Australia, and the store price for the other brands (LumiBricks, Pantasy, CaDA and more), in your currency. It’s in the exports too.'],
+    ['Set pages', 'the Value box shows the RRP alongside the New and Used prices.'],
+    ['Other brands', 'their store price has moved from New to RRP, as they aren’t sold on BrickLink. It still counts towards your collection value.'],
+  ] },
   { v: '0.34', date: '14 November 2026', title: 'Minifigure values', items: [
     ['Minifigure prices on set pages', 'every minifigure on a set page now shows what it sells for, new and used, with a total for all the set’s minifigures. Prices come from BrickLink sales, from sellers in your country when there are any, in your currency.'],
   ] },
