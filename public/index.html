@@ -3740,7 +3740,7 @@ function cardMoney(aud) {
   try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: c, currencyDisplay: 'narrowSymbol', notation: v >= 10000 ? 'compact' : 'standard', maximumFractionDigits: v >= 10000 ? 1 : 0 }).format(v); }
   catch { return money(aud); }
 }
-// oy shifts the content down (the Story picture centres it between Instagram's top and bottom bars). Returns where the content ends.
+// oy shifts the content down (the Story picture starts it just below Instagram's top bar). Returns where the content ends.
 function cardDraw(cv, d, o, oy = 0) {
   const W = CARD_W, H = CARD_H[o.size], story = o.size === 'story', P = 90, CARD_C = CARD_COLS[o.color] || CARD_COLS.navy;
   cv.width = W; cv.height = H;
@@ -3754,14 +3754,14 @@ function cardDraw(cv, d, o, oy = 0) {
   const rr = (x, y, w, h, r, col) => { g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); g.fill(); };
   g.fillStyle = CARD_C.bg; g.fillRect(0, 0, W, H);
   // Background mark: a large BC outline (circle + letters, no fill), tilted and faint, top right (white on the dark colours, navy on Cloud so it still shows).
-  const by = (story ? 170 : 136) + oy, mk = CARD_C.mark || '255,255,255', mr = story ? 400 : 340;
+  const by = (story ? 170 : 120) + oy, mk = CARD_C.mark || '255,255,255', mr = story ? 400 : 340;
   g.save(); g.translate(W - 170, by + (story ? 190 : 150)); g.rotate(-18 * Math.PI / 180);
   g.strokeStyle = `rgba(${mk},.16)`; g.lineWidth = 12; g.beginPath(); g.arc(0, 0, mr, 0, Math.PI * 2); g.stroke();
   g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = F(400, mr * 0.78); g.fillStyle = `rgba(${mk},.16)`; sp(mr * 0.05); g.fillText('BC', mr * 0.025, mr * 0.05); sp(0);
   g.restore();
   // Title only: your name or @handle as typed, or "My … collection".
   const what = d.scopeName ? `${d.scopeName} collection` : 'collection';
-  text(o.name || `My ${what}`, P, by + 22, F(500, 64), CARD_C.fg, { max: W - P * 2 });
+  text(o.name || `My ${what}`, P, by + 30, F(500, 88), CARD_C.fg, { max: W - P * 2 });
   // Big number
   let y = (story ? 520 : 420) + oy;
   text(d.sets.toLocaleString(), P - 6, y, F(500, story ? 230 : 190), CARD_C.fg);
@@ -3815,7 +3815,7 @@ async function cardPaint() {
   await cardFontLoad();
   const cv = document.createElement('canvas');
   const end = cardDraw(cv, d, o);
-  if (o.size === 'story') { const top = 106, room = [230, CARD_H.story - 300], h = end - top; cardDraw(cv, d, o, Math.max(0, Math.round(room[0] + (room[1] - room[0] - h) / 2 - top))); }
+  if (o.size === 'story') cardDraw(cv, d, o, 80); // Story: start just below Instagram's top bar (not centred), per Matt
   cardBlob = await new Promise(r => cv.toBlob(r, 'image/png'));
   if (cardUrl) URL.revokeObjectURL(cardUrl);
   cardUrl = cardBlob ? URL.createObjectURL(cardBlob) : '';
