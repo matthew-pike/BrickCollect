@@ -467,9 +467,9 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
 @media (max-width:900px){.pop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:420px){.pop-grid{grid-template-columns:1fr}}
 /* ---------- Phones: each row becomes a compact card; slimmer sticky toolbar ---------- */
-/* Sort menu: on every screen (Year and Pieces have no column headers to click). */
-.phone-sort{display:inline-flex}
-.phone-sort select{font-size:13px;padding:6px 8px;border-radius:7px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg)}
+/* Sort menu: on every screen (Year and Pieces have no column headers to click). Looks like the Prices button. */
+.phone-sort{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line-2);border-radius:7px;background:var(--panel-2);padding-left:13px;font-size:13px;font-weight:500;color:var(--fg)}
+.phone-sort select{font:inherit;padding:8px 8px 8px 2px;border:0;border-radius:7px;background:transparent;color:var(--fg);cursor:pointer}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:640px){
   .top{position:static}
@@ -477,8 +477,9 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
   .board-head .toolbar{gap:8px;padding-block:8px}
   .board-head .tab,.board-head .pill{padding-block:5px}
   .board-head.stuck .menuwrap,.board-head.stuck .toolbar > .tip,.board-head.stuck .phone-sort{display:none}
-  .phone-sort{display:inline-flex}
-  .phone-sort select{font-size:13px;padding:6px 8px;border-radius:7px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--fg)}
+  .phone-sort{padding-left:0}
+  .phone-sort .sortlab{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .phone-sort select{padding:6px 8px}
   .table-scroll{overflow-x:visible}
   .table-scroll table,.table-scroll tbody{display:block;width:100%;min-width:0}
   .table-scroll thead{display:none}
@@ -1033,7 +1034,7 @@ th.myh{white-space:normal;line-height:1.35;min-width:72px}
       </div><button type="button" class="tip" data-tip="All: everything in view (with no filter, everything you own or want). Owned: only what you have. Wanted: only what you&#x27;ve starred." aria-label="What is this?">i</button>
       <button class="fsonly" type="button" id="fsOnlyBtn" data-fsonly="1" hidden aria-pressed="false" title="Show only Wanted sets that collectors have for sale or trade">For sale <b id="cFs">0</b></button>
       <button class="btn clearf on" id="fiClearS" type="button" hidden title="Clear all filters and search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>Clear<span class="lg"> filters</span></button>
-      <label class="phone-sort"><span class="sr">Sort</span><select id="sortSel" aria-label="Sort by">
+      <label class="phone-sort"><span class="sortlab">Sort:</span><select id="sortSel" aria-label="Sort by">
         <option value="year:desc">Newest first</option><option value="year:asc">Oldest first</option><option value="name:asc">Name A–Z</option>
         <option value="n:asc">Set number</option><option value="rrp:desc">RRP, highest</option><option value="new:desc">New price, highest</option><option value="used:desc">Used price, highest</option><option value="pieces:desc">Most pieces</option>
       </select></label>
@@ -2144,7 +2145,7 @@ function renderTimeline() {
 const tagsOpen = new Set(); // rows where you've asked to see every tag
 /* ---------- render ---------- */
 const COLS = () => [
-  { label: '<input type="checkbox" class="chk" id="selAll" aria-label="Mark everything in view as owned">' }, { label: 'Image' },
+  { label: '<input type="checkbox" class="chk" id="selAll" aria-label="Mark everything in view as owned">' }, { label: '<span class="sr">Image</span>' },
   { key: 'name', label: kind === 'sets' ? 'Set name' : 'Minifigure' }, { key: 'cond', label: 'Condition', tip: 'N new, UC used complete, UI used incomplete, ST for sale or trade, each with how many copies. Click to change copies or mark some for sale or trade.' },
   { key: 'sub', label: 'Subtheme' },
   { key: 'n', label: kind === 'sets' ? 'Set #' : 'RB #', tip: kind === 'sets' ? 'Set number, with the year it came out and its piece count underneath (R retired, RS retiring soon). Sort by year or pieces with the Sort menu.' : 'Rebrickable number, with the year it first came out underneath. Sort by year with the Sort menu.' }, ...(kind === 'figs' ? [{ key: 'bl', label: 'BL #' }] : []),
