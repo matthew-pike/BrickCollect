@@ -3753,11 +3753,11 @@ function cardDraw(cv, d, o, oy = 0) {
   };
   const rr = (x, y, w, h, r, col) => { g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); g.fill(); };
   g.fillStyle = CARD_C.bg; g.fillRect(0, 0, W, H);
-  // Background mark: a large BC outline (circle + letters, no fill), tilted and faint, top right (white on the dark colours, navy on Cloud so it still shows).
+  // Background mark: a large BC outline (circle + letters, no fill, 80% transparent), tilted, top right (white on the dark colours, navy on Cloud so it still shows).
   const by = (story ? 170 : 120) + oy, mk = CARD_C.mark || '255,255,255', mr = story ? 340 : 290;
   g.save(); g.translate(W - 160, by + (story ? 170 : 135)); g.rotate(-18 * Math.PI / 180);
-  g.strokeStyle = `rgba(${mk},.16)`; g.lineWidth = 12; g.beginPath(); g.arc(0, 0, mr, 0, Math.PI * 2); g.stroke();
-  g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = F(400, mr * 0.78); g.fillStyle = `rgba(${mk},.16)`; sp(mr * 0.05); g.fillText('BC', mr * 0.025, mr * 0.05); sp(0);
+  g.strokeStyle = `rgba(${mk},.2)`; g.lineWidth = 12; g.beginPath(); g.arc(0, 0, mr, 0, Math.PI * 2); g.stroke();
+  g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = F(400, mr); g.fillStyle = `rgba(${mk},.2)`; sp(mr * 0.04); g.fillText('BC', mr * 0.02, mr * 0.06); sp(0);
   g.restore();
   // Title only: your name or @handle as typed, or "My … collection".
   const what = d.scopeName ? `${d.scopeName} collection` : 'collection';
