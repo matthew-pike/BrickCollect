@@ -69,7 +69,9 @@ select{appearance:none;-webkit-appearance:none;padding:8px 36px 8px 14px;cursor:
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:999px;padding:5px 12px;font:inherit;font-size:12.5px;cursor:pointer}
 .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
-.count{color:var(--faint);font-size:12.5px;margin-left:auto}
+.count{color:var(--muted);font-size:13px;margin-left:auto;font-variant-numeric:tabular-nums}
+.count b{color:var(--fg);font-weight:600}
+.count .faint{color:var(--faint)}
 .views{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden}
 .views button{display:inline-flex;align-items:center;gap:6px;border:0;background:var(--panel);color:var(--muted);font:inherit;font-size:13px;padding:8px 12px;cursor:pointer}
 .views button+button{border-left:1px solid var(--line-2)}
@@ -298,7 +300,12 @@ footer.bot .grow{flex:1}
     }[sort];
     rows = rows.slice().sort(cmp);
     const copies = rows.reduce((t, x) => t + (x.q || 1), 0);
-    $('count').textContent = `${copies.toLocaleString()} ${copies === 1 ? 'item' : 'items'}`;
+    // Totals for what's showing: sets, minifigures, copies and the asking total (items with Ask for price left out and counted).
+    const nS = new Set(rows.filter(x => x.k !== 'm').map(x => x.x || x.n)).size, nM = new Set(rows.filter(x => x.k === 'm').map(x => x.x || x.n)).size;
+    const tot = rows.reduce((t, x) => t + (x.p > 0 ? x.p * (x.q || 1) : 0), 0), ask = rows.filter(x => !(x.p > 0)).reduce((t, x) => t + (x.q || 1), 0);
+    const pl = (n, a, b) => `<b>${n.toLocaleString()}</b> ${n === 1 ? a : b}`;
+    $('count').innerHTML = [nS && pl(nS, 'set', 'sets'), nM && pl(nM, 'minifigure', 'minifigures'), copies !== nS + nM && pl(copies, 'item', 'items'),
+      tot > 0 && `Total <b>${esc(money(tot))}</b>${ask ? ` <span class="faint">(+${ask.toLocaleString()} ask for price)</span>` : ''}`].filter(Boolean).join(' · ');
     $('none').hidden = rows.length > 0;
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
     $('grid').className = view === 'list' ? 'list' : 'grid';
