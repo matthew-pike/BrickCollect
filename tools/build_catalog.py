@@ -15,14 +15,24 @@ def rd(name):
 themes = rd('themes'); sets = rd('sets'); figs = rd('minifigs')
 inv = {r['id']: r['set_num'] for r in rd('inventories')}
 set_idx = {s['set_num']: i for i, s in enumerate(sets)}
-fig_sets = collections.defaultdict(set)
+# fig -> {set index: how many in the set}. A set can have more than one inventory version: take the largest count.
+fig_sets = collections.defaultdict(dict)
 for r in rd('inventory_minifigs'):
     sn = inv.get(r['inventory_id'])
-    if sn in set_idx: fig_sets[r['fig_num']].add(set_idx[sn])
+    if sn in set_idx:
+        i, q = set_idx[sn], max(1, int(r.get('quantity') or 1))
+        d = fig_sets[r['fig_num']]; d[i] = max(d.get(i, 0), q)
+def fig_row(f):
+    d = fig_sets.get(f['fig_num'], {})
+    row = [f['fig_num'], f['name'], int(f['num_parts']), sorted(d)]
+    # Optional 5th item: {set index: count} for sets with more than one of this minifigure (e.g. two Stormtroopers).
+    multi = {str(i): q for i, q in sorted(d.items()) if q > 1}
+    if multi: row.append(multi)
+    return row
 data = {
   'themes': [[int(t['id']), t['name'], int(t['parent_id']) if t['parent_id'] else 0] for t in themes],
   'sets': [[s['set_num'], s['name'], int(s['year']), int(s['theme_id']), int(s['num_parts'])] for s in sets],
-  'figs': [[f['fig_num'], f['name'], int(f['num_parts']), sorted(fig_sets.get(f['fig_num'], []))] for f in figs],
+  'figs': [fig_row(f) for f in figs],
 }
 old = {}
 try: old = {s[0] for s in json.load(open(out, encoding='utf-8'))['sets']}

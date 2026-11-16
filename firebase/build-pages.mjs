@@ -82,7 +82,9 @@ const lego = raw.sets.map(([n, name, year, tid, pieces]) => {
   if (CUUSOO_SETS.has(n) && !p.sub) p = { theme: p.theme, sub: 'CUUSOO' };
   return { n, name, year, pieces, theme: p.theme, sub: p.sub, brand: 'LEGO', figs: [] };
 });
-for (const [fn, name, , si] of raw.figs) for (const i of si) if (lego[i]) lego[i].figs.push({ n: fn, name });
+// q: how many of this minifigure come in the set (catalog's optional 5th item, {set index: count} when more than one).
+for (const [fn, name, , si, multi] of raw.figs) for (const i of si) if (lego[i]) lego[i].figs.push({ n: fn, name, q: (multi && multi[i]) || 1 });
+const figCount = figs => figs.reduce((t, f) => t + (f.q || 1), 0);
 
 const shared = new Map();   // n -> { ret, exit, bl, used, new, loc, pricedAt, priceSource, manualPrice, rrp, rrpSource, rrpAt, manualRrp }
 const extras = [];
@@ -253,10 +255,11 @@ const figVal = f => {
 };
 function figTotal(figs) {
   const ps = figs.map(f => priceOf({ n: f.n, brand: 'LEGO' }));
-  const sum = fld => ps.reduce((t, p) => t + (p[fld] || 0), 0);
-  const priced = ps.filter(p => p.new != null || p.used != null).length;
-  const line = priced ? `Together: <b data-t="new">${aud(sum('new'))}</b> new · <b data-t="used">${aud(sum('used'))}</b> used${priced < figs.length ? ` <span class="muted">(${priced} of ${figs.length} minifigures priced)</span>` : ''}` : 'No minifigure prices yet.';
-  return `<div class="figtotal" id="figTotal" data-count="${figs.length}"><p class="ftl" id="figTotalLine">${line}</p><p class="fine" id="figNote"><span id="figNoteWhere">Minifigure values: average of the last 6 months’ sales on BrickLink, from sellers in Australia where there are any, otherwise worldwide.</span><span id="figNoteMore"${priced < figs.length ? '' : ' hidden'}> Minifigures get a price once a collector owns or wants them.</span></p></div>`;
+  // Counts each copy: a set with two Stormtroopers adds the Stormtrooper's price twice.
+  const sum = fld => ps.reduce((t, p, i) => t + (p[fld] || 0) * (figs[i].q || 1), 0);
+  const all = figCount(figs), priced = ps.reduce((t, p, i) => t + (p.new != null || p.used != null ? figs[i].q || 1 : 0), 0);
+  const line = priced ? `Together: <b data-t="new">${aud(sum('new'))}</b> new · <b data-t="used">${aud(sum('used'))}</b> used${priced < all ? ` <span class="muted">(${priced} of ${all} minifigures priced)</span>` : ''}` : 'No minifigure prices yet.';
+  return `<div class="figtotal" id="figTotal" data-count="${all}"><p class="ftl" id="figTotalLine">${line}</p><p class="fine" id="figNote"><span id="figNoteWhere">Minifigure values: average of the last 6 months’ sales on BrickLink, from sellers in Australia where there are any, otherwise worldwide.</span><span id="figNoteMore"${priced < all ? '' : ' hidden'}> Minifigures get a price once a collector owns or wants them.</span></p></div>`;
 }
 
 for (const x of sets) {
@@ -270,7 +273,7 @@ for (const x of sets) {
     x.year ? ['Released', String(x.year)] : null,
     x.pieces ? ['Pieces', fmt(x.pieces)] : null,
     ['Theme', `<a href="${esc(groupPath(x))}">${esc(x.theme)}</a>${x.sub ? ` › ${esc(x.sub)}` : ''}`],
-    figs.length ? ['Minifigures', `<a href="#minifigures">${figs.length}</a>`] : null,
+    figs.length ? ['Minifigures', `<a href="#minifigures">${figCount(figs)}</a>`] : null,
     statusTxt ? ['Status', `<span class="pill${ret.s === 'S' ? ' soon' : ''}">${esc(statusTxt)}</span>`] : null,
   ].filter(Boolean);
   const app = `/collection?set=${encodeURIComponent(x.n)}`;
@@ -283,7 +286,7 @@ for (const x of sets) {
     x.brand === 'LEGO' ? `<a class="btn" href="https://rebrickable.com/sets/${encodeURIComponent(x.n)}/" target="_blank" rel="noopener" data-cta="rebrickable">Parts on Rebrickable ↗</a>` : '',
   ].filter(Boolean).join('');
   const label = x.brand === 'LEGO' ? `LEGO ${x.theme} ${num}` : `${x.brand} ${num}`;
-  const desc = `${label} ${x.name}${x.year ? ` (${x.year})` : ''}: ${x.pieces ? `${fmt(x.pieces)} pieces` : 'set details'}${figs.length ? `, ${figs.length} minifigure${figs.length === 1 ? '' : 's'}` : ''}${statusTxt ? `. ${statusTxt.replace(/:.*/, '')}` : ''}. Track it free in BrickCollect, the collection tracker for LEGO and other brick brands.`;
+  const desc = `${label} ${x.name}${x.year ? ` (${x.year})` : ''}: ${x.pieces ? `${fmt(x.pieces)} pieces` : 'set details'}${figs.length ? `, ${figCount(figs)} minifigure${figCount(figs) === 1 ? '' : 's'}` : ''}${statusTxt ? `. ${statusTxt.replace(/:.*/, '')}` : ''}. Track it free in BrickCollect, the collection tracker for LEGO and other brick brands.`;
   const body = `<p class="sub">${esc(x.brand)} ${esc(num)}${x.year ? ` · ${x.year}` : ''}${x.pieces ? ` · ${fmt(x.pieces)} pieces` : ''}${statusTxt ? ` · <span class="pill${ret.s === 'S' ? ' soon' : ''}">${esc(ret.s === 'S' ? 'Retiring soon' : 'Retired')}</span>` : ''}</p>
 <div class="setgrid">
 <div class="pic">${imgUrl(x) ? `<button type="button" class="picbtn" data-zoom="${esc(imgUrl(x))}" data-cap="${esc(x.name)}" data-meta="${esc(`${x.brand} ${num}${x.year ? ` · ${x.year}` : ''}`)}" title="See a larger picture"><img src="${esc(imgUrl(x))}" alt="${esc(`${x.brand} ${num} ${x.name}`)}"></button>` : '<span class="noimg big"></span>'}</div>
@@ -295,9 +298,9 @@ ${priceBox(x, blNum)}
 ${links ? `<div class="row links">${links}</div>` : ''}
 </div>
 </div>
-${figs.length ? `<h2 id="minifigures">Minifigures in this set (${figs.length})</h2>
+${figs.length ? `<h2 id="minifigures">Minifigures in this set (${figCount(figs)})</h2>
 ${figTotal(figs)}
-<div class="figs" id="figVals">${figs.map(f => `<button type="button" class="fig" data-n="${esc(f.n)}"${(shared.get(f.n) || {}).bl || bl.figs[f.n] ? ` data-bl="${esc((shared.get(f.n) || {}).bl || bl.figs[f.n])}"` : ''} data-zoom="${esc(figImg(f))}" data-cap="${esc(f.name)}" data-meta="${esc(bl.figs[f.n] || f.n)}" title="See a larger picture"><img src="${esc(figImg(f))}" alt="" loading="lazy" width="160" height="160"><span class="cn">${esc(f.name)}</span><span class="cm">${esc(bl.figs[f.n] || f.n)}</span>${figVal(f)}</button>`).join('')}</div>` : ''}
+<div class="figs" id="figVals">${figs.map(f => `<button type="button" class="fig" data-n="${esc(f.n)}"${f.q > 1 ? ` data-q="${f.q}"` : ''}${(shared.get(f.n) || {}).bl || bl.figs[f.n] ? ` data-bl="${esc((shared.get(f.n) || {}).bl || bl.figs[f.n])}"` : ''} data-zoom="${esc(figImg(f))}" data-cap="${esc(f.name)}" data-meta="${esc(bl.figs[f.n] || f.n)}" title="See a larger picture">${f.q > 1 ? `<span class="fq" title="${f.q} of this minifigure in the set">×${f.q}</span>` : ''}<img src="${esc(figImg(f))}" alt="" loading="lazy" width="160" height="160"><span class="cn">${esc(f.name)}</span><span class="cm">${esc(bl.figs[f.n] || f.n)}</span>${figVal(f)}</button>`).join('')}</div>` : ''}
 <dialog class="dlg zoomdlg" id="zoomDlg" aria-label="Larger picture"><div class="dhead"><div><b id="zoomCap"></b><span id="zoomMeta" class="cm"></span></div><button type="button" class="icon-btn" data-close aria-label="Close" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="zoombody"><img id="zoomImg" alt=""></div></dialog>
 ${near.length ? `<section class="hsec"><div class="hhead"><h2>More ${esc(x.sub || x.theme)} sets</h2><a href="${esc(groupPath(x))}">All ${esc(groupName(x))} sets${ARR}</a></div>
 <div class="cards">${near.map(card).join('')}</div></section>` : ''}`;

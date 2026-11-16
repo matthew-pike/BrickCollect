@@ -239,11 +239,12 @@
         figCards.forEach(card => {
           const it = figItems[card.dataset.n] || {}, fl = rg !== 'world' && !it.manualPrice ? (it.loc || {})[rg] : null;
           const fLocal = !!(fl && (fl.used != null || fl.new != null)), fv = fld => fLocal && fl[fld] != null ? fl[fld] : it[fld];
-          let has = false;
-          card.querySelectorAll('.fv [data-f]').forEach(el => { const v = fv(el.dataset.f); if (v != null) { has = true; tot[el.dataset.f] += v; } el.textContent = v != null ? f.format(v * k) : '—'; });
+          let has = false; const q = Number(card.dataset.q) || 1; // copies of this minifigure in the set
+          card.querySelectorAll('.fv [data-f]').forEach(el => { const v = fv(el.dataset.f); if (v != null) { has = true; tot[el.dataset.f] += v * q; } el.textContent = v != null ? f.format(v * k) : '—'; });
           const box = card.querySelector('.fv'); if (box) box.toggleAttribute('data-none', !has);
-          if (has) priced++;
+          if (has) priced += q;
         });
+        const all = figCards.reduce((t, c) => t + (Number(c.dataset.q) || 1), 0);
         const line = $('figTotalLine');
         if (line) {
           line.textContent = '';
@@ -251,10 +252,10 @@
           else {
             const b = v => { const e = document.createElement('b'); e.textContent = f.format(v * k); return e; };
             line.append('Together: ', b(tot.new), ' new · ', b(tot.used), ' used');
-            if (priced < figCards.length) { const m = document.createElement('span'); m.className = 'muted'; m.textContent = ` (${priced} of ${figCards.length} minifigures priced)`; line.append(' ', m); }
+            if (priced < all) { const m = document.createElement('span'); m.className = 'muted'; m.textContent = ` (${priced} of ${all} minifigures priced)`; line.append(' ', m); }
           }
         }
-        if ($('figNoteMore')) $('figNoteMore').hidden = priced >= figCards.length;
+        if ($('figNoteMore')) $('figNoteMore').hidden = priced >= all;
         if ($('figNoteWhere')) $('figNoteWhere').textContent = `Minifigure values: average of the last 6 months’ sales on BrickLink, from sellers ${rg !== 'world' ? `in ${LOCS[rg]} where there are any, otherwise worldwide` : 'worldwide'}.`;
       }
       if (!setRead) return; // this set's bucket couldn't be read: keep the price the page was built with
