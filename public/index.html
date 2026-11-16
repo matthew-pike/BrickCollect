@@ -2597,7 +2597,19 @@ let qT, qTrackT; $('q').addEventListener('input', () => { clearTimeout(qT); qT =
   clearTimeout(qTrackT); qTrackT = setTimeout(() => { const q = $('q').value.trim(); if (q.length >= 2) track('search', { search_term: q.slice(0, 60), results: $('rows') ? $('rows').rows.length : undefined }); }, 1500); });
 $('more').onclick = () => { limit += PAGE; render(); };
 $('moreAll').onclick = () => { limit = SHOW_ALL_MAX; render(); };
-$('fiReset').onclick = $('fiClearM').onclick = $('fiClearS').onclick = () => { const stuck = $('boardHead').classList.contains('stuck'); focus = null; tlFilter = null; leaveSale(); Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); subOptions(''); filmOptions(''); $('q').value = ''; limit = PAGE; savePrefs(); render();
+// Clears brand, theme, subtheme, tag, year, retired and Set filters, the selected set and timeline entry (same as Clear filters).
+// Returns true if anything was cleared.
+function clearFilters() {
+  const any = !!(focus || tlFilter || listView === 'sale' || Object.values(fi).some(s => s.value !== '' && s.value !== 'all'));
+  focus = null; tlFilter = null; leaveSale(); Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); for (const k of Object.keys(saved)) saved[k] = undefined;
+  if (CAT) themeOptions(); subOptions(''); filmOptions(''); // themes for every brand again
+  return any;
+}
+// Enter (or the phone keyboard's Search key) searches everything: filters are cleared, the search text stays.
+$('q').addEventListener('keydown', e => { if (e.key !== 'Enter' || e.isComposing || !$('q').value.trim()) return;
+  clearTimeout(qT); const cleared = clearFilters(); if (kind === 'sets') focus = null; limit = PAGE; savePrefs(); render();
+  if (cleared) { toast('Filters cleared to search everything'); track('search_clear_filters'); } });
+$('fiReset').onclick = $('fiClearM').onclick = $('fiClearS').onclick = () => { const stuck = $('boardHead').classList.contains('stuck'); clearFilters(); $('q').value = ''; limit = PAGE; savePrefs(); render();
   // From the sticky header: go back to the top of the list, which is now a different (longer) list
   if (stuck) { const top = document.querySelector('.top'), off = getComputedStyle(top).position === 'sticky' ? top.offsetHeight : 0; scrollTo({ top: Math.max(0, $('boardHead').closest('.board').getBoundingClientRect().top + scrollY - off - 8), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } };
 $('hideWelcome').onclick = () => { $('welcome').hidden = true; lsSet('bc-start', 1); savePrefs(); };
@@ -4612,7 +4624,8 @@ $('themeBtn').onclick = () => { prefs.theme = THEMES[(THEMES.indexOf(curTheme())
 function linkAction() {
   const q = new URLSearchParams(location.search), n = q.get('set');
   // From the header search on the other pages (/collection?q=…), and their About / Sign in buttons.
-  if (q.get('q') && !n) { $('q').value = q.get('q'); q.delete('q'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); track('search_from_page'); }
+  // A search from another page looks through everything, so saved filters are cleared first.
+  if (q.get('q') && !n) { clearFilters(); $('q').value = q.get('q'); q.delete('q'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; savePrefs(); render(); track('search_from_page'); }
   if (['S', 'R'].includes(q.get('ret')) && !n) { fi.ret.value = q.get('ret'); fi.ret.classList.add('set-on'); q.delete('ret'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); kind = 'sets'; tlOpen = false; limit = PAGE; render(); }
   // /collection#sell (from My sale or trade list): open Sell or trade and scroll to it.
   if (location.hash === '#sell') { history.replaceState(null, '', location.pathname + location.search); prefs.sellOpen = true; savePrefs(); paintSell(); setTimeout(() => { const b = $('sellToggle').closest('section') || $('sellToggle'), h = document.querySelector('header.top'), off = h && getComputedStyle(h).position !== 'static' ? h.offsetHeight : 0; scrollTo({ top: Math.max(0, b.getBoundingClientRect().top + scrollY - off - 12), behavior: 'smooth' }); }, 300); }
