@@ -31,6 +31,10 @@ const BRANDS = [
   // Reobrix (Chinese brand, licensed World of Tanks, Maserati, Lambretta sets). Its store runs on UeeShop, not Shopify,
   // so products are read from the store's pages instead (ueeshopProducts below). Set numbers are on each product page
   // as "No.RB99009"; the store's collections (Car, Ship, Space, Train…) become the theme. Prices are in USD.
+  // Barweer (Chinese store, barweer.com, Shopify). It also sells other brands' sets (DK, Xbert, Pantasy…), so only its own
+  // sets are taken: numbered BWR + 3–4 digits (e.g. BWR302 Lion Castle), found in the address, title or SKU.
+  // Its product types aren't checked yet, so new sets come in as Unsorted for the owner to sort.
+  { brand: 'Barweer', shop: 'https://www.barweer.com', numRe: /\b(BWR\d{3,4})\b/i, themeOf: () => null },
   { brand: 'Reobrix', shop: 'https://reobrix.com', currency: 'USD', products: (shop, known) => ueeshopProducts(shop, known), imgSize: false },
 ];
 
@@ -44,7 +48,7 @@ const BRICKCRAFT_LINES = {
 
 // The set number is the last number in the address, optionally followed by a region (e.g. pantasy-t-800-87503-us-eu).
 const numFromHandle = h => { const m = /-([a-z]?\d{4,6})(?:-[a-z]{2,3})*$/i.exec(h || ''); return m ? m[1].toUpperCase() : null; };
-const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy|JMBricklayer|JM\s?Bricklayer|Brickcraft|Reobrix)\b[\s:–-]*/i, '').trim() || num;
+const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy|JMBricklayer|JM\s?Bricklayer|Brickcraft|Reobrix|Barweer)\b[\s:–-]*/i, '').replace(new RegExp(`^\\s*${num}\\b[\\s:–-]*`, 'i'), '').trim() || num;
 
 async function fetchJson(url) {
   const res = await fetch(url, { headers: { 'User-Agent': 'BrickCollect price updater (an Art of Bricks project)', Accept: 'application/json' } });

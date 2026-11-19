@@ -33,5 +33,7 @@ window.BC_CONFIG = {
     Brickcraft:   { label: 'BR', name: 'Brickcraft', title: 'Buy at Brickcraft', product: 'https://shopbrickcraft.com{path}', url: 'https://shopbrickcraft.com/search?q={num}' },
     // Reobrix's store (UeeShop) has no search address we can link to, so sets without a product page go to the full product list.
     Reobrix:      { label: 'RX', name: 'Reobrix', title: 'Buy at Reobrix', product: 'https://reobrix.com{path}', url: 'https://reobrix.com/products/' },
+    // Barweer: no affiliate code yet (add it to both addresses when you join their programme).
+    Barweer:      { label: 'BW', name: 'Barweer', title: 'Buy at Barweer', product: 'https://www.barweer.com{path}', url: 'https://www.barweer.com/search?q={num}' },
   },
 };

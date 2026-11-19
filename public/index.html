@@ -806,6 +806,7 @@ th.myh{white-space:normal;line-height:1.35;min-width:72px}
 .buy-mould-king{--t:#0b3a82;--bd:#0b3a82;--hv:#062452;--hb:#f5c400}
 .buy-brickcraft{--t:#c8102e;--bd:#c8102e;--hv:#7d0a1d;--hb:#7d0a1d}
 .buy-reobrix{--t:#1d1d1f;--bd:#8a8f98;--hv:#000;--hb:#1d1d1f}
+.buy-barweer{--t:#1d1d1f;--bd:#e4572e;--hv:#000;--hb:#1d1d1f}
 /* Hover: the chip keeps its brand colours and only the letters change colour */
 .btn.buy,.btn.bl{transition:color .15s ease}
 .btn.mini.buy:not(.buy-wide),.btn.mini.bl{box-sizing:border-box;min-width:36px}
@@ -1798,6 +1799,7 @@ const BUY = Object.assign({
   'Mould King': { label: 'MK', name: 'Mould King', title: 'Buy at Mould King', product: 'https://mouldkingcorp.com{path}', url: 'https://mouldkingcorp.com/search?q={num}' },
   Brickcraft: { label: 'BR', name: 'Brickcraft', title: 'Buy at Brickcraft', product: 'https://shopbrickcraft.com{path}', url: 'https://shopbrickcraft.com/search?q={num}' },
   Reobrix: { label: 'RX', name: 'Reobrix', title: 'Buy at Reobrix', product: 'https://reobrix.com{path}', url: 'https://reobrix.com/products/' },
+  Barweer: { label: 'BW', name: 'Barweer', title: 'Buy at Barweer', product: 'https://www.barweer.com{path}', url: 'https://www.barweer.com/search?q={num}' },
 }, (window.BC_CONFIG && window.BC_CONFIG.buyLinks) || {});
 // Set number as shown: LEGO's usual "-1" is hidden (75192), later versions keep theirs (75192-2). Exports keep the full number.
 const shownNum = x => x.disp || (x.brand === 'LEGO' && x.k === 's' ? x.n.replace(/-1$/, '') : x.n);
@@ -1904,7 +1906,7 @@ const THEME_TILES = [
   ['Ideas', 'Ideas', '21330-1'], ['Art', 'LEGO Art', '31208-1'], ['Disney', 'Disney', '43222-1'], ['Speed Champions', 'Speed Champions', '76916-1'],
   ['Friends', 'Friends', '41704-1'], ['Minecraft', 'Minecraft', '21189-1'], ['Bionicle', 'Bionicle', '8733-1'],
 ];
-const BRAND_TILES = ['LumiBricks', 'Pantasy', 'JMBricklayer', 'Brickcraft', 'Reobrix'];
+const BRAND_TILES = ['LumiBricks', 'Pantasy', 'JMBricklayer', 'Brickcraft', 'Reobrix', 'Barweer'];
 function paintThemeStrip() {
   const el = $('themeStrip'); if (!el || !CAT) return;
   const themes = new Set([...fi.theme.options].map(o => o.value).filter(Boolean));
