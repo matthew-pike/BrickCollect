@@ -35,6 +35,14 @@ const BRANDS = [
   // sets are taken: numbered BWR + 3–4 digits (e.g. BWR302 Lion Castle), found in the address, title or SKU.
   // Its product types aren't checked yet, so new sets come in as Unsorted for the owner to sort.
   { brand: 'Barweer', shop: 'https://www.barweer.com', numRe: /\b(BWR\d{3,4})\b/i, themeOf: () => null },
+  // Mattel Brick Shop (Mattel's own brick sets: Hot Wheels cars, Masters of the Universe, Xbox…), from the US Mattel store
+  // (shop.mattel.com, Shopify), which sells all of Mattel's toys, so only its Mattel Brick Shop collection is read.
+  // Set numbers are Mattel's product codes, 3 letters + 2 digits at the end of the address (…-audi-r8-lms-deluxe-version-jnm81).
+  // The same set is listed again for Canada, Brazil and Mexico (…-jnm81-en-ca, -fr-ca, -pt-br, -es-mx) in other currencies,
+  // so only the US listing (no region on the end) is taken. RRP = the full price (compare-at) when the store shows a sale price.
+  { brand: 'Mattel Brick Shop', shop: 'https://shop.mattel.com', currency: 'USD', numRe: /\b([A-Z]{3}\d{2})$/i,
+    products: async shop => (await allProducts(`${shop}/collections/mattel-brick-shop`)).filter(p => /-[a-z]{3}\d{2}$/i.test(p.handle || '')),
+    themeOf: p => mattelLine(p.title), tidy: n => mattelName(n), rrpFull: true, piecesFromText: true },
   { brand: 'Reobrix', shop: 'https://reobrix.com', currency: 'USD', products: (shop, known) => ueeshopProducts(shop, known), imgSize: false },
 ];
 
@@ -46,9 +54,17 @@ const BRICKCRAFT_LINES = {
   PPT: 'Poppy Playtime', RUD: 'Rudolph', SAN: 'Sanrio', SUS: 'Dr. Seuss', TYT: 'Toyota', YS: 'Yellowstone',
 };
 
+// Mattel Brick Shop: the theme is the line named in the title; names lose the line (it's the theme) and the store's "Building Toy Kit"-style endings.
+export const mattelLine = t => /masters of the universe|\bmotu\b|he-man|skeletor/i.test(t || '') ? 'Masters of the Universe'
+  : /\bxbox\b/i.test(t || '') ? 'Xbox' : /hot wheels/i.test(t || '') ? 'Hot Wheels' : null;
+export const mattelName = n => String(n || '').replace(/^\s*Mattel Brick Shop\b[\s:–-]*/i, '').replace(/^\s*(?:Hot Wheels|Masters of the Universe)\s+/i, '')
+  .replace(/\s+(?:Vehicle\s+)?(?:Building\s+(?:Toy\s+)?(?:Kit|Set)|Collector\s+Building\s+Set)\s*$/i, '').trim() || n;
+// Piece count from the product description ("861 pieces", "3,509 pcs").
+export const piecesIn = html => { const m = /(\d{1,2},?\d{3}|\d{2,4})\s*(?:-|\s)?(?:pieces|pcs|piece)\b/i.exec(String(html || '').replace(/<[^>]+>/g, ' ')); return m ? Number(m[1].replace(',', '')) : null; };
+
 // The set number is the last number in the address, optionally followed by a region (e.g. pantasy-t-800-87503-us-eu).
 const numFromHandle = h => { const m = /-([a-z]?\d{4,6})(?:-[a-z]{2,3})*$/i.exec(h || ''); return m ? m[1].toUpperCase() : null; };
-const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy|JMBricklayer|JM\s?Bricklayer|Brickcraft|Reobrix|Barweer)\b[\s:–-]*/i, '').replace(new RegExp(`^\\s*${num}\\b[\\s:–-]*`, 'i'), '').trim() || num;
+const cleanName = (title, num) => String(title || '').replace(new RegExp(`\\s*[-–|#]?\\s*${num}\\s*$`, 'i'), '').replace(/^\s*(LumiBricks|Pantasy|JMBricklayer|JM\s?Bricklayer|Brickcraft|Reobrix|Barweer|Mattel\s+Brick\s+Shop)\b[\s:–-]*/i, '').replace(new RegExp(`^\\s*${num}\\b[\\s:–-]*`, 'i'), '').trim() || num;
 
 async function fetchJson(url) {
   const res = await fetch(url, { headers: { 'User-Agent': 'BrickCollect price updater (an Art of Bricks project)', Accept: 'application/json' } });
@@ -173,7 +189,7 @@ function numFor(p, numRe) {
   return null;
 }
 
-export async function updateBrand({ brand, shop, series = [], numRe, themeOf, currency: fixedCurrency, products: readProducts, imgSize = true }, rates, manual = new Set()) {
+export async function updateBrand({ brand, shop, series = [], numRe, themeOf, currency: fixedCurrency, products: readProducts, imgSize = true, tidy = n => n, rrpFull = false, piecesFromText = false }, rates, manual = new Set()) {
   let currency = fixedCurrency || 'USD';
   if (!fixedCurrency) try { currency = (await fetchJson(`${shop}/cart.js`)).currency || currency; } catch { /* keep default */ }
   const perAud = currency === 'AUD' ? 1 : rates?.[currency];
@@ -191,7 +207,7 @@ export async function updateBrand({ brand, shop, series = [], numRe, themeOf, cu
 
   const items = { ...(cat.items || {}) };
   const updates = new Map(), now = new Date().toISOString();
-  let added = 0, priced = 0, linked = 0, themed = 0, pictured = 0;
+  let added = 0, priced = 0, linked = 0, themed = 0, pictured = 0, counted = 0;
   // Sets whose number was corrected on the site (catalog moved: old -> new): the store's number maps to the right set,
   // so the old one isn't added back.
   const moved = cat.moved || {};
@@ -199,8 +215,10 @@ export async function updateBrand({ brand, shop, series = [], numRe, themeOf, cu
   for (const p of products) {
     const num = follow(numFor(p, numRe));
     if (!num) continue;
-    const prices = (p.variants || []).map(v => Number(v.price)).filter(v => v > 0);
-    if (!items[num]) { items[num] = { name: cleanName(p.title, num), theme: 'Unsorted', sub: '', year: null, pieces: null, img: '' }; added++; }
+    // Placeholder prices (some stores show $0.01 on coming-soon sets) don't count. rrpFull: the full price when on sale.
+    const prices = (p.variants || []).map(v => Math.max(Number(v.price) || 0, rrpFull ? Number(v.compare_at_price) || 0 : 0)).filter(v => v >= 1);
+    if (!items[num]) { items[num] = { name: tidy(cleanName(p.title, num)), theme: 'Unsorted', sub: '', year: null, pieces: null, img: '' }; added++; }
+    if (piecesFromText && !items[num].pieces) { const pc = piecesIn(p.body_html); if (pc) { items[num] = { ...items[num], pieces: pc }; counted++; } }
     const path = `/products/${p.handle}`;
     if (items[num].url !== path) { items[num] = { ...items[num], url: path }; linked++; }
     // Set the theme from the store's series, unless you've set one yourself (themeAuto marks ones set here).
@@ -221,9 +239,9 @@ export async function updateBrand({ brand, shop, series = [], numRe, themeOf, cu
       priced++;
     }
   }
-  if (added || linked || themed || pictured) await upsertShared('catalog', brand, { ...cat, brand, items, updatedAt: Date.now() });
+  if (added || linked || themed || pictured || counted) await upsertShared('catalog', brand, { ...cat, brand, items, updatedAt: Date.now() });
   await savePrices(updates);
-  return { brand, currency, products: products.length, priced, added, linked, themed, pictured };
+  return { brand, currency, products: products.length, priced, added, linked, themed, pictured, ...(piecesFromText ? { counted } : {}) };
 }
 
 export default async () => {

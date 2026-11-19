@@ -35,5 +35,7 @@ window.BC_CONFIG = {
     Reobrix:      { label: 'RX', name: 'Reobrix', title: 'Buy at Reobrix', product: 'https://reobrix.com{path}', url: 'https://reobrix.com/products/' },
     // Barweer: no affiliate code yet (add it to both addresses when you join their programme).
     Barweer:      { label: 'BW', name: 'Barweer', title: 'Buy at Barweer', product: 'https://www.barweer.com{path}', url: 'https://www.barweer.com/search?q={num}' },
+    // Mattel Brick Shop: the US Mattel store. No affiliate code yet.
+    'Mattel Brick Shop': { label: 'MB', name: 'Mattel Brick Shop', title: 'Buy at Mattel', product: 'https://shop.mattel.com{path}', url: 'https://shop.mattel.com/search?q={num}' },
   },
 };
