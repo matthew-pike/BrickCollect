@@ -20,7 +20,8 @@ const BRANDS = [
   ] },
   { brand: 'Pantasy', shop: 'https://pantasy.com' },
   // Set numbers that aren't at the end of the product address are found in the address, title or SKU with numRe.
-  { brand: 'CaDA', shop: 'https://decadastore.com', numRe: /\b(C\d{5}[A-Z]?)\b/i },
+  // CaDA: the theme is the kind of model named in the title (Trains, Military, Construction…), otherwise the store's product type.
+  { brand: 'CaDA', shop: 'https://decadastore.com', numRe: /\b(C\d{5}[A-Z]?)\b/i, themeOf: p => cadaLine(p.title) || String(p.product_type || '').trim() || null },
   { brand: 'Mould King', shop: 'https://mouldkingcorp.com', numRe: /\b(\d{5})\b/ },
   // JMBricklayer set numbers are 5 digits (e.g. 61031), usually in the product title or SKU.
   { brand: 'JMBricklayer', shop: 'https://jmbricklayer.com', numRe: /\b(\d{5})\b/ },
@@ -53,6 +54,23 @@ const BRICKCRAFT_LINES = {
   HID: 'Mo Willems', JSN: 'Friday the 13th', KOH: 'King of the Hill', MTV: 'MTV', NCK: 'Nickelodeon',
   PPT: 'Poppy Playtime', RUD: 'Rudolph', SAN: 'Sanrio', SUS: 'Dr. Seuss', TYT: 'Toyota', YS: 'Yellowstone',
 };
+
+// CaDA: the theme is the first kind of model its title names, in this order (a "military truck" is Military, a "race car" Racing).
+const CADA_LINES = [
+  ['Trains', /\b(train|locomotive|railway|tram|steam engine)s?\b/i],
+  ['Military', /\b(military|tank|army|armou?red|howitzer|missile|battle|tiger|panzer|sherman|humvee)s?\b/i],
+  ['Aircraft', /\b(plane|aircraft|airplane|jet|helicopter|fighter|bomber|airship|drone)s?\b/i],
+  ['Ships', /\b(ship|boat|yacht|submarine|vessel|sailboat|cruiser)s?\b/i],
+  ['Construction', /\b(excavator|crane|bulldozer|loader|digger|dump truck|tipper|forklift|construction|road roller|mixer)s?\b/i],
+  ['Robots', /\b(robot|mech|mecha|transform(?:ing|er)?)s?\b/i],
+  ['Motorcycles', /\b(motorcycle|motorbike|motor bike|bike|scooter)s?\b/i],
+  ['Racing', /\b(race|racing|racer|formula|f1|rally|drift|kart|le mans)\b/i],
+  ['Off-Road', /\b(off[- ]?road|4x4|crawler|buggy|truggy|monster truck|pickup|jeep|wrangler|defender|land cruiser|g ?63|g-class)\b/i],
+  ['Trucks', /\b(truck|lorry|tractor|trailer|bus|van|fire engine|tow)s?\b/i],
+  ['Cars', /\b(car|supercar|sports car|coupe|roadster|sedan|gt\d*|shelby|mustang|countach|camaro|corvette|porsche|lamborghini|ferrari|bugatti|mercedes|bmw|audi|toyota|nissan|ford)s?\b/i],
+  ['Buildings', /\b(house|building|street|shop|store|caf[eé]|castle|tower|temple|restaurant|modular|city)s?\b/i],
+];
+export const cadaLine = t => (CADA_LINES.find(([, re]) => re.test(t || '')) || [])[0] || null;
 
 // Mattel Brick Shop: the theme is the line named in the title; names lose the line (it's the theme) and the store's "Building Toy Kit"-style endings.
 export const mattelLine = t => /masters of the universe|\bmotu\b|he-man|skeletor/i.test(t || '') ? 'Masters of the Universe'
