@@ -359,7 +359,7 @@ th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mu
 th{width:1%}
 th.w-name{width:30%}
 th.w-sub{width:20%}
-td.c-own,td.c-img,td.c-cond,td.c-num,td.c-bl,td.c-rrp,td.c-used,td.c-new,td.c-my,td.c-links{white-space:nowrap}
+td.c-own,td.c-img,td.c-cond,td.c-num,td.c-bl,td.c-rrp,td.c-used,td.c-new,td.c-my,td.c-sold,td.c-links{white-space:nowrap}
 th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{color:var(--fg)}
 th .arr{color:var(--accent)}
@@ -518,6 +518,12 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
   #rows .c-my::before{content:"Your price";color:var(--faint);font-size:11px;margin-right:8px;white-space:nowrap;flex-shrink:0}
   #rows .c-my{display:flex;align-items:center}
   #rows .myin{font-size:16px;width:96px;padding:3px 6px} /* 16px: iPhone doesn't zoom in on the box */
+  #rows .c-sold{order:8;flex-basis:100%;margin-top:2px;display:flex;align-items:flex-start}
+  #rows .c-sold .myp{flex-direction:row;flex-wrap:wrap;align-items:flex-start;justify-content:flex-start;gap:6px 12px}
+  #rows .c-sold .soldent{align-items:flex-start}
+  #rows .c-sold::before{content:"Sold for";color:var(--faint);font-size:11px;margin:7px 8px 0 0;white-space:nowrap;flex-shrink:0}
+  .soldform .myin{font-size:16px}
+  .soldrow input[type=date]{font-size:16px}
   #rows .c-sub{order:10;font-size:12px}
   #rows .c-sub:empty{display:none}
   #rows .c-links{order:11;margin-left:auto}
@@ -682,6 +688,21 @@ html{overflow-x:hidden}@supports (overflow:clip){html{overflow-x:clip}}
 .soldbtn{all:unset;cursor:pointer;margin-top:4px;text-align:center;font-size:12.5px;font-weight:500;padding:7px 10px;border-radius:8px;border:1px solid color-mix(in srgb,var(--violet) 45%,transparent);color:var(--violet)}
 .soldbtn:hover{background:color-mix(in srgb,var(--violet) 10%,transparent)}
 .soldbtn.confirm{background:var(--violet);color:#fff}
+.soldform{display:flex;flex-direction:column;gap:7px;margin-top:6px;padding-top:10px;border-top:1px solid var(--line)}
+.soldform h4{margin:0}
+.soldrow{display:flex;align-items:center;gap:8px;font-size:13px}
+.soldrow .lab{flex:1;white-space:nowrap}
+.soldrow .myin{width:96px}
+.soldrow input[type=date]{width:150px;padding:4px 6px;font-size:12.5px}
+.soldform .hint{margin-top:0}
+.soldbtns{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.soldbtns .soldbtn{margin-top:0}
+.soldent{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.c-sold .myin{width:104px}
+.solddt{font-size:11px;color:var(--faint);display:inline-flex;align-items:center;gap:2px}
+.soldx{border:0;background:none;color:var(--faint);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;border-radius:4px}
+.soldx:hover{color:var(--bad,#e5484d)}
+.sellbox.soldmode .pct,.sellbox.soldmode .sellgrid,.sellbox.soldmode .sellhead{display:none}
 .soldbtn:focus-visible{outline:2px solid var(--accent)}
 .myp{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .mypr{position:relative;display:inline-flex;align-items:center;white-space:nowrap}
@@ -997,7 +1018,7 @@ th.myh{white-space:normal;line-height:1.35;min-width:72px}
   <section class="sellbox" id="sellbox" aria-labelledby="sellTitle">
     <button class="sellopen" id="sellToggle" aria-expanded="false" aria-controls="sellBody"><span class="sellq"><span class="selltl"><b>Sell or trade</b><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span> <span class="muted" id="sellSub">See what your collection is worth</span></span><span class="sellpeek" id="sellPeek"></span></button>
     <div class="sellbody" id="sellBody" hidden>
-    <div class="sellmode" role="group" aria-label="Value"><button type="button" data-salemode="own" aria-pressed="true">Everything you own</button><button type="button" data-salemode="sale" aria-pressed="false" title="Copies you've marked for sale or trade. Also shows just those in the list below.">Sale or trade list <b id="cSale">0</b></button></div>
+    <div class="sellmode" role="group" aria-label="Value"><button type="button" data-salemode="own" aria-pressed="true">Everything you own</button><button type="button" data-salemode="sale" aria-pressed="false" title="Copies you've marked for sale or trade. Also shows just those in the list below.">Sale or trade list <b id="cSale">0</b></button><button type="button" data-salemode="sold" aria-pressed="false" id="soldMode" hidden title="Copies you've marked Sold or traded, with what you got for them. Also shows just those in the list below.">Sold <b id="cSold">0</b></button></div>
     <p class="salesum" id="saleSum" hidden></p>
     <p class="blrow" id="blRow" hidden><span>Selling on BrickLink? Add details and your price to each copy (click its condition chip, then Listing details), then make your upload file.</span><button class="btn" type="button" id="blOpen2">BrickLink upload</button></p>
     <p class="blrow" id="shareRow" hidden><span>Selling or trading in Facebook groups? Share one link to your whole list instead of posting every set. Buyers see pictures, details and prices, and contact you directly.</span><button class="btn" type="button" id="shareOpen2">Share your list</button></p>
@@ -1051,7 +1072,7 @@ th.myh{white-space:normal;line-height:1.35;min-width:72px}
         <div class="menu" id="regionMenu" role="menu" hidden><button role="menuitemradio" data-loc="AU">Australia<small>BrickLink sellers in Australia</small></button><button role="menuitemradio" data-loc="US">United States<small>Sellers in the US</small></button><button role="menuitemradio" data-loc="CA">Canada<small>Sellers in Canada</small></button><button role="menuitemradio" data-loc="EU">Europe (EU)<small>Sellers in the European Union</small></button><button role="menuitemradio" data-loc="UK">United Kingdom<small>Sellers in the UK</small></button><button role="menuitemradio" data-loc="world">Worldwide (W)<small>All sellers. Shown greyed with a W wherever a local price is missing</small></button></div></div>
       <button class="btn" id="importBtn" title="Add sets from Rebrickable, Brickset, BrickLink, a spreadsheet or a BrickCollect export">Import</button>
       <div class="menuwrap"><button class="btn" id="exportMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportMenu">Export <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button><button role="menuitem" id="exportBlBtn">BrickLink store upload<small>Your sale or trade list, ready to upload to your BrickLink store</small></button><button role="menuitem" id="exportCardBtn">Share your collection<small>A picture of your totals for Instagram, Facebook or anywhere</small></button><button role="menuitem" id="exportShareBtn">Share your sale or trade list<small>A link anyone can open to see what you’re selling or trading, any brand</small></button></div></div>
+        <div class="menu" id="exportMenu" role="menu" hidden><button role="menuitem" id="exportBtn">My collection<small>Everything you own, with condition, copies and value</small></button><button role="menuitem" id="exportWantBtn">Wanted list<small>Starred items with prices and where to buy</small></button><button role="menuitem" id="exportSaleBtn">Sale or trade list<small>Copies you’re letting go, with value and your price</small></button><button role="menuitem" id="exportSoldBtn">Sold list<small>What you’ve sold or traded, with the price and date</small></button><button role="menuitem" id="exportBlBtn">BrickLink store upload<small>Your sale or trade list, ready to upload to your BrickLink store</small></button><button role="menuitem" id="exportCardBtn">Share your collection<small>A picture of your totals for Instagram, Facebook or anywhere</small></button><button role="menuitem" id="exportShareBtn">Share your sale or trade list<small>A link anyone can open to see what you’re selling or trading, any brand</small></button></div></div>
       <button class="btn primary" id="syncBtn" title="Fetch the latest BrickLink prices for what's in view (site owner only; everyone else's prices refresh twice a day).">Sync Prices</button>
     </div>
     <form class="focusbar" id="bulkbar" hidden autocomplete="off">
@@ -1483,7 +1504,7 @@ function retBadge(x) {
 }
 // Under the set number: year and piece count (they used to be their own columns; the R / RS badge sits by the number).
 const numSub = x => { const bits = [x.year ?? '', x.pieces ? `${x.pieces.toLocaleString()} pcs` : ''].filter(Boolean); return bits.length ? `<small class="numsub">${bits.map(b => `<span class="nb">${esc(String(b))}</span>`).join('')}</small>` : ''; };
-const hasMineData = v => v && (v.owned || v.wanted || (v.mytags && v.mytags.length) || SHARED_KEYS.some(k => v[k] != null));
+const hasMineData = v => v && (v.owned || v.wanted || (v.mytags && v.mytags.length) || (Array.isArray(v.sold) && v.sold.length) || SHARED_KEYS.some(k => v[k] != null));
 const personalObj = () => { const o = {}; for (const [k, v] of mine) if (hasMineData(v)) o[k] = v; return o; };
 function loadPersonal(items) { mine.clear(); for (const [k, v] of Object.entries(items || {})) if (v && typeof v === 'object') mine.set(k, v); if (typeof remapMoved === 'function') remapMoved(); if (CAT && typeof filmOptions === 'function') filmOptions(); }
 /* ---------- your own tags (private: saved with your collection, never shared) ---------- */
@@ -1593,6 +1614,8 @@ function setInfo(n, patch, { quiet } = {}) {
     if (Object.keys(o).length) me.saleInfo = o; else delete me.saleInfo;
   }
   if ('wanted' in patch) me.wanted = !!patch.wanted && !me.owned;
+  // sold: what you've sold or traded (see soldOf). Kept when the item leaves your collection.
+  if ('sold' in patch) { const a = (patch.sold || []).map(cleanSold).filter(Boolean).slice(-500); if (a.length) me.sold = a; else delete me.sold; }
   if ('mytags' in patch) { const t = [...new Set((patch.mytags || []).map(cleanTag).filter(Boolean))].slice(0, MY_TAG_MAX); if (t.length) me.mytags = t; else delete me.mytags; }
   { const was = mine.get(n) || {}, it = n.startsWith('fig-') ? 'minifigure' : 'set';
     if ('owned' in patch && !!me.owned !== !!was.owned) { track(me.owned ? 'set_ticked' : 'set_unticked', { item_type: it }); trackSize(); if (me.owned) { lsSet('bc-tick-tip', 1); document.getElementById('tickTip')?.remove(); if (!quiet) setTimeout(() => tallyToast(n), 0); } }
@@ -1732,7 +1755,7 @@ function inScope(x) {
   return !!q && x.key.includes(q) && (!setFilters || x.so.some(s => setPasses(s, '')));
 }
 // Picking a brand, theme or subtheme, or resetting filters, leaves the Sale or trade list (back to All).
-function leaveSale() { if (listView === 'sale') listView = 'all'; }
+function leaveSale() { if (listView === 'sale' || listView === 'sold') listView = 'all'; }
 const owned = x => !!(mine.get(x.n) || {}).owned;
 const wanted = x => !!(mine.get(x.n) || {}).wanted;
 // Minifigures that come with a set you own count as in your collection (but aren't valued twice).
@@ -1767,6 +1790,21 @@ const copyCount = x => { const q = copiesOf(x); return q.new + q.used + q['used-
 // Copies you've marked for sale or trade, per condition.
 function saleOf(x) { const own = copiesOf(x), s = (mine.get(x.n) || {}).sale || {}, out = {}; for (const c of CONDS) out[c] = Math.min(own[c], Math.max(0, Number(s[c]) || 0)); return out; }
 const saleCount = x => { const q = saleOf(x); return q.new + q.used + q['used-inc']; };
+// Copies you've marked Sold or traded, kept after they leave your collection:
+// [{ c: condition, q: copies, d: 'YYYY-MM-DD', p: { p: price for each copy, c: currency it was typed in } }] (p left out for a trade or no price).
+const soldOf = x => { const s = (mine.get(x.n) || {}).sold; return Array.isArray(s) ? s : []; };
+const soldCount = x => soldOf(x).reduce((t, s) => t + (s.q || 0), 0);
+const soldEach = s => s.p ? lstPrice({ price: s.p }) : null; // price for each copy, in the currency you're viewing
+function soldTotal(x) { let t = 0, any = false; for (const s of soldOf(x)) { const v = soldEach(s); if (v != null) { t += v * s.q; any = true; } } return any ? Math.round(t * 100) / 100 : null; }
+const soldLast = x => soldOf(x).reduce((a, s) => s.d > a ? s.d : a, '');
+const todayIso = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, your own time zone
+function cleanSold(v) {
+  if (!v || !CONDS.includes(v.c)) return null;
+  const q = Math.max(1, Math.min(999, Math.floor(Number(v.q) || 0))), o = { c: v.c, q, d: /^\d{4}-\d{2}-\d{2}$/.test(v.d || '') ? v.d : todayIso() };
+  if (v.p && Number(v.p.p) > 0 && /^[A-Z]{3}$/.test(v.p.c || '')) o.p = { p: Math.round(Number(v.p.p) * 100) / 100, c: v.p.c };
+  return o;
+}
+const fmtDay = d => { const t = new Date(d + 'T12:00:00'); return isNaN(t) ? d : t.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }); };
 // What an owned item is worth at its condition, in AUD (null when unpriced).
 // Value of every copy you own (new copies at the new price, used and incomplete at the used price).
 function valueOf(x) {
@@ -1860,7 +1898,8 @@ function menuNewBadges(root) {
   });
 }
 const NEW_TIPS = [
-  { id: 'myprice', at: '2026-11-13T12:00:00+11:00', sel: '#rows .myin', title: 'Your price, right in the list', text: 'Type a price in the Your price column to change it. It’s saved straight away and goes on your shared page and BrickLink upload.' },
+  { id: 'sold', at: '2026-11-21T09:00:00+11:00', sel: '#sellToggle', title: 'Keep what you sold', text: 'Marking copies Sold or traded now asks what you got for them. They’re kept under Sell or trade → Sold, with a Sold price column and your total.' },
+  { id: 'myprice', at: '2026-11-13T12:00:00+11:00', sel: '#rows .c-my .myin', title: 'Your price, right in the list', text: 'Type a price in the Your price column to change it. It’s saved straight away and goes on your shared page and BrickLink upload.' },
   { id: 'menu', at: '2026-11-13T06:00:00+11:00', sel: '#hMenu summary', title: 'Everything in the menu', text: 'Your account, your sale or trade list, every set by theme, Getting started and What’s new are now in the ☰ menu, on every page.' },
   { id: 'unlisted', at: '2026-11-11T07:30:00+11:00', sel: '#shareOpen2', title: 'Listed or unlisted', text: 'Reserved something? In a copy’s Listing details, set Shared page to Unlisted: it stays on your Sale or trade list but leaves your shared page.' },
   { id: 'shareCard', at: '2026-11-10T19:30:00+11:00', sel: '#insToggle', title: 'Share your collection', text: 'Open Collection insights and tap Share to make a picture of your collection for Instagram, Facebook or anywhere.' },
@@ -2165,11 +2204,13 @@ const COLS = () => [
   { key: 'used', label: `Used<br>${cur()}`, cls: 'num myh pc', tip: `Average used price on BrickLink over the last six months of sales ${priceRegion() !== 'world' ? `by sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, or current listings if nothing sold. In your currency.` },
   { key: 'new', label: `New<br>${cur()}`, cls: 'num myh pc', tip: `Average new price on BrickLink ${priceRegion() !== 'world' ? `from sellers in ${LOCS[priceRegion()]} (worldwide, greyed with a W, where there are none)` : 'worldwide'}, In your currency. The other brands aren’t sold on BrickLink: their store price is under RRP.` },
   ...(listView === 'sale' ? [{ key: 'myprice', label: `Your price<br>${cur()}`, cls: 'num myh pc', tip: `What you’re asking for each copy, in ${cur()}. Type to change it: it’s saved straight away and used on your shared page, Copy a post and the BrickLink upload. Left empty, the BrickLink price at your Sell or trade percentage is used (shown greyed). Copies with different prices: click Mixed to set each one in Listing details.` }] : []),
+  ...(listView === 'sold' ? [{ key: 'soldprice', label: `Sold price<br>${cur()}`, cls: 'num myh pc', tip: `What you got for each copy you marked Sold or traded, in ${cur()}, with the date underneath. Type to change it; leave it empty for a trade. Sorts by the total for the item.` }] : []),
   { label: 'Links ↗', cls: 'num', tip: 'Each button opens a new tab. The coloured button opens the set at the brand’s own store (some are affiliate links that support BrickCollect). BL opens it on BrickLink.' },
 ];
-const val = (x, k) => k === 'myprice' ? myPriceSort(x) : k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl' || k === 'rrp') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
+const val = (x, k) => k === 'myprice' ? myPriceSort(x) : k === 'soldprice' ? soldTotal(x) : k === 'solddate' ? (soldLast(x) || null) : k === 'cond' ? (owned(x) ? { new: 1, used: 2, 'used-inc': 3 }[condOf(x)] : null) : k === 'film' ? (x.film || null) : (k === 'used' || k === 'new' || k === 'bl' || k === 'rrp') ? info(x.n)[k] : k === 'sub' ? (x.sub || x.theme) : x[k];
 
-function paintSortSel() { const sel = $('sortSel'); if (!sel) return; const v = `${sort.key}:${sort.dir}`; [...sel.options].filter(x => x.dataset.extra).forEach(x => x.remove()); if (![...sel.options].some(o => o.value === v)) { const o = new Option('Column order', v); o.dataset.extra = 1; sel.add(o); } sel.value = v; }
+function paintSortSel() { const sel = $('sortSel'); if (!sel) return; const v = `${sort.key}:${sort.dir}`; [...sel.options].filter(x => x.dataset.extra || x.dataset.soldopt).forEach(x => x.remove());
+  if (listView === 'sold') [['solddate:desc', 'Date sold, newest'], ['soldprice:desc', 'Sold price, highest']].reverse().forEach(([k, l]) => { const o = new Option(l, k); o.dataset.soldopt = 1; sel.add(o, 0); }); if (![...sel.options].some(o => o.value === v)) { const o = new Option('Column order', v); o.dataset.extra = 1; sel.add(o); } sel.value = v; }
 // Sale or trade list totals above the tiles: items, copies, what you're asking (your price, else BrickLink at your %)
 // and the BrickLink value. Also run after a quick price edit, which saves without re-rendering. Returns the header peek.
 function paintSaleSum() {
@@ -2184,8 +2225,20 @@ function paintSaleSum() {
   if ($('sellPeek')) $('sellPeek').textContent = peek;
   return peek;
 }
+// Sold list totals: items, copies and what you got (in the currency you're viewing). Returns the header peek.
+function paintSoldSum() {
+  const list = kind === 'sets' ? CAT.sets : CAT.figs, src = (scoped() ? list.filter(inScope) : list).filter(x => soldCount(x) > 0);
+  let copies = 0, got = 0, unp = 0;
+  for (const x of src) for (const s of soldOf(x)) { copies += s.q; const v = soldEach(s); if (v == null) unp += s.q; else got += v * s.q; }
+  const noun = kind === 'sets' ? (src.length === 1 ? 'set' : 'sets') : (src.length === 1 ? 'minifigure' : 'minifigures'), fmt = v => money(v / rate());
+  const extra = [unp && `${unp.toLocaleString()} with no price`, scoped() && 'in view'].filter(Boolean).join(' · ');
+  const el = $('saleSum'); el.hidden = !src.length;
+  el.innerHTML = src.length ? `<span><b>${src.length.toLocaleString()}</b> ${noun}</span><span><b>${copies.toLocaleString()}</b> ${copies === 1 ? 'copy' : 'copies'}</span><span class="ask" title="The total of your sold prices">Sold for <b>${fmt(got)}</b></span>${extra ? `<small>(${extra})</small>` : ''}` : '';
+  return src.length ? `${src.length.toLocaleString()} ${noun} · Sold for ${fmt(got)}` : '';
+}
 function render() {
   if (sort.key === 'myprice' && listView !== 'sale') sort = { key: 'year', dir: 'desc' }; // Your price is only a column in the Sale or trade list
+  if ((sort.key === 'soldprice' || sort.key === 'solddate') && listView !== 'sold') sort = { key: 'year', dir: 'desc' }; // and Sold price only in Sold
   paintSortSel();
   if (!CAT) return;
   $('tabSets').setAttribute('aria-selected', !tlOpen && kind === 'sets');
@@ -2241,13 +2294,15 @@ function render() {
     const ok = prefs.sellPct !== '' && prefs.sellPct != null && isFinite(pct) && pct > 0;
     // Market value of what you own, split by condition; the total applies your percentage.
     // In the Sale/trade view, only the copies marked for sale or trade count.
-    const saleMode = listView === 'sale', src = saleMode ? (isScoped ? list.filter(inScope) : list).filter(x => saleCount(x) > 0) : ownedIn, qOf = saleMode ? saleOf : copiesOf;
+    const saleMode = listView === 'sale', soldMode = listView === 'sold', src = saleMode ? (isScoped ? list.filter(inScope) : list).filter(x => saleCount(x) > 0) : ownedIn, qOf = saleMode ? saleOf : copiesOf;
     const byVal = { new: 0, used: 0, 'used-inc': 0 }, byN = { new: 0, used: 0, 'used-inc': 0 }; src.forEach(x => { const q = qOf(x), i = info(x.n); for (const c of CONDS) if (q[c]) { byVal[c] += (valueOne(i, c) || 0) * q[c]; byN[c] += q[c]; } });
     const tot = byVal.new + byVal.used + byVal['used-inc'];
-    $('sellSub').textContent = saleMode ? 'Your sale or trade list' : 'See what your collection is worth';
+    $('sellSub').textContent = soldMode ? 'What you’ve sold or traded' : saleMode ? 'Your sale or trade list' : 'See what your collection is worth';
+    $('sellbox').classList.toggle('soldmode', soldMode);
+    { const nSold = list.filter(x => soldCount(x) > 0).length; $('cSold').textContent = nSold.toLocaleString(); $('soldMode').hidden = !nSold && !soldMode; }
     $('blRow').hidden = !saleMode || !src.length;
     $('shareRow').hidden = !saleMode || !src.length;
-    document.querySelectorAll('[data-salemode]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.salemode === 'sale') === saleMode)));
+    document.querySelectorAll('[data-salemode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.salemode === (saleMode ? 'sale' : soldMode ? 'sold' : 'own'))));
     $('sellNew').textContent = money(byVal.new); $('sellUsed').textContent = money(byVal.used); $('sellInc').textContent = money(byVal['used-inc']);
     const cnt = (n, c) => n ? `${n.toLocaleString()} item${n > 1 ? 's' : ''}` : 'None';
     $('sellNewN').textContent = cnt(byN.new); $('sellUsedN').textContent = cnt(byN.used); $('sellIncN').textContent = cnt(byN['used-inc']);
@@ -2256,8 +2311,8 @@ function render() {
     $('sellPctRow').hidden = !at;
     $('sellTotalK').textContent = at ? `Total at ${pct}%` : 'Total at 100%';
     $('sellTotal').textContent = money(at ? tot * pct / 100 : tot);
-    const ask = saleMode ? paintSaleSum() : null;
-    if (!saleMode) $('saleSum').hidden = true;
+    const ask = saleMode ? paintSaleSum() : soldMode ? paintSoldSum() : null;
+    if (!saleMode && !soldMode) $('saleSum').hidden = true;
     $('sellPeek').textContent = ask != null ? ask : src.length ? (at ? `${money(tot * pct / 100)} at ${pct}%` : money(tot)) : '';
     document.querySelectorAll('.pctchip').forEach(b => b.setAttribute('aria-pressed', String(ok ? Number(b.dataset.pct) === pct : b.dataset.pct === '100')));
     $('sValUs').textContent = ok ? `At ${pct}%: ${money(vc * pct / 100)}` : (ownedIn.length ? `${byCond.new} new · ${byCond.used} used · ${byCond['used-inc']} incomplete` : 'By each item’s condition');
@@ -2271,6 +2326,7 @@ function render() {
   const figFocus = kind === 'figs' && !!focus;
   let rows = figFocus ? (fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope)
     : listView === 'owned' ? base.filter(has) : listView === 'wanted' ? base.filter(wanted) : listView === 'sale' ? (isScoped ? base : list).filter(x => saleCount(x) > 0)
+    : listView === 'sold' ? (isScoped ? base : list).filter(x => soldCount(x) > 0)
     : !isScoped ? list.filter(x => has(x) || wanted(x))
     : fi.set.value === 'owned' ? ownedIn : fi.set.value === 'missing' ? needed : scope;
   $('cOwned').textContent = list.filter(has).length.toLocaleString();
@@ -2383,7 +2439,7 @@ function render() {
       <td class="sub c-sub">${subCell(x)}${x.sub || x.brand !== 'LEGO' ? `<small>${esc([x.brand !== 'LEGO' ? x.brand : '', x.sub ? x.theme : ''].filter(Boolean).join(' · '))}</small>` : ''}${tagCell(x)}</td>
       <td class="mono c-num">${esc(shownNum(x))}${retBadge(x)}${numSub(x)}</td>${x.k === 'm' ? `<td class="c-bl">${blCell(x)}</td>` : ''}
       ${x.k === 's' ? `<td class="num c-rrp">${rrpCell(x)}</td>` : ''}<td class="num c-used">${price(x, 'used')}</td>
-      <td class="num c-new">${price(x, 'new')}</td>${listView === 'sale' ? `<td class="num c-my">${myPriceCell(x)}</td>` : ''}
+      <td class="num c-new">${price(x, 'new')}</td>${listView === 'sale' ? `<td class="num c-my">${myPriceCell(x)}</td>` : ''}${listView === 'sold' ? `<td class="num c-sold">${soldCell(x)}</td>` : ''}
       <td class="c-links"><div class="links">${buyLink(x)}${x.extra ? (can('sets') ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
   tickTip(); setTimeout(newTips, 0);
@@ -2391,7 +2447,7 @@ function render() {
   const empty = $('empty');
   // A first-time visitor with nothing ticked: hide the empty stat cards and selling box, and shorten
   // Getting started on phones, so "Tick the sets you own" and the popular sets are near the top.
-  document.body.classList.toggle('fresh', !showRows && ![...mine.values()].some(v => v && (v.owned || v.wanted)));
+  document.body.classList.toggle('fresh', !showRows && ![...mine.values()].some(v => v && (v.owned || v.wanted || (Array.isArray(v.sold) && v.sold.length))));
   if (!showRows) {
     empty.hidden = false;
     const pop = ['Star Wars', 'Technic', 'Harry Potter', 'Icons', 'Ideas', 'Ninjago'].filter(t => [...fi.theme.options].some(o => o.value === t));
@@ -2399,6 +2455,7 @@ function render() {
     // Start screen: one clear first step (tick a popular set), then themes, brands and import.
     empty.innerHTML = `<h3 class="start-h">Select “I own it” to add to your collection</h3><p>Start with a popular set below, or pick a theme or search above. BrickCollect keeps count of your sets, pieces and minifigures across ${CAT.sets.length.toLocaleString()} sets from ${1 + otherBrands.length} brand${otherBrands.length ? 's' : ''}.</p>${popularHtml()}<h4 class="start-sub">Or jump to a theme</h4><div class="chips">${pop.map(t => `<button class="btn" data-theme="${esc(t)}">${esc(t)}</button>`).join('')}${otherBrands.map(b => `<button class="btn" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}</div>${mine.size < 20 ? '<p class="imp-hint">Already tracking your sets on Rebrickable, Brickset, BrickLink or a spreadsheet? <button class="linkbtn" type="button" data-import>Import them</button></p>' : ''}`;
   } else if (!rows.length && listView === 'sale') { empty.hidden = false; empty.innerHTML = '<h3>Nothing marked for sale or trade</h3><p>Click a set’s condition chip and use the Sale or trade column to choose which copies you’re letting go.</p>'; }
+  else if (!rows.length && listView === 'sold') { empty.hidden = false; empty.innerHTML = '<h3>Nothing sold or traded yet</h3><p>When you let something go, open its condition chip, mark the copies for sale or trade, then click Sold or traded. What you got for them is kept here, even after they leave your collection.</p>'; }
   else if (!rows.length && listView === 'wanted') { empty.hidden = false; empty.innerHTML = '<h3>Your wanted list is empty</h3><p>Tap the star next to any set or minifigure to add it here.</p>'; }
   else if (!rows.length && listView === 'owned') { empty.hidden = false; empty.innerHTML = '<h3>Nothing owned here yet</h3><p>Select “I own it” on your sets and minifigures to add them to your collection, and they’ll show here.</p>'; }
   else if (!rows.length) { empty.hidden = false; empty.innerHTML = '<h3>Nothing matches</h3><p>Try a different search, or reset the filters.</p>'; }
@@ -2497,13 +2554,27 @@ const copiesEl = document.createElement('div'); copiesEl.className = 'copies'; c
 document.body.append(copiesEl);
 let soldConfirm = false;
 function paintCopies() {
-  const x = { n: copiesFor }, q = copiesOf(x), sq = saleOf(x), ns = saleCount(x), colour = { new: 'var(--good)', used: 'var(--accent)', 'used-inc': 'var(--stud)' };
+  const x = findItem(copiesFor) || { n: copiesFor }, q = copiesOf(x), sq = saleOf(x), ns = saleCount(x), colour = { new: 'var(--good)', used: 'var(--accent)', 'used-inc': 'var(--stud)' };
   const step = (kind, c, v, max) => `<span class="stepper"><button data-${kind}="${c}" data-d="-1" aria-label="One fewer ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${v ? '' : 'disabled'}>−</button><span class="n" aria-live="polite">${v}</span><button data-${kind}="${c}" data-d="1" aria-label="One more ${kind === 'sale' ? 'for sale or trade, ' : ''}${COND[c]}" ${max != null && v >= max ? 'disabled' : ''}>+</button></span>`;
   const it = findItem(copiesFor);
   copiesEl.innerHTML = `<div class="copytitle"><div class="t"><h3 id="copiesTitle">Manage your copies</h3>${it ? `<small title="${esc(it.name)}">${esc(shownNum(it))} · ${esc(it.name)}</small>` : ''}</div><button class="copyx" type="button" data-copiesclose="1" aria-label="Close" title="Close"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="copyhead"><h4>Copies you own</h4><h4>Sale or trade <span class="code">ST</span></h4></div>${CONDS.map(c => `<div class="copyrow"><span class="lab"><span class="dot" style="--c:${colour[c]}"></span>${COND[c]} <span class="code">${{ new: 'N', used: 'UC', 'used-inc': 'UI' }[c]}</span></span>${step('copy', c, q[c])}${step('sale', c, sq[c], q[c])}</div>`).join('')}
     ${ns ? `<button class="lstbtn" data-listing="1">Listing details…<small>for BrickLink and your shared page</small></button>` : ''}
-    ${ns ? `<button class="soldbtn ${soldConfirm ? 'confirm' : ''}" data-sold="1">${soldConfirm ? `Remove ${ns} sold or traded ${ns === 1 ? 'copy' : 'copies'} from your collection?` : `Sold or traded (${ns})…`}</button>` : ''}
+    ${ns ? (soldConfirm ? soldForm(x, ns) : `<button class="soldbtn" data-sold="1">Sold or traded (${ns})…</button>`) : ''}
     <span class="hint">Set all copies to 0 to remove it from your collection.</span>`;
+}
+// Sold or traded: what you got for each copy (prefilled with your price, else BrickLink at your %; empty for a trade)
+// and the date. Copies of one condition with different asking prices get a line each.
+function soldGroups(x) {
+  const g = [];
+  for (const { c, d } of listingsOf(x)) { const v = lstPrice(d) ?? lstSuggest(x, c), k = g.find(e => e.c === c && e.v === v); if (k) k.q++; else g.push({ c, v, q: 1 }); }
+  return g;
+}
+function soldForm(x, ns) {
+  const ab = { new: 'N', used: 'UC', 'used-inc': 'UI' };
+  return `<div class="soldform" role="group" aria-label="Sold or traded"><h4>What did you get for ${ns === 1 ? 'it' : 'them'}?</h4>${soldGroups(x).map((e, i) => `<label class="soldrow"><span class="lab">${COND_SHORT[e.c]} <span class="code">${ab[e.c]}</span>${e.q > 1 ? ` ×${e.q}` : ''}</span><input class="inp mono myin" type="number" min="0" step="0.01" inputmode="decimal" data-soldin="${i}" value="${e.v == null ? '' : e.v.toFixed(2)}" placeholder="Trade" aria-label="Sold price in ${cur()}${e.q > 1 ? ' for each copy' : ''}, ${esc(COND[e.c])}"><span class="code">${cur()}${e.q > 1 ? ' each' : ''}</span></label>`).join('')}
+    <label class="soldrow"><span class="lab">Date</span><input class="inp" type="date" id="soldDate" value="${todayIso()}" max="${todayIso()}" aria-label="Date sold or traded"></label>
+    <span class="hint">Leave a price empty for a trade. You’ll find these under Sell or trade → Sold.</span>
+    <div class="soldbtns"><button type="button" class="btn ghost" data-soldcancel="1">Cancel</button><button type="button" class="soldbtn confirm" data-sold="1">Remove ${ns} ${ns === 1 ? 'copy' : 'copies'}</button></div></div>`;
 }
 function placeCopies() {
   const chip = document.querySelector(`[data-condmenu="${CSS.escape(copiesFor)}"]`);
@@ -2513,7 +2584,7 @@ function placeCopies() {
   copiesEl.style.top = (r.bottom + window.scrollY + 6) + 'px';
   copiesEl.style.left = Math.max(8 + window.scrollX, Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - w - 8)) + 'px';
 }
-function openCopies(n) { copiesFor = n; placeCopies(); copiesEl.querySelector('.copyrow button:not(:disabled)')?.focus(); }
+function openCopies(n) { copiesFor = n; soldConfirm = false; placeCopies(); copiesEl.querySelector('.copyrow button:not(:disabled)')?.focus(); }
 function closeCopies() { if (!copiesFor) return; const n = copiesFor; copiesFor = null; copiesEl.hidden = true; document.querySelector(`[data-condmenu="${CSS.escape(n)}"]`)?.focus(); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && copiesFor) closeCopies(); });
 document.addEventListener('click', e => { if (copiesFor && !e.target.closest('.copies,[data-condmenu]')) closeCopies(); }, true);
@@ -2526,7 +2597,7 @@ document.addEventListener('click', e => {
   if (tr && !e.target.closest('button,a,input,label')) { focus = focus === tr.dataset.row ? null : tr.dataset.row; savePrefs(); render(); return; }
   const t = e.target.closest('button,[data-sort]'); if (!t) return;
   if (t.dataset.mymix) { openListing(t.dataset.mymix); return; }
-  if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new', 'myprice'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
+  if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' } : { key: t.dataset.sort, dir: ['year', 'pieces', 'used', 'new', 'myprice', 'soldprice', 'solddate'].includes(t.dataset.sort) ? 'desc' : 'asc' }; savePrefs(); render(); return; }
   if (t.id === 'filtToggle') { const o = !$('filters').classList.contains('open'); $('filters').classList.toggle('open', o); t.setAttribute('aria-expanded', o); return; }
   if (t.dataset.need) { prefs.needMode = t.dataset.need; savePrefs(); render(); return; }
   if (t.dataset.tl) { tlOpen = true; tlFollowTheme(); savePrefs(); render(); track('open_timeline'); return; }
@@ -2550,17 +2621,24 @@ document.addEventListener('click', e => {
   if (t.dataset.copiesclose) { closeCopies(); return; }
   if (t.dataset.condmenu) { copiesFor === t.dataset.condmenu ? closeCopies() : openCopies(t.dataset.condmenu); return; }
   if (t.dataset.sale) { soldConfirm = false; const n = copiesFor, q = saleOf({ n }); q[t.dataset.sale] += Number(t.dataset.d); setInfo(n, { sale: q }); placeCopies(); return; }
+  if (t.dataset.soldcancel) { soldConfirm = false; placeCopies(); return; }
+  if (t.dataset.solddel) { deleteSold(t.dataset.solddel, Number(t.dataset.si)); return; }
+  if (t.dataset.soldundo) { if (soldUndo) { setInfo(soldUndo.n, { sold: soldUndo.was }); soldUndo = null; } $('toast').hidden = true; return; }
   if (t.dataset.listing) { const n = copiesFor; closeCopies(); openListing(n); return; }
   if (t.dataset.sold) {
     const n = copiesFor;
-    if (!soldConfirm) { soldConfirm = true; paintCopies(); return; }
+    if (!soldConfirm) { soldConfirm = true; placeCopies(); copiesEl.querySelector('[data-soldin]')?.focus(); return; }
+    const x = findItem(n) || { n }, groups = soldGroups(x), day = $('soldDate')?.value || todayIso(), add = [];
+    groups.forEach((g, i) => { const v = parseFloat(copiesEl.querySelector(`[data-soldin="${i}"]`)?.value); add.push({ c: g.c, q: g.q, d: day > todayIso() ? todayIso() : day, ...(v > 0 ? { p: { p: v, c: cur() } } : {}) }); });
     soldConfirm = false; const own = copiesOf({ n }), sq = saleOf({ n }), left = {}; for (const c of CONDS) left[c] = own[c] - sq[c];
-    const k = saleCount({ n }); setInfo(n, { qty: left, sale: {} }); toast(`Removed ${k} sold or traded ${k === 1 ? 'copy' : 'copies'}`);
+    const k = saleCount({ n }); setInfo(n, { qty: left, sale: {}, sold: [...soldOf({ n }), ...add] }); toast(`Removed ${k} sold or traded ${k === 1 ? 'copy' : 'copies'}. They’re under Sell or trade → Sold.`, 4000);
+    track('sold_record', { copies: k, priced: add.filter(a => a.p).reduce((t, a) => t + a.q, 0) });
+    newTipSeen('sold', 'used'); if (newTipShown === 'sold') document.getElementById('newTip')?.remove();
     if (copyCount({ n })) placeCopies(); else closeCopies(); return;
   }
   if (t.dataset.copy) { soldConfirm = false; const n = copiesFor, q = copiesOf({ n }); q[t.dataset.copy] += Number(t.dataset.d); setInfo(n, { qty: q }); if (copyCount({ n })) placeCopies(); else closeCopies(); return; }
   if (t.dataset.want) { setInfo(t.dataset.want, { wanted: !wanted({ n: t.dataset.want }) }); return; }
-  if (t.dataset.salemode) { const want = t.dataset.salemode === 'sale' ? 'sale' : (listView === 'sale' ? 'all' : listView); if (want !== listView) { listView = want; limit = PAGE; savePrefs(); render(); } return; }
+  if (t.dataset.salemode) { const m = t.dataset.salemode, want = m === 'own' ? (listView === 'sale' || listView === 'sold' ? 'all' : listView) : m; if (want !== listView) { listView = want; limit = PAGE; if (want === 'sold') sort = { key: 'solddate', dir: 'desc' }; savePrefs(); render(); if (m === 'sold') { track('sold_view'); newTipSeen('sold', 'used'); } } return; }
   if (t.dataset.view) { listView = t.dataset.view; limit = PAGE; savePrefs(); render(); return; }
   if (t.dataset.fs) { fsOpen(t.dataset.fs); return; }
   if (t.dataset.fsonly) { fsOnly = !fsOnly; prefs.fsOnly = fsOnly; limit = PAGE; savePrefs(); render(); track('fs_only', { on: fsOnly }); return; }
@@ -2575,7 +2653,8 @@ document.addEventListener('keydown', e => {
   const el = e.target;
   if (el.dataset?.sort && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); el.click(); }
   if (el.id === 'edit-price') { if (e.key === 'Enter') el.blur(); if (e.key === 'Escape') { editing = null; render(); } }
-  if (el.dataset?.myprice && e.key === 'Enter') { e.preventDefault(); el.blur(); }
+  if ((el.dataset?.myprice || el.dataset?.soldp) && e.key === 'Enter') { e.preventDefault(); el.blur(); }
+  if (el.dataset?.soldin && e.key === 'Enter') { e.preventDefault(); copiesEl.querySelector('[data-sold]')?.click(); }
 });
 document.addEventListener('focusout', e => {
   const el = e.target; if (el.id !== 'edit-price' || !editing) return;
@@ -2590,6 +2669,7 @@ document.addEventListener('focusout', e => {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.dataset?.myprice) { saveMyPrice(el); return; }
+  if (el.dataset?.soldp) { saveSoldPrice(el); return; }
   if (el.id === 'selAll') { bulkOwn(el.checked); return; }
   if (el.dataset?.cond) { setInfo(el.dataset.cond, { cond: el.value }); return; }
   if (el.dataset?.own) { change(el.dataset.own, { owned: el.checked }); return; }
@@ -2607,7 +2687,7 @@ $('moreAll').onclick = () => { limit = SHOW_ALL_MAX; render(); };
 // Clears brand, theme, subtheme, tag, year, retired and Set filters, the selected set and timeline entry (same as Clear filters).
 // Returns true if anything was cleared.
 function clearFilters() {
-  const any = !!(focus || tlFilter || listView === 'sale' || Object.values(fi).some(s => s.value !== '' && s.value !== 'all'));
+  const any = !!(focus || tlFilter || listView === 'sale' || listView === 'sold' || Object.values(fi).some(s => s.value !== '' && s.value !== 'all'));
   focus = null; tlFilter = null; leaveSale(); Object.values(fi).forEach(s => { s.value = s === fi.set ? 'all' : ''; s.classList.remove('set-on'); }); for (const k of Object.keys(saved)) saved[k] = undefined;
   if (CAT) themeOptions(); subOptions(''); filmOptions(''); // themes for every brand again
   return any;
@@ -3202,7 +3282,7 @@ function setExportMenu(open) { $('exportMenu').hidden = !open; $('exportMenuBtn'
 $('exportMenuBtn').onclick = e => { e.stopPropagation(); if (typeof setRegionMenu === 'function') setRegionMenu(false); setExportMenu($('exportMenu').hidden); };
 document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) setExportMenu(false); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('exportMenu').hidden) { setExportMenu(false); $('exportMenuBtn').focus(); } });
-['exportBtn', 'exportWantBtn', 'exportSaleBtn', 'exportBlBtn', 'exportShareBtn', 'exportCardBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
+['exportBtn', 'exportWantBtn', 'exportSaleBtn', 'exportSoldBtn', 'exportBlBtn', 'exportShareBtn', 'exportCardBtn'].forEach(id => $(id).addEventListener('click', () => setExportMenu(false)));
 $('exportBtn').onclick = async () => { track('export', { list: 'collection' });
   if (!CAT) return;
   // Everything you own, sets then minifigures, whatever the filters are.
@@ -3236,6 +3316,19 @@ $('exportSaleBtn').onclick = async () => { track('export', { list: 'sale_or_trad
   const total = ['Total', '', `${rows.length} item${rows.length === 1 ? '' : 's'}`, '', '', '', '', '', '', sumCol(9), '', '', '', sumCol(13), ...(withPct ? [sumCol(14)] : [])];
   const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
   await saveCsv(`brickcollect-sale-or-trade-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your sale or trade list: ${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`);
+};
+$('exportSoldBtn').onclick = async () => { track('export', { list: 'sold' });
+  if (!CAT) return;
+  // One row per sale (newest first): price for each copy and the total, in the currency you're viewing.
+  const rows = [...CAT.sets, ...CAT.figs].flatMap(x => soldOf(x).map(s => ({ x, s }))).sort((a, b) => b.s.d.localeCompare(a.s.d));
+  if (!rows.length) { toast('Nothing sold or traded yet: mark copies Sold or traded from a set’s condition chip.'); return; }
+  const head = ['Date', 'Type', 'Number', 'Name', 'Brand', 'Theme', 'Subtheme', 'Year', 'Condition', 'Copies', `Sold price each ${cur()}`, `Sold total ${cur()}`];
+  const body = rows.map(({ x, s }) => { const v = soldEach(s);
+    return [s.d, x.k === 's' ? 'Set' : 'Minifigure', x.disp || x.n, x.name, x.brand, x.theme, x.sub, x.year, COND[s.c], s.q, v ?? '', v == null ? '' : Math.round(v * s.q * 100) / 100]; });
+  const sumCol = i => Math.round(body.reduce((t, r) => t + (Number(r[i]) || 0), 0) * 100) / 100;
+  const total = ['Total', '', '', `${rows.length} sale${rows.length === 1 ? '' : 's'}`, '', '', '', '', '', sumCol(9), '', sumCol(11)];
+  const csv = [head, ...body, total].map(r => r.map(cell).join(',')).join('\n');
+  await saveCsv(`brickcollect-sold-${new Date().toISOString().slice(0, 10)}.csv`, csv, `your sold list: ${rows.length.toLocaleString()} sale${rows.length === 1 ? '' : 's'}`);
 };
 $('exportWantBtn').onclick = async () => { track('export', { list: 'wanted' });
   if (!CAT) return;
@@ -3318,6 +3411,29 @@ function myPriceCell(x) {
 function myPriceSort(x) {
   let hi = null; for (const { c, d } of listingsOf(x)) { const v = lstPrice(d) ?? lstSuggest(x, c); if (v != null && (hi == null || v > hi)) hi = v; }
   return hi;
+}
+/* Sold price column (Sold list): one line per sale with the condition, a price box (each copy) and the date. */
+function soldCell(x) {
+  const ab = { new: 'N', used: 'UC', 'used-inc': 'UI' };
+  return `<div class="myp">${soldOf(x).map((s, i) => { const v = soldEach(s);
+    return `<span class="soldent"><span class="mypr lab"><span class="code mylab" title="${esc(COND[s.c])}${s.q > 1 ? `, ${s.q} copies` : ''}">${ab[s.c]}${s.q > 1 ? ` ×${s.q}` : ''}</span><input class="inp mono myin" type="number" min="0" step="0.01" inputmode="decimal" data-soldp="${esc(x.n)}" data-si="${i}" value="${v == null ? '' : v.toFixed(2)}" placeholder="—" aria-label="Sold price in ${cur()} for each copy of ${esc(x.name)}, ${esc(COND[s.c])}" title="${s.q > 1 ? `Price for each of the ${s.q} copies. ` : ''}Empty for a trade or no price"></span><small class="solddt">${esc(fmtDay(s.d))}<button type="button" class="soldx" data-solddel="${esc(x.n)}" data-si="${i}" title="Delete this record" aria-label="Delete the ${esc(fmtDay(s.d))} sale record for ${esc(x.name)}">×</button></small></span>`; }).join('')}</div>`;
+}
+function saveSoldPrice(el) {
+  const n = el.dataset.soldp, i = Number(el.dataset.si), a = soldOf({ n }).map(s => ({ ...s })); if (!a[i]) return;
+  const v = parseFloat(el.value), want = v > 0 ? Math.round(v * 100) / 100 : null;
+  if (soldEach(a[i]) === want) return;
+  if (want == null) delete a[i].p; else a[i].p = { p: want, c: cur() };
+  setInfo(n, { sold: a }, { quiet: true });
+  if (listView === 'sold') { const pk = paintSoldSum(); if ($('sellPeek')) $('sellPeek').textContent = pk; }
+  el.value = want == null ? '' : want.toFixed(2);
+  track('sold_price_edit', { cleared: want == null });
+}
+let soldUndo = null;
+function deleteSold(n, i) {
+  const was = soldOf({ n }), a = was.filter((_, j) => j !== i); if (a.length === was.length) return;
+  soldUndo = { n, was }; setInfo(n, { sold: a });
+  const t = $('toast'); toast('Sale record deleted', 6000);
+  const b = document.createElement('button'); b.className = 'tbtn'; b.dataset.soldundo = '1'; b.textContent = 'Undo'; t.append(b);
 }
 function saveMyPrice(el) {
   const n = el.dataset.myprice, c = el.dataset.mc, x = findItem(n); if (!x) return;
@@ -4307,6 +4423,11 @@ document.addEventListener('click', e => { if (!e.target.closest?.('[data-import]
 
 /* ---------- versions and What's new (new features only; newest first) ---------- */
 const RELEASES = [
+  { v: '0.38', date: '21 November 2026', title: 'Sold prices', items: [
+    ['Sold or traded', 'when you mark copies sold or traded, BrickCollect now asks what you got for each one (it starts with your price) and the date. Leave it empty for a trade.'],
+    ['Your Sold list', 'Sell or trade → Sold shows everything you’ve let go, with a Sold price column you can change, the date, and the total you’ve sold for. It stays even after the set leaves your collection.'],
+    ['Export', 'Export → Sold list downloads it as a spreadsheet.'],
+  ] },
   { v: '0.37', date: '16 November 2026', title: 'Every minifigure counted', items: [
     ['Set pages', 'when a set comes with more than one of the same minifigure, like three Clone Troopers in a battle pack, its card shows ×3 and the set’s minifigure count includes every one.'],
     ['Minifigure total', 'the Together value now adds a minifigure’s price for each copy in the set.'],
