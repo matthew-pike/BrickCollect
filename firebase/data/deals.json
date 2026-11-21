@@ -1,0 +1,424 @@
+{
+ "deals": [
+  {
+   "id": "amazon-au-bf-2026-star-wars",
+   "title": "LEGO Star Wars on special at Amazon Australia",
+   "store": "Amazon Australia",
+   "url": "https://www.amazon.com.au/s?k=LEGO+Star+Wars",
+   "sets": [
+    {
+     "n": "75419",
+     "price": 1148.98,
+     "was": 1499.99
+    },
+    {
+     "n": "75355",
+     "price": 291.54,
+     "was": 349.99
+    },
+    {
+     "n": "75397",
+     "price": 608.98,
+     "was": 799.99
+    },
+    {
+     "n": "75394",
+     "price": 241.27,
+     "was": 299.99
+    },
+    {
+     "n": "75453",
+     "price": 239.0,
+     "was": 329.99
+    },
+    {
+     "n": "75454",
+     "price": 209.0,
+     "was": 279.99
+    },
+    {
+     "n": "75459",
+     "price": 189.0,
+     "was": 249.99
+    },
+    {
+     "n": "75435",
+     "price": 189.0,
+     "was": 249.99
+    },
+    {
+     "n": "75447",
+     "price": 154.34,
+     "was": 249.99
+    },
+    {
+     "n": "75427",
+     "price": 146.53,
+     "was": 249.99
+    },
+    {
+     "n": "75428",
+     "price": 143.0,
+     "was": 199.99
+    }
+   ],
+   "starts": "2026-11-17",
+   "ends": "2026-11-30",
+   "note": "Amazon’s early Black Friday sale. Amazon prices move often and sets sell out: check the price before you buy. Usual prices worked out from the % off.",
+   "source": {
+    "title": "Jay's Brick Blog: Amazon Australia early Black Friday LEGO deals (17 Nov)",
+    "url": "https://jaysbrickblog.com/news/amazon-australia-early-black-friday-lego-deals/"
+   },
+   "found": "2026-11-22"
+  },
+  {
+   "id": "amazon-au-bf-2026-icons-ideas",
+   "title": "LEGO Icons, Ideas and display sets on special at Amazon Australia",
+   "store": "Amazon Australia",
+   "url": "https://www.amazon.com.au/s?k=LEGO+Icons",
+   "sets": [
+    {
+     "n": "11377",
+     "price": 749.0,
+     "was": 999.99
+    },
+    {
+     "n": "10333",
+     "price": 528.98,
+     "was": 699.99
+    },
+    {
+     "n": "11385",
+     "price": 449.0,
+     "was": 599.99
+    },
+    {
+     "n": "21067",
+     "price": 339.98,
+     "was": 499.99
+    },
+    {
+     "n": "10332",
+     "price": 309.0,
+     "was": 399.99
+    },
+    {
+     "n": "10283",
+     "price": 254.98,
+     "was": 299.99
+    },
+    {
+     "n": "21351",
+     "price": 239.0,
+     "was": 299.99
+    },
+    {
+     "n": "21061",
+     "price": 237.31,
+     "was": 349.99
+    },
+    {
+     "n": "21367",
+     "price": 216.23,
+     "was": 279.99
+    },
+    {
+     "n": "10321",
+     "price": 212.48,
+     "was": 249.99
+    },
+    {
+     "n": "21333",
+     "price": 199.0,
+     "was": 259.99
+    },
+    {
+     "n": "21350",
+     "price": 194.0,
+     "was": 249.99
+    },
+    {
+     "n": "10357",
+     "price": 189.0,
+     "was": 249.99
+    },
+    {
+     "n": "11381",
+     "price": 179.0,
+     "was": 249.99
+    },
+    {
+     "n": "11382",
+     "price": 170.0,
+     "was": 229.99
+    },
+    {
+     "n": "11389",
+     "price": 152.98,
+     "was": 179.99
+    },
+    {
+     "n": "11384",
+     "price": 152.14,
+     "was": 229.99
+    },
+    {
+     "n": "31216",
+     "price": 149.0,
+     "was": 199.99
+    },
+    {
+     "n": "31218",
+     "price": 154.0,
+     "was": 199.99
+    },
+    {
+     "n": "21370",
+     "price": 143.64,
+     "was": 229.99
+    },
+    {
+     "n": "11383",
+     "price": 130.03,
+     "was": 179.99
+    },
+    {
+     "n": "21366",
+     "price": 119.0,
+     "was": 179.99
+    },
+    {
+     "n": "43301",
+     "price": 167.75,
+     "was": 249.99
+    },
+    {
+     "n": "43024",
+     "price": 119.0,
+     "was": 149.99
+    },
+    {
+     "n": "43023",
+     "price": 84.0,
+     "was": 149.99
+    },
+    {
+     "n": "43014",
+     "price": 119.0,
+     "was": 149.99
+    },
+    {
+     "n": "11510",
+     "price": 48.26,
+     "was": 99.99
+    },
+    {
+     "n": "11501",
+     "price": 66.29,
+     "was": 99.99
+    }
+   ],
+   "starts": "2026-11-17",
+   "ends": "2026-11-30",
+   "note": "Amazon’s early Black Friday sale. Amazon prices move often and sets sell out: check the price before you buy. Usual prices worked out from the % off.",
+   "source": {
+    "title": "Jay's Brick Blog: Amazon Australia early Black Friday LEGO deals (17 Nov)",
+    "url": "https://jaysbrickblog.com/news/amazon-australia-early-black-friday-lego-deals/"
+   },
+   "found": "2026-11-22"
+  },
+  {
+   "id": "amazon-au-bf-2026-technic",
+   "title": "LEGO Technic on special at Amazon Australia",
+   "store": "Amazon Australia",
+   "url": "https://www.amazon.com.au/s?k=LEGO+Technic",
+   "sets": [
+    {
+     "n": "42146",
+     "price": 799.0,
+     "was": 999.99
+    },
+    {
+     "n": "42239",
+     "price": 250.0,
+     "was": 329.99
+    },
+    {
+     "n": "42207",
+     "price": 229.0,
+     "was": 349.99
+    },
+    {
+     "n": "42096",
+     "price": 229.0,
+     "was": 299.99
+    },
+    {
+     "n": "42224",
+     "price": 155.71,
+     "was": 229.99
+    }
+   ],
+   "starts": "2026-11-17",
+   "ends": "2026-11-30",
+   "note": "Amazon’s early Black Friday sale. Amazon prices move often and sets sell out: check the price before you buy. Usual prices worked out from the % off.",
+   "source": {
+    "title": "Jay's Brick Blog: Amazon Australia early Black Friday LEGO deals (17 Nov)",
+    "url": "https://jaysbrickblog.com/news/amazon-australia-early-black-friday-lego-deals/"
+   },
+   "found": "2026-11-22"
+  },
+  {
+   "id": "amazon-au-bf-2026-nintendo",
+   "title": "LEGO Nintendo and Pokémon on special at Amazon Australia",
+   "store": "Amazon Australia",
+   "url": "https://www.amazon.com.au/s?k=LEGO+Super+Mario",
+   "sets": [
+    {
+     "n": "72154",
+     "price": 319.0,
+     "was": 429
+    },
+    {
+     "n": "72046",
+     "price": 64.59,
+     "was": 99.99
+    },
+    {
+     "n": "72051",
+     "price": 207.18,
+     "was": 279
+    },
+    {
+     "n": "72037",
+     "price": 195.24,
+     "was": 249.99
+    },
+    {
+     "n": "77093",
+     "price": 159.0,
+     "was": 199
+    }
+   ],
+   "starts": "2026-11-17",
+   "ends": "2026-11-30",
+   "note": "Amazon’s early Black Friday sale. Amazon prices move often and sets sell out: check the price before you buy. Usual prices worked out from the % off.",
+   "source": {
+    "title": "Jay's Brick Blog: Amazon Australia early Black Friday LEGO deals (17 Nov)",
+    "url": "https://jaysbrickblog.com/news/amazon-australia-early-black-friday-lego-deals/"
+   },
+   "found": "2026-11-22"
+  },
+  {
+   "id": "amazon-au-bf-2026-more",
+   "title": "LEGO Marvel, DC, Harry Potter, NINJAGO and more on special at Amazon Australia",
+   "store": "Amazon Australia",
+   "url": "https://www.amazon.com.au/s?k=LEGO",
+   "sets": [
+    {
+     "n": "76300",
+     "price": 424.0,
+     "was": 499.99
+    },
+    {
+     "n": "71043",
+     "price": 519.0,
+     "was": 699.99
+    },
+    {
+     "n": "76344",
+     "price": 126.64,
+     "was": 199.99
+    },
+    {
+     "n": "76352",
+     "price": 134.0,
+     "was": 179.99
+    },
+    {
+     "n": "72423",
+     "price": 136.0,
+     "was": 199
+    },
+    {
+     "n": "71870",
+     "price": 135.14,
+     "was": 229.99
+    },
+    {
+     "n": "71869",
+     "price": 114.91,
+     "was": 199.99
+    },
+    {
+     "n": "71860",
+     "price": 109.64,
+     "was": 199.99
+    },
+    {
+     "n": "60494",
+     "price": 129.0,
+     "was": 199.99
+    },
+    {
+     "n": "60504",
+     "price": 126.64,
+     "was": 179.99
+    },
+    {
+     "n": "31168",
+     "price": 126.64,
+     "was": 199.99
+    },
+    {
+     "n": "77983",
+     "price": 109.0,
+     "was": 149.99
+    },
+    {
+     "n": "42704",
+     "price": 169.14,
+     "was": 249.99
+    }
+   ],
+   "starts": "2026-11-17",
+   "ends": "2026-11-30",
+   "note": "Amazon’s early Black Friday sale. Amazon prices move often and sets sell out: check the price before you buy. Usual prices worked out from the % off.",
+   "source": {
+    "title": "Jay's Brick Blog: Amazon Australia early Black Friday LEGO deals (17 Nov)",
+    "url": "https://jaysbrickblog.com/news/amazon-australia-early-black-friday-lego-deals/"
+   },
+   "found": "2026-11-22"
+  },
+  {
+   "id": "bigw-bf-2026-nintendo",
+   "title": "LEGO Pokémon and Mario Kart on special at Big W",
+   "store": "Big W",
+   "url": "https://www.bigw.com.au/search?text=lego%20nintendo",
+   "sets": [
+    {
+     "n": "72152",
+     "price": 199,
+     "was": 279
+    },
+    {
+     "n": "72051",
+     "price": 199,
+     "was": 279
+    },
+    {
+     "n": "72050",
+     "price": 189,
+     "was": 239
+    }
+   ],
+   "starts": "2026-11-19",
+   "note": "Part of Big W’s Black Friday sale, online and in store while stocks last.",
+   "source": {
+    "title": "Vooks: Australian Nintendo Black Friday & Cyber Monday deals",
+    "url": "https://www.vooks.net/all-the-australian-nintendo-black-friday-cyber-monday-deals-2026/"
+   },
+   "found": "2026-11-22"
+  }
+ ]
+}

@@ -327,3 +327,23 @@ a.tag:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent
 .authdlg [hidden]{display:none!important}
 .noimg{background:#f3f5f9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 120'%3E%3Cg fill='%23c9d2e0'%3E%3Crect x='48' y='44' width='64' height='30' rx='5'/%3E%3Crect x='58' y='37' width='14' height='9' rx='3'/%3E%3Crect x='88' y='37' width='14' height='9' rx='3'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
 img.nopic{object-fit:contain;background:#f3f5f9}
+/* On special (deals): /deals, the On special boxes on Home and the Blog, the line in a set page's Value box */
+.pricebox .sale{margin:0;padding:9px 12px;border-radius:9px;font-size:14px;background:color-mix(in srgb,var(--coral) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--coral) 35%,var(--line))}
+.pricebox .sale b{color:var(--coral)}
+.pricebox .sale a{white-space:nowrap}
+.dtag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;padding:2px 7px;border-radius:5px;color:var(--beta-ink,var(--coral));background:color-mix(in srgb,var(--beta-fill,var(--coral)) var(--beta-tint,15%),transparent)}
+.dprice{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;margin-top:4px;font-variant-numeric:tabular-nums}
+.dprice b{font-size:17px}
+.dprice s{color:var(--faint);font-size:13px}
+.dprice .dtag{align-self:center}
+.tcard .dwhere{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.deals{display:flex;flex-direction:column;gap:14px;margin-top:18px}
+.deal{padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.deal .dealhead{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 14px;margin-bottom:10px}
+.deal h2{font-size:18px;margin:0}
+.deal .dkick{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--coral);margin:0 0 3px}
+.deal .dwhen{font-size:13px;color:var(--muted)}
+.deal .tcards{margin-bottom:10px}
+.deal .dnote{margin:0 0 10px;color:var(--muted);font-size:14px}
+.deal .row{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:640px){.deal{padding:14px}.deal h2{font-size:16px}}

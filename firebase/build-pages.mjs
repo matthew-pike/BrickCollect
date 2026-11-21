@@ -241,6 +241,7 @@ function priceBox(x, blNum) {
   return `<div class="pricebox" id="priceBox" data-n="${esc(x.n)}" data-brand="${esc(x.brand)}" data-fb="${esc(FB_KEY)}"${blNum ? ` data-bl="${esc(blNum)}"` : ''}>
 <div class="phead"><b>${store ? 'Price' : 'Value'}</b><span class="cur-note muted" id="priceCur"></span></div>
 <div class="pvals">${rows.map(([k, f]) => `<div class="pv"><span class="pk">${k}</span><span class="pn" data-f="${f}">${cell(f)}</span></div>`).join('')}</div>
+<p class="sale" id="saleLine" hidden></p>
 <p class="fine" id="priceNote"${store ? ' hidden' : ''}>${hasBL ? esc(priceNote(p)) : 'No price yet.'}</p>
 <p class="fine" id="rrpNote"${p.rrp != null ? '' : store ? '' : ' hidden'}>${p.rrp != null ? esc(rrpNote(p)) : 'No price yet.'}</p>
 </div>`;
@@ -413,6 +414,9 @@ ${(a.sets || []).length > 1 ? `<div class="post-thumbs">${a.sets.slice(1, 11).ma
 <a class="btn post-more" href="${esc(a.path)}">Read more${ARR_RING}</a></div></article>`; };
 const newsSet = s => { const x = byNum.get(s.n); const num = s.n.replace(/-1$/, ''), pic = `<img src="${esc(newsImg(s))}" alt="" loading="lazy" width="72" height="54" ${NOIMG}>`, text = `<span class="cb"><span class="cn">${esc(s.name)}</span><span class="cm">${esc(num)} · ${fmt(s.pieces)} pcs${s.price ? ` · ${esc(s.price)}` : ''} · out ${esc(s.out)}</span></span>`;
   return x ? `<a class="card" href="${esc(x.path)}">${pic}${text}</a>` : `<div class="card">${pic}${text}</div>`; };
+// On special (deals): approved on the Admin page and kept in Firestore meta/deals, so they change without a rebuild.
+// pages.js fills these in from Firestore; they stay hidden when nothing is on special.
+const dealsPeek = where => `<section class="hsec dealspeek" id="dealsPeek" data-fb="${esc(FB_KEY)}" data-where="${where}" hidden><div class="hhead"><h2>On special</h2><a href="/deals" data-cta="more_deals" id="dealsPeekAll">All deals${ARR}</a></div><div class="tcards" id="dealsPeekList"></div></section>`;
 /* ---------- home page (/) ---------- */
 // The app moves to /collection (My collection); / becomes a page of sets you can tick straight away.
 {
@@ -458,6 +462,7 @@ write('./index.html', shell({
 <p class="lead">The free collection tracker for LEGO and other brick brands. Search, <a href="/sets" data-cta="hero_lead_sets">browse all sets</a> to find sets to add to your collection, create a Wanted list for items in your wish list, check your collection’s value and share or sell it.</p>
 <div class="row"><a class="btn primary" href="/collection#signin" id="heroBtn" data-cta="hero">Sign in to view your collection</a><a class="btn" href="/sets" data-cta="hero_sets">Browse all ${fmt(sets.length)} sets</a></div></div></section>
 ${section('Popular sets', `<a href="/collection" data-cta="more_popular">Find more in My collection${ARR}</a>`, popular)}
+${dealsPeek('home')}
 ${section('Retiring soon', `<a href="/collection?ret=S" data-cta="more_retiring">All retiring soon${ARR}</a>`, retiring)}
 ${latestUpdate ? section(`Recently added sets`, '', latestUpdate.list.slice(0, 12)) : section(`New in ${thisYear}`, '', newest)}
 <section class="hsec"><div class="hhead"><h2>Themes</h2><a href="/sets">All themes${ARR}</a></div><div class="ttiles">${bigTheme.map(themeTile).join('')}</div></section>
@@ -474,7 +479,7 @@ const tagBar = cur => TAGS.size ? `<nav class="tagbar" aria-label="Tags">${[...T
 if (UPDATES.length) {
   write('./blog.html', shell({ path: '/blog', title: 'Blog: LEGO and Brick news | BrickCollect', h1: 'Blog', crumbs: [['Blog', '/blog']],
     desc: `LEGO and brick news, and the new sets that arrive in BrickCollect every week. Latest: ${latestUpdate.title}.`,
-    body: `${tagBar()}<div class="posts">${ALL_POSTS.map(p => p.html).join('\n')}</div>` }));
+    body: `${dealsPeek('blog')}${tagBar()}<div class="posts">${ALL_POSTS.map(p => p.html).join('\n')}</div>` }));
   for (const [k, { name, posts }] of TAGS) {
     write(`.${tagPath(name)}.html`, shell({ path: tagPath(name), title: `${name}: BrickCollect blog`, h1: esc(name), crumbs: [['Blog', '/blog'], [name, tagPath(name)]],
       desc: `BrickCollect blog posts tagged ${name}: ${posts.slice(0, 3).map(p => p.title).join('; ')}.`,
@@ -496,6 +501,13 @@ ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(
       body: `<article class="post-page"><p class="post-date">${esc(u.day)}</p><p class="post-lede">${updIntro(u)}. Select “I own it” or “I want it” on any set page</p>${[...groups].map(([t, l]) => `<section class="hsec"><div class="hhead"><h2>${esc(t)}</h2><a href="${esc(themePath(t))}">All LEGO ${esc(t)} sets${ARR}</a></div><div class="cards">${l.map(card).join('')}</div></section>`).join('\n')}${tagList(u.tags)}</article>` }));
   }
 }
+
+/* ---------- /deals: On special ---------- */
+write('./deals.html', shell({ path: '/deals', title: 'LEGO on special in Australia: current deals | BrickCollect', h1: 'On special', crumbs: [['On special', '/deals']],
+  desc: 'LEGO and brick sets on special at Australian stores right now: the special price, the usual price, how much you save and until when.',
+  body: `<p class="sub">LEGO and brick sets on special at Australian stores right now. Prices in Australian dollars, checked by BrickCollect; stores can change them or sell out, so check the price on the store’s page before you buy.</p>
+<div class="deals" id="dealsAll" data-fb="${esc(FB_KEY)}"><p class="muted" id="dealsWait">Loading the specials…</p></div>
+<p class="fine">Spotted a special we missed? Tell us on <a href="https://instagram.com/brickcollect.app" target="_blank" rel="noopener">Instagram</a>.</p>` }));
 
 /* ---------- About and Privacy: their text from public/about.html and public/privacy.html, in the site's page ---------- */
 for (const [file, path, crumb] of [['about.html', '/about', 'About'], ['privacy.html', '/privacy', 'Privacy'], ['getting-started.html', '/getting-started', 'Getting started']]) {
@@ -670,7 +682,7 @@ write('./404.html', shell({ path: '/404', title: 'Page not found · BrickCollect
 
 /* ---------- sitemaps ---------- */
 const urlset = paths => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${paths.map(p => `  <url><loc>${SITE}${p}</loc></url>`).join('\n')}\n</urlset>\n`;
-write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/about', '/getting-started', '/privacy', '/whats-new', ...(UPDATES.length ? ['/blog', ...UPDATES.map(u => u.path), ...NEWS.map(a => a.path), ...[...TAGS.values()].map(t => tagPath(t.name))] : []), ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
+write('./sitemap-pages.xml', urlset(['/', '/collection', '/sets', '/deals', '/about', '/getting-started', '/privacy', '/whats-new', ...(UPDATES.length ? ['/blog', ...UPDATES.map(u => u.path), ...NEWS.map(a => a.path), ...[...TAGS.values()].map(t => tagPath(t.name))] : []), ...[...legoThemes.keys()].map(themePath), ...[...brands.keys()].map(brandPath)]));
 write('./sitemap-sets.xml', urlset(sets.map(x => x.path)));
 const day = now.toISOString().slice(0, 10);
 write('./sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${SITE}/sitemap-pages.xml</loc><lastmod>${day}</lastmod></sitemap>\n  <sitemap><loc>${SITE}/sitemap-sets.xml</loc><lastmod>${day}</lastmod></sitemap>\n</sitemapindex>\n`);

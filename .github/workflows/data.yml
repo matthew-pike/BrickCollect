@@ -1,14 +1,19 @@
-# Owner data changes from files in firebase/data (the retiring-soon and retired lists, and the RRPs from saved LEGO.com pages).
+# Owner data changes from files in firebase/data (the retiring-soon and retired lists, the RRPs from saved LEGO.com pages,
+# and the deals found by the deal scan).
 # Runs when one of those files changes on preview or main, or by hand (Actions → Data → Run workflow).
+# Every day at 00:17 Sydney (13:17 UTC; schedules run from main only) the deals job alone runs, to end deals past their date.
 name: Data
 on:
   push:
     branches: [main, preview]
-    paths: ['firebase/data/**', 'firebase/mark-retiring.mjs', 'firebase/set-rrp.mjs']
+    paths: ['firebase/data/**', 'firebase/mark-retiring.mjs', 'firebase/set-rrp.mjs', 'firebase/load-deals.mjs']
+  schedule:
+    - cron: '17 13 * * *'
   workflow_dispatch:
 concurrency: data
 jobs:
   retiring:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: firebase } }
     steps:
@@ -24,6 +29,7 @@ jobs:
           if [ -f data/retired.txt ]; then GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Mark retired" node mark-retiring.mjs data/retired.txt retired; fi
           rm -f "$RUNNER_TEMP/sa.json"
   rrp:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: firebase } }
     steps:
@@ -37,4 +43,18 @@ jobs:
         run: |
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Save LEGO RRPs" node set-rrp.mjs data/lego-au-rrp.txt
+          rm -f "$RUNNER_TEMP/sa.json"
+  deals:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: firebase } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: ./report.sh "npm install" npm install --no-audit --no-fund
+      - name: Deals (drafts for the Admin page; end deals past their date)
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" ./report.sh "Deals" node load-deals.mjs data/deals.json
           rm -f "$RUNNER_TEMP/sa.json"

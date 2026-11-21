@@ -124,6 +124,33 @@ tr.owner td{color:var(--muted)}
 .tabs3 button{background:none;border:0;color:var(--muted);font:12.5px var(--font);padding:5px 11px;cursor:pointer}
 .tabs3 button[aria-pressed="true"]{background:var(--accent);color:#04121b}
 :root[data-theme="light"] .tabs3 button[aria-pressed="true"]{color:#fff}
+/* Deals ("On special"): drafts from the deal scan to approve, live deals, ended ones */
+.deal{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;background:var(--panel-2)}
+.deal h3{font-size:14px;font-weight:500;margin:0 0 2px}
+.deal .meta{font-size:12px;color:var(--muted);margin:0 0 8px}
+.deal .meta .warnc{color:var(--coral)}
+.deal ul{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px}
+.deal li{display:flex;align-items:center;gap:10px;font-size:13px}
+.deal li img{width:56px;height:42px;object-fit:contain;background:#fff;border-radius:6px;flex:none}
+.deal li .nm{flex:1;min-width:0}
+.deal li .nm small{display:block;color:var(--faint)}
+.deal li .pr{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.deal li .pr s{color:var(--faint);margin-right:6px}
+.deal li .pr b{color:var(--good);font-weight:500;margin-left:6px}
+.deal .note{font-size:12.5px;color:var(--muted);margin:0 0 8px}
+.deal .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.deal .acts .fine{margin:0}
+.dbtn{background:none;border:1px solid var(--line-2);color:var(--fg);border-radius:8px;padding:5px 12px;font:13px var(--font);cursor:pointer;text-decoration:none}
+.dbtn:hover{border-color:var(--accent);color:var(--accent)}
+.dbtn.go{background:var(--accent);border-color:var(--accent);color:#04121b;font-weight:500}
+:root[data-theme="light"] .dbtn.go{color:#fff}
+.dbtn.no:hover{border-color:var(--danger);color:var(--danger)}
+.dform{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:8px 0}
+.dform label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.dform label.w{grid-column:1/-1}
+.dform input,.dform textarea{background:var(--panel);color:var(--fg);border:1px solid var(--line-2);border-radius:7px;padding:6px 8px;font:13px var(--font)}
+.dform textarea{min-height:64px;font-family:var(--mono);font-size:12.5px}
+@media (max-width:520px){.dform{grid-template-columns:1fr}.deal li img{width:44px;height:33px}}
 @media (max-width:820px){.grid2{grid-template-columns:1fr}}
 @media (max-width:520px){
   header{padding:12px 14px}header h1{font-size:17px}header .back{padding:5px 9px}
@@ -150,6 +177,14 @@ tr.owner td{color:var(--muted)}
       <button class="sync" id="sync" type="button" title="Work out these numbers now instead of waiting for 20 past the hour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Sync now</button>
     </div>
     <div class="cards" id="cards"></div>
+
+    <section class="box" id="dealBox" hidden>
+      <h2>Deals</h2>
+      <p class="sub">Specials found by the deal scan (and any you add). Publish puts a deal on <a href="/deals" target="_blank">On special</a>, the Blog and its set pages until its end date. Prices in AUD.</p>
+      <div class="tabs3" id="dealTabs"><button type="button" data-t="draft" aria-pressed="true">To approve</button><button type="button" data-t="live" aria-pressed="false">Live</button><button type="button" data-t="done" aria-pressed="false">Ended or skipped</button></div>
+      <button class="dbtn" type="button" id="dealAdd" style="float:right">+ Add a deal</button>
+      <div id="dealList"></div>
+    </section>
 
     <section class="box">
       <h2>New accounts</h2>
@@ -454,6 +489,158 @@ tr.owner td{color:var(--muted)}
     catch (e) { $('permSave').disabled = false; $('permMsg').className = 'fine warnc'; $('permMsg').textContent = 'Couldn’t save: ' + (e.message || e.code || 'unknown error'); }
   };
 
+
+  /* ---------- Deals: approve the deal scan's drafts (meta/deals), publish to the set pages (iteminfo items.<n>.sale) ---------- */
+  const DEAL_TODAY = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+  const dslug = s => String(s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x';
+  const dbucket = n => { let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) >>> 0; return 'b' + (h % 16); };
+  const aud = v => v == null ? '' : '$' + Number(v).toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const dday = d => { const t = Date.parse((d || '') + 'T00:00:00'); return isNaN(t) ? '' : new Date(t).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }); };
+  let deals = {}, dealTab = 'draft', dealEdit = null, dealMsg = {};
+  const FP = (...p) => new firebase.firestore.FieldPath(...p);
+  function dealRows() {
+    const today = DEAL_TODAY();
+    const st = d => d.status === 'live' && d.ends && d.ends < today ? 'ended' : d.status;
+    const all = Object.entries(deals).map(([id, d]) => ({ ...d, id, st: st(d) }));
+    const pick = { draft: all.filter(d => d.st === 'draft'), live: all.filter(d => d.st === 'live'), done: all.filter(d => d.st === 'ended' || d.st === 'skipped') };
+    pick.draft.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0)); pick.live.sort((a, b) => (a.ends || '').localeCompare(b.ends || '')); pick.done.sort((a, b) => (b.endedAt || b.skippedAt || 0) - (a.endedAt || a.skippedAt || 0));
+    return pick;
+  }
+  function setLine(s) {
+    const off = s.was && s.price ? Math.round((1 - s.price / s.was) * 100) : 0;
+    return `<li>${s.img ? `<img src="${esc(s.img)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">` : '<img alt="">'}<span class="nm"><a href="${esc(s.path || '#')}" target="_blank">${esc(s.name || s.n)}</a><small>${esc(s.n.replace(/-1$/, ''))}${s.pieces ? ` · ${fmt(s.pieces)} pcs` : ''}</small></span><span class="pr">${s.was ? `<s>${aud(s.was)}</s>` : ''}${aud(s.price)}${off > 0 ? `<b>${off}% off</b>` : ''}</span></li>`;
+  }
+  function dealForm(d) {
+    const lines = (d.sets || []).map(s => `${s.n.replace(/-1$/, '')} ${s.price ?? ''}${s.was ? ' ' + s.was : ''}`).join('\n');
+    return `<div class="dform">
+<label class="w">Headline<input name="title" value="${esc(d.title || '')}" placeholder="Venator 34% off at Big W"></label>
+<label>Store<input name="store" value="${esc(d.store || '')}" placeholder="Big W"></label>
+<label>Link to the deal<input name="url" value="${esc(d.url || '')}" placeholder="https://…"></label>
+<label>Starts<input name="starts" type="date" value="${esc(d.starts || '')}"></label>
+<label>Ends<input name="ends" type="date" value="${esc(d.ends || '')}"></label>
+<label class="w">Sets: one per line, set number, special price, normal price (e.g. 75367 99 149.99)<textarea name="sets">${esc(lines)}</textarea></label>
+<label class="w">Note (shown on On special)<input name="note" value="${esc(d.note || '')}" placeholder="Online and in store, while stocks last"></label>
+</div>`;
+  }
+  function paintDeals() {
+    const box = $('dealList'); if (!box) return;
+    const pick = dealRows();
+    $('dealTabs').querySelectorAll('button').forEach(b => { const n = pick[b.dataset.t].length; b.setAttribute('aria-pressed', String(b.dataset.t === dealTab)); b.textContent = { draft: 'To approve', live: 'Live', done: 'Ended or skipped' }[b.dataset.t] + (n ? ` (${n})` : ''); });
+    const today = DEAL_TODAY();
+    let html = '';
+    if (dealEdit === 'new') html += `<div class="deal" data-id="new"><h3>Add a deal</h3>${dealForm({ starts: today })}<div class="acts"><button class="dbtn go" data-a="savenew">Save as a draft</button><button class="dbtn" data-a="cancel">Cancel</button><span class="fine" data-m></span></div></div>`;
+    const list = pick[dealTab];
+    if (!list.length && dealEdit !== 'new') html += `<p class="fine">${dealTab === 'draft' ? 'Nothing to approve. The deal scan adds drafts here when it finds specials.' : dealTab === 'live' ? 'No live deals.' : 'None yet.'}</p>`;
+    for (const d of list) {
+      const editing = dealEdit === d.id, m = dealMsg[d.id] || '';
+      const when = [d.starts && d.starts > today ? `starts ${dday(d.starts)}` : '', d.ends ? `${d.st === 'live' || d.st === 'draft' ? 'until' : 'ended'} ${dday(d.ends)}${d.endsGuess ? ' <span class="warnc" title="The scan didn’t find an end date: it guessed a week. Check it.">(guess)</span>' : ''}` : '', d.found ? `found ${dday(d.found)}` : '', d.st === 'skipped' ? 'skipped' : ''].filter(Boolean).join(' · ');
+      const acts = d.st === 'draft' ? `<button class="dbtn go" data-a="publish">Publish</button><button class="dbtn" data-a="edit">Edit</button><button class="dbtn no" data-a="skip">Skip</button>`
+        : d.st === 'live' ? `<button class="dbtn" data-a="edit">Edit</button><button class="dbtn no" data-a="down">Take down</button>`
+        : `<button class="dbtn" data-a="redraft">Back to To approve</button>`;
+      html += `<div class="deal" data-id="${esc(d.id)}"><h3>${esc(d.title)}</h3><p class="meta"><b>${esc(d.store)}</b>${when ? ' · ' + when : ''}</p>
+${editing ? dealForm(d) : `<ul>${(d.sets || []).map(setLine).join('')}</ul>${d.note ? `<p class="note">${esc(d.note)}</p>` : ''}`}
+<div class="acts">${editing ? `<button class="dbtn go" data-a="save">Save${d.st === 'live' ? ' (updates the set pages)' : ''}</button><button class="dbtn" data-a="cancel">Cancel</button>` : acts}${d.url ? `<a class="dbtn" href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.store)} ↗</a>` : ''}${d.source && d.source.url ? `<a class="dbtn" href="${esc(d.source.url)}" target="_blank" rel="noopener" title="${esc(d.source.title || '')}">Where it was found ↗</a>` : ''}<span class="fine${/^Couldn/.test(m) ? ' warnc' : ''}" data-m>${esc(m)}</span></div></div>`;
+    }
+    box.innerHTML = html;
+  }
+  // The edit form → a deal (sets matched against the catalog for names, pictures and page addresses).
+  function readForm(el, base) {
+    const v = k => (el.querySelector(`[name="${k}"]`).value || '').trim();
+    const sets = [], bad = [];
+    for (const line of v('sets').split('\n').map(l => l.trim()).filter(Boolean)) {
+      const [num, p, w] = line.split(/[\s,]+/); const price = Number(String(p || '').replace('$', '')), was = w ? Number(String(w).replace('$', '')) : null;
+      let n = num; if (/^\d{3,7}$/.test(n)) n += '-1';
+      const old = (base.sets || []).find(s => s.n === n);
+      const c = names && names.get(n);
+      if (!(price > 0) || (w && !(was > 0)) || (!c && !old)) { bad.push(line); continue; }
+      const brand = c ? c.brand : 'LEGO', isLego = brand === 'LEGO';
+      sets.push({ n, name: c ? c.name : old.name, pieces: old ? old.pieces || null : null,
+        img: old && old.img ? old.img : isLego ? `https://cdn.rebrickable.com/media/sets/${encodeURIComponent(n.toLowerCase())}.jpg` : '',
+        path: old && old.path ? old.path : isLego ? `/set/${dslug(n)}` : `/set/${dslug(brand)}-${dslug(n.split(':').slice(1).join(':'))}`,
+        price: Math.round(price * 100) / 100, was: was && was > price ? Math.round(was * 100) / 100 : null });
+    }
+    if (bad.length) throw new Error(`check these lines (set number not found, or price missing): ${bad.join(' | ')}`);
+    if (!sets.length) throw new Error('add at least one set');
+    const d = { title: v('title'), store: v('store'), url: v('url'), starts: v('starts'), ends: v('ends'), note: v('note'), sets };
+    if (!d.title || !d.store) throw new Error('headline and store are needed');
+    if (d.url && !/^https:\/\//.test(d.url)) throw new Error('the link must start with https://');
+    if (!d.ends) throw new Error('add an end date (deals come off the site after it)');
+    return d;
+  }
+  // Put a deal's prices on its set pages. A set already on special elsewhere keeps the cheaper live one.
+  async function putOnSets(id, d) {
+    const today = DEAL_TODAY(); let put = 0, kept = 0;
+    for (const s of d.sets || []) {
+      const ref = BC.db.doc(`iteminfo/${dbucket(s.n)}`);
+      await BC.db.runTransaction(async tx => {
+        const snap = await tx.get(ref); const cur = snap.exists ? ((snap.data().items || {})[s.n] || {}).sale : null;
+        if (cur && cur.id !== id && cur.ends >= today && cur.p <= s.price && deals[cur.id] && deals[cur.id].status === 'live') { kept++; return; }
+        tx.update(ref, FP('items', s.n, 'sale'), { p: s.price, was: s.was || null, store: d.store, url: d.url || '', ends: d.ends, id, at: Date.now() }); put++;
+      });
+    }
+    return { put, kept };
+  }
+  // Take a deal off its set pages. A set that's also in another live deal gets that deal's price (the cheapest) instead.
+  async function takeOffSets(id, d) {
+    const today = DEAL_TODAY();
+    for (const s of d.sets || []) {
+      let next = null;
+      for (const [oid, o] of Object.entries(deals)) {
+        if (oid === id || o.status !== 'live' || (o.ends && o.ends < today)) continue;
+        const x = (o.sets || []).find(y => y.n === s.n);
+        if (x && (!next || x.price < next.p)) next = { p: x.price, was: x.was || null, store: o.store, url: o.url || '', ends: o.ends, id: oid, at: Date.now() };
+      }
+      const ref = BC.db.doc(`iteminfo/${dbucket(s.n)}`);
+      await BC.db.runTransaction(async tx => {
+        const snap = await tx.get(ref); const cur = snap.exists ? ((snap.data().items || {})[s.n] || {}).sale : null;
+        if (cur && cur.id === id) tx.update(ref, FP('items', s.n, 'sale'), next || firebase.firestore.FieldValue.delete());
+      });
+    }
+  }
+  const saveDeal = (id, d) => BC.db.doc('meta/deals').set({ deals: { [id]: d }, updatedAt: Date.now() }, { merge: true });
+  // merge:true would keep old keys inside the deal (e.g. a removed set list), so replace the whole deal with update().
+  const putDeal = (id, d) => BC.db.doc('meta/deals').update(FP('deals', id), d, 'updatedAt', Date.now());
+  function startDeals() {
+    $('dealBox').hidden = false;
+    $('dealTabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; dealTab = b.dataset.t; dealEdit = null; paintDeals(); };
+    $('dealAdd').onclick = () => { dealEdit = 'new'; dealTab = 'draft'; paintDeals(); };
+    $('dealList').onclick = async e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const card = b.closest('.deal'), id = card.dataset.id, a = b.dataset.a, d = deals[id];
+      const say = t => { dealMsg[id] = t; const m = card.querySelector('[data-m]'); if (m) { m.textContent = t; m.className = 'fine' + (/^Couldn/.test(t) ? ' warnc' : ''); } };
+      const busy = on => card.querySelectorAll('button').forEach(x => { x.disabled = on; });
+      try {
+        busy(true);
+        if (a === 'cancel') { dealEdit = null; paintDeals(); return; }
+        if (a === 'edit') { dealEdit = id; paintDeals(); return; }
+        if (a === 'savenew') {
+          const nd = readForm(card, {});
+          const nid = dslug(`${nd.store}-${nd.sets.map(s => s.n.replace(/-1$/, '')).join('-')}-${nd.starts || DEAL_TODAY()}`).slice(0, 80);
+          await saveDeal(nid, { ...nd, status: 'draft', addedAt: Date.now(), found: DEAL_TODAY(), byHand: true, edited: true });
+          dealEdit = null; paintDeals(); return;
+        }
+        if (a === 'save') {
+          const nd = { ...d, ...readForm(card, d), endsGuess: false, edited: true };
+          if (d.status === 'live') { const gone = (d.sets || []).filter(s => !nd.sets.some(x => x.n === s.n)); if (gone.length) await takeOffSets(id, { sets: gone }); await putOnSets(id, nd); }
+          await putDeal(id, nd); dealEdit = null; dealMsg[id] = 'Saved.'; paintDeals(); return;
+        }
+        if (a === 'publish') {
+          if (!d.ends) throw new Error('add an end date first (Edit)');
+          say('Publishing…');
+          const r = await putOnSets(id, d);
+          await putDeal(id, { ...d, status: 'live', publishedAt: Date.now() });
+          dealMsg[id] = `Published: on ${r.put} set page${r.put === 1 ? '' : 's'}${r.kept ? ` (${r.kept} already had a cheaper special, kept)` : ''}.`;
+          dealTab = 'live'; paintDeals(); return;
+        }
+        if (a === 'skip') { await putDeal(id, { ...d, status: 'skipped', skippedAt: Date.now() }); return; }
+        if (a === 'down') { say('Taking down…'); await takeOffSets(id, d); await putDeal(id, { ...d, status: 'ended', endedAt: Date.now() }); return; }
+        if (a === 'redraft') { await putDeal(id, { ...d, status: 'draft', skippedAt: null, endedAt: null }); dealTab = 'draft'; return; }
+      } catch (err) { say('Couldn’t do that: ' + (err.message || err.code || 'unknown error')); }
+      finally { busy(false); }
+    };
+    BC.db.doc('meta/deals').onSnapshot(s => { deals = (s.exists && s.data().deals) || {}; if (!dealEdit) paintDeals(); else { const t = dealRows(); $('dealTabs').querySelectorAll('button').forEach(b => { const n = t[b.dataset.t].length; b.textContent = { draft: 'To approve', live: 'Live', done: 'Ended or skipped' }[b.dataset.t] + (n ? ` (${n})` : ''); }); } }, e => { $('dealList').innerHTML = `<p class="fine warnc">Couldn’t load the deals: ${esc(e.message || e.code)}</p>`; });
+  }
+
   /* ---------- start: super admins, and anyone given "Open the Admin page" ---------- */
   (async () => {
     const BC = window.BC || {};
@@ -465,6 +652,8 @@ tr.owner td{color:var(--muted)}
     try { let stop = null; const ps = await new Promise((res, rej) => { stop = BC.db.doc('meta/permissions').onSnapshot(res, rej); }); stop && stop(); perms = (ps.exists && ps.data()) || {}; } catch { perms = {}; }
     if (myRole !== 'super' && perms?.[myRole]?.usage !== true) return show('Not available', 'You don’t have access to this page. <a href="/">Back to BrickCollect</a>');
     BC.db.doc('meta/permissions').onSnapshot(s => { perms = (s.exists && s.data()) || {}; if (!draft && U) paintPerms(); }, () => {});
+    // Deals: needs the shared-prices permission (items), as publishing writes the set pages' prices.
+    if (myRole === 'super' || perms?.[myRole]?.items === true) startDeals();
     loadNames().then(m => { names = m; if (U) { paintTop(); paintHealth(); } }).catch(e => console.warn('names', e));
     BC.db.doc('admin/usage').onSnapshot(snap => {
       if (!snap.exists) return show('No numbers yet', 'The usage numbers are worked out at 20 past each hour. Check back after the next run.');

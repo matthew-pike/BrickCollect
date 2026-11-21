@@ -200,6 +200,62 @@
   /* LEGO.com in the visitor's own country */
   { const mp = { AU: 'en-au', GB: 'en-gb', CA: 'en-ca', NZ: 'en-nz', IE: 'en-ie' }; const c = (navigator.language || '').split('-')[1]; const l = mp[(c || '').toUpperCase()]; if (l) document.querySelectorAll('a[href*="lego.com/en-us/"]').forEach(a => { a.href = a.href.replace('/en-us/', `/${l}/`); }); }
 
+  /* On special (deals): approved on the Admin page and kept in Firestore meta/deals (readable by anyone).
+     Shown on /deals (every live deal), in the On special boxes on Home and the Blog, and on set pages (pricebox below).
+     A deal shows until the end of its end date, Sydney time. Prices are AUD (Australian stores). */
+  const sydToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+  const dealDay = d => { const t = Date.parse((d || '') + 'T00:00:00'); return isNaN(t) ? '' : new Date(t).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }); };
+  {
+    const all = $('dealsAll'), peek = $('dealsPeek'), host = all || peek;
+    if (host && host.dataset.fb) {
+      const [proj, key] = host.dataset.fb.split('|');
+      const val = v => { if (!v) return null; if ('stringValue' in v) return v.stringValue; if ('integerValue' in v) return Number(v.integerValue); if ('doubleValue' in v) return Number(v.doubleValue); if ('booleanValue' in v) return v.booleanValue; if ('nullValue' in v) return null; if ('arrayValue' in v) return (v.arrayValue.values || []).map(val); if ('mapValue' in v) { const o = {}; for (const [k, x] of Object.entries(v.mapValue.fields || {})) o[k] = val(x); return o; } return null; };
+      const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+      const A = v => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(v);
+      const priceRow = s => { const p = el('span', 'dprice'); p.append(el('b', '', A(s.price))); if (s.was > s.price) { p.append(el('s', '', A(s.was))); p.append(el('span', 'dtag', `${Math.round((1 - s.price / s.was) * 100)}% OFF`)); } return p; };
+      const setCard = (s, d, withStore) => {
+        const c = el('div', 'tcard'), pic = el('a', 'tpic'); pic.href = s.path || '#';
+        const img = document.createElement('img'); img.src = s.img || ''; img.alt = ''; img.loading = 'lazy'; img.width = 96; img.height = 72; pic.append(img);
+        const body = el('div', 'cb'), nm = el('a', 'cn', s.name || s.n); nm.href = s.path || '#';
+        body.append(nm, el('span', 'cm', `${s.n.includes(':') ? s.n.split(':').slice(1).join(':') : s.n.replace(/-1$/, '')}${s.pieces ? ` · ${Number(s.pieces).toLocaleString('en-AU')} pcs` : ''}`), priceRow(s));
+        if (withStore) body.append(el('span', 'dwhere', `${d.store}${d.ends ? ` · until ${dealDay(d.ends)}` : ''}`));
+        c.append(pic, body); return c;
+      };
+      fetch(`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/meta/deals?key=${key}&mask.fieldPaths=deals`)
+        .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+        .then(j => {
+          const today = sydToday();
+          const live = Object.entries(val({ mapValue: { fields: (j.fields && j.fields.deals && j.fields.deals.mapValue.fields) || {} } }) || {})
+            .map(([id, d]) => ({ ...d, id })).filter(d => d.status === 'live' && (!d.ends || d.ends >= today) && (!d.starts || d.starts <= today) && (d.sets || []).length)
+            .sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
+          if (all) {
+            all.textContent = '';
+            if (!live.length) { all.append(el('p', 'muted', 'Nothing on special right now. Check back soon: we look for new specials a few times a week.')); return; }
+            for (const d of live) {
+              const box = el('article', 'deal'), head = el('div', 'dealhead'), t = el('div');
+              t.append(el('p', 'dkick', d.store), el('h2', '', d.title));
+              head.append(t, el('span', 'dwhen', [d.ends ? `Until ${dealDay(d.ends)}` : '', d.found ? `checked ${dealDay(d.found)}` : ''].filter(Boolean).join(' · ')));
+              const cards = el('div', 'tcards'); d.sets.forEach(s => cards.append(setCard(s, d, false)));
+              box.append(head, cards);
+              if (d.note) box.append(el('p', 'dnote', d.note));
+              if (d.url) { const row = el('div', 'row'), a = el('a', 'btn primary', `See it at ${d.store} ↗`); a.href = d.url; a.target = '_blank'; a.rel = 'noopener'; a.dataset.cta = 'deal'; row.append(a); box.append(row); }
+              all.append(box);
+            }
+            track('deals_view', { deals: live.length });
+          }
+          if (peek) {
+            const sets = live.flatMap(d => d.sets.map(s => ({ s, d })));
+            if (!sets.length) return;
+            const best = sets.sort((a, b) => ((b.s.was ? 1 - b.s.price / b.s.was : 0) - (a.s.was ? 1 - a.s.price / a.s.was : 0))).slice(0, 4);
+            const list = $('dealsPeekList'); best.forEach(({ s, d }) => list.append(setCard(s, d, true)));
+            const more = $('dealsPeekAll'); if (more && sets.length > 4) more.firstChild.textContent = `All ${sets.length} deals`;
+            peek.hidden = false;
+          }
+        })
+        .catch(e => { console.warn('deals', e); if (all) { all.textContent = ''; all.append(el('p', 'muted', 'Couldn’t load the specials just now. Try again in a moment.')); } });
+    }
+  }
+
   /* set page: today's price, in your currency. The page was built with the price in AUD; this reads the latest
      from Firestore (just this set's entry in its price bucket) and converts it with the app's exchange rates.
      LEGO: BrickLink's average of recent sales, from sellers in the location you've picked in My collection
@@ -268,6 +324,20 @@
         const rat = rr ? fmtDay(rr.at) : '', rwhen = rat ? ` · ${rat}` : '';
         rn.textContent = !rr ? 'No price yet.' : rr.manual ? `RRP set by BrickCollect${rwhen}` : `RRP: price on ${rr.src === 'LEGO' ? 'LEGO.com Australia' : `the ${rr.src} store`}${rwhen}`;
         rn.hidden = !rr && !store;
+      }
+      // On special (a deal published on the Admin page): where, for how much and until when. Store prices stay in AUD.
+      const sl = $('saleLine'), sale = item.sale;
+      if (sl) {
+        const ok = sale && sale.p > 0 && (!sale.ends || sale.ends >= sydToday());
+        sl.hidden = !ok; sl.textContent = '';
+        if (ok) {
+          const A = v => (c === 'AUD' ? '' : 'A') + new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(v);
+          const off = sale.was > sale.p ? Math.round((1 - sale.p / sale.was) * 100) : 0;
+          const b = document.createElement('b'); b.textContent = `On special at ${sale.store}: ${A(sale.p)}`;
+          sl.append(b, off ? ` (usually ${A(sale.was)}, ${off}% off)` : '', sale.ends ? ` until ${dealDay(sale.ends)}.` : '.', ' ');
+          if (sale.url) { const a = document.createElement('a'); a.href = sale.url; a.target = '_blank'; a.rel = 'noopener'; a.dataset.cta = 'deal'; a.textContent = 'See the deal ↗'; sl.append(a); }
+          else { const a = document.createElement('a'); a.href = '/deals'; a.textContent = 'All deals'; sl.append(a); }
+        }
       }
       $('priceCur').textContent = c !== 'AUD' && rates && rates.date ? `${c}, converted from AUD at ${fmtDay(rates.date)} rates` : '';
     };
