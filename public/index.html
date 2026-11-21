@@ -377,6 +377,9 @@ tbody tr.picked td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .pick{all:unset;cursor:pointer;font-weight:500;color:var(--fg)}
 .pick:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .pick:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+/* Phones: the set name opens the set page and a Minifigures button shows its minifigures; on bigger screens the name selects the set */
+.pk-m,.figsbtn{display:none}
+.figsbtn b{font-weight:600;margin-left:3px}
 .focusbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 9%,var(--panel));font-size:13px}
 .focusbar b{font-weight:500}
 .price.mine{font-style:italic}
@@ -504,6 +507,11 @@ body:has(#saveNudge) .toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))
   #rows .c-img{position:absolute;left:40px;top:12px}
   #rows .c-nm{order:1;flex-basis:100%;font-weight:500}
   #rows .c-nm .pick{text-align:left}
+  #rows .c-nm .pk-d,#rows .c-nm .pk-m + .spage{display:none}
+  #rows .c-nm .pk-m{display:inline}
+  #footHint .pk-d{display:none}
+  #footHint .pk-m{display:inline}
+  #rows .figsbtn{display:inline-flex}
   #rows .c-num{order:2;font-size:12px}
   #rows .c-bl{order:3;font-size:12px}
   #rows .c-num .numsub{display:inline-flex;margin:0 0 0 5px;font-size:12px}
@@ -1125,7 +1133,7 @@ th.myh{white-space:normal;line-height:1.35;min-width:72px}
       </table>
     </div>
     <div class="empty" id="empty"><h3>Loading the catalog…</h3></div>
-    <div class="foot" id="foot" hidden><span class="footleft"><span id="footCount"></span><span class="savemode" id="saveMode" hidden></span><button class="linkbtn" id="unselAll" hidden>Unmark all</button></span><span class="morebtns"><button class="btn" id="more">Show 50 more</button><button class="btn" id="moreAll" hidden>Show all</button></span><span id="footHint">Click a set to see its minifigures</span></div>
+    <div class="foot" id="foot" hidden><span class="footleft"><span id="footCount"></span><span class="savemode" id="saveMode" hidden></span><button class="linkbtn" id="unselAll" hidden>Unmark all</button></span><span class="morebtns"><button class="btn" id="more">Show 50 more</button><button class="btn" id="moreAll" hidden>Show all</button></span><span id="footHint"><span class="pk-d">Click a set to see its minifigures</span><span class="pk-m">Tap a set to open its page</span></span></div>
   </section>
 </main>
 <footer class="foot-site">
@@ -1430,6 +1438,7 @@ function buildCatalog(raw) {
       // how many come in a set, for sets with more than one (catalog's optional {set index: count})
       qIn: new Map(Object.entries(multi || {}).filter(([i]) => sets[i]).map(([i, q]) => [sets[i].n, q])), firstSet: first ? first.n : '', key: (n + ' ' + name).toLowerCase() };
   });
+  for (const f of figs) for (const s of f.so) s.figN = (s.figN || 0) + (f.qIn.get(s.n) || 1); // minifigures per set, each copy counted like the Selected bar (phone cards' Minifigures button)
   return { themes, sets, lego: sets, figs };
 }
 
@@ -2439,13 +2448,13 @@ function render() {
     <tr class="${owned(x) ? 'owned' : fromSet(x) ? 'fromset' : ''}${x.k === 's' && x.n === focus ? ' picked' : ''}"${x.k === 's' ? ` data-row="${esc(x.n)}"` : ''}>
       <td class="c-own"><div class="ownc"><input type="checkbox" class="chk" data-own="${esc(x.n)}" ${has(x) ? 'checked' : ''} ${fromSet(x) ? 'disabled title="Comes with a set you own"' : ''} aria-label="I own ${esc(x.name)}">${has(x) ? '' : `<button class="star" data-want="${esc(x.n)}" aria-pressed="${wanted(x)}" title="${wanted(x) ? 'Remove from wanted' : 'Add to wanted'}" aria-label="${wanted(x) ? 'Remove' : 'Add'} ${esc(x.name)} ${wanted(x) ? 'from' : 'to'} wanted"><svg width="16" height="16" viewBox="0 0 24 24" fill="${wanted(x) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg></button>`}</div></td>
       <td class="c-img">${thumb(x)}</td>
-      <td class="nm c-nm">${x.k === 's' ? `<button class="pick" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>${setPageLink(x)}` : esc(x.name)}${fsIdx ? fsBadge(x) : ''}${x.k === 'm' && focus && x.qIn.get(focus) > 1 ? ` <b class="qin" title="${x.qIn.get(focus)} of this minifigure in the selected set">×${x.qIn.get(focus)}</b>` : ''}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
+      <td class="nm c-nm">${x.k === 's' ? `<button class="pick${setPage(x) ? ' pk-d' : ''}" data-focus="${esc(x.n)}" title="Select this set to see its minifigures" aria-pressed="${x.n === focus}">${esc(x.name)}</button>${setPage(x) ? `<a class="pick pk-m" href="${esc(setPage(x))}">${esc(x.name)}</a>` : ''}${setPageLink(x)}` : esc(x.name)}${fsIdx ? fsBadge(x) : ''}${x.k === 'm' && focus && x.qIn.get(focus) > 1 ? ` <b class="qin" title="${x.qIn.get(focus)} of this minifigure in the selected set">×${x.qIn.get(focus)}</b>` : ''}${x.k === 'm' && x.inSets ? `<small>In ${x.inSets} set${x.inSets > 1 ? 's' : ''}${x.firstSet ? ` · first ${esc(x.firstSet)}` : ''}</small>` : ''}</td>
       <td class="c-cond">${condCell(x)}</td>
       <td class="sub c-sub">${subCell(x)}${x.sub || x.brand !== 'LEGO' ? `<small>${esc([x.brand !== 'LEGO' ? x.brand : '', x.sub ? x.theme : ''].filter(Boolean).join(' · '))}</small>` : ''}${tagCell(x)}</td>
       <td class="mono c-num">${esc(shownNum(x))}${retBadge(x)}${numSub(x)}</td>${x.k === 'm' ? `<td class="c-bl">${blCell(x)}</td>` : ''}
       ${x.k === 's' ? `<td class="num c-rrp">${rrpCell(x)}</td>` : ''}<td class="num c-used">${price(x, 'used')}</td>
       <td class="num c-new">${price(x, 'new')}</td>${listView === 'sale' ? `<td class="num c-my">${myPriceCell(x)}</td>` : ''}${listView === 'sold' ? `<td class="num c-sold">${soldCell(x)}</td>` : ''}
-      <td class="c-links"><div class="links">${buyLink(x)}${x.extra ? (can('sets') ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
+      <td class="c-links"><div class="links">${x.k === 's' && x.figN ? `<button class="btn mini figsbtn" data-figsof="${esc(x.n)}" aria-label="View the minifigures in ${esc(x.name)}">Minifigures <b>${x.figN}</b></button>` : ''}${buyLink(x)}${x.extra ? (can('sets') ? `<button class="btn mini" data-editset="${esc(x.n)}">Edit</button>` : '') : `<a class="btn mini bl" href="${bl(x)}" target="_blank" rel="noopener" title="${blLoc ? `View on BrickLink, sellers in ${LOCS[priceRegion()]}` : 'View on BrickLink'}" aria-label="View ${esc(x.name)} on BrickLink">BL</a>`}</div></td>
     </tr>`).join('');
   tickTip(); setTimeout(newTips, 0);
 
@@ -2599,6 +2608,8 @@ document.addEventListener('click', e => {
   if (e.target.closest('#zoom')) return;
   const zb = e.target.closest('[data-zoom]'); if (zb) { openZoom(zb); return; }
   const tr = e.target.closest('tr[data-row]');
+  // Phones: tapping a set card opens its set page (its Minifigures button shows the minifigures)
+  if (tr && !e.target.closest('button,a,input,label,select,textarea') && matchMedia('(max-width:640px)').matches) { const u = setPage(CAT.sets.find(x => x.n === tr.dataset.row)); if (u) { location.href = u; return; } }
   if (tr && !e.target.closest('button,a,input,label')) { focus = focus === tr.dataset.row ? null : tr.dataset.row; savePrefs(); render(); return; }
   const t = e.target.closest('button,[data-sort]'); if (!t) return;
   if (t.dataset.mymix) { openListing(t.dataset.mymix); return; }
@@ -2648,6 +2659,8 @@ document.addEventListener('click', e => {
   if (t.dataset.fs) { fsOpen(t.dataset.fs); return; }
   if (t.dataset.fsonly) { fsOnly = !fsOnly; prefs.fsOnly = fsOnly; limit = PAGE; savePrefs(); render(); track('fs_only', { on: fsOnly }); return; }
   if (t.dataset.editset) { openAdd(CAT.sets.find(x => x.n === t.dataset.editset)); return; }
+  if (t.dataset.figsof) { focus = t.dataset.figsof; tlOpen = false; kind = 'figs'; limit = PAGE; themeOptions(); filmOptions(); savePrefs(); render(); track('view_figs', { set: focus });
+    const top = document.querySelector('.top'), off = getComputedStyle(top).position === 'sticky' ? top.offsetHeight : 0; scrollTo({ top: Math.max(0, $('boardHead').closest('.board').getBoundingClientRect().top + scrollY - off - 8), behavior: 'auto' }); return; }
   if (t.dataset.focus) { focus = focus === t.dataset.focus ? null : t.dataset.focus; savePrefs(); render(); return; }
   if (t.dataset.clearfocus) { focus = null; limit = PAGE; savePrefs(); render(); return; }
   if (t.dataset.brand) { focus = null; leaveSale(); fi.brand.value = fi.brand.value === t.dataset.brand && t.closest('#themeStrip') ? '' : t.dataset.brand; fi.theme.value = ''; themeOptions(); subOptions(''); filmOptions(''); limit = PAGE; savePrefs(); render(); return; }
