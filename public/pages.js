@@ -52,6 +52,7 @@
   /* Admin in the menu, for accounts that can open it (remembered by the app) */
   if (lsGet('bc-admin')) document.querySelectorAll('.hm-admin').forEach(x => { x.hidden = false; });
   if (acct) document.querySelectorAll('.hm-in').forEach(x => { x.hidden = false; }); // Sign out, when signed in on this browser
+  if (acct) document.querySelectorAll('.hm-out').forEach(x => { x.hidden = true; }); // and no Sign in
 
   /* Sign in on any page: a pop-up like the one in My collection, so you stay where you are.
      The sign-in code (Firebase) loads only when it's needed: when the pop-up opens, or when an email
@@ -111,6 +112,8 @@
   }
   const openSignIn = (e, next) => { e.preventDefault(); const d = authDialog(); d.dataset.next = next || ''; d.showModal(); loadFB().catch(() => {}); track('signin_open', { from: location.pathname }); };
   if (ab && !acct) ab.addEventListener('click', e => openSignIn(e));
+  // Sign in in the ☰ menu (signed out): the same pop-up.
+  if (!acct) document.querySelectorAll('.hm-out').forEach(x => x.addEventListener('click', e => { const d = x.closest('details'); if (d) d.open = false; openSignIn(e); }));
   // Home: "Sign in to view your collection" signs in here, then opens My collection.
   if (hb && !acct) hb.addEventListener('click', e => openSignIn(e, '/collection'));
   // Back from an email sign-in link (or a Google redirect on phones that block pop-ups): finish here.

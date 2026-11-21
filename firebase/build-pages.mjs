@@ -44,7 +44,7 @@ if (!MARK) throw new Error('Logo not found in index.html; update build-pages.mjs
 const MENU = (() => {
   const m = readFileSync(new URL('index.html', PUB), 'utf8').match(/<details class="hmenu"[\s\S]*?<nav aria-label="Menu">([\s\S]*?)<\/nav><\/details>/);
   if (!m) throw new Error('Menu not found in index.html; update build-pages.mjs');
-  return m[1].replace('<a href="#" data-hm="signOutBtn"', '<a href="/collection#signout"');
+  return m[1].replace('<a href="#" data-hm="signOutBtn"', '<a href="/collection#signout"').replace('<a href="#" data-hm="acctBtn"', '<a href="#signin"');
 })();
 // The notice bar under the header (e.g. BrickLink is offline) comes from the app too, shown by pages.js.
 const NOTICE = (readFileSync(new URL('index.html', PUB), 'utf8').match(/<section class="notice" id="blNotice"[\s\S]*?<\/section>/) || [''])[0];

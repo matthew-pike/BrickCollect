@@ -54,6 +54,11 @@ button,input,select{font:inherit;color:inherit}
 .hmenu nav a:hover{background:var(--panel-2);color:var(--accent)}
 .hmenu nav a.hm-admin,.hmenu nav a.hm-admin:hover{color:var(--accent)}
 .hmenu nav hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
+/* ☰ menu blocks: a small label over each group of links */
+.hmenu nav{min-width:220px;max-height:calc(100vh - 90px);overflow-y:auto}
+.hmenu .hm-b{display:flex;flex-direction:column;margin-top:6px;padding:2px 0 4px;border-radius:9px;background:var(--bg)}
+.hmenu .hm-b a{padding:8px 12px}
+.hmenu .hm-h{margin:0;padding:8px 12px 2px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .hmenu nav [hidden]{display:none}
 .hmenu .unew{margin-left:6px;font-size:11px;font-weight:600;color:#fff;background:var(--coral);border-radius:999px;padding:1px 6px}
 .hmenu .mnew{display:inline-block;margin-left:7px;padding:1px 5px;border-radius:5px;border:1px solid var(--coral);font-size:9.5px;font-weight:600;letter-spacing:.1em;line-height:1.3;color:var(--coral);background:color-mix(in srgb,var(--coral) 15%,transparent);vertical-align:1px}
