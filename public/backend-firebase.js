@@ -250,5 +250,6 @@
     return out;
   }
 
-  window.BC = { db, user, auth, syncPrices, ready };
+  // fs: Firestore itself, for pages that need transactions or field updates (the Admin page's Deals box).
+  window.BC = { db, fs: fstore, user, auth, syncPrices, ready };
 })();

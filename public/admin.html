@@ -571,8 +571,8 @@ ${editing ? dealForm(d) : `<ul>${(d.sets || []).map(setLine).join('')}</ul>${d.n
   async function putOnSets(id, d) {
     const today = DEAL_TODAY(); let put = 0, kept = 0;
     for (const s of d.sets || []) {
-      const ref = BC.db.doc(`iteminfo/${dbucket(s.n)}`);
-      await BC.db.runTransaction(async tx => {
+      const ref = BC.fs.doc(`iteminfo/${dbucket(s.n)}`);
+      await BC.fs.runTransaction(async tx => {
         const snap = await tx.get(ref); const cur = snap.exists ? ((snap.data().items || {})[s.n] || {}).sale : null;
         if (cur && cur.id !== id && cur.ends >= today && cur.p <= s.price && deals[cur.id] && deals[cur.id].status === 'live') { kept++; return; }
         tx.update(ref, FP('items', s.n, 'sale'), { p: s.price, was: s.was || null, store: d.store, url: d.url || '', ends: d.ends, id, at: Date.now() }); put++;
@@ -590,16 +590,16 @@ ${editing ? dealForm(d) : `<ul>${(d.sets || []).map(setLine).join('')}</ul>${d.n
         const x = (o.sets || []).find(y => y.n === s.n);
         if (x && (!next || x.price < next.p)) next = { p: x.price, was: x.was || null, store: o.store, url: o.url || '', ends: o.ends, id: oid, at: Date.now() };
       }
-      const ref = BC.db.doc(`iteminfo/${dbucket(s.n)}`);
-      await BC.db.runTransaction(async tx => {
+      const ref = BC.fs.doc(`iteminfo/${dbucket(s.n)}`);
+      await BC.fs.runTransaction(async tx => {
         const snap = await tx.get(ref); const cur = snap.exists ? ((snap.data().items || {})[s.n] || {}).sale : null;
         if (cur && cur.id === id) tx.update(ref, FP('items', s.n, 'sale'), next || firebase.firestore.FieldValue.delete());
       });
     }
   }
-  const saveDeal = (id, d) => BC.db.doc('meta/deals').set({ deals: { [id]: d }, updatedAt: Date.now() }, { merge: true });
+  const saveDeal = (id, d) => BC.fs.doc('meta/deals').set({ deals: { [id]: d }, updatedAt: Date.now() }, { merge: true });
   // merge:true would keep old keys inside the deal (e.g. a removed set list), so replace the whole deal with update().
-  const putDeal = (id, d) => BC.db.doc('meta/deals').update(FP('deals', id), d, 'updatedAt', Date.now());
+  const putDeal = (id, d) => BC.fs.doc('meta/deals').update(FP('deals', id), d, 'updatedAt', Date.now());
   function startDeals() {
     $('dealBox').hidden = false;
     $('dealTabs').onclick = e => { const b = e.target.closest('button'); if (!b) return; dealTab = b.dataset.t; dealEdit = null; paintDeals(); };
@@ -638,7 +638,7 @@ ${editing ? dealForm(d) : `<ul>${(d.sets || []).map(setLine).join('')}</ul>${d.n
       } catch (err) { say('Couldn’t do that: ' + (err.message || err.code || 'unknown error')); }
       finally { busy(false); }
     };
-    BC.db.doc('meta/deals').onSnapshot(s => { deals = (s.exists && s.data().deals) || {}; if (!dealEdit) paintDeals(); else { const t = dealRows(); $('dealTabs').querySelectorAll('button').forEach(b => { const n = t[b.dataset.t].length; b.textContent = { draft: 'To approve', live: 'Live', done: 'Ended or skipped' }[b.dataset.t] + (n ? ` (${n})` : ''); }); } }, e => { $('dealList').innerHTML = `<p class="fine warnc">Couldn’t load the deals: ${esc(e.message || e.code)}</p>`; });
+    BC.fs.doc('meta/deals').onSnapshot(s => { deals = (s.exists && s.data().deals) || {}; if (!dealEdit) paintDeals(); else { const t = dealRows(); $('dealTabs').querySelectorAll('button').forEach(b => { const n = t[b.dataset.t].length; b.textContent = { draft: 'To approve', live: 'Live', done: 'Ended or skipped' }[b.dataset.t] + (n ? ` (${n})` : ''); }); } }, e => { $('dealList').innerHTML = `<p class="fine warnc">Couldn’t load the deals: ${esc(e.message || e.code)}</p>`; });
   }
 
   /* ---------- start: super admins, and anyone given "Open the Admin page" ---------- */
