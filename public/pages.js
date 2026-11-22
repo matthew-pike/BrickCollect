@@ -204,7 +204,7 @@
   { const mp = { AU: 'en-au', GB: 'en-gb', CA: 'en-ca', NZ: 'en-nz', IE: 'en-ie' }; const c = (navigator.language || '').split('-')[1]; const l = mp[(c || '').toUpperCase()]; if (l) document.querySelectorAll('a[href*="lego.com/en-us/"]').forEach(a => { a.href = a.href.replace('/en-us/', `/${l}/`); }); }
 
   /* On special (deals): approved on the Admin page and kept in Firestore meta/deals (readable by anyone).
-     Shown on /deals (every live deal), in the On special boxes on Home and the Blog, and on set pages (pricebox below).
+     Shown on /deals (every live deal), in the Deals boxes on Home and the Blog, and on set pages (pricebox below).
      A deal shows until the end of its end date, Sydney time. Prices are AUD (Australian stores). */
   const sydToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
   const dealDay = d => { const t = Date.parse((d || '') + 'T00:00:00'); return isNaN(t) ? '' : new Date(t).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }); };
@@ -233,7 +233,7 @@
             .sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
           if (all) {
             all.textContent = '';
-            if (!live.length) { all.append(el('p', 'muted', 'Nothing on special right now. Check back soon: we look for new specials a few times a week.')); return; }
+            if (!live.length) { all.append(el('p', 'muted', 'No deals right now. Check back soon: we look for new specials a few times a week.')); return; }
             for (const d of live) {
               const box = el('article', 'deal'), head = el('div', 'dealhead'), t = el('div');
               t.append(el('p', 'dkick', d.store), el('h2', '', d.title));

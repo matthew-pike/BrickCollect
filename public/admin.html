@@ -180,7 +180,7 @@ tr.owner td{color:var(--muted)}
 
     <section class="box" id="dealBox" hidden>
       <h2>Deals</h2>
-      <p class="sub">Specials found by the deal scan (and any you add). Publish puts a deal on <a href="/deals" target="_blank">On special</a>, the Blog and its set pages until its end date. Prices in AUD.</p>
+      <p class="sub">Specials found by the deal scan (and any you add). Publish puts a deal on <a href="/deals" target="_blank">Deals</a>, the Blog and its set pages until its end date. Prices in AUD.</p>
       <div class="tabs3" id="dealTabs"><button type="button" data-t="draft" aria-pressed="true">To approve</button><button type="button" data-t="live" aria-pressed="false">Live</button><button type="button" data-t="done" aria-pressed="false">Ended or skipped</button></div>
       <button class="dbtn" type="button" id="dealAdd" style="float:right">+ Add a deal</button>
       <div id="dealList"></div>
@@ -519,7 +519,7 @@ tr.owner td{color:var(--muted)}
 <label>Starts<input name="starts" type="date" value="${esc(d.starts || '')}"></label>
 <label>Ends<input name="ends" type="date" value="${esc(d.ends || '')}"></label>
 <label class="w">Sets: one per line, set number, special price, normal price (e.g. 75367 99 149.99)<textarea name="sets">${esc(lines)}</textarea></label>
-<label class="w">Note (shown on On special)<input name="note" value="${esc(d.note || '')}" placeholder="Online and in store, while stocks last"></label>
+<label class="w">Note (shown on Deals)<input name="note" value="${esc(d.note || '')}" placeholder="Online and in store, while stocks last"></label>
 </div>`;
   }
   function paintDeals() {

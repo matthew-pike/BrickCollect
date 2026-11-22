@@ -414,9 +414,9 @@ ${(a.sets || []).length > 1 ? `<div class="post-thumbs">${a.sets.slice(1, 11).ma
 <a class="btn post-more" href="${esc(a.path)}">Read more${ARR_RING}</a></div></article>`; };
 const newsSet = s => { const x = byNum.get(s.n); const num = s.n.replace(/-1$/, ''), pic = `<img src="${esc(newsImg(s))}" alt="" loading="lazy" width="72" height="54" ${NOIMG}>`, text = `<span class="cb"><span class="cn">${esc(s.name)}</span><span class="cm">${esc(num)} · ${fmt(s.pieces)} pcs${s.price ? ` · ${esc(s.price)}` : ''} · out ${esc(s.out)}</span></span>`;
   return x ? `<a class="card" href="${esc(x.path)}">${pic}${text}</a>` : `<div class="card">${pic}${text}</div>`; };
-// On special (deals): approved on the Admin page and kept in Firestore meta/deals, so they change without a rebuild.
+// Deals ("on special"): approved on the Admin page and kept in Firestore meta/deals, so they change without a rebuild.
 // pages.js fills these in from Firestore; they stay hidden when nothing is on special.
-const dealsPeek = where => `<section class="hsec dealspeek" id="dealsPeek" data-fb="${esc(FB_KEY)}" data-where="${where}" hidden><div class="hhead"><h2>On special</h2><a href="/deals" data-cta="more_deals" id="dealsPeekAll">All deals${ARR}</a></div><div class="tcards" id="dealsPeekList"></div></section>`;
+const dealsPeek = where => `<section class="hsec dealspeek" id="dealsPeek" data-fb="${esc(FB_KEY)}" data-where="${where}" hidden><div class="hhead"><h2>Deals</h2><a href="/deals" data-cta="more_deals" id="dealsPeekAll">All deals${ARR}</a></div><div class="tcards" id="dealsPeekList"></div></section>`;
 /* ---------- home page (/) ---------- */
 // The app moves to /collection (My collection); / becomes a page of sets you can tick straight away.
 {
@@ -502,8 +502,8 @@ ${(a.sources || []).length ? `<p class="fine post-src">Sources: ${a.sources.map(
   }
 }
 
-/* ---------- /deals: On special ---------- */
-write('./deals.html', shell({ path: '/deals', title: 'LEGO on special in Australia: current deals | BrickCollect', h1: 'On special', crumbs: [['On special', '/deals']],
+/* ---------- /deals: Deals ---------- */
+write('./deals.html', shell({ path: '/deals', title: 'LEGO deals in Australia: sets on special now | BrickCollect', h1: 'Deals', crumbs: [['Deals', '/deals']],
   desc: 'LEGO and brick sets on special at Australian stores right now: the special price, the usual price, how much you save and until when.',
   body: `<p class="sub">LEGO and brick sets on special at Australian stores right now. Prices in Australian dollars, checked by BrickCollect; stores can change them or sell out, so check the price on the store’s page before you buy.</p>
 <div class="deals" id="dealsAll" data-fb="${esc(FB_KEY)}"><p class="muted" id="dealsWait">Loading the specials…</p></div>
