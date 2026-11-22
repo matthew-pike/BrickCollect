@@ -353,3 +353,11 @@ img.nopic{object-fit:contain;background:#f3f5f9}
 .deal .dnote{margin:0 0 10px;color:var(--muted);font-size:14px}
 .deal .row{display:flex;gap:8px;flex-wrap:wrap}
 @media (max-width:640px){.deal{padding:14px}.deal h2{font-size:16px}}
+
+/* Deal posts in the /blog feed (pages.js dealPosts): a % OFF badge on the picture, a plain store chip, ended ones faded */
+.dealpost .post-pic{position:relative}
+.post-off{position:absolute;top:10px;left:10px;font-size:12px;background:color-mix(in srgb,var(--coral) 92%,#000);color:#fff}
+.tag.plain{background:transparent;border-style:dashed;cursor:default}
+.post-ended{color:var(--coral);font-weight:500}
+.dealpost.over .post-pic img{opacity:.6;filter:grayscale(.5)}
+.deal{scroll-margin-top:80px}

@@ -415,7 +415,7 @@ ${(a.sets || []).length > 1 ? `<div class="post-thumbs">${a.sets.slice(1, 11).ma
 const newsSet = s => { const x = byNum.get(s.n); const num = s.n.replace(/-1$/, ''), pic = `<img src="${esc(newsImg(s))}" alt="" loading="lazy" width="72" height="54" ${NOIMG}>`, text = `<span class="cb"><span class="cn">${esc(s.name)}</span><span class="cm">${esc(num)} · ${fmt(s.pieces)} pcs${s.price ? ` · ${esc(s.price)}` : ''} · out ${esc(s.out)}</span></span>`;
   return x ? `<a class="card" href="${esc(x.path)}">${pic}${text}</a>` : `<div class="card">${pic}${text}</div>`; };
 // Deals ("on special"): approved on the Admin page and kept in Firestore meta/deals, so they change without a rebuild.
-// pages.js fills these in from Firestore; they stay hidden when nothing is on special.
+// pages.js fills these in from Firestore; they stay hidden when nothing is on special. On /blog each deal is a post in the feed instead (pages.js).
 const dealsPeek = where => `<section class="hsec dealspeek" id="dealsPeek" data-fb="${esc(FB_KEY)}" data-where="${where}" hidden><div class="hhead"><h2>Deals</h2><a href="/deals" data-cta="more_deals" id="dealsPeekAll">All deals${ARR}</a></div><div class="tcards" id="dealsPeekList"></div></section>`;
 /* ---------- home page (/) ---------- */
 // The app moves to /collection (My collection); / becomes a page of sets you can tick straight away.
@@ -471,7 +471,9 @@ ${brands.size ? `<section class="hsec"><div class="hhead"><h2>Other brands</h2><
 }));
 
 // Every post on /blog (weekly updates and news), newest first, and the tags they use.
-const ALL_POSTS = [...UPDATES.map(u => ({ date: u.date, title: updHead(u), tags: u.tags, html: updCard(u) })), ...NEWS.map(a => ({ date: a.date, title: a.title, tags: a.tags, html: newsCard(a) }))].sort((a, b) => b.date.localeCompare(a.date));
+// Each post carries data-date, so pages.js can slot deal posts (from Firestore meta/deals) in by date.
+const ALL_POSTS = [...UPDATES.map(u => ({ date: u.date, title: updHead(u), tags: u.tags, html: updCard(u) })), ...NEWS.map(a => ({ date: a.date, title: a.title, tags: a.tags, html: newsCard(a) }))]
+  .map(p => ({ ...p, html: p.html.replace('<article ', `<article data-date="${esc(p.date)}" `) })).sort((a, b) => b.date.localeCompare(a.date));
 const TAGS = new Map();
 for (const p of ALL_POSTS) for (const t of p.tags || []) { const k = slug(t); if (!TAGS.has(k)) TAGS.set(k, { name: t, posts: [] }); TAGS.get(k).posts.push(p); }
 // The tag bar on /blog and the tag pages: every tag, most posts first (the current one highlighted).
@@ -479,7 +481,7 @@ const tagBar = cur => TAGS.size ? `<nav class="tagbar" aria-label="Tags">${[...T
 if (UPDATES.length) {
   write('./blog.html', shell({ path: '/blog', title: 'Blog: LEGO and Brick news | BrickCollect', h1: 'Blog', crumbs: [['Blog', '/blog']],
     desc: `LEGO and brick news, and the new sets that arrive in BrickCollect every week. Latest: ${latestUpdate.title}.`,
-    body: `${dealsPeek('blog')}${tagBar()}<div class="posts">${ALL_POSTS.map(p => p.html).join('\n')}</div>` }));
+    body: `${tagBar()}<div class="posts" id="dealsFeed" data-fb="${esc(FB_KEY)}">${ALL_POSTS.map(p => p.html).join('\n')}</div>` }));
   for (const [k, { name, posts }] of TAGS) {
     write(`.${tagPath(name)}.html`, shell({ path: tagPath(name), title: `${name}: BrickCollect blog`, h1: esc(name), crumbs: [['Blog', '/blog'], [name, tagPath(name)]],
       desc: `BrickCollect blog posts tagged ${name}: ${posts.slice(0, 3).map(p => p.title).join('; ')}.`,

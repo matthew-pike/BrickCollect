@@ -204,12 +204,12 @@
   { const mp = { AU: 'en-au', GB: 'en-gb', CA: 'en-ca', NZ: 'en-nz', IE: 'en-ie' }; const c = (navigator.language || '').split('-')[1]; const l = mp[(c || '').toUpperCase()]; if (l) document.querySelectorAll('a[href*="lego.com/en-us/"]').forEach(a => { a.href = a.href.replace('/en-us/', `/${l}/`); }); }
 
   /* On special (deals): approved on the Admin page and kept in Firestore meta/deals (readable by anyone).
-     Shown on /deals (every live deal), in the Deals boxes on Home and the Blog, and on set pages (pricebox below).
+     Shown on /deals (every live deal), in the Deals box on Home, as posts in the /blog feed, and on set pages (pricebox below).
      A deal shows until the end of its end date, Sydney time. Prices are AUD (Australian stores). */
   const sydToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
   const dealDay = d => { const t = Date.parse((d || '') + 'T00:00:00'); return isNaN(t) ? '' : new Date(t).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }); };
   {
-    const all = $('dealsAll'), peek = $('dealsPeek'), host = all || peek;
+    const all = $('dealsAll'), peek = $('dealsPeek'), feed = $('dealsFeed'), host = all || peek || feed;
     if (host && host.dataset.fb) {
       const [proj, key] = host.dataset.fb.split('|');
       const val = v => { if (!v) return null; if ('stringValue' in v) return v.stringValue; if ('integerValue' in v) return Number(v.integerValue); if ('doubleValue' in v) return Number(v.doubleValue); if ('booleanValue' in v) return v.booleanValue; if ('nullValue' in v) return null; if ('arrayValue' in v) return (v.arrayValue.values || []).map(val); if ('mapValue' in v) { const o = {}; for (const [k, x] of Object.entries(v.mapValue.fields || {})) o[k] = val(x); return o; } return null; };
@@ -224,18 +224,58 @@
         if (withStore) body.append(el('span', 'dwhere', `${d.store}${d.ends ? ` · until ${dealDay(d.ends)}` : ''}`));
         c.append(pic, body); return c;
       };
+      /* /blog: each published deal is a post in the feed, slotted in by the day it went live (posts carry data-date).
+         Live deals link to their place on /deals; a deal past its end date stays as a record ("Ended …") until the
+         daily tidy-up drops it (60 days). Taken-down deals (ended before their end date) don't show. */
+      const pct = s => s.was > s.price ? Math.round((1 - s.price / s.was) * 100) : 0;
+      const dealPosts = (feed, live, every, today) => {
+        const ended = every.filter(d => d.status === 'ended' && d.publishedAt && d.ends && d.ends < today && (d.sets || []).length);
+        const posts = [...live, ...ended].sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
+        if (!posts.length) return;
+        const pubDay = d => new Date(d.publishedAt || Date.parse((d.found || today) + 'T00:00:00')).toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' });
+        const longDay = ymd => new Date(Date.parse(ymd + 'T00:00:00')).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+        for (const d of posts) {
+          const over = d.status === 'ended', sets = d.sets.slice().sort((a, b) => pct(b) - pct(a)), lead = sets[0], top = pct(lead), day = pubDay(d), n = sets.length;
+          const href = over ? '/deals' : `/deals#deal-${d.id}`;
+          const art = el('article', `post dealpost${over ? ' over' : ''}`); art.dataset.date = day;
+          const pic = el('a', 'post-pic'); pic.href = lead.path || href; pic.tabIndex = -1; pic.setAttribute('aria-hidden', 'true');
+          const img = document.createElement('img'); img.src = lead.img || ''; img.alt = ''; img.loading = 'lazy'; img.width = 360; img.height = 270;
+          img.onerror = () => img.replaceWith(el('span', 'noimg')); pic.append(img);
+          if (top) pic.append(el('span', 'dtag post-off', `${n > 1 && !over ? 'Up to ' : ''}${top}% OFF`));
+          const body = el('div', 'post-body'), date = el('p', 'post-date', `${longDay(day)} · `);
+          date.append(el('span', 'post-kicker', `Deals · ${d.store}`));
+          const h = el('h2'), ha = el('a', '', d.title); ha.href = href; h.append(ha);
+          const intro = el('p', 'post-intro');
+          intro.append(`${n === 1 ? `One set ${over ? 'was' : 'is'}` : `${n} sets ${over ? 'were' : 'are'}`} on special at ${d.store}${d.ends ? ` until ${dealDay(d.ends)}` : ''}${top ? `, ${n > 1 ? 'up to ' : ''}${top}% off` : ''}. The biggest saving ${over ? 'was' : 'is'} `);
+          const la = el('a', '', lead.name || lead.n); la.href = lead.path || href; intro.append(la, `: ${A(lead.price)}${lead.was > lead.price ? `, usually ${A(lead.was)}` : ''}.`);
+          if (over) intro.append(el('span', 'post-ended', ` Ended ${dealDay(d.ends)}.`));
+          const tags = el('p', 'post-tags'), tg = el('a', 'tag', 'Deals'); tg.href = '/deals'; tags.append(tg, el('span', 'tag plain', d.store));
+          body.append(date, h, intro, tags);
+          const more = sets.slice(1, 11);
+          if (more.length) { const th = el('div', 'post-thumbs'); for (const s of more) { const a = el('a'); a.href = s.path || href; a.title = `${s.name} · ${A(s.price)}${pct(s) ? ` (${pct(s)}% off)` : ''}`; const i = document.createElement('img'); i.src = s.img || ''; i.alt = s.name || ''; i.loading = 'lazy'; i.width = 64; i.height = 48; i.onerror = () => i.replaceWith(el('span', 'noimg')); a.append(i); th.append(a); } body.append(th); }
+          const btn = el('a', 'btn post-more', over ? 'See today’s deals' : `See all ${n === 1 ? 'the deal' : `${n} sets`}`); btn.href = href; btn.dataset.cta = 'blog_deal';
+          btn.insertAdjacentHTML('beforeend', '<span class="arr-ring" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span>'); body.append(btn);
+          art.append(pic, body);
+          const after = [...feed.querySelectorAll(':scope > article[data-date]')].find(x => !x.classList.contains('dealpost') && x.dataset.date <= day);
+          feed.insertBefore(art, after || null);
+        }
+        const bar = document.querySelector('.tagbar');
+        if (bar && live.length) { const t = el('a', 'tag', 'Deals '); t.href = '/deals'; t.append(el('span', '', String(live.length))); bar.prepend(t); }
+        track('deals_blog', { live: live.length, ended: ended.length });
+      };
       fetch(`https://firestore.googleapis.com/v1/projects/${proj}/databases/(default)/documents/meta/deals?key=${key}&mask.fieldPaths=deals`)
         .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
         .then(j => {
           const today = sydToday();
-          const live = Object.entries(val({ mapValue: { fields: (j.fields && j.fields.deals && j.fields.deals.mapValue.fields) || {} } }) || {})
-            .map(([id, d]) => ({ ...d, id })).filter(d => d.status === 'live' && (!d.ends || d.ends >= today) && (!d.starts || d.starts <= today) && (d.sets || []).length)
+          const every = Object.entries(val({ mapValue: { fields: (j.fields && j.fields.deals && j.fields.deals.mapValue.fields) || {} } }) || {}).map(([id, d]) => ({ ...d, id }));
+          const live = every.filter(d => d.status === 'live' && (!d.ends || d.ends >= today) && (!d.starts || d.starts <= today) && (d.sets || []).length)
             .sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
+          if (feed) try { dealPosts(feed, live, every, today); } catch (e) { console.warn('deal posts', e); }
           if (all) {
             all.textContent = '';
             if (!live.length) { all.append(el('p', 'muted', 'No deals right now. Check back soon: we look for new specials a few times a week.')); return; }
             for (const d of live) {
-              const box = el('article', 'deal'), head = el('div', 'dealhead'), t = el('div');
+              const box = el('article', 'deal'), head = el('div', 'dealhead'), t = el('div'); box.id = `deal-${d.id}`;
               t.append(el('p', 'dkick', d.store), el('h2', '', d.title));
               head.append(t, el('span', 'dwhen', [d.ends ? `Until ${dealDay(d.ends)}` : '', d.found ? `checked ${dealDay(d.found)}` : ''].filter(Boolean).join(' · ')));
               const cards = el('div', 'tcards'); d.sets.forEach(s => cards.append(setCard(s, d, false)));
@@ -244,6 +284,8 @@
               if (d.url) { const row = el('div', 'row'), a = el('a', 'btn primary', `See it at ${d.store} ↗`); a.href = d.url; a.target = '_blank'; a.rel = 'noopener'; a.dataset.cta = 'deal'; row.append(a); box.append(row); }
               all.append(box);
             }
+            // Deal posts on /blog link to /deals#deal-<id>; the deals arrive after the page, so jump there now.
+            { const h = decodeURIComponent(location.hash.slice(1)), t = h && document.getElementById(h); if (t) t.scrollIntoView(); }
             track('deals_view', { deals: live.length });
           }
           if (peek) {
