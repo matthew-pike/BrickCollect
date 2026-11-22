@@ -37,16 +37,17 @@ export function readDeals(file, catalog) {
     if (!d.title || !d.store) why.push('title and store needed');
     if (d.url && !/^https:\/\//.test(d.url)) why.push('url must be https');
     for (const k of ['starts', 'ends', 'found']) if (d[k] && !DAY_RE.test(d[k])) why.push(`${k} must be YYYY-MM-DD`);
-    const sets = [];
+    const sets = [], missing = [];
     for (const s of d.sets || []) {
       let n = String(s.n || '').trim();
       if (/^\d{3,7}$/.test(n)) n += '-1';
       const price = money(s.price), was = money(s.was);
       if (!n || Number.isNaN(price) || Number.isNaN(was)) { why.push(`set ${n || '?'}: bad number or price`); continue; }
       const c = catalog.get(n);
-      if (!c) { why.push(`set ${n}: not in the catalog`); continue; }
+      if (!c) { missing.push(n); continue; } // left out of this deal; the rest of the deal still loads
       sets.push({ n, name: c.name, img: c.img, path: c.path, pieces: c.pieces || null, price, was: was && price && was > price ? was : null });
     }
+    if (missing.length) bad.push(`${id}: left out ${missing.join(', ')} (not in the catalog)`);
     if (!sets.length) why.push('no sets');
     if (why.length) { bad.push(`${id}: ${why.join('; ')}`); continue; }
     const found = d.found || today();
