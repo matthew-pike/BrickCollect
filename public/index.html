@@ -109,10 +109,11 @@ button,input,select{font:inherit;color:inherit}
 .hmenu nav a.hm-admin,.hmenu nav a.hm-admin:hover{color:var(--accent)}
 .hmenu nav hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
 /* ☰ menu blocks: a small label over each group of links */
-.hmenu nav{min-width:220px;max-height:calc(100vh - 90px);overflow-y:auto}
+.hmenu nav{min-width:220px;max-height:calc(100vh - 72px);overflow-y:auto}
+@media (min-width:700px){.hmenu nav{display:grid;grid-template-columns:repeat(2,minmax(200px,1fr));column-gap:6px}.hmenu nav>a{grid-column:1/-1}} /* wide screens: blocks two by two, so the menu fits without scrolling */
 .hmenu .hm-b{display:flex;flex-direction:column;margin-top:6px;padding:2px 0 4px;border-radius:9px;background:var(--bg)}
-.hmenu .hm-b a{padding:8px 12px}
-.hmenu .hm-h{margin:0;padding:8px 12px 2px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.hmenu .hm-b a{padding:7px 12px}
+.hmenu .hm-h{margin:0;padding:7px 12px 1px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 /* Page title, like the other pages */
 .pagehead .crumbs{font-size:13px;color:var(--muted)}.pagehead .crumbs a{color:var(--muted);text-decoration:none}.pagehead .crumbs a:hover{color:var(--accent)}.pagehead .sep{margin:0 6px;color:var(--faint)}
 .pg-h1{font-family:var(--font-display);font-size:30px;font-weight:500;margin:10px 0 0;line-height:1.2}
