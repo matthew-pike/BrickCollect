@@ -591,7 +591,7 @@ userPage('/selling', 'My sale or trade list · BrickCollect', 'My sale or trade 
   `  try { const s = await BC.db.doc('data/users/' + uid + '/share').get(); const v = s.exists ? s.data() : null; if (v && v.on && v.id) { location.replace('/sale/' + v.id + '?mine=1'); return; } } catch (e) { console.warn(e); }
   show('.none');`);
 
-userPage('/account', 'My account · BrickCollect', 'My account', 'My account',
+userPage('/account', 'Your account · BrickCollect', 'Your account', 'Your account',
   `<section class="box out" hidden><h2>Sign in to your account</h2><p>Save your collection to a free account and see it on your phone and computer.</p><p><a class="btn primary" href="/collection#signin">Sign in</a></p></section>
 <section class="box in" hidden><h2>Your account</h2><dl class="kv"><dt>Email</dt><dd id="aEmail">—</dd><dt>Member since</dt><dd id="aSince">—</dd><dt>Signed in with</dt><dd id="aHow">—</dd><dt id="aRoleK" hidden>Account type</dt><dd id="aRole" hidden></dd></dl></section>
 <section class="box in" hidden><h2>Your collection</h2><div class="stats"><div class="stat"><div class="k">Sets</div><div class="v" id="aSets">—</div></div><div class="stat"><div class="k">Minifigures</div><div class="v" id="aFigs">—</div></div><div class="stat"><div class="k">Wanted</div><div class="v" id="aWant">—</div></div><div class="stat"><div class="k">For sale or trade</div><div class="v" id="aSale">—</div></div></div><p class="row"><a class="btn primary" href="/collection">Open My collection</a><a class="btn" href="/collection#export">Export</a></p></section>

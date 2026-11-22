@@ -4619,7 +4619,7 @@ async function paintAccount() {
     if (m) { const isNew = BC.user.isNew ? await BC.user.isNew() : false; track(isNew ? 'sign_up' : 'login', { method: m }); } trackSize(); }
   const nm = email ? email.split('@')[0] : '';
   $('acctBtn').innerHTML = email ? `<span class="full">${esc(nm.slice(0, 14))}</span><span class="short" aria-hidden="true">${esc(nm.slice(0, 1).toUpperCase())}</span>` : 'Sign in';
-  $('acctBtn').title = email ? `My account · signed in as ${email}` : 'Sign in to save your collection to a free account';
+  $('acctBtn').title = email ? `Your account · signed in as ${email}` : 'Sign in to save your collection to a free account';
   $('acctBtn').classList.toggle('in', !!email);
   document.querySelectorAll('.hm-in').forEach(x => { x.hidden = !email; }); // Sign out at the bottom of the ☰ menu
   document.querySelectorAll('.hm-out').forEach(x => { x.hidden = !!email || !window.BC?.auth?.available; }); // Sign in, when signed out
@@ -4656,7 +4656,7 @@ function watchUserCount() {
     $('usageLink').title = `${label}. Open Admin`;
   }, () => {});
 }
-// Signed in: My account page (like every other page). Signed out: the sign-in box. (The panel itself still opens from /collection#account, for Delete.)
+// Signed in: Your account page (like every other page). Signed out: the sign-in box. (The panel itself still opens from /collection#account, for Delete.)
 $('acctBtn').onclick = () => { if (uid) location.href = '/account'; else openAuth(); };
 $('acctExport').onclick = () => { dlg.close(); $('exportBtn').click(); };
 // Without an account: up to FREE_ITEMS sets and minifigures (owned or wanted), then sign up to add more.
