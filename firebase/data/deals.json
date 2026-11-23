@@ -626,6 +626,331 @@
     "url": "https://pantasy.com/pages/black-friday-2026"
    },
    "found": "2026-11-22"
+  },
+  {
+   "id": "target-bf-2026-star-wars-marvel-hp",
+   "title": "LEGO Star Wars, Marvel and Harry Potter on special at Target",
+   "store": "Target Australia",
+   "url": "https://www.target.com.au/collection/selected-lego-sets",
+   "sets": [
+    {
+     "n": "75446",
+     "price": 119,
+     "was": 199
+    },
+    {
+     "n": "75453",
+     "price": 199,
+     "was": 299
+    },
+    {
+     "n": "75452",
+     "price": 89,
+     "was": 139
+    },
+    {
+     "n": "75440",
+     "price": 69,
+     "was": 99
+    },
+    {
+     "n": "75406",
+     "price": 69,
+     "was": 99
+    },
+    {
+     "n": "75427",
+     "price": 139,
+     "was": 239
+    },
+    {
+     "n": "76349",
+     "price": 59,
+     "was": 89
+    },
+    {
+     "n": "76354",
+     "price": 359,
+     "was": 549
+    },
+    {
+     "n": "76339",
+     "price": 75,
+     "was": 109
+    },
+    {
+     "n": "76466",
+     "price": 149,
+     "was": 239
+    },
+    {
+     "n": "76471",
+     "price": 89,
+     "was": 139
+    }
+   ],
+   "starts": "2026-11-23",
+   "ends": "2026-11-30",
+   "note": "Target Black Friday: up to 40% off selected LEGO, ends 30 Nov. Some sets are online only; check the price on the page before you buy.",
+   "source": {
+    "title": "Target Australia: selected LEGO sets (Black Friday)",
+    "url": "https://www.target.com.au/collection/selected-lego-sets"
+   },
+   "found": "2026-11-23"
+  },
+  {
+   "id": "target-bf-2026-technic-f1",
+   "title": "LEGO Technic, F1 and racing sets on special at Target",
+   "store": "Target Australia",
+   "url": "https://www.target.com.au/collection/selected-lego-sets",
+   "sets": [
+    {
+     "n": "42231",
+     "price": 149,
+     "was": 229
+    },
+    {
+     "n": "42214",
+     "price": 169,
+     "was": 269
+    },
+    {
+     "n": "42240",
+     "price": 199,
+     "was": 319
+    },
+    {
+     "n": "42239",
+     "price": 199,
+     "was": 299
+    },
+    {
+     "n": "42228",
+     "price": 219,
+     "was": 329
+    },
+    {
+     "n": "42224",
+     "price": 149,
+     "was": 229
+    },
+    {
+     "n": "43018",
+     "price": 129,
+     "was": 229
+    },
+    {
+     "n": "43022",
+     "price": 89,
+     "was": 119
+    },
+    {
+     "n": "43023",
+     "price": 89,
+     "was": 119
+    },
+    {
+     "n": "43014",
+     "price": 89,
+     "was": 119
+    },
+    {
+     "n": "11375",
+     "price": 99,
+     "was": 139
+    },
+    {
+     "n": "77258",
+     "price": 18,
+     "was": 37
+    }
+   ],
+   "starts": "2026-11-23",
+   "ends": "2026-11-30",
+   "note": "Target Black Friday: up to 40% off selected LEGO, ends 30 Nov. Some sets are online only; check the price on the page before you buy.",
+   "source": {
+    "title": "Target Australia: selected LEGO sets (Black Friday)",
+    "url": "https://www.target.com.au/collection/selected-lego-sets"
+   },
+   "found": "2026-11-23"
+  },
+  {
+   "id": "target-bf-2026-icons-disney",
+   "title": "LEGO Icons, Ideas, Disney and One Piece on special at Target",
+   "store": "Target Australia",
+   "url": "https://www.target.com.au/collection/selected-lego-sets",
+   "sets": [
+    {
+     "n": "11510",
+     "price": 39,
+     "was": 89
+    },
+    {
+     "n": "10358",
+     "price": 199,
+     "was": 289
+    },
+    {
+     "n": "11383",
+     "price": 109,
+     "was": 169
+    },
+    {
+     "n": "11384",
+     "price": 159,
+     "was": 229
+    },
+    {
+     "n": "21370",
+     "price": 139,
+     "was": 219
+    },
+    {
+     "n": "43301",
+     "price": 149,
+     "was": 239
+    },
+    {
+     "n": "43290",
+     "price": 59,
+     "was": 89
+    },
+    {
+     "n": "43304",
+     "price": 49,
+     "was": 75
+    },
+    {
+     "n": "43287",
+     "price": 45,
+     "was": 75
+    },
+    {
+     "n": "43300",
+     "price": 149,
+     "was": 219
+    },
+    {
+     "n": "72537",
+     "price": 69,
+     "was": 109
+    },
+    {
+     "n": "75646",
+     "price": 149,
+     "was": 259
+    },
+    {
+     "n": "75645",
+     "price": 89,
+     "was": 139
+    }
+   ],
+   "starts": "2026-11-23",
+   "ends": "2026-11-30",
+   "note": "Target Black Friday: up to 40% off selected LEGO, ends 30 Nov. Some sets are online only; check the price on the page before you buy.",
+   "source": {
+    "title": "Target Australia: selected LEGO sets (Black Friday)",
+    "url": "https://www.target.com.au/collection/selected-lego-sets"
+   },
+   "found": "2026-11-23"
+  },
+  {
+   "id": "target-bf-2026-kids",
+   "title": "LEGO Bluey, DUPLO, Ninjago and Pokémon on special at Target",
+   "store": "Target Australia",
+   "url": "https://www.target.com.au/collection/selected-lego-sets",
+   "sets": [
+    {
+     "n": "11216",
+     "price": 12,
+     "was": 24
+    },
+    {
+     "n": "11221",
+     "price": 25,
+     "was": 39
+    },
+    {
+     "n": "11217",
+     "price": 65,
+     "was": 99
+    },
+    {
+     "n": "10455",
+     "price": 59,
+     "was": 79
+    },
+    {
+     "n": "10459",
+     "price": 49,
+     "was": 89
+    },
+    {
+     "n": "10448",
+     "price": 29,
+     "was": 45
+    },
+    {
+     "n": "71820",
+     "price": 69,
+     "was": 129
+    },
+    {
+     "n": "71867",
+     "price": 79,
+     "was": 119
+    },
+    {
+     "n": "72163",
+     "price": 69,
+     "was": 109
+    },
+    {
+     "n": "72166",
+     "price": 99,
+     "was": 149
+    },
+    {
+     "n": "77079",
+     "price": 10,
+     "was": 22
+    },
+    {
+     "n": "77059",
+     "price": 59,
+     "was": 89
+    }
+   ],
+   "starts": "2026-11-23",
+   "ends": "2026-11-30",
+   "note": "Target Black Friday: up to 40% off selected LEGO, ends 30 Nov. Some sets are online only; check the price on the page before you buy.",
+   "source": {
+    "title": "Target Australia: selected LEGO sets (Black Friday)",
+    "url": "https://www.target.com.au/collection/selected-lego-sets"
+   },
+   "found": "2026-11-23"
+  },
+  {
+   "id": "myer-2026-10366-tropical-aquarium",
+   "title": "LEGO Icons Tropical Aquarium on special at Myer",
+   "store": "Myer",
+   "url": "https://www.myer.com.au/p/lego-icons-tropical-aquarium-10366",
+   "sets": [
+    {
+     "n": "10366",
+     "price": 549.99,
+     "was": 699.99
+    }
+   ],
+   "starts": "2026-11-23",
+   "ends": "2026-12-02",
+   "note": "Online, click and collect and in store. End date is a guess from the deal listing.",
+   "source": {
+    "title": "OzBargain: Tropical Aquarium deal at Myer (23 Nov)",
+    "url": "https://www.ozbargain.com.au/node/984984"
+   },
+   "found": "2026-11-23"
   }
  ]
 }
