@@ -28,22 +28,22 @@
     },
     {
      "n": "75453",
-     "price": 239.0,
+     "price": 239,
      "was": 329.99
     },
     {
      "n": "75454",
-     "price": 209.0,
+     "price": 209,
      "was": 279.99
     },
     {
      "n": "75459",
-     "price": 189.0,
+     "price": 189,
      "was": 249.99
     },
     {
      "n": "75435",
-     "price": 189.0,
+     "price": 189,
      "was": 249.99
     },
     {
@@ -58,7 +58,7 @@
     },
     {
      "n": "75428",
-     "price": 143.0,
+     "price": 143,
      "was": 199.99
     }
    ],
@@ -79,7 +79,7 @@
    "sets": [
     {
      "n": "11377",
-     "price": 749.0,
+     "price": 749,
      "was": 999.99
     },
     {
@@ -89,7 +89,7 @@
     },
     {
      "n": "11385",
-     "price": 449.0,
+     "price": 449,
      "was": 599.99
     },
     {
@@ -99,7 +99,7 @@
     },
     {
      "n": "10332",
-     "price": 309.0,
+     "price": 309,
      "was": 399.99
     },
     {
@@ -109,7 +109,7 @@
     },
     {
      "n": "21351",
-     "price": 239.0,
+     "price": 239,
      "was": 299.99
     },
     {
@@ -129,27 +129,27 @@
     },
     {
      "n": "21333",
-     "price": 199.0,
+     "price": 199,
      "was": 259.99
     },
     {
      "n": "21350",
-     "price": 194.0,
+     "price": 194,
      "was": 249.99
     },
     {
      "n": "10357",
-     "price": 189.0,
+     "price": 189,
      "was": 249.99
     },
     {
      "n": "11381",
-     "price": 179.0,
+     "price": 179,
      "was": 249.99
     },
     {
      "n": "11382",
-     "price": 170.0,
+     "price": 170,
      "was": 229.99
     },
     {
@@ -164,12 +164,12 @@
     },
     {
      "n": "31216",
-     "price": 149.0,
+     "price": 149,
      "was": 199.99
     },
     {
      "n": "31218",
-     "price": 154.0,
+     "price": 154,
      "was": 199.99
     },
     {
@@ -184,7 +184,7 @@
     },
     {
      "n": "21366",
-     "price": 119.0,
+     "price": 119,
      "was": 179.99
     },
     {
@@ -194,17 +194,17 @@
     },
     {
      "n": "43024",
-     "price": 119.0,
+     "price": 119,
      "was": 149.99
     },
     {
      "n": "43023",
-     "price": 84.0,
+     "price": 84,
      "was": 149.99
     },
     {
      "n": "43014",
-     "price": 119.0,
+     "price": 119,
      "was": 149.99
     },
     {
@@ -235,22 +235,22 @@
    "sets": [
     {
      "n": "42146",
-     "price": 799.0,
+     "price": 799,
      "was": 999.99
     },
     {
      "n": "42239",
-     "price": 250.0,
+     "price": 250,
      "was": 329.99
     },
     {
      "n": "42207",
-     "price": 229.0,
+     "price": 229,
      "was": 349.99
     },
     {
      "n": "42096",
-     "price": 229.0,
+     "price": 229,
      "was": 299.99
     },
     {
@@ -276,7 +276,7 @@
    "sets": [
     {
      "n": "72154",
-     "price": 319.0,
+     "price": 319,
      "was": 429
     },
     {
@@ -296,7 +296,7 @@
     },
     {
      "n": "77093",
-     "price": 159.0,
+     "price": 159,
      "was": 199
     }
    ],
@@ -317,12 +317,12 @@
    "sets": [
     {
      "n": "76300",
-     "price": 424.0,
+     "price": 424,
      "was": 499.99
     },
     {
      "n": "71043",
-     "price": 519.0,
+     "price": 519,
      "was": 699.99
     },
     {
@@ -332,12 +332,12 @@
     },
     {
      "n": "76352",
-     "price": 134.0,
+     "price": 134,
      "was": 179.99
     },
     {
      "n": "72423",
-     "price": 136.0,
+     "price": 136,
      "was": 199
     },
     {
@@ -357,7 +357,7 @@
     },
     {
      "n": "60494",
-     "price": 129.0,
+     "price": 129,
      "was": 199.99
     },
     {
@@ -372,7 +372,7 @@
     },
     {
      "n": "77983",
-     "price": 109.0,
+     "price": 109,
      "was": 149.99
     },
     {
@@ -951,6 +951,111 @@
     "url": "https://www.ozbargain.com.au/node/984984"
    },
    "found": "2026-11-23"
+  },
+  {
+   "id": "amazon-au-bf-2026-late-adds",
+   "title": "More LEGO on special at Amazon Australia",
+   "store": "Amazon Australia",
+   "url": "https://www.amazon.com.au/s?k=LEGO",
+   "sets": [
+    {
+     "n": "10356",
+     "price": 449,
+     "was": 599.99
+    },
+    {
+     "n": "42228",
+     "price": 229,
+     "was": 349.99
+    },
+    {
+     "n": "31382",
+     "price": 26.99,
+     "was": 44.99
+    },
+    {
+     "n": "75446",
+     "price": 125
+    },
+    {
+     "n": "75416",
+     "price": 108
+    }
+   ],
+   "starts": "2026-11-16",
+   "ends": "2026-11-30",
+   "note": "Extra Amazon Black Friday price drops spotted this week. Amazon prices change often: check before you buy.",
+   "source": {
+    "title": "OzBargain: Amazon AU LEGO deals (16–24 Nov)",
+    "url": "https://www.ozbargain.com.au/node/984530"
+   },
+   "found": "2026-11-25"
+  },
+  {
+   "id": "kmart-bf-2026",
+   "title": "LEGO on special at Kmart for Black Friday",
+   "store": "Kmart",
+   "url": "https://www.kmart.com.au/category/toys/toys-by-category/blocks-&-construction/lego-shop/lego-all/252097/",
+   "sets": [
+    {
+     "n": "42240",
+     "price": 179
+    },
+    {
+     "n": "75427",
+     "price": 129
+    },
+    {
+     "n": "76320",
+     "price": 15
+    }
+   ],
+   "starts": "2026-11-23",
+   "note": "Kmart Black Friday prices. The Iron Man set (76320) goes on sale from 8am AEDT Thu 26 Nov (OnePass early access the night before). Some smaller stores may not stock every item.",
+   "source": {
+    "title": "OzBargain: Kmart LEGO Technic and Star Wars deal (23 Nov)",
+    "url": "https://www.ozbargain.com.au/node/984934"
+   },
+   "found": "2026-11-25"
+  },
+  {
+   "id": "bigw-bf-2026-more",
+   "title": "LEGO Minecraft on special at Big W",
+   "store": "Big W",
+   "url": "https://www.bigw.com.au/black-friday",
+   "sets": [
+    {
+     "n": "21268",
+     "price": 19,
+     "was": 22
+    }
+   ],
+   "note": "Part of Big W's Black Friday sale, which also promises selected LEGO at half price or better. Usual price worked out from the $3 saving.",
+   "source": {
+    "title": "Big W Black Friday page",
+    "url": "https://www.bigw.com.au/black-friday"
+   },
+   "found": "2026-11-25"
+  },
+  {
+   "id": "lego-au-insiders-2026-76300",
+   "title": "LEGO Batman Arkham Asylum at Insiders price on LEGO.com",
+   "store": "LEGO.com Australia",
+   "url": "https://www.lego.com/en-au/product/arkham-asylum-76300",
+   "sets": [
+    {
+     "n": "76300",
+     "price": 399.99,
+     "was": 499.99
+    }
+   ],
+   "ends": "2026-11-26",
+   "note": "Insiders-only price (free LEGO Insiders sign-up needed). On back order, so it ships later.",
+   "source": {
+    "title": "OzBargain",
+    "url": "https://www.ozbargain.com.au/node/984576"
+   },
+   "found": "2026-11-25"
   }
  ]
 }
