@@ -1038,24 +1038,91 @@
    "found": "2026-11-25"
   },
   {
-   "id": "lego-au-insiders-2026-76300",
-   "title": "LEGO Batman Arkham Asylum at Insiders price on LEGO.com",
-   "store": "LEGO.com Australia",
-   "url": "https://www.lego.com/en-au/product/arkham-asylum-76300",
+   "id": "amazon-au-bf-2026-pokemon-mario",
+   "title": "LEGO Pokémon, Super Mario and Batman on special at Amazon Australia",
+   "store": "Amazon Australia",
+   "url": "https://www.amazon.com.au/s?k=LEGO+Pokemon",
    "sets": [
     {
-     "n": "76300",
-     "price": 399.99,
-     "was": 499.99
+     "n": "71411",
+     "price": 304,
+     "was": 399.99
+    },
+    {
+     "n": "72164",
+     "price": 87,
+     "was": 129
+    },
+    {
+     "n": "72165",
+     "price": 94,
+     "was": 139
+    },
+    {
+     "n": "72160",
+     "price": 99,
+     "was": 149
+    },
+    {
+     "n": "72150",
+     "price": 79,
+     "was": 119
+    },
+    {
+     "n": "76304",
+     "price": 99,
+     "was": 149
     }
    ],
-   "ends": "2026-11-26",
-   "note": "Insiders-only price (free LEGO Insiders sign-up needed). On back order, so it ships later.",
+   "starts": "2026-11-17",
+   "ends": "2026-11-30",
+   "note": "Amazon Black Friday prices, sale runs to 30 Nov. Amazon prices change often: check before you buy.",
    "source": {
-    "title": "OzBargain",
-    "url": "https://www.ozbargain.com.au/node/984576"
+    "title": "Vooks: Australian Nintendo Black Friday deals (updated 25 Nov)",
+    "url": "https://www.vooks.net/all-the-australian-nintendo-black-friday-cyber-monday-deals-2026/"
    },
-   "found": "2026-11-25"
+   "found": "2026-11-27"
+  },
+  {
+   "id": "amazon-au-bf-2026-ideas-botanicals",
+   "title": "LEGO Ideas, Botanicals and Technic on special at Amazon Australia",
+   "store": "Amazon Australia",
+   "url": "https://www.amazon.com.au/s?k=LEGO+Ideas",
+   "sets": [
+    {
+     "n": "42210",
+     "price": 173.3,
+     "was": 249.99
+    },
+    {
+     "n": "21349",
+     "price": 121.3,
+     "was": 169.99
+    },
+    {
+     "n": "21357",
+     "price": 64.99,
+     "was": 109.99
+    },
+    {
+     "n": "10328",
+     "price": 71.2,
+     "was": 99.99
+    },
+    {
+     "n": "10349",
+     "price": 20,
+     "was": 29.99
+    }
+   ],
+   "starts": "2026-11-26",
+   "ends": "2026-11-30",
+   "note": "Black Friday prices on Amazon. Prices move during the sale: check before you buy.",
+   "source": {
+    "title": "Tom's Guide AU: best Black Friday deals (26 Nov)",
+    "url": "https://www.tomsguide.com/deals/best-black-friday-deals-au-1"
+   },
+   "found": "2026-11-27"
   }
  ]
 }
